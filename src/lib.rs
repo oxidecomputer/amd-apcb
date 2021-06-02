@@ -11,11 +11,3 @@ extern crate serde_derive;
 mod ondisk;
 mod image;
 pub use image::APCB;
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
