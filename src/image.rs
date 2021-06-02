@@ -94,10 +94,17 @@ impl<S: Read + Write + Seek> APCB<S> {
 #[cfg(test)]
 mod tests {
     use crate::APCB;
+
     #[test]
     #[should_panic]
     fn load_garbage_image() {
         let mut buffer: [u8; 8*1024] = [0xFF; 8*1024];
         APCB::load(&mut std::io::Cursor::new(&mut buffer[0..])).unwrap();
+    }
+
+    #[test]
+    fn create_empty_image() {
+        let mut buffer: [u8; 8*1024] = [0xFF; 8*1024];
+        APCB::create(&mut std::io::Cursor::new(&mut buffer[0..]), 8*1024).unwrap();
     }
 }
