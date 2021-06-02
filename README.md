@@ -1,6 +1,7 @@
 # Purpose
 
 This crate allows you to manipulate APCB (AGESA PSP Configuration Blob), either directly on flash or in an image file.
+
 # Usage
 
 Add
@@ -8,6 +9,12 @@ Add
     amd-apcb = { path = "../amd-apcb", default_features = false, features = ["no_std"] }
 
 to the `[dependencies]` block in your `Cargo.toml`.
+
+# Testing
+
+Run
+
+    cargo test --features std
 
 # Implementation design decisions
 
