@@ -95,8 +95,8 @@ impl Default for APCB_GROUP_HEADER {
             signature: *b"    ", // probably invalid
             group_id: 0,         // probably invalid
             header_size: size_of::<Self>() as u16,
-            version: 0x01,                        // FIXME: Verify ?
-            reserved: 0,                          // FIXME: Verify
+            version: 0x01,
+            reserved: 0,
             group_size: size_of::<Self>() as u32, // probably invalid
         }
     }
