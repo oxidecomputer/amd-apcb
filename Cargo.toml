@@ -8,6 +8,14 @@ edition = "2018"
 
 [dependencies]
 core_io = { version = "0.1.20210325", optional = true }
+#
+# In order to use macros as discriminants in enums that make use of derive
+# macros (e.g., AsBytes, FromPrimitive), we need the syn crate to have "full"
+# enabled. The easiest way to do this is to use num-derive's "full-syntax",
+# which passes "full" through to syn.
+#
+num-derive = { version = "0.3.0", features = [ "full-syntax" ] }
+num-traits = { version = "0.2.12", default-features = false }
 ssmarshal = "1.0.0"
 serde = "1.0.125"
 serde_derive = "1.0.125"
