@@ -6,7 +6,7 @@ use core::mem::size_of;
 #[repr(C)]
 pub struct APCB_V2_HEADER {
 	pub signature: [u8; 4],
-	pub header_size: u16, // == sizeof(APCB_V2_HEADER)
+	pub header_size: u16, // == sizeof(APCB_V2_HEADER); but 128 for V3
 	pub version: u16, // == 0x30
 	pub apcb_size: u32,
 	pub unique_apcb_instance: u32,
@@ -14,15 +14,6 @@ pub struct APCB_V2_HEADER {
 	reserved1: [u8; 3], // 0
 	reserved2: [u32; 3], // 0
 }
-
-// FIXME: APCB v3 has more fields, starting with another signature.  It's probably better to model that as an additional header.
-
-/*
-#[derive(Serialize, Deserialize)]
-#[repr(C)]
-pub struct APCB_V3_ADDITIONAL_HEADER {
-}
-*/
 
 impl Default for APCB_V2_HEADER {
 	fn default() -> Self {
@@ -35,6 +26,54 @@ impl Default for APCB_V2_HEADER {
 			checksum_byte: 0, // probably invalid
 			reserved1: [0, 0, 0],
 			reserved2: [0, 0, 0],
+		}
+	}
+}
+
+#[derive(Serialize, Deserialize)]
+#[repr(C)]
+pub struct APCB_V3_HEADER_EXT {
+	pub signature: [u8; 4], // "ECB2"
+	reserved_1: u16, // 0
+	reserved_2: u16, // 0x10
+	pub struct_version: u16,
+	pub data_version: u16,
+	pub ext_header_size: u32, // 96
+	reserved_3: u16, // 0
+	reserved_4: u16, // 0xFFFF
+	reserved_5: u16, // 0x40
+	reserved_6: u16, // 0x00
+	reserved_7: [u32; 2], // 0 0
+	pub data_offset: u16, // 0x58
+	pub header_checksum: u8,
+	reserved_8: u8, // 0
+	reserved_9: [u32; 3], // 0 0 0
+	pub integrity_sign: [u8; 32],
+	reserved_10: [u32; 3], // 0 0 0
+	pub signature_ending: [u8; 4], // "BCPA"
+}
+
+impl Default for APCB_V3_HEADER_EXT {
+	fn default() -> Self {
+		Self {
+			signature: *b"ECB2",
+			reserved_1: 0,
+			reserved_2: 0x10,
+			struct_version: 0x12,
+			data_version: 0x100,
+			ext_header_size: size_of::<Self>() as u32,
+			reserved_3: 0,
+			reserved_4: 0xFFFF,
+			reserved_5: 0x40,
+			reserved_6: 0x00,
+			reserved_7: [0, 0],
+			data_offset: 0x58,
+			header_checksum: 0, // invalid--but unused by AMD Rome
+			reserved_8: 0,
+			reserved_9: [0, 0, 0],
+			integrity_sign: [0; 32], // invalid--but unused by AMD Rome
+			reserved_10: [0; 3],
+			signature_ending: *b"BCPA",
 		}
 	}
 }
@@ -100,7 +139,8 @@ impl Default for APCB_TYPE_HEADER {
 pub const APCB_TYPE_ALIGNMENT: usize = 4;
 /*
 APCB:
-        Header V3
+        Header V2
+        V3 Header Ext
         [Group]
 
 Group:
