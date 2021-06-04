@@ -15,10 +15,12 @@ use std::io::Error as IOError;
 use ssmarshal::deserialize;
 use serde::de::DeserializeOwned;
 use crate::ondisk::APCB_V2_HEADER;
+use crate::ondisk::APCB_V3_HEADER_EXT;
 
 pub struct APCB<S: Read + Write + Seek> {
     backing_store: S,
     header: APCB_V2_HEADER,
+    v3_header_ext: Option<APCB_V3_HEADER_EXT>,
     beginning_of_groups_position: u64,
 }
 
@@ -77,15 +79,27 @@ impl<S: Read + Write + Seek> APCB<S> {
         assert!(header.version == 0x30);
         assert!(header.apcb_size >= header.header_size.into());
 
-        // TODO: parse V3 header
+        let v3_header_ext = if usize::from(header.header_size) > size_of::<APCB_V2_HEADER>() {
+            let value = read_struct::<APCB_V3_HEADER_EXT, _>(&mut backing_store)?;
+            assert!(value.signature == *b"ECB2");
+            assert!(value.struct_version == 0x12);
+            assert!(value.data_version == 0x100);
+            assert!(value.ext_header_size == 88);
+            assert!(u32::from(value.data_offset) == value.ext_header_size);
+            assert!(value.signature_ending == *b"BCPA");
+            //// TODO: Maybe skip weird header
+            //backing_store.seek(SeekFrom::Current(i64::from(header.header_size) - (size_of::<APCB_V2_HEADER>() as i64)))?;
+            Some(value)
+        } else {
+            None
+        };
 
-        // Skip V3 header
-        backing_store.seek(SeekFrom::Current(i64::from(header.header_size) - (size_of::<APCB_V2_HEADER>() as i64)))?;
 
         let beginning_of_groups_position = backing_store.seek(SeekFrom::Current(0))? as u64;
         Ok(Self {
             backing_store,
             header,
+            v3_header_ext,
             beginning_of_groups_position,
         })
     }
