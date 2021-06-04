@@ -100,6 +100,14 @@ pub enum PspTypeId {
     BoardIdGettingMethod = 0x60,
 }
 
+#[repr(u16)]
+#[derive(Debug, PartialEq, FromPrimitive)]
+pub enum DfTypeId {
+    SlinkConfig = 0xCC,
+    XgmiTxEq = 0xD0,
+    XgmiPhyOverride = 0xDD,
+}
+
 #[derive(Serialize, Deserialize)]
 #[repr(C)]
 pub struct APCB_GROUP_HEADER {
