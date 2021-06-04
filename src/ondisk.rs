@@ -1,6 +1,8 @@
 // This file contains the APCB on-disk format.  Please only change it in coordination with the AMD PSP team.  Even then, you probably shouldn't.
 
 use core::mem::size_of;
+use num_derive::FromPrimitive;
+use num_traits::FromPrimitive;
 
 #[derive(Serialize, Deserialize)]
 #[repr(C)]
@@ -76,6 +78,20 @@ impl Default for APCB_V3_HEADER_EXT {
             signature_ending: *b"BCPA",
         }
     }
+}
+
+#[repr(u16)]
+#[derive(Debug, PartialEq, FromPrimitive)]
+pub enum GroupId {
+    Psp = 0x1701, // usual signature: "PSPG"
+    Ccx = 0x1702,
+    Df = 0x1703, // usual signature: "DFG "
+    Memory = 0x1704, // usual signature: "MEMG"
+    Gnb = 0x1705,
+    Fch = 0x1706,
+    Cbs = 0x1707,
+    Oem = 0x1708,
+    Token = 0x3000, // usual signature: "TOKN"
 }
 
 #[derive(Serialize, Deserialize)]
