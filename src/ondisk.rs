@@ -113,7 +113,7 @@ pub struct APCB_TYPE_HEADER {
     pub context_format: u8, // 0: raw, 1: sort ascenting by unit_size, 2: sort descending by unit_size[don't use]
     pub unit_size: u8,      // in Byte.  Applicable when ContextType == 2.  value should be 8
     pub priority_mask: u8,
-    pub key_size: u8, // Sorting key size. Should be smaller than or equal to UnitSize. Applicable when ContextFormat = 1. (or != 0)
+    pub key_size: u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
     pub key_pos: u8,  // Sorting key position of the unit specified of UnitSize
     pub board_instance_mask: u8, // Board-specific APCB instance mask
 }
