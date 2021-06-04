@@ -108,6 +108,60 @@ pub enum DfTypeId {
     XgmiPhyOverride = 0xDD,
 }
 
+#[repr(u16)]
+#[derive(Debug, PartialEq, FromPrimitive)]
+pub enum MemoryTypeId {
+    SpdInfo = 0x30,
+    DimmInfoSmbus = 0x31,
+    DimmConfigInfoId = 0x32,
+    MemOverclockConfig = 0x33,
+
+    PsoData = 0x40,
+
+    PsUdimmDdr4OdtPat = 0x41,
+    PsUdimmDdr4CadBus = 0x42,
+    PsUdimmDdr4DataBus = 0x43,
+    PsUdimmDdr4MaxFreq = 0x44,
+    PsUdimmDdr4StretchFreq = 0x45,
+
+    PsRdimmDdr4OdtPat = 0x46,
+    PsRdimmDdr4CadBus = 0x47,
+    PsRdimmDdr4DataBus = 0x48,
+    PsRdimmDdr4MaxFreq = 0x49,
+    PsRdimmDdr4StretchFreq = 0x4A,
+
+    Ps3dsRdimmDdr4MaxFreq = 0x4B,
+    Ps3dsRdimmDdr4StretchFreq = 0x4C,
+    Ps3dsRdimmDdr4DataBus = 0x4D,
+
+    ConsoleOutControl = 0x50,
+    EventControl = 0x51,
+    ErrorOutEventControl = 0x52,
+    ExtVoltageControl = 0x53,
+
+    PsLrdimmDdr4OdtPat = 0x54,
+    PsLrdimmDdr4CadBus = 0x55,
+    PsLrdimmDdr4DataBus = 0x56,
+    PsLrdimmDdr4MaxFreq = 0x57,
+    PsLrdimmDdr4StretchFreq = 0x58,
+
+    PsSodimmDdr4OdtPat = 0x59,
+    PsSodimmDdr4CadBus = 0x5A,
+    PsSodimmDdr4DataBus = 0x5B,
+    PsSodimmDdr4MaxFreq = 0x5C,
+    PsSodimmDdr4StretchFreq = 0x5D,
+
+    DdrPostPackageRepair = 0x5E,
+
+    PsDramdownDdr4OdtPat = 0x70,
+    PsDramdownDdr4CadBus = 0x71,
+    PsDramdownDdr4DataBus = 0x72,
+    PsDramdownDdr4MaxFreq = 0x73,
+    PsDramdownDdr4StretchFreq = 0x74,
+
+    PlatformTuning = 0x75,
+}
+
 #[derive(Serialize, Deserialize)]
 #[repr(C)]
 pub struct APCB_GROUP_HEADER {
