@@ -94,6 +94,12 @@ pub enum GroupId {
     Token = 0x3000, // usual signature: "TOKN"
 }
 
+#[repr(u16)]
+#[derive(Debug, PartialEq, FromPrimitive)]
+pub enum PspTypeId {
+    BoardIdGettingMethod = 0x60,
+}
+
 #[derive(Serialize, Deserialize)]
 #[repr(C)]
 pub struct APCB_GROUP_HEADER {
