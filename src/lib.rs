@@ -5,9 +5,6 @@
 //#[cfg(feature="std")]
 //extern crate std;
 
-#[macro_use]
-extern crate serde_derive;
-
 mod ondisk;
 mod image;
 pub use image::APCB;

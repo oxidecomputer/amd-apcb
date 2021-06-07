@@ -12,10 +12,9 @@ use std::io::{Read, Seek, SeekFrom, Write};
 #[cfg(feature="std")]
 use std::io::Error as IOError;
 
-use ssmarshal::deserialize;
-use serde::de::DeserializeOwned;
 use crate::ondisk::APCB_V2_HEADER;
 use crate::ondisk::APCB_V3_HEADER_EXT;
+use zerocopy::{FromBytes, LayoutVerified, Unaligned};
 
 pub struct APCB<S: Read + Write + Seek> {
     backing_store: S,
@@ -27,7 +26,7 @@ pub struct APCB<S: Read + Write + Seek> {
 #[derive(Debug)]
 pub enum Error {
     IOError(IOError),
-    MarshalError(ssmarshal::Error),
+    MarshalError,
 }
 
 impl From<IOError> for Error {
@@ -36,24 +35,17 @@ impl From<IOError> for Error {
     }
 }
 
-impl From<ssmarshal::Error> for Error {
-    fn from(error: ssmarshal::Error) -> Self {
-        Self::MarshalError(error)
-    }
-}
-
 type Result<Q> = core::result::Result<Q, Error>;
 
-fn read_struct<T : Sized + DeserializeOwned, R: Read>(mut read: R) -> Result<T> {
+fn read_struct<T: FromBytes + Unaligned + Copy, R: Read>(mut read: R) -> Result<T> {
     let num_bytes = mem::size_of::<T>();
     unsafe {
         let mut s: T = mem::uninitialized();
         let buffer = slice::from_raw_parts_mut(&mut s as *mut T as *mut u8, num_bytes);
         match read.read_exact(buffer) {
             Ok(()) => {
-                let (result, size) = deserialize::<T>(&buffer)?;
-                assert!(size == size_of::<T>());
-                Ok(result)
+                let r = LayoutVerified::new_unaligned(buffer).map(LayoutVerified::into_ref).expect("slice of incorrect length or alignment");
+                Ok(*r)
             },
             Err(e) => {
                 mem::forget(s);
@@ -76,16 +68,16 @@ impl<S: Read + Write + Seek> APCB<S> {
     pub fn load(mut backing_store: S) -> Result<Self> {
         let header = read_struct::<APCB_V2_HEADER, _>(&mut backing_store)?;
         assert!(usize::from(header.header_size) >= size_of::<APCB_V2_HEADER>());
-        assert!(header.version == 0x30);
-        assert!(header.apcb_size >= header.header_size.into());
+        assert!(header.version.get() == 0x30);
+        assert!(header.apcb_size.get() >= header.header_size.get().into());
 
         let v3_header_ext = if usize::from(header.header_size) > size_of::<APCB_V2_HEADER>() {
             let value = read_struct::<APCB_V3_HEADER_EXT, _>(&mut backing_store)?;
             assert!(value.signature == *b"ECB2");
-            assert!(value.struct_version == 0x12);
-            assert!(value.data_version == 0x100);
-            assert!(value.ext_header_size == 88);
-            assert!(u32::from(value.data_offset) == value.ext_header_size);
+            assert!(value.struct_version.get() == 0x12);
+            assert!(value.data_version.get() == 0x100);
+            assert!(value.ext_header_size.get() == 88);
+            assert!(u32::from(value.data_offset.get()) == value.ext_header_size.get());
             assert!(value.signature_ending == *b"BCPA");
             //// TODO: Maybe skip weird header
             //backing_store.seek(SeekFrom::Current(i64::from(header.header_size) - (size_of::<APCB_V2_HEADER>() as i64)))?;

@@ -1,17 +1,19 @@
 // This file contains the APCB on-disk format.  Please only change it in coordination with the AMD PSP team.  Even then, you probably shouldn't.
 
+use byteorder::LittleEndian;
 use core::mem::size_of;
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
+use zerocopy::{AsBytes, FromBytes, Unaligned, U16, U32};
 
-#[derive(Serialize, Deserialize)]
-#[repr(C)]
+#[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
+#[repr(C, packed)]
 pub struct APCB_V2_HEADER {
     pub signature: [u8; 4],
-    pub header_size: u16, // == sizeof(APCB_V2_HEADER); but 128 for V3
-    pub version: u16,     // == 0x30
-    pub apcb_size: u32,
-    pub unique_apcb_instance: u32,
+    pub header_size: U16<LittleEndian>, // == sizeof(APCB_V2_HEADER); but 128 for V3
+    pub version: U16<LittleEndian>,     // == 0x30
+    pub apcb_size: U32<LittleEndian>,
+    pub unique_apcb_instance: U32<LittleEndian>,
     pub checksum_byte: u8,
     reserved1: [u8; 3],  // 0
     reserved2: [u32; 3], // 0
@@ -21,32 +23,32 @@ impl Default for APCB_V2_HEADER {
     fn default() -> Self {
         Self {
             signature: *b"APCB",
-            header_size: size_of::<Self>() as u16,
-            version: 0x30,
-            apcb_size: size_of::<Self>() as u32,
-            unique_apcb_instance: 0, // probably invalid
-            checksum_byte: 0,        // probably invalid
+            header_size: (size_of::<Self>() as u16).into(),
+            version: 0x30u16.into(),
+            apcb_size: (size_of::<Self>() as u32).into(),
+            unique_apcb_instance: 0u32.into(), // probably invalid
+            checksum_byte: 0,                  // probably invalid
             reserved1: [0, 0, 0],
             reserved2: [0, 0, 0],
         }
     }
 }
 
-#[derive(Serialize, Deserialize)]
-#[repr(C)]
+#[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
+#[repr(C, packed)]
 pub struct APCB_V3_HEADER_EXT {
-    pub signature: [u8; 4], // "ECB2"
-    reserved_1: u16,        // 0
-    reserved_2: u16,        // 0x10
-    pub struct_version: u16,
-    pub data_version: u16,
-    pub ext_header_size: u32, // 96
-    reserved_3: u16,          // 0
-    reserved_4: u16,          // 0xFFFF
-    reserved_5: u16,          // 0x40
-    reserved_6: u16,          // 0x00
-    reserved_7: [u32; 2],     // 0 0
-    pub data_offset: u16,     // 0x58
+    pub signature: [u8; 4],        // "ECB2"
+    reserved_1: U16<LittleEndian>, // 0
+    reserved_2: U16<LittleEndian>, // 0x10
+    pub struct_version: U16<LittleEndian>,
+    pub data_version: U16<LittleEndian>,
+    pub ext_header_size: U32<LittleEndian>, // 96
+    reserved_3: U16<LittleEndian>,          // 0
+    reserved_4: U16<LittleEndian>,          // 0xFFFF
+    reserved_5: U16<LittleEndian>,          // 0x40
+    reserved_6: U16<LittleEndian>,          // 0x00
+    reserved_7: [u32; 2],                   // 0 0
+    pub data_offset: U16<LittleEndian>,     // 0x58
     pub header_checksum: u8,
     reserved_8: u8,       // 0
     reserved_9: [u32; 3], // 0 0 0
@@ -59,17 +61,17 @@ impl Default for APCB_V3_HEADER_EXT {
     fn default() -> Self {
         Self {
             signature: *b"ECB2",
-            reserved_1: 0,
-            reserved_2: 0x10,
-            struct_version: 0x12,
-            data_version: 0x100,
-            ext_header_size: size_of::<Self>() as u32,
-            reserved_3: 0,
-            reserved_4: 0xFFFF,
-            reserved_5: 0x40,
-            reserved_6: 0x00,
+            reserved_1: 0u16.into(),
+            reserved_2: 0x10u16.into(),
+            struct_version: 0x12u16.into(),
+            data_version: 0x100u16.into(),
+            ext_header_size: (size_of::<Self>() as u32).into(),
+            reserved_3: 0u16.into(),
+            reserved_4: 0xFFFFu16.into(),
+            reserved_5: 0x40u16.into(),
+            reserved_6: 0x00u16.into(),
             reserved_7: [0, 0],
-            data_offset: 0x58,
+            data_offset: 0x58u16.into(),
             header_checksum: 0, // invalid--but unused by AMD Rome
             reserved_8: 0,
             reserved_9: [0, 0, 0],
@@ -85,7 +87,7 @@ impl Default for APCB_V3_HEADER_EXT {
 pub enum GroupId {
     Psp = 0x1701, // usual signature: "PSPG"
     Ccx = 0x1702,
-    Df = 0x1703, // usual signature: "DFG "
+    Df = 0x1703,     // usual signature: "DFG "
     Memory = 0x1704, // usual signature: "MEMG"
     Gnb = 0x1705,
     Fch = 0x1706,
@@ -162,37 +164,37 @@ pub enum MemoryTypeId {
     PlatformTuning = 0x75,
 }
 
-#[derive(Serialize, Deserialize)]
-#[repr(C)]
+#[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
+#[repr(C, packed)]
 pub struct APCB_GROUP_HEADER {
     pub signature: [u8; 4],
-    pub group_id: u16,
-    pub header_size: u16, // == sizeof(APCB_GROUP_HEADER)
-    pub version: u16,     // == 0 << 4 | 1
+    pub group_id: U16<LittleEndian>,
+    pub header_size: U16<LittleEndian>, // == sizeof(APCB_GROUP_HEADER)
+    pub version: U16<LittleEndian>,     // == 0 << 4 | 1
     reserved: u16,
-    pub group_size: u32, // including header!
+    pub group_size: U32<LittleEndian>, // including header!
 }
 
 impl Default for APCB_GROUP_HEADER {
     fn default() -> Self {
         Self {
-            signature: *b"    ", // probably invalid
-            group_id: 0,         // probably invalid
-            header_size: size_of::<Self>() as u16,
-            version: 0x01,
+            signature: *b"    ",   // probably invalid
+            group_id: 0u16.into(), // probably invalid
+            header_size: (size_of::<Self>() as u16).into(),
+            version: 0x01u16.into(),
             reserved: 0,
-            group_size: size_of::<Self>() as u32, // probably invalid
+            group_size: (size_of::<Self>() as u32).into(), // probably invalid
         }
     }
 }
 
-#[derive(Serialize, Deserialize)]
-#[repr(C)]
+#[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
+#[repr(C, packed)]
 pub struct APCB_TYPE_HEADER {
-    pub group_id: u16,  // should be equal to the group's group_id
-    pub type_id: u16,   // meaning depends on context_type
-    pub type_size: u16, // including header
-    pub instance_id: u16,
+    pub group_id: U16<LittleEndian>, // should be equal to the group's group_id
+    pub type_id: U16<LittleEndian>,  // meaning depends on context_type
+    pub type_size: U16<LittleEndian>, // including header
+    pub instance_id: U16<LittleEndian>,
     pub context_type: u8, // 0: struct, 1: APCB parameter, 2: APCB V3 token[then, type_id means something else]
     pub context_format: u8, // 0: raw, 1: sort ascenting by unit_size, 2: sort descending by unit_size[don't use]
     pub unit_size: u8,      // in Byte.  Applicable when ContextType == 2.  value should be 8
@@ -205,10 +207,10 @@ pub struct APCB_TYPE_HEADER {
 impl Default for APCB_TYPE_HEADER {
     fn default() -> Self {
         Self {
-            group_id: 0,                         // probably invalid
-            type_id: 0,                          // probably invalid
-            type_size: size_of::<Self>() as u16, // probably invalid
-            instance_id: 0,                      // probably invalid
+            group_id: 0u16.into(),                        // probably invalid
+            type_id: 0u16.into(),                         // probably invalid
+            type_size: (size_of::<Self>() as u16).into(), // probably invalid
+            instance_id: 0u16.into(),                     // probably invalid
             context_type: 2,
             context_format: 0,
             unit_size: 8,

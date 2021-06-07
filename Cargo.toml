@@ -14,11 +14,12 @@ core_io = { version = "0.1.20210325", optional = true }
 # enabled. The easiest way to do this is to use num-derive's "full-syntax",
 # which passes "full" through to syn.
 #
+byteorder = "1.4.3"
 num-derive = { version = "0.3.0", features = [ "full-syntax" ] }
 num-traits = { version = "0.2.12", default-features = false }
-ssmarshal = "1.0.0"
 serde = "1.0.125"
 serde_derive = "1.0.125"
+zerocopy = "0.5.0"
 
 [features]
 default = ["std"]
