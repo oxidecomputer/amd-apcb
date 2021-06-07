@@ -21,13 +21,15 @@ pub struct Groups<'a> {
     header: &'a APCB_V2_HEADER,
     v3_header_ext: Option<APCB_V3_HEADER_EXT>,
     beginning_of_groups: &'a mut [u8],
+    remaining_used_size: usize,
 }
 
 impl<'a> Iterator for Groups<'a> {
     type Item = APCB_GROUP_HEADER;
 
     fn next(&mut self) -> Option<APCB_GROUP_HEADER> {
-        let (header, mut rest) = LayoutVerified::<_, APCB_GROUP_HEADER>::new_unaligned_from_prefix(&mut *self.beginning_of_groups)?;
+        let beginning_of_groups = &mut self.beginning_of_groups[0..self.remaining_used_size];
+        let (header, mut rest) = LayoutVerified::<_, APCB_GROUP_HEADER>::new_unaligned_from_prefix(&mut *beginning_of_groups)?;
         Some(*header)
     }
 }
@@ -48,8 +50,8 @@ impl<'a> APCB<'a> {
             assert!(value.signature == *b"ECB2");
             assert!(value.struct_version.get() == 0x12);
             assert!(value.data_version.get() == 0x100);
-            assert!(value.ext_header_size.get() == 88);
-            assert!(u32::from(value.data_offset.get()) == value.ext_header_size.get());
+            assert!(value.ext_header_size.get() == 96);
+            assert!(u32::from(value.data_offset.get()) == 88);
             assert!(value.signature_ending == *b"BCPA");
             Some(*value)
         } else {
@@ -77,7 +79,8 @@ impl<'a> APCB<'a> {
             let v3_header_ext = &mut *layout;
             *v3_header_ext = Default::default();
 
-            header.apcb_size = ((size_of::<APCB_V2_HEADER>() + size_of::<APCB_V3_HEADER_EXT>()) as u32).into();
+            header.header_size.set((size_of::<APCB_V2_HEADER>() + size_of::<APCB_V3_HEADER_EXT>()) as u16);
+            header.apcb_size = (header.header_size.get() as u32).into();
         }
 
         Self::load(backing_store)
@@ -86,7 +89,8 @@ impl<'a> APCB<'a> {
         Groups {
             header: self.header,
             v3_header_ext: self.v3_header_ext,
-            beginning_of_groups: self.beginning_of_groups
+            beginning_of_groups: self.beginning_of_groups,
+            remaining_used_size: (self.header.apcb_size.get() - u32::from(self.header.header_size)) as usize,
         }
     }
 }
