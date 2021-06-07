@@ -65,8 +65,8 @@ impl<'a> APCB<'a> {
             beginning_of_groups: rest,
         })
     }
-    pub fn create(backing_store: &'a mut [u8], size: usize) -> Result<Self> {
-        for i in 0..size {
+    pub fn create(backing_store: &'a mut [u8]) -> Result<Self> {
+        for i in 0..backing_store.len() {
             backing_store[i] = 0xFF;
         }
         {
@@ -108,7 +108,7 @@ mod tests {
     #[test]
     fn create_empty_image() {
         let mut buffer: [u8; 8*1024] = [0xFF; 8*1024];
-        let groups = APCB::create(&mut buffer[0..], 8*1024).unwrap().into_groups();
+        let groups = APCB::create(&mut buffer[0..]).unwrap().into_groups();
         for item in groups {
             assert!(false);
         }
@@ -118,7 +118,7 @@ mod tests {
     #[should_panic]
     fn create_empty_too_small_image() {
         let mut buffer: [u8; 1] = [0];
-        let groups = APCB::create(&mut buffer[0..], 1).unwrap().into_groups();
+        let groups = APCB::create(&mut buffer[0..]).unwrap().into_groups();
         for item in groups {
             assert!(false);
         }
