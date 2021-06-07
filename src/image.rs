@@ -4,10 +4,9 @@ use crate::ondisk::APCB_V3_HEADER_EXT;
 use zerocopy::LayoutVerified;
 
 pub struct APCB<'a> {
-    backing_store: &'a mut [u8],
     header: APCB_V2_HEADER,
     v3_header_ext: Option<APCB_V3_HEADER_EXT>,
-    beginning_of_groups_position: u64,
+    beginning_of_groups: &'a mut [u8],
 }
 
 #[derive(Debug)]
@@ -49,12 +48,10 @@ impl<'a> APCB<'a> {
             None
         };
 
-        let beginning_of_groups_position = 0; // FIXME
         Ok(Self {
-            backing_store: rest,
             header: *header,
             v3_header_ext: v3_header_ext,
-            beginning_of_groups_position,
+            beginning_of_groups: rest,
         })
     }
 }
