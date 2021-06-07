@@ -66,7 +66,6 @@ impl<'a> APCB<'a> {
         })
     }
     pub fn create(backing_store: &'a mut [u8], size: usize) -> Result<Self> {
-        assert!(size >= 8 * 1024);
         for i in 0..size {
             backing_store[i] = 0xFF;
         }
@@ -110,6 +109,16 @@ mod tests {
     fn create_empty_image() {
         let mut buffer: [u8; 8*1024] = [0xFF; 8*1024];
         let groups = APCB::create(&mut buffer[0..], 8*1024).unwrap().into_groups();
+        for item in groups {
+            assert!(false);
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn create_empty_too_small_image() {
+        let mut buffer: [u8; 1] = [0];
+        let groups = APCB::create(&mut buffer[0..], 1).unwrap().into_groups();
         for item in groups {
             assert!(false);
         }
