@@ -3,7 +3,6 @@
 use byteorder::LittleEndian;
 use core::mem::size_of;
 use num_derive::FromPrimitive;
-use num_traits::FromPrimitive;
 use zerocopy::{AsBytes, FromBytes, Unaligned, U16, U32};
 
 #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
