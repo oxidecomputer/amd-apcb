@@ -1,6 +1,7 @@
 use core::mem::size_of;
 use crate::ondisk::APCB_V2_HEADER;
 use crate::ondisk::APCB_V3_HEADER_EXT;
+use crate::ondisk::APCB_GROUP_HEADER;
 use zerocopy::LayoutVerified;
 
 pub struct APCB<'a> {
@@ -15,6 +16,21 @@ pub enum Error {
 }
 
 type Result<Q> = core::result::Result<Q, Error>;
+
+pub struct Groups<'a> {
+    header: &'a APCB_V2_HEADER,
+    v3_header_ext: Option<APCB_V3_HEADER_EXT>,
+    beginning_of_groups: &'a mut [u8],
+}
+
+impl<'a> Iterator for Groups<'a> {
+    type Item = APCB_GROUP_HEADER;
+
+    fn next(&mut self) -> Option<APCB_GROUP_HEADER> {
+        let (header, mut rest) = LayoutVerified::<_, APCB_GROUP_HEADER>::new_unaligned_from_prefix(&mut *self.beginning_of_groups)?;
+        Some(*header)
+    }
+}
 
 impl<'a> APCB<'a> {
     pub fn load(backing_store: &'a mut [u8]) -> Result<Self> {
@@ -66,6 +82,13 @@ impl<'a> APCB<'a> {
 
         Self::load(backing_store)
     }
+    pub fn into_groups(self) -> Groups<'a> {
+        Groups {
+            header: self.header,
+            v3_header_ext: self.v3_header_ext,
+            beginning_of_groups: self.beginning_of_groups
+        }
+    }
 }
 
 #[cfg(test)]
@@ -82,6 +105,9 @@ mod tests {
     #[test]
     fn create_empty_image() {
         let mut buffer: [u8; 8*1024] = [0xFF; 8*1024];
-        APCB::create(&mut buffer[0..], 8*1024).unwrap();
+        let groups = APCB::create(&mut buffer[0..], 8*1024).unwrap().into_groups();
+        for item in groups {
+            assert!(false);
+        }
     }
 }
