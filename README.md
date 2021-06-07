@@ -6,7 +6,7 @@ This crate allows you to manipulate APCB (AGESA PSP Configuration Blob), either 
 
 Add
 
-    amd-apcb = { path = "../amd-apcb", default_features = false, features = ["no_std"] }
+    amd-apcb = { path = "../amd-apcb", default_features = false, features = [] }
 
 to the `[dependencies]` block in your `Cargo.toml`.
 
