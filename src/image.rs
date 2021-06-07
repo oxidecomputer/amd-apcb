@@ -17,6 +17,10 @@ pub enum Error {
 
 type Result<Q> = core::result::Result<Q, Error>;
 
+pub struct Group {
+    header: APCB_GROUP_HEADER,
+}
+
 pub struct Groups<'a> {
     header: &'a APCB_V2_HEADER,
     v3_header_ext: Option<APCB_V3_HEADER_EXT>,
@@ -25,12 +29,12 @@ pub struct Groups<'a> {
 }
 
 impl<'a> Iterator for Groups<'a> {
-    type Item = APCB_GROUP_HEADER;
+    type Item = Group;
 
-    fn next(&mut self) -> Option<APCB_GROUP_HEADER> {
+    fn next(&mut self) -> Option<Group> {
         let beginning_of_groups = &mut self.beginning_of_groups[0..self.remaining_used_size];
         let (header, mut rest) = LayoutVerified::<_, APCB_GROUP_HEADER>::new_unaligned_from_prefix(&mut *beginning_of_groups)?;
-        Some(*header)
+        Some(Group { header: *header })
     }
 }
 
