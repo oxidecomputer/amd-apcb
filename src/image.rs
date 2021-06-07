@@ -17,13 +17,6 @@ pub enum Error {
 type Result<Q> = core::result::Result<Q, Error>;
 
 impl<'a> APCB<'a> {
-    pub fn create(backing_store: &'a mut [u8], size: usize) -> Result<Self> {
-        assert!(size >= 8 * 1024);
-        for i in 0..size {
-            backing_store[i] = 0xFF;
-        }
-        Self::load(backing_store)
-    }
     pub fn load(backing_store: &'a mut [u8]) -> Result<Self> {
         let (header, mut rest) = LayoutVerified::<_, APCB_V2_HEADER>::new_unaligned_from_prefix(backing_store).ok_or_else(|| Error::MarshalError)?;
         let header = header.into_ref();
@@ -53,6 +46,25 @@ impl<'a> APCB<'a> {
             v3_header_ext: v3_header_ext,
             beginning_of_groups: rest,
         })
+    }
+    pub fn create(backing_store: &'a mut [u8], size: usize) -> Result<Self> {
+        assert!(size >= 8 * 1024);
+        for i in 0..size {
+            backing_store[i] = 0xFF;
+        }
+        {
+            let (mut layout, rest) = LayoutVerified::<_, APCB_V2_HEADER>::new_unaligned_from_prefix(&mut *backing_store).ok_or_else(|| Error::MarshalError)?;
+            let header = &mut *layout;
+            *header = Default::default();
+
+            let (mut layout, rest) = LayoutVerified::<_, APCB_V3_HEADER_EXT>::new_unaligned_from_prefix(rest).ok_or_else(|| Error::MarshalError)?;
+            let v3_header_ext = &mut *layout;
+            *v3_header_ext = Default::default();
+
+            header.apcb_size = ((size_of::<APCB_V2_HEADER>() + size_of::<APCB_V3_HEADER_EXT>()) as u32).into();
+        }
+
+        Self::load(backing_store)
     }
 }
 
