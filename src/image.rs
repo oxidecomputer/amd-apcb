@@ -21,11 +21,13 @@ pub enum Error {
 
 type Result<Q> = core::result::Result<Q, Error>;
 
+#[derive(Debug)]
 pub struct Entry<'a> {
     pub header: APCB_TYPE_HEADER,
     body: &'a mut [u8],
 }
 
+#[derive(Debug)]
 pub struct Group<'a> {
     header: APCB_GROUP_HEADER,
     buf: &'a mut [u8],
