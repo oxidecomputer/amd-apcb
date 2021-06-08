@@ -15,7 +15,7 @@ pub struct APCB_V2_HEADER {
     pub unique_apcb_instance: U32<LittleEndian>,
     pub checksum_byte: u8,
     reserved1: [u8; 3],  // 0
-    reserved2: [u32; 3], // 0
+    reserved2: [U32<LittleEndian>; 3], // 0
 }
 
 impl Default for APCB_V2_HEADER {
@@ -28,7 +28,7 @@ impl Default for APCB_V2_HEADER {
             unique_apcb_instance: 0u32.into(), // probably invalid
             checksum_byte: 0,                  // probably invalid
             reserved1: [0, 0, 0],
-            reserved2: [0, 0, 0],
+            reserved2: [0u32.into(); 3],
         }
     }
 }
@@ -46,13 +46,13 @@ pub struct APCB_V3_HEADER_EXT {
     reserved_4: U16<LittleEndian>,          // 0xFFFF
     reserved_5: U16<LittleEndian>,          // 0x40
     reserved_6: U16<LittleEndian>,          // 0x00
-    reserved_7: [u32; 2],                   // 0 0
+    reserved_7: [U32<LittleEndian>; 2],                   // 0 0
     pub data_offset: U16<LittleEndian>,     // 0x58
     pub header_checksum: u8,
     reserved_8: u8,       // 0
-    reserved_9: [u32; 3], // 0 0 0
+    reserved_9: [U32<LittleEndian>; 3], // 0 0 0
     pub integrity_sign: [u8; 32],
-    reserved_10: [u32; 3],         // 0 0 0
+    reserved_10: [U32<LittleEndian>; 3],         // 0 0 0
     pub signature_ending: [u8; 4], // "BCBA"
 }
 
@@ -69,13 +69,13 @@ impl Default for APCB_V3_HEADER_EXT {
             reserved_4: 0xFFFFu16.into(),
             reserved_5: 0x40u16.into(),
             reserved_6: 0x00u16.into(),
-            reserved_7: [0, 0],
+            reserved_7: [0u32.into(); 2],
             data_offset: 0x58u16.into(),
             header_checksum: 0, // invalid--but unused by AMD Rome
             reserved_8: 0,
-            reserved_9: [0, 0, 0],
+            reserved_9: [0u32.into(); 3],
             integrity_sign: [0; 32], // invalid--but unused by AMD Rome
-            reserved_10: [0; 3],
+            reserved_10: [0u32.into(); 3],
             signature_ending: *b"BCBA",
         }
     }
@@ -170,7 +170,7 @@ pub struct APCB_GROUP_HEADER {
     pub group_id: U16<LittleEndian>,
     pub header_size: U16<LittleEndian>, // == sizeof(APCB_GROUP_HEADER)
     pub version: U16<LittleEndian>,     // == 0 << 4 | 1
-    reserved: u16,
+    reserved: U16<LittleEndian>,
     pub group_size: U32<LittleEndian>, // including header!
 }
 
@@ -181,7 +181,7 @@ impl Default for APCB_GROUP_HEADER {
             group_id: 0u16.into(), // probably invalid
             header_size: (size_of::<Self>() as u16).into(),
             version: 0x01u16.into(),
-            reserved: 0,
+            reserved: 0u16.into(),
             group_size: (size_of::<Self>() as u32).into(), // probably invalid
         }
     }
