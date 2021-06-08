@@ -14,7 +14,7 @@ pub struct APCB_V2_HEADER {
     pub apcb_size: U32<LittleEndian>,
     pub unique_apcb_instance: U32<LittleEndian>,
     pub checksum_byte: u8,
-    reserved1: [u8; 3],  // 0
+    reserved1: [u8; 3],                // 0
     reserved2: [U32<LittleEndian>; 3], // 0
 }
 
@@ -46,14 +46,14 @@ pub struct APCB_V3_HEADER_EXT {
     reserved_4: U16<LittleEndian>,          // 0xFFFF
     reserved_5: U16<LittleEndian>,          // 0x40
     reserved_6: U16<LittleEndian>,          // 0x00
-    reserved_7: [U32<LittleEndian>; 2],                   // 0 0
+    reserved_7: [U32<LittleEndian>; 2],     // 0 0
     pub data_offset: U16<LittleEndian>,     // 0x58
     pub header_checksum: u8,
-    reserved_8: u8,       // 0
+    reserved_8: u8,                     // 0
     reserved_9: [U32<LittleEndian>; 3], // 0 0 0
     pub integrity_sign: [u8; 32],
-    reserved_10: [U32<LittleEndian>; 3],         // 0 0 0
-    pub signature_ending: [u8; 4], // "BCBA"
+    reserved_10: [U32<LittleEndian>; 3], // 0 0 0
+    pub signature_ending: [u8; 4],       // "BCBA"
 }
 
 impl Default for APCB_V3_HEADER_EXT {
@@ -178,7 +178,7 @@ pub struct APCB_GROUP_HEADER {
 #[derive(Debug, PartialEq, FromPrimitive)]
 pub enum ContextFormat {
     Raw = 0,
-    SortAscending = 1, // (sort by unit size)
+    SortAscending = 1,  // (sort by unit size)
     SortDescending = 2, // don't use
 }
 
@@ -210,7 +210,7 @@ pub struct APCB_TYPE_HEADER {
     pub type_id: U16<LittleEndian>,  // meaning depends on context_type
     pub type_size: U16<LittleEndian>, // including header
     pub instance_id: U16<LittleEndian>,
-    pub context_type: u8, // see ContextType enum
+    pub context_type: u8,   // see ContextType enum
     pub context_format: u8, // see ContextFormat enum
     pub unit_size: u8,      // in Byte.  Applicable when ContextType == 2.  value should be 8
     pub priority_mask: u8,
