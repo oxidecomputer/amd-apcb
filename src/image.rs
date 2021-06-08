@@ -27,10 +27,54 @@ pub struct Entry<'a> {
     body: &'a mut [u8],
 }
 
+impl Entry<'_> {
+    // pub fn group_id(&self) -> u16  ; suppressed--replaced by an assert on read.
+    pub fn id(&self) -> u16 {
+        self.header.type_id.get()
+    }
+    pub fn instance_id(&self) -> u16 {
+        self.header.instance_id.get()
+    }
+    pub fn context_type(&self) -> u8 {
+        self.header.context_type
+    }
+    pub fn context_format(&self) -> u8 {
+        self.header.context_format
+    }
+    /// Note: Applicable iff context_type() == 2.  Usual value then: 8.  If inapplicable, value is 0.
+    pub fn unit_size(&self) -> u8 {
+        self.header.unit_size
+    }
+    pub fn priority_mask(&self) -> u8 {
+        self.header.priority_mask
+    }
+    /// Note: Applicable iff context_format() != 0. Result <= unit_size.
+    pub fn key_size(&self) -> u8 {
+        self.header.key_size
+    }
+    pub fn key_pos(&self) -> u8 {
+        self.header.key_pos
+    }
+    pub fn board_instance_mask(&self) -> u8 {
+        self.header.board_instance_mask
+    }
+}
+
 #[derive(Debug)]
 pub struct Group<'a> {
     pub header: APCB_GROUP_HEADER,
     buf: &'a mut [u8],
+}
+
+impl Group<'_> {
+    /// Note: ASCII
+    pub fn signature(&self) -> [u8; 4] {
+        self.header.signature
+    }
+    /// Note: See ondisk::GroupId
+    pub fn id(&self) -> u16 {
+        self.header.group_id.get()
+    }
 }
 
 impl<'a> Iterator for Group<'a> {
