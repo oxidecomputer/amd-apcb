@@ -5,6 +5,8 @@ use crate::ondisk::APCB_V3_HEADER_EXT;
 use crate::ondisk::APCB_GROUP_HEADER;
 use crate::ondisk::APCB_TYPE_HEADER;
 use crate::ondisk::APCB_TYPE_ALIGNMENT;
+pub use crate::ondisk::{ContextFormat, ContextType};
+use num_traits::FromPrimitive;
 use zerocopy::LayoutVerified;
 
 pub struct APCB<'a> {
@@ -35,11 +37,11 @@ impl Entry<'_> {
     pub fn instance_id(&self) -> u16 {
         self.header.instance_id.get()
     }
-    pub fn context_type(&self) -> u8 {
-        self.header.context_type
+    pub fn context_type(&self) -> ContextType {
+        FromPrimitive::from_u8(self.header.context_type).unwrap()
     }
-    pub fn context_format(&self) -> u8 {
-        self.header.context_format
+    pub fn context_format(&self) -> ContextFormat {
+        FromPrimitive::from_u8(self.header.context_format).unwrap()
     }
     /// Note: Applicable iff context_type() == 2.  Usual value then: 8.  If inapplicable, value is 0.
     pub fn unit_size(&self) -> u8 {
@@ -87,6 +89,8 @@ impl<'a> Iterator for Group<'a> {
             let header = header.into_ref();
             *header
         };
+        let _: ContextFormat = FromPrimitive::from_u8(header.context_format).unwrap();
+        let _: ContextType = FromPrimitive::from_u8(header.context_type).unwrap();
         assert!(header.group_id.get() == self.header.group_id.get());
         let type_size = header.type_size.get() as usize;
         assert!(type_size >= size_of::<APCB_TYPE_HEADER>());
