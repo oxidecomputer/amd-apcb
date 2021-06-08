@@ -53,7 +53,6 @@ impl<'a> Iterator for Group<'a> {
         }
         self.buf = buf;
 
-        //let body = &mut self.beginning_of_groups[self.position+size_of::<APCB_GROUP_HEADER>()..type_size];
         Some(Entry { header: header, body: &mut item[size_of::<APCB_TYPE_HEADER>()..]})
     }
 }
