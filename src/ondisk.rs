@@ -216,7 +216,7 @@ impl Default for APCB_TYPE_HEADER {
             priority_mask: 0, // FIXME: Verify
             key_size: 0,
             key_pos: 0,
-            board_instance_mask: 0xFF, // FIXME: Verify
+            board_instance_mask: 0xFF,
         }
     }
 }
