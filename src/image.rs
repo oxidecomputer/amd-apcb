@@ -165,7 +165,7 @@ mod tests {
     fn create_empty_too_small_image() {
         let mut buffer: [u8; 1] = [0];
         let groups = APCB::create(&mut buffer[0..]).unwrap().into_groups();
-        for item in groups {
+        for _ in groups {
             assert!(false);
         }
     }
