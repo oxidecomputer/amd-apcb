@@ -1,4 +1,5 @@
 use core::mem::size_of;
+use core::mem::replace;
 use crate::ondisk::APCB_V2_HEADER;
 use crate::ondisk::APCB_V3_HEADER_EXT;
 use crate::ondisk::APCB_GROUP_HEADER;
@@ -31,10 +32,22 @@ pub struct Groups<'a> {
 impl<'a> Iterator for Groups<'a> {
     type Item = Group;
 
-    fn next(&mut self) -> Option<Group> {
-        let beginning_of_groups = &mut self.beginning_of_groups[0..self.remaining_used_size];
-        let (header, mut rest) = LayoutVerified::<_, APCB_GROUP_HEADER>::new_unaligned_from_prefix(&mut *beginning_of_groups)?;
-        Some(Group { header: *header })
+    fn next(&mut self) -> Option<Self::Item> {
+        let header = {
+            let beginning_of_groups = &self.beginning_of_groups[0..self.remaining_used_size];
+            let (header, _) = LayoutVerified::<_, APCB_GROUP_HEADER>::new_unaligned_from_prefix(&*beginning_of_groups)?;
+            let header = header.into_ref();
+            *header
+        };
+        let group_size = header.group_size.get() as usize;
+        assert!(group_size >= size_of::<APCB_GROUP_HEADER>());
+
+        let beginning_of_groups = replace(&mut self.beginning_of_groups, &mut []);
+        let (item, beginning_of_groups) = beginning_of_groups.split_at_mut(group_size);
+        self.beginning_of_groups = beginning_of_groups;
+
+        //let body = &mut self.beginning_of_groups[self.position+size_of::<APCB_GROUP_HEADER>()..group_size];
+        Some(Group { header: header })
     }
 }
 
