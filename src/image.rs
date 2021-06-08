@@ -3,6 +3,7 @@ use core::mem::replace;
 use crate::ondisk::APCB_V2_HEADER;
 use crate::ondisk::APCB_V3_HEADER_EXT;
 use crate::ondisk::APCB_GROUP_HEADER;
+use crate::ondisk::APCB_TYPE_HEADER;
 use zerocopy::LayoutVerified;
 
 pub struct APCB<'a> {
@@ -18,9 +19,36 @@ pub enum Error {
 
 type Result<Q> = core::result::Result<Q, Error>;
 
+pub struct Entry<'a> {
+    pub header: APCB_TYPE_HEADER,
+    body: &'a mut [u8],
+}
+
 pub struct Group<'a> {
     header: APCB_GROUP_HEADER,
-    body: &'a [u8],
+    buf: &'a mut [u8],
+}
+
+impl<'a> Iterator for Group<'a> {
+    type Item = Entry<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let header = {
+            let buf = &self.buf[0..];
+            let (header, _) = LayoutVerified::<_, APCB_TYPE_HEADER>::new_unaligned_from_prefix(&*buf)?;
+            let header = header.into_ref();
+            *header
+        };
+        let type_size = header.type_size.get() as usize;
+        assert!(type_size >= size_of::<APCB_TYPE_HEADER>());
+
+        let buf = replace(&mut self.buf, &mut []);
+        let (item, buf) = buf.split_at_mut(type_size);
+        self.buf = buf;
+
+        //let body = &mut self.beginning_of_groups[self.position+size_of::<APCB_GROUP_HEADER>()..type_size];
+        Some(Entry { header: header, body: &mut item[size_of::<APCB_TYPE_HEADER>()..]})
+    }
 }
 
 pub struct Groups<'a> {
@@ -48,7 +76,7 @@ impl<'a> Iterator for Groups<'a> {
         self.beginning_of_groups = beginning_of_groups;
 
         //let body = &mut self.beginning_of_groups[self.position+size_of::<APCB_GROUP_HEADER>()..group_size];
-        Some(Group { header: header, body: &mut item[size_of::<APCB_GROUP_HEADER>()..]})
+        Some(Group { header: header, buf: &mut item[size_of::<APCB_GROUP_HEADER>()..]})
     }
 }
 
