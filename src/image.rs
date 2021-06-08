@@ -43,6 +43,7 @@ impl<'a> Iterator for Group<'a> {
             let header = header.into_ref();
             *header
         };
+        assert!(header.group_id.get() == self.header.group_id.get());
         let type_size = header.type_size.get() as usize;
         assert!(type_size >= size_of::<APCB_TYPE_HEADER>());
 
