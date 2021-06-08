@@ -174,6 +174,22 @@ pub struct APCB_GROUP_HEADER {
     pub group_size: U32<LittleEndian>, // including header!
 }
 
+#[repr(u8)]
+#[derive(Debug, PartialEq, FromPrimitive)]
+pub enum ContextFormat {
+    Raw = 0,
+    SortAscending = 1, // (sort by unit size)
+    SortDescending = 2, // don't use
+}
+
+#[repr(u8)]
+#[derive(Debug, PartialEq, FromPrimitive)]
+pub enum ContextType {
+    Struct = 0,
+    Parameter = 1,
+    Token = 2, // then, type_id means something else
+}
+
 impl Default for APCB_GROUP_HEADER {
     fn default() -> Self {
         Self {
@@ -194,8 +210,8 @@ pub struct APCB_TYPE_HEADER {
     pub type_id: U16<LittleEndian>,  // meaning depends on context_type
     pub type_size: U16<LittleEndian>, // including header
     pub instance_id: U16<LittleEndian>,
-    pub context_type: u8, // 0: struct, 1: APCB parameter, 2: APCB V3 token[then, type_id means something else]
-    pub context_format: u8, // 0: raw, 1: sort ascenting by unit_size, 2: sort descending by unit_size[don't use]
+    pub context_type: u8, // see ContextType enum
+    pub context_format: u8, // see ContextFormat enum
     pub unit_size: u8,      // in Byte.  Applicable when ContextType == 2.  value should be 8
     pub priority_mask: u8,
     pub key_size: u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
