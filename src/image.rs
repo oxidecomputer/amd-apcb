@@ -4,6 +4,7 @@ use crate::ondisk::APCB_V2_HEADER;
 use crate::ondisk::APCB_V3_HEADER_EXT;
 use crate::ondisk::APCB_GROUP_HEADER;
 use crate::ondisk::APCB_TYPE_HEADER;
+use crate::ondisk::APCB_TYPE_ALIGNMENT;
 use zerocopy::LayoutVerified;
 
 pub struct APCB<'a> {
@@ -44,7 +45,12 @@ impl<'a> Iterator for Group<'a> {
         assert!(type_size >= size_of::<APCB_TYPE_HEADER>());
 
         let buf = replace(&mut self.buf, &mut []);
-        let (item, buf) = buf.split_at_mut(type_size);
+        let (item, mut buf) = buf.split_at_mut(type_size);
+        if type_size % APCB_TYPE_ALIGNMENT != 0 {
+            // Align to APCB_TYPE_ALIGNMENT.
+            let (_, b) = buf.split_at_mut(APCB_TYPE_ALIGNMENT - (type_size % APCB_TYPE_ALIGNMENT));
+            buf = b;
+        }
         self.buf = buf;
 
         //let body = &mut self.beginning_of_groups[self.position+size_of::<APCB_GROUP_HEADER>()..type_size];
