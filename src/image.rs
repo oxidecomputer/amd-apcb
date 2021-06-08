@@ -182,7 +182,7 @@ impl<'a> APCB<'a> {
             let header = &mut *layout;
             *header = Default::default();
 
-            let (mut layout, rest) = LayoutVerified::<_, APCB_V3_HEADER_EXT>::new_unaligned_from_prefix(rest).ok_or_else(|| Error::MarshalError)?;
+            let (mut layout, _rest) = LayoutVerified::<_, APCB_V3_HEADER_EXT>::new_unaligned_from_prefix(rest).ok_or_else(|| Error::MarshalError)?;
             let v3_header_ext = &mut *layout;
             *v3_header_ext = Default::default();
 
