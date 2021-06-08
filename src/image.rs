@@ -77,6 +77,16 @@ impl Group<'_> {
     pub fn id(&self) -> u16 {
         self.header.group_id.get()
     }
+
+    /// Finds the first Entry with the given id, if any, and returns it.
+    pub fn first_entry_mut(&mut self, id: u16) -> Option<Entry> {
+        for entry in self {
+            if entry.id() == id {
+                return Some(entry)
+            }
+        }
+        None
+    }
 }
 
 impl<'a> Iterator for Group<'a> {
