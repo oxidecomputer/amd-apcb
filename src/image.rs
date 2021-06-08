@@ -98,7 +98,7 @@ impl<'a> APCB<'a> {
             assert!(value.data_version.get() == 0x100);
             assert!(value.ext_header_size.get() == 96);
             assert!(u32::from(value.data_offset.get()) == 88);
-            assert!(value.signature_ending == *b"BCPA");
+            assert!(value.signature_ending == *b"BCBA");
             Some(*value)
         } else {
             //// TODO: Maybe skip weird header

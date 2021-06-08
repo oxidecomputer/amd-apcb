@@ -53,7 +53,7 @@ pub struct APCB_V3_HEADER_EXT {
     reserved_9: [u32; 3], // 0 0 0
     pub integrity_sign: [u8; 32],
     reserved_10: [u32; 3],         // 0 0 0
-    pub signature_ending: [u8; 4], // "BCPA"
+    pub signature_ending: [u8; 4], // "BCBA"
 }
 
 impl Default for APCB_V3_HEADER_EXT {
@@ -76,7 +76,7 @@ impl Default for APCB_V3_HEADER_EXT {
             reserved_9: [0, 0, 0],
             integrity_sign: [0; 32], // invalid--but unused by AMD Rome
             reserved_10: [0; 3],
-            signature_ending: *b"BCPA",
+            signature_ending: *b"BCBA",
         }
     }
 }
