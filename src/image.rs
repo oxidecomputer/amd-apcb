@@ -1,11 +1,11 @@
-use core::mem::size_of;
-use core::mem::replace;
+use crate::ondisk::APCB_GROUP_HEADER;
+use crate::ondisk::APCB_TYPE_ALIGNMENT;
+use crate::ondisk::APCB_TYPE_HEADER;
 use crate::ondisk::APCB_V2_HEADER;
 use crate::ondisk::APCB_V3_HEADER_EXT;
-use crate::ondisk::APCB_GROUP_HEADER;
-use crate::ondisk::APCB_TYPE_HEADER;
-use crate::ondisk::APCB_TYPE_ALIGNMENT;
 pub use crate::ondisk::{ContextFormat, ContextType};
+use core::mem::replace;
+use core::mem::size_of;
 use num_traits::FromPrimitive;
 use zerocopy::LayoutVerified;
 
@@ -61,27 +61,27 @@ impl Entry<'_> {
         self.header.board_instance_mask
     }
 
-/* Not seen in the wild anymore.
-    /// If the value is a Parameter, returns its time point
-    pub fn parameter_time_point(&self) -> u8 {
-        assert!(self.context_type() == ContextType::Parameter);
-        self.body[0]
-    }
+    /* Not seen in the wild anymore.
+        /// If the value is a Parameter, returns its time point
+        pub fn parameter_time_point(&self) -> u8 {
+            assert!(self.context_type() == ContextType::Parameter);
+            self.body[0]
+        }
 
-    /// If the value is a Parameter, returns its token
-    pub fn parameter_token(&self) -> u16 {
-        assert!(self.context_type() == ContextType::Parameter);
-        let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
-        value & 0x1FFF
-    }
+        /// If the value is a Parameter, returns its token
+        pub fn parameter_token(&self) -> u16 {
+            assert!(self.context_type() == ContextType::Parameter);
+            let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
+            value & 0x1FFF
+        }
 
-    // If the value is a Parameter, returns its size
-    pub fn parameter_size(&self) -> u16 {
-        assert!(self.context_type() == ContextType::Parameter);
-        let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
-        (value >> 13) + 1
-    }
-*/
+        // If the value is a Parameter, returns its size
+        pub fn parameter_size(&self) -> u16 {
+            assert!(self.context_type() == ContextType::Parameter);
+            let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
+            (value >> 13) + 1
+        }
+    */
 }
 
 #[derive(Debug)]
@@ -104,7 +104,7 @@ impl Group<'_> {
     pub fn first_entry_mut(&mut self, id: u16) -> Option<Entry> {
         for entry in self {
             if entry.id() == id {
-                return Some(entry)
+                return Some(entry);
             }
         }
         None
@@ -117,7 +117,8 @@ impl<'a> Iterator for Group<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         let header = {
             let buf = &self.buf[0..];
-            let (header, _) = LayoutVerified::<_, APCB_TYPE_HEADER>::new_unaligned_from_prefix(&*buf)?;
+            let (header, _) =
+                LayoutVerified::<_, APCB_TYPE_HEADER>::new_unaligned_from_prefix(&*buf)?;
             let header = header.into_ref();
             *header
         };
@@ -136,7 +137,10 @@ impl<'a> Iterator for Group<'a> {
         }
         self.buf = buf;
 
-        Some(Entry { header: header, body: &mut item[size_of::<APCB_TYPE_HEADER>()..]})
+        Some(Entry {
+            header: header,
+            body: &mut item[size_of::<APCB_TYPE_HEADER>()..],
+        })
     }
 }
 
@@ -146,7 +150,9 @@ impl<'a> Iterator for APCB<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         let header = {
             let beginning_of_groups = &self.beginning_of_groups[0..self.remaining_used_size];
-            let (header, _) = LayoutVerified::<_, APCB_GROUP_HEADER>::new_unaligned_from_prefix(&*beginning_of_groups)?;
+            let (header, _) = LayoutVerified::<_, APCB_GROUP_HEADER>::new_unaligned_from_prefix(
+                &*beginning_of_groups,
+            )?;
             let header = header.into_ref();
             *header
         };
@@ -159,21 +165,30 @@ impl<'a> Iterator for APCB<'a> {
         self.remaining_used_size -= group_size;
 
         //let body = &mut self.beginning_of_groups[self.position+size_of::<APCB_GROUP_HEADER>()..group_size];
-        Some(Group { header: header, buf: &mut item[size_of::<APCB_GROUP_HEADER>()..]})
+        Some(Group {
+            header: header,
+            buf: &mut item[size_of::<APCB_GROUP_HEADER>()..],
+        })
     }
 }
 
 impl<'a> APCB<'a> {
     pub fn load(backing_store: &'a mut [u8]) -> Result<Self> {
-        let (header, mut rest) = LayoutVerified::<_, APCB_V2_HEADER>::new_unaligned_from_prefix(&mut *backing_store).ok_or_else(|| Error::MarshalError)?;
+        let (header, mut rest) =
+            LayoutVerified::<_, APCB_V2_HEADER>::new_unaligned_from_prefix(&mut *backing_store)
+                .ok_or_else(|| Error::MarshalError)?;
         let header = header.into_ref();
 
         assert!(usize::from(header.header_size) >= size_of::<APCB_V2_HEADER>());
         assert!(header.version.get() == 0x30);
         assert!(header.apcb_size.get() >= header.header_size.get().into());
 
-        let v3_header_ext = if usize::from(header.header_size) == size_of::<APCB_V2_HEADER>() + size_of::<APCB_V3_HEADER_EXT>() {
-            let (value, r) = LayoutVerified::<_, APCB_V3_HEADER_EXT>::new_unaligned_from_prefix(rest).ok_or_else(|| Error::MarshalError)?;
+        let v3_header_ext = if usize::from(header.header_size)
+            == size_of::<APCB_V2_HEADER>() + size_of::<APCB_V3_HEADER_EXT>()
+        {
+            let (value, r) =
+                LayoutVerified::<_, APCB_V3_HEADER_EXT>::new_unaligned_from_prefix(rest)
+                    .ok_or_else(|| Error::MarshalError)?;
             rest = r;
             let value = value.into_ref();
             assert!(value.signature == *b"ECB2");
@@ -200,15 +215,21 @@ impl<'a> APCB<'a> {
             backing_store[i] = 0xFF;
         }
         {
-            let (mut layout, rest) = LayoutVerified::<_, APCB_V2_HEADER>::new_unaligned_from_prefix(&mut *backing_store).ok_or_else(|| Error::MarshalError)?;
+            let (mut layout, rest) =
+                LayoutVerified::<_, APCB_V2_HEADER>::new_unaligned_from_prefix(&mut *backing_store)
+                    .ok_or_else(|| Error::MarshalError)?;
             let header = &mut *layout;
             *header = Default::default();
 
-            let (mut layout, _rest) = LayoutVerified::<_, APCB_V3_HEADER_EXT>::new_unaligned_from_prefix(rest).ok_or_else(|| Error::MarshalError)?;
+            let (mut layout, _rest) =
+                LayoutVerified::<_, APCB_V3_HEADER_EXT>::new_unaligned_from_prefix(rest)
+                    .ok_or_else(|| Error::MarshalError)?;
             let v3_header_ext = &mut *layout;
             *v3_header_ext = Default::default();
 
-            header.header_size.set((size_of::<APCB_V2_HEADER>() + size_of::<APCB_V3_HEADER_EXT>()) as u16);
+            header
+                .header_size
+                .set((size_of::<APCB_V2_HEADER>() + size_of::<APCB_V3_HEADER_EXT>()) as u16);
             header.apcb_size = (header.header_size.get() as u32).into();
         }
 
@@ -223,13 +244,13 @@ mod tests {
     #[test]
     #[should_panic]
     fn load_garbage_image() {
-        let mut buffer: [u8; 8*1024] = [0xFF; 8*1024];
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
         APCB::load(&mut buffer[0..]).unwrap();
     }
 
     #[test]
     fn create_empty_image() {
-        let mut buffer: [u8; 8*1024] = [0xFF; 8*1024];
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
         let groups = APCB::create(&mut buffer[0..]).unwrap();
         for item in groups {
             assert!(false);
