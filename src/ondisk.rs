@@ -229,7 +229,7 @@ impl Default for APCB_TYPE_HEADER {
             context_type: 2,
             context_format: 0,
             unit_size: 8,
-            priority_mask: 0, // FIXME: Verify
+            priority_mask: 0x20, // maybe want to change that at runtime
             key_size: 0,
             key_pos: 0,
             board_instance_mask: 0xFF,
