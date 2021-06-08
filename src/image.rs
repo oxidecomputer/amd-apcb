@@ -18,8 +18,9 @@ pub enum Error {
 
 type Result<Q> = core::result::Result<Q, Error>;
 
-pub struct Group {
+pub struct Group<'a> {
     header: APCB_GROUP_HEADER,
+    body: &'a [u8],
 }
 
 pub struct Groups<'a> {
@@ -30,7 +31,7 @@ pub struct Groups<'a> {
 }
 
 impl<'a> Iterator for Groups<'a> {
-    type Item = Group;
+    type Item = Group<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let header = {
@@ -47,7 +48,7 @@ impl<'a> Iterator for Groups<'a> {
         self.beginning_of_groups = beginning_of_groups;
 
         //let body = &mut self.beginning_of_groups[self.position+size_of::<APCB_GROUP_HEADER>()..group_size];
-        Some(Group { header: header })
+        Some(Group { header: header, body: &mut item[size_of::<APCB_GROUP_HEADER>()..]})
     }
 }
 
