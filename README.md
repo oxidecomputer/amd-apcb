@@ -1,6 +1,6 @@
 # Purpose
 
-This crate allows you to manipulate APCB (AGESA PSP Configuration Blob), either directly on flash or in an image file.
+This crate allows you to manipulate APCB (AGESA PSP Configuration Blob), either directly in an image (u8 slice).
 
 # Usage
 
