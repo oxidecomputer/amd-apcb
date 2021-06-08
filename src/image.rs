@@ -29,7 +29,7 @@ pub struct Entry<'a> {
 
 #[derive(Debug)]
 pub struct Group<'a> {
-    header: APCB_GROUP_HEADER,
+    pub header: APCB_GROUP_HEADER,
     buf: &'a mut [u8],
 }
 
