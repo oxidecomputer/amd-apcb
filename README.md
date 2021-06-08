@@ -13,7 +13,7 @@ to the `[dependencies]` block in your `Cargo.toml`.
 Then
 
     let mut buffer: [u8; 8*1024] = ... load from file;
-    let groups = APCB::load(&mut buffer[0..]).unwrap().into_groups();
+    let groups = APCB::load(&mut buffer[0..]).unwrap();
     for group in groups {
         for entry in group {
             ...

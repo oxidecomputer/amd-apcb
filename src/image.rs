@@ -10,6 +10,7 @@ pub struct APCB<'a> {
     header: &'a APCB_V2_HEADER,
     v3_header_ext: Option<APCB_V3_HEADER_EXT>,
     beginning_of_groups: &'a mut [u8],
+    remaining_used_size: usize,
 }
 
 #[derive(Debug)]
@@ -51,14 +52,7 @@ impl<'a> Iterator for Group<'a> {
     }
 }
 
-pub struct Groups<'a> {
-    header: &'a APCB_V2_HEADER,
-    v3_header_ext: Option<APCB_V3_HEADER_EXT>,
-    beginning_of_groups: &'a mut [u8],
-    remaining_used_size: usize,
-}
-
-impl<'a> Iterator for Groups<'a> {
+impl<'a> Iterator for APCB<'a> {
     type Item = Group<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -74,6 +68,7 @@ impl<'a> Iterator for Groups<'a> {
         let beginning_of_groups = replace(&mut self.beginning_of_groups, &mut []);
         let (item, beginning_of_groups) = beginning_of_groups.split_at_mut(group_size);
         self.beginning_of_groups = beginning_of_groups;
+        self.remaining_used_size -= group_size;
 
         //let body = &mut self.beginning_of_groups[self.position+size_of::<APCB_GROUP_HEADER>()..group_size];
         Some(Group { header: header, buf: &mut item[size_of::<APCB_GROUP_HEADER>()..]})
@@ -109,6 +104,7 @@ impl<'a> APCB<'a> {
             header: header,
             v3_header_ext: v3_header_ext,
             beginning_of_groups: rest,
+            remaining_used_size: (header.apcb_size.get() - u32::from(header.header_size)) as usize,
         })
     }
     pub fn create(backing_store: &'a mut [u8]) -> Result<Self> {
@@ -130,14 +126,6 @@ impl<'a> APCB<'a> {
 
         Self::load(backing_store)
     }
-    pub fn into_groups(self) -> Groups<'a> {
-        Groups {
-            header: self.header,
-            v3_header_ext: self.v3_header_ext,
-            beginning_of_groups: self.beginning_of_groups,
-            remaining_used_size: (self.header.apcb_size.get() - u32::from(self.header.header_size)) as usize,
-        }
-    }
 }
 
 #[cfg(test)]
@@ -154,7 +142,7 @@ mod tests {
     #[test]
     fn create_empty_image() {
         let mut buffer: [u8; 8*1024] = [0xFF; 8*1024];
-        let groups = APCB::create(&mut buffer[0..]).unwrap().into_groups();
+        let groups = APCB::create(&mut buffer[0..]).unwrap();
         for item in groups {
             assert!(false);
         }
@@ -164,7 +152,7 @@ mod tests {
     #[should_panic]
     fn create_empty_too_small_image() {
         let mut buffer: [u8; 1] = [0];
-        let groups = APCB::create(&mut buffer[0..]).unwrap().into_groups();
+        let groups = APCB::create(&mut buffer[0..]).unwrap();
         for _ in groups {
             assert!(false);
         }
