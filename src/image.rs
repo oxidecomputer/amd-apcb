@@ -203,11 +203,14 @@ impl<'a> APCB<'a> {
             None
         };
 
+        let remaining_used_size = (header.apcb_size.get() - u32::from(header.header_size)) as usize;
+        assert!(rest.len() >= remaining_used_size);
+
         Ok(Self {
             header: header,
             v3_header_ext: v3_header_ext,
             beginning_of_groups: rest,
-            remaining_used_size: (header.apcb_size.get() - u32::from(header.header_size)) as usize,
+            remaining_used_size: remaining_used_size,
         })
     }
     pub fn create(backing_store: &'a mut [u8]) -> Result<Self> {
