@@ -1,9 +1,40 @@
 // This file contains the APCB on-disk format.  Please only change it in coordination with the AMD PSP team.  Even then, you probably shouldn't.
 
 use byteorder::LittleEndian;
+use core::mem::replace;
 use core::mem::size_of;
 use num_derive::FromPrimitive;
-use zerocopy::{AsBytes, FromBytes, Unaligned, U16, U32};
+use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32};
+
+/// Given BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing BUF to the next item (the new buf is also returned).
+/// Assuming that BUF had been aligned to ALIGNMENT before the call, it also ensures that buf is aligned to ALIGNMENT after the call.
+/// If the item cannot be parsed, returns None and does not advance.
+pub fn take_body_from_collection<'a>(buf: &'a mut [u8], size: usize, alignment: usize) -> Option<(&'a mut [u8], &'a mut [u8])> {
+    let xbuf = replace(&mut buf, &mut []);
+    if buf.len() >= size {
+        let (item, mut xbuf) = xbuf.split_at_mut(size);
+        if size % alignment != 0 {
+            let (_, b) = xbuf.split_at_mut(alignment - (size % alignment));
+            xbuf = b;
+        }
+        Some((item, xbuf))
+    } else {
+        None
+    }
+}
+
+/// Given BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing BUF to the next item.
+/// If the item cannot be parsed, returns None and does not advance.
+pub fn take_header_from_collection<'a, T: 'a + FromBytes + Unaligned>(buf: &'a mut [u8]) -> Option<(LayoutVerified<&'a mut [u8], T>, &'a mut [u8])> {
+    let xbuf = replace(&mut buf, &mut []);
+    let (item, mut xbuf) = xbuf.split_at_mut(size_of::<T>());
+    match LayoutVerified::<_, T>::new(item) {
+       Some(v) => {
+           Some((v, xbuf))
+       },
+       None => None,
+    }
+}
 
 #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
 #[repr(C, packed)]

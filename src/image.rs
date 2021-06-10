@@ -4,13 +4,13 @@ use crate::ondisk::APCB_TYPE_HEADER;
 use crate::ondisk::APCB_V2_HEADER;
 use crate::ondisk::APCB_V3_HEADER_EXT;
 pub use crate::ondisk::{ContextFormat, ContextType};
-use core::mem::replace;
+use crate::ondisk::{take_body_from_collection, take_header_from_collection};
 use core::mem::size_of;
 use num_traits::FromPrimitive;
 use zerocopy::LayoutVerified;
 
 pub struct APCB<'a> {
-    header: &'a APCB_V2_HEADER,
+    header: LayoutVerified<&'a mut [u8], APCB_V2_HEADER>,
     v3_header_ext: Option<APCB_V3_HEADER_EXT>,
     beginning_of_groups: &'a mut [u8],
     remaining_used_size: usize,
@@ -25,7 +25,7 @@ type Result<Q> = core::result::Result<Q, Error>;
 
 #[derive(Debug)]
 pub struct Entry<'a> {
-    pub header: APCB_TYPE_HEADER,
+    pub header: LayoutVerified<&'a mut [u8], APCB_TYPE_HEADER>,
     body: &'a mut [u8],
 }
 
@@ -86,7 +86,7 @@ impl Entry<'_> {
 
 #[derive(Debug)]
 pub struct Group<'a> {
-    pub header: APCB_GROUP_HEADER,
+    pub header: LayoutVerified<&'a mut [u8], APCB_GROUP_HEADER>,
     buf: &'a mut [u8],
 }
 
@@ -115,31 +115,20 @@ impl<'a> Iterator for Group<'a> {
     type Item = Entry<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let header = {
-            let buf = &self.buf[0..];
-            let (header, _) =
-                LayoutVerified::<_, APCB_TYPE_HEADER>::new_unaligned_from_prefix(&*buf)?;
-            let header = header.into_ref();
-            *header
-        };
+        let (header, buf) = take_header_from_collection::<APCB_TYPE_HEADER>(self.buf)?;
         let _: ContextFormat = FromPrimitive::from_u8(header.context_format).unwrap();
         let _: ContextType = FromPrimitive::from_u8(header.context_type).unwrap();
         assert!(header.group_id.get() == self.header.group_id.get());
         let type_size = header.type_size.get() as usize;
-        assert!(type_size >= size_of::<APCB_TYPE_HEADER>());
 
-        let buf = replace(&mut self.buf, &mut []);
-        let (item, mut buf) = buf.split_at_mut(type_size);
-        if type_size % APCB_TYPE_ALIGNMENT != 0 {
-            // Align to APCB_TYPE_ALIGNMENT.
-            let (_, b) = buf.split_at_mut(APCB_TYPE_ALIGNMENT - (type_size % APCB_TYPE_ALIGNMENT));
-            buf = b;
-        }
+        assert!(type_size >= size_of::<APCB_TYPE_HEADER>());
+        let payload_size = type_size - size_of::<APCB_TYPE_HEADER>();
+        let (body, buf) = take_body_from_collection(self.buf, payload_size, APCB_TYPE_ALIGNMENT)?;
         self.buf = buf;
 
         Some(Entry {
             header: header,
-            body: &mut item[size_of::<APCB_TYPE_HEADER>()..],
+            body: body,
         })
     }
 }
@@ -148,26 +137,18 @@ impl<'a> Iterator for APCB<'a> {
     type Item = Group<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let header = {
-            let beginning_of_groups = &self.beginning_of_groups[0..self.remaining_used_size];
-            let (header, _) = LayoutVerified::<_, APCB_GROUP_HEADER>::new_unaligned_from_prefix(
-                &*beginning_of_groups,
-            )?;
-            let header = header.into_ref();
-            *header
-        };
+        let (header, beginning_of_groups) = take_header_from_collection::<APCB_GROUP_HEADER>(self.beginning_of_groups)?;
         let group_size = header.group_size.get() as usize;
         assert!(group_size >= size_of::<APCB_GROUP_HEADER>());
-
-        let beginning_of_groups = replace(&mut self.beginning_of_groups, &mut []);
-        let (item, beginning_of_groups) = beginning_of_groups.split_at_mut(group_size);
+        let payload_size = group_size - size_of::<APCB_GROUP_HEADER>();
+        let (body, beginning_of_groups) = take_body_from_collection(self.beginning_of_groups, payload_size, 1)?;
         self.beginning_of_groups = beginning_of_groups;
         self.remaining_used_size -= group_size;
 
         //let body = &mut self.beginning_of_groups[self.position+size_of::<APCB_GROUP_HEADER>()..group_size];
         Some(Group {
             header: header,
-            buf: &mut item[size_of::<APCB_GROUP_HEADER>()..],
+            buf: body,
         })
     }
 }
@@ -182,10 +163,8 @@ impl<'a> APCB<'a> {
         None
     }
     pub fn load(backing_store: &'a mut [u8]) -> Result<Self> {
-        let (header, mut rest) =
-            LayoutVerified::<_, APCB_V2_HEADER>::new_unaligned_from_prefix(&mut *backing_store)
-                .ok_or_else(|| Error::MarshalError)?;
-        let header = header.into_ref();
+        let backing_store = &mut *backing_store;
+        let (header, backing_store) = take_header_from_collection::<APCB_V2_HEADER>(backing_store).ok_or_else(|| Error::MarshalError)?;
 
         assert!(usize::from(header.header_size) >= size_of::<APCB_V2_HEADER>());
         assert!(header.version.get() == 0x30);
@@ -194,10 +173,8 @@ impl<'a> APCB<'a> {
         let v3_header_ext = if usize::from(header.header_size)
             == size_of::<APCB_V2_HEADER>() + size_of::<APCB_V3_HEADER_EXT>()
         {
-            let (value, r) =
-                LayoutVerified::<_, APCB_V3_HEADER_EXT>::new_unaligned_from_prefix(rest)
-                    .ok_or_else(|| Error::MarshalError)?;
-            rest = r;
+            let (value, x) = take_header_from_collection::<APCB_V3_HEADER_EXT>(backing_store).ok_or_else(|| Error::MarshalError)?;
+            backing_store = x;
             let value = value.into_ref();
             assert!(value.signature == *b"ECB2");
             assert!(value.struct_version.get() == 0x12);
@@ -212,12 +189,12 @@ impl<'a> APCB<'a> {
         };
 
         let remaining_used_size = (header.apcb_size.get() - u32::from(header.header_size)) as usize;
-        assert!(rest.len() >= remaining_used_size);
+        assert!(backing_store.len() >= remaining_used_size);
 
         Ok(Self {
             header: header,
             v3_header_ext: v3_header_ext,
-            beginning_of_groups: rest,
+            beginning_of_groups: backing_store,
             remaining_used_size: remaining_used_size,
         })
     }
@@ -226,6 +203,7 @@ impl<'a> APCB<'a> {
             backing_store[i] = 0xFF;
         }
         {
+            let backing_store = &mut *backing_store;
             let (mut layout, rest) =
                 LayoutVerified::<_, APCB_V2_HEADER>::new_unaligned_from_prefix(&mut *backing_store)
                     .ok_or_else(|| Error::MarshalError)?;
