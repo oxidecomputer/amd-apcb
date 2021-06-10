@@ -173,6 +173,14 @@ impl<'a> Iterator for APCB<'a> {
 }
 
 impl<'a> APCB<'a> {
+    pub fn group_mut(&mut self, group_id: u16) -> Option<Group> {
+        for group in self {
+            if group.id() == group_id {
+                return Some(group);
+            }
+        }
+        None
+    }
     pub fn load(backing_store: &'a mut [u8]) -> Result<Self> {
         let (header, mut rest) =
             LayoutVerified::<_, APCB_V2_HEADER>::new_unaligned_from_prefix(&mut *backing_store)
