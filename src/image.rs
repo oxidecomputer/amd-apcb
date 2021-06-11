@@ -188,7 +188,7 @@ impl<'a> APCB<'a> {
     }
     pub fn delete_group(&mut self, group_id: u16, signature: [u8; 4]) {
         loop {
-            let mut beginning_of_groups = &mut self.beginning_of_groups[..self.header.apcb_size.get() as usize];
+            let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
             if beginning_of_groups.len() == 0 {
                 break;
             }
@@ -324,6 +324,7 @@ mod tests {
         groups.insert_group(0x1701, *b"PSPG")?;
         groups.insert_group(0x1704, *b"MEMG")?;
         let mut count = 0;
+        let groups = APCB::load(&mut buffer[0..]).unwrap();
         for group in groups {
             match count {
                 0 => {
@@ -352,6 +353,7 @@ mod tests {
         groups.insert_group(0x1704, *b"MEMG")?;
         groups.delete_group(0x1701, *b"PSPG");
         let mut count = 0;
+        let groups = APCB::load(&mut buffer[0..]).unwrap();
         for group in groups {
             match count {
                 0 => {
@@ -376,6 +378,7 @@ mod tests {
         groups.insert_group(0x1704, *b"MEMG")?;
         groups.delete_group(0x1704, *b"MEMG");
         let mut count = 0;
+        let groups = APCB::load(&mut buffer[0..]).unwrap();
         for group in groups {
             match count {
                 0 => {
@@ -400,9 +403,14 @@ mod tests {
         groups.insert_group(0x1704, *b"MEMG")?;
         groups.delete_group(0x4711, *b"XXXX");
         let mut count = 0;
+        let groups = APCB::load(&mut buffer[0..]).unwrap();
         for group in groups {
             match count {
                 0 => {
+                    assert!(group.id() == 0x1701);
+                    assert!(group.signature() ==*b"PSPG");
+                },
+                1 => {
                     assert!(group.id() == 0x1704);
                     assert!(group.signature() ==*b"MEMG");
                 },
@@ -412,7 +420,7 @@ mod tests {
             }
             count += 1;
         }
-        assert!(count == 1);
+        assert!(count == 2);
         Ok(())
     }
 }
