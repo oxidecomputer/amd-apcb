@@ -118,8 +118,8 @@ impl<'a> Iterator for Group<'a> {
             return None;
         }
         let header = take_header_from_collection::<APCB_TYPE_HEADER>(&mut self.buf)?;
-        let _: ContextFormat = FromPrimitive::from_u8(header.context_format).unwrap();
-        let _: ContextType = FromPrimitive::from_u8(header.context_type).unwrap();
+        ContextFormat::from_u8(header.context_format).unwrap();
+        ContextType::from_u8(header.context_type).unwrap();
         assert!(header.group_id.get() == self.header.group_id.get());
         let type_size = header.type_size.get() as usize;
 
