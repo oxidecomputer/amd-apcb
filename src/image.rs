@@ -189,6 +189,9 @@ impl<'a> APCB<'a> {
     pub fn delete_group(&mut self, group_id: u16, signature: [u8; 4]) {
         loop {
             let mut beginning_of_groups = &mut self.beginning_of_groups[..self.header.apcb_size.get() as usize];
+            if beginning_of_groups.len() == 0 {
+                break;
+            }
             let header = *take_header_from_collection::<APCB_GROUP_HEADER>(&mut beginning_of_groups).unwrap(); // copy
             if header.group_id.get() == group_id && header.signature == signature {
                 let group_size = header.group_size.get();
