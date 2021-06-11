@@ -6,7 +6,6 @@ use crate::ondisk::APCB_V3_HEADER_EXT;
 pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection, take_body_from_collection};
 use core::mem::{size_of};
 use num_traits::FromPrimitive;
-use zerocopy::LayoutVerified;
 
 pub struct APCB<'a> {
     header: &'a APCB_V2_HEADER,
@@ -205,17 +204,13 @@ impl<'a> APCB<'a> {
             backing_store[i] = 0xFF;
         }
         {
-            let backing_store = &mut *backing_store;
-            let (mut layout, rest) =
-                LayoutVerified::<_, APCB_V2_HEADER>::new_unaligned_from_prefix(&mut *backing_store)
+            let mut backing_store = &mut *backing_store;
+            let header = take_header_from_collection::<APCB_V2_HEADER>(&mut backing_store)
                     .ok_or_else(|| Error::MarshalError)?;
-            let header = &mut *layout;
             *header = Default::default();
 
-            let (mut layout, _rest) =
-                LayoutVerified::<_, APCB_V3_HEADER_EXT>::new_unaligned_from_prefix(rest)
+            let v3_header_ext = take_header_from_collection::<APCB_V3_HEADER_EXT>(&mut backing_store)
                     .ok_or_else(|| Error::MarshalError)?;
-            let v3_header_ext = &mut *layout;
             *v3_header_ext = Default::default();
 
             header
