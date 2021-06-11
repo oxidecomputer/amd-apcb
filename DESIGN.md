@@ -11,6 +11,7 @@ The other APCB elements have unique type_id.
 # Modification actions that are supported
 
 * Creating a new group
+* Deleting a group from APCB
 
 # Modification actions that need to be supported
 
@@ -19,8 +20,7 @@ The other APCB elements have unique type_id.
 * Growing an existing entry; especially for adding tokens (which have to be sorted) (TODO)
 * Querying/adding/REMOVEing tokens in entry (by token_id and entry type (Bool, DWord etc)) (TODO)
   * Hardcode and check: unit_size = 8, key_size = 4, key_pos = 0
-* Deleteing group from APCB (TODO)
-* Deleteing entry from group (TODO)
+* Deleting entry from group (TODO)
 
 # Limitations
 
