@@ -8,6 +8,10 @@ ed, leaving only `ssmarshal` and maybe `packed_struct`.  `binread` would be othe
 APCB V3 TOKEN type_id are NOT unique per group.  Maybe unique (board_mask, type_id)--maybe not.
 The other APCB elements have unique type_id.
 
+# Modification actions that are supported
+
+* Creating a new group
+
 # Modification actions that need to be supported
 
 * Creating a new group; order doesn't matter--although it's usually ascending by group_id (TODO)

@@ -8,7 +8,7 @@ use core::mem::{size_of};
 use num_traits::FromPrimitive;
 
 pub struct APCB<'a> {
-    header: &'a APCB_V2_HEADER,
+    header: &'a mut APCB_V2_HEADER,
     v3_header_ext: Option<APCB_V3_HEADER_EXT>,
     beginning_of_groups: &'a mut [u8],
     remaining_used_size: usize,
@@ -17,6 +17,7 @@ pub struct APCB<'a> {
 #[derive(Debug)]
 pub enum Error {
     MarshalError,
+    OutOfSpaceError,
 }
 
 type Result<Q> = core::result::Result<Q, Error>;
@@ -163,6 +164,28 @@ impl<'a> APCB<'a> {
         }
         None
     }
+    pub fn insert_group(&mut self, group_id: u16, signature: [u8; 4]) -> Result<Group> {
+        // TODO: insert sorted.
+        let size = size_of::<APCB_GROUP_HEADER>();
+        let apcb_size = self.header.apcb_size.get();
+        self.header.apcb_size.set(apcb_size.checked_add(size as u32).ok_or_else(|| Error::OutOfSpaceError)?);
+        let remaining_used_size = self.remaining_used_size;
+        self.remaining_used_size = remaining_used_size.checked_add(size).ok_or_else(|| Error::OutOfSpaceError)?;
+        assert!(self.beginning_of_groups.len() >= self.remaining_used_size);
+
+        let mut beginning_of_group = &mut self.beginning_of_groups[remaining_used_size..(remaining_used_size + size)];
+
+        let mut header = take_header_from_collection::<APCB_GROUP_HEADER>(&mut beginning_of_group).ok_or_else(|| Error::MarshalError)?;
+        *header = APCB_GROUP_HEADER::default();
+        header.signature = signature;
+        header.group_id = group_id.into();
+        let body = take_body_from_collection(&mut beginning_of_group, 0, 1).ok_or_else(|| Error::MarshalError)?;
+
+        Ok(Group {
+            header: header,
+            buf: body,
+        })
+    }
     pub fn load(backing_store: &'a mut [u8]) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
         let header = take_header_from_collection::<APCB_V2_HEADER>(&mut backing_store)
@@ -225,7 +248,8 @@ impl<'a> APCB<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::APCB;
+    use super::APCB;
+    use super::Error;
 
     #[test]
     #[should_panic]
@@ -251,5 +275,45 @@ mod tests {
         for _ in groups {
             assert!(false);
         }
+    }
+
+    #[test]
+    fn create_image_with_one_group() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut groups = APCB::create(&mut buffer[0..]).unwrap();
+        groups.insert_group(0x1701, *b"PSPG")?;
+        let mut count = 0;
+        for item in groups {
+            count += 1;
+        }
+        assert!(count == 1);
+        Ok(())
+    }
+
+    #[test]
+    fn create_image_with_two_groups() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut groups = APCB::create(&mut buffer[0..]).unwrap();
+        groups.insert_group(0x1701, *b"PSPG")?;
+        groups.insert_group(0x1704, *b"MEMG")?;
+        let mut count = 0;
+        for group in groups {
+            match count {
+                0 => {
+                    assert!(group.id() == 0x1701);
+                    assert!(group.signature() ==*b"PSPG");
+                },
+                1 => {
+                    assert!(group.id() == 0x1704);
+                    assert!(group.signature() ==*b"MEMG");
+                },
+                _ => {
+                    assert!(false);
+                }
+            }
+            count += 1;
+        }
+        assert!(count == 2);
+        Ok(())
     }
 }
