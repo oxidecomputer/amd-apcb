@@ -212,7 +212,7 @@ impl<'a> APCB<'a> {
                 self.remaining_used_size -= group_size;
             }
         }
-        return Ok(())
+        Ok(())
     }
     pub fn load(backing_store: &'a mut [u8]) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
