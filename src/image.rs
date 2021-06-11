@@ -34,12 +34,12 @@ macro_rules! take_body_from_collection {
         let xbuf = replace(&mut $buf, &mut []);
         if xbuf.len() >= size {
             let (item, xbuf) = xbuf.split_at_mut(size);
-/*            if size % alignment != 0 && xbuf.len() >= alignment - (size % alignment) {
+            if size % alignment != 0 && xbuf.len() >= alignment - (size % alignment) {
                 let (_, b) = xbuf.split_at_mut(alignment - (size % alignment));
                 $buf = b;
-            } else {*/
+            } else {
                 $buf = xbuf;
-//            }
+            }
             Some(item)
         } else {
             None
