@@ -186,32 +186,33 @@ impl<'a> APCB<'a> {
             buf: body,
         })
     }
-    pub fn delete_group(&mut self, group_id: u16) {
+    pub fn delete_group(&mut self, group_id: u16) -> Result<()> {
         loop {
             let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
             if beginning_of_groups.len() == 0 {
                 break;
             }
-            let header = *take_header_from_collection::<APCB_GROUP_HEADER>(&mut beginning_of_groups).unwrap(); // copy
+            let header = *take_header_from_collection::<APCB_GROUP_HEADER>(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?; // copy
             if header.group_id.get() == group_id {
                 let group_size = header.group_size.get();
 
                 let apcb_size = self.header.apcb_size.get();
                 assert!(apcb_size >= group_size);
                 self.beginning_of_groups.copy_within((group_size as usize)..(apcb_size as usize), 0);
-                self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).unwrap());
+                self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).ok_or_else(|| Error::MarshalError)?);
 
-                self.remaining_used_size = self.remaining_used_size.checked_sub(group_size as usize).unwrap();
+                self.remaining_used_size = self.remaining_used_size.checked_sub(group_size as usize).ok_or_else(|| Error::MarshalError)?;
                 break;
             } else { // copy of APCB::next--please keep in sync
-                let header = take_header_from_collection::<APCB_GROUP_HEADER>(&mut self.beginning_of_groups).unwrap();
+                let header = take_header_from_collection::<APCB_GROUP_HEADER>(&mut self.beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
                 let group_size = header.group_size.get() as usize;
                 assert!(group_size >= size_of::<APCB_GROUP_HEADER>());
                 let payload_size = group_size - size_of::<APCB_GROUP_HEADER>();
-                take_body_from_collection(&mut self.beginning_of_groups, payload_size, 1).unwrap();
+                take_body_from_collection(&mut self.beginning_of_groups, payload_size, 1).ok_or_else(|| Error::MarshalError)?;
                 self.remaining_used_size -= group_size;
             }
         }
+        return Ok(())
     }
     pub fn load(backing_store: &'a mut [u8]) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
@@ -351,7 +352,7 @@ mod tests {
         let mut groups = APCB::create(&mut buffer[0..]).unwrap();
         groups.insert_group(0x1701, *b"PSPG")?;
         groups.insert_group(0x1704, *b"MEMG")?;
-        groups.delete_group(0x1701);
+        groups.delete_group(0x1701)?;
         let mut count = 0;
         let groups = APCB::load(&mut buffer[0..]).unwrap();
         for group in groups {
@@ -376,7 +377,7 @@ mod tests {
         let mut groups = APCB::create(&mut buffer[0..]).unwrap();
         groups.insert_group(0x1701, *b"PSPG")?;
         groups.insert_group(0x1704, *b"MEMG")?;
-        groups.delete_group(0x1704);
+        groups.delete_group(0x1704)?;
         let mut count = 0;
         let groups = APCB::load(&mut buffer[0..]).unwrap();
         for group in groups {
@@ -401,7 +402,7 @@ mod tests {
         let mut groups = APCB::create(&mut buffer[0..]).unwrap();
         groups.insert_group(0x1701, *b"PSPG")?;
         groups.insert_group(0x1704, *b"MEMG")?;
-        groups.delete_group(0x4711);
+        groups.delete_group(0x4711)?;
         let mut count = 0;
         let groups = APCB::load(&mut buffer[0..]).unwrap();
         for group in groups {
@@ -429,7 +430,7 @@ mod tests {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
         let mut groups = APCB::create(&mut buffer[0..]).unwrap();
         groups.insert_group(0x1701, *b"PSPG")?;
-        groups.delete_group(0x1701);
+        groups.delete_group(0x1701)?;
         let groups = APCB::load(&mut buffer[0..]).unwrap();
         for group in groups {
             assert!(false);
