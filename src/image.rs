@@ -423,4 +423,17 @@ mod tests {
         assert!(count == 2);
         Ok(())
     }
+
+    #[test]
+    fn create_image_with_group_delete_group() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut groups = APCB::create(&mut buffer[0..]).unwrap();
+        groups.insert_group(0x1701, *b"PSPG")?;
+        groups.delete_group(0x1701, *b"PSPG");
+        let groups = APCB::load(&mut buffer[0..]).unwrap();
+        for group in groups {
+            assert!(false);
+        }
+        Ok(())
+    }
 }
