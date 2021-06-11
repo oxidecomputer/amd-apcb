@@ -13,11 +13,10 @@ use zerocopy::LayoutVerified;
 macro_rules! take_header_from_collection {
     ( $buf:expr, $T:ty ) => {{
         let xbuf = replace(&mut $buf, &mut []);
-        let (item, xbuf) = xbuf.split_at_mut(size_of::<$T>());
-        match LayoutVerified::<_, $T>::new(item) {
-            Some(v) => {
+        match LayoutVerified::<_, $T>::new_from_prefix(xbuf) {
+            Some((item, xbuf)) => {
                 $buf = xbuf;
-                Some(v)
+                Some(item)
             }
             None => None,
         }
