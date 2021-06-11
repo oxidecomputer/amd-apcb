@@ -262,7 +262,7 @@ mod tests {
     fn create_empty_image() {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
         let groups = APCB::create(&mut buffer[0..]).unwrap();
-        for item in groups {
+        for _item in groups {
             assert!(false);
         }
     }
@@ -283,7 +283,7 @@ mod tests {
         let mut groups = APCB::create(&mut buffer[0..]).unwrap();
         groups.insert_group(0x1701, *b"PSPG")?;
         let mut count = 0;
-        for item in groups {
+        for _item in groups {
             count += 1;
         }
         assert!(count == 1);
