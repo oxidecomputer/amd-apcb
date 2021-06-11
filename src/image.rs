@@ -21,27 +21,23 @@ fn take_header_from_collection<'a, T: Sized>(buf: &mut &'a mut [u8]) -> Option<L
     }
 }
 
-/// Given BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing BUF to the next item (the new buf is also returned).
-/// Assuming that BUF had been aligned to ALIGNMENT before the call, it also ensures that buf is aligned to ALIGNMENT after the call.
+/// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
+/// Assuming that *BUF had been aligned to ALIGNMENT before the call, it also ensures that *BUF is aligned to ALIGNMENT after the call.
 /// If the item cannot be parsed, returns None and does not advance.
-macro_rules! take_body_from_collection {
-    ( $buf:expr, $size:expr, $alignment:expr ) => {{
-        let size = $size;
-        let alignment = $alignment;
-        let xbuf = replace(&mut $buf, &mut []);
-        if xbuf.len() >= size {
-            let (item, xbuf) = xbuf.split_at_mut(size);
-            if size % alignment != 0 && xbuf.len() >= alignment - (size % alignment) {
-                let (_, b) = xbuf.split_at_mut(alignment - (size % alignment));
-                $buf = b;
-            } else {
-                $buf = xbuf;
-            }
-            Some(item)
+fn take_body_from_collection<'a>(buf: &mut &'a mut [u8], size: usize, alignment: usize) -> Option<&'a mut [u8]> {
+    let xbuf = replace(&mut *buf, &mut []);
+    if xbuf.len() >= size {
+        let (item, xbuf) = xbuf.split_at_mut(size);
+        if size % alignment != 0 && xbuf.len() >= alignment - (size % alignment) {
+            let (_, b) = xbuf.split_at_mut(alignment - (size % alignment));
+            *buf = b;
         } else {
-            None
+            *buf = xbuf;
         }
-    }};
+        Some(item)
+    } else {
+        None
+    }
 }
 
 pub struct APCB<'a> {
@@ -161,7 +157,7 @@ impl<'a> Iterator for Group<'a> {
 
         assert!(type_size >= size_of::<APCB_TYPE_HEADER>());
         let payload_size = type_size - size_of::<APCB_TYPE_HEADER>();
-        let body = take_body_from_collection!(self.buf, payload_size, APCB_TYPE_ALIGNMENT)?;
+        let body = take_body_from_collection(&mut self.buf, payload_size, APCB_TYPE_ALIGNMENT)?;
 
         Some(Entry {
             header: header,
@@ -181,7 +177,7 @@ impl<'a> Iterator for APCB<'a> {
         let group_size = header.group_size.get() as usize;
         assert!(group_size >= size_of::<APCB_GROUP_HEADER>());
         let payload_size = group_size - size_of::<APCB_GROUP_HEADER>();
-        let body = take_body_from_collection!(self.beginning_of_groups, payload_size, 1)?; // breaks?
+        let body = take_body_from_collection(&mut self.beginning_of_groups, payload_size, 1)?;
         self.remaining_used_size -= group_size;
 
         Some(Group {
