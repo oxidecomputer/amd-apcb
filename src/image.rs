@@ -192,7 +192,7 @@ impl<'a> APCB<'a> {
             if beginning_of_groups.len() == 0 {
                 break;
             }
-            let header = *take_header_from_collection::<APCB_GROUP_HEADER>(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?; // copy
+            let header = take_header_from_collection::<APCB_GROUP_HEADER>(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
             if header.group_id.get() == group_id {
                 let group_size = header.group_size.get();
 
