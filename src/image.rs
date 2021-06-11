@@ -186,6 +186,30 @@ impl<'a> APCB<'a> {
             buf: body,
         })
     }
+    pub fn delete_group(&mut self, group_id: u16, signature: [u8; 4]) {
+        loop {
+            let mut beginning_of_groups = &mut self.beginning_of_groups[..self.header.apcb_size.get() as usize];
+            let header = *take_header_from_collection::<APCB_GROUP_HEADER>(&mut beginning_of_groups).unwrap(); // copy
+            if header.group_id.get() == group_id && header.signature == signature {
+                let group_size = header.group_size.get();
+
+                let apcb_size = self.header.apcb_size.get();
+                assert!(apcb_size >= group_size);
+                self.beginning_of_groups.copy_within((group_size as usize)..(apcb_size as usize), 0);
+                self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).unwrap());
+
+                self.remaining_used_size = self.remaining_used_size.checked_sub(group_size as usize).unwrap();
+                break;
+            } else { // copy of APCB::next--please keep in sync
+                let header = take_header_from_collection::<APCB_GROUP_HEADER>(&mut self.beginning_of_groups).unwrap();
+                let group_size = header.group_size.get() as usize;
+                assert!(group_size >= size_of::<APCB_GROUP_HEADER>());
+                let payload_size = group_size - size_of::<APCB_GROUP_HEADER>();
+                take_body_from_collection(&mut self.beginning_of_groups, payload_size, 1).unwrap();
+                self.remaining_used_size -= group_size;
+            }
+        }
+    }
     pub fn load(backing_store: &'a mut [u8]) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
         let header = take_header_from_collection::<APCB_V2_HEADER>(&mut backing_store)
@@ -314,6 +338,78 @@ mod tests {
             count += 1;
         }
         assert!(count == 2);
+        Ok(())
+    }
+
+    #[test]
+    fn create_image_with_two_groups_delete_first_group() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut groups = APCB::create(&mut buffer[0..]).unwrap();
+        groups.insert_group(0x1701, *b"PSPG")?;
+        groups.insert_group(0x1704, *b"MEMG")?;
+        groups.delete_group(0x1701, *b"PSPG");
+        let mut count = 0;
+        for group in groups {
+            match count {
+                0 => {
+                    assert!(group.id() == 0x1704);
+                    assert!(group.signature() ==*b"MEMG");
+                },
+                _ => {
+                    assert!(false);
+                }
+            }
+            count += 1;
+        }
+        assert!(count == 1);
+        Ok(())
+    }
+
+    #[test]
+    fn create_image_with_two_groups_delete_second_group() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut groups = APCB::create(&mut buffer[0..]).unwrap();
+        groups.insert_group(0x1701, *b"PSPG")?;
+        groups.insert_group(0x1704, *b"MEMG")?;
+        groups.delete_group(0x1704, *b"MEMG");
+        let mut count = 0;
+        for group in groups {
+            match count {
+                0 => {
+                    assert!(group.id() == 0x1701);
+                    assert!(group.signature() ==*b"PSPG");
+                },
+                _ => {
+                    assert!(false);
+                }
+            }
+            count += 1;
+        }
+        assert!(count == 1);
+        Ok(())
+    }
+
+    #[test]
+    fn create_image_with_two_groups_delete_unknown_group() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut groups = APCB::create(&mut buffer[0..]).unwrap();
+        groups.insert_group(0x1701, *b"PSPG")?;
+        groups.insert_group(0x1704, *b"MEMG")?;
+        groups.delete_group(0x4711, *b"XXXX");
+        let mut count = 0;
+        for group in groups {
+            match count {
+                0 => {
+                    assert!(group.id() == 0x1704);
+                    assert!(group.signature() ==*b"MEMG");
+                },
+                _ => {
+                    assert!(false);
+                }
+            }
+            count += 1;
+        }
+        assert!(count == 1);
         Ok(())
     }
 }
