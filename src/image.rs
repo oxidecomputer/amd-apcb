@@ -6,16 +6,16 @@ use crate::ondisk::APCB_V3_HEADER_EXT;
 pub use crate::ondisk::{ContextFormat, ContextType};
 use core::mem::{replace, size_of};
 use num_traits::FromPrimitive;
-use zerocopy::LayoutVerified;
+use zerocopy::{LayoutVerified, FromBytes, AsBytes};
 
 /// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
 /// If the item cannot be parsed, returns None and does not advance.
-fn take_header_from_collection<'a, T: Sized>(buf: &mut &'a mut [u8]) -> Option<LayoutVerified::<&'a mut [u8], T>> {
+fn take_header_from_collection<'a, T: Sized + FromBytes + AsBytes>(buf: &mut &'a mut [u8]) -> Option<&'a mut T> {
     let xbuf = replace(&mut *buf, &mut []);
     match LayoutVerified::<_, T>::new_from_prefix(xbuf) {
         Some((item, xbuf)) => {
             *buf = xbuf;
-            Some(item)
+            Some(item.into_mut())
         }
         None => None,
     }
@@ -41,7 +41,7 @@ fn take_body_from_collection<'a>(buf: &mut &'a mut [u8], size: usize, alignment:
 }
 
 pub struct APCB<'a> {
-    header: LayoutVerified<&'a mut [u8], APCB_V2_HEADER>,
+    header: &'a APCB_V2_HEADER,
     v3_header_ext: Option<APCB_V3_HEADER_EXT>,
     beginning_of_groups: &'a mut [u8],
     remaining_used_size: usize,
@@ -56,7 +56,7 @@ type Result<Q> = core::result::Result<Q, Error>;
 
 #[derive(Debug)]
 pub struct Entry<'a> {
-    pub header: LayoutVerified<&'a mut [u8], APCB_TYPE_HEADER>,
+    pub header: &'a mut APCB_TYPE_HEADER,
     body: &'a mut [u8],
 }
 
@@ -117,7 +117,7 @@ impl Entry<'_> {
 
 #[derive(Debug)]
 pub struct Group<'a> {
-    pub header: LayoutVerified<&'a mut [u8], APCB_GROUP_HEADER>,
+    pub header: &'a mut APCB_GROUP_HEADER,
     buf: &'a mut [u8],
 }
 
@@ -210,7 +210,6 @@ impl<'a> APCB<'a> {
         {
             let value = take_header_from_collection::<APCB_V3_HEADER_EXT>(&mut backing_store)
                 .ok_or_else(|| Error::MarshalError)?;
-            let value = value.into_ref();
             assert!(value.signature == *b"ECB2");
             assert!(value.struct_version.get() == 0x12);
             assert!(value.data_version.get() == 0x100);
