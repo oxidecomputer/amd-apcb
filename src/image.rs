@@ -95,8 +95,8 @@ impl Entry<'_> {
     pub fn key_pos(&self) -> u8 {
         self.header.key_pos
     }
-    pub fn board_instance_mask(&self) -> u8 {
-        self.header.board_instance_mask
+    pub fn board_instance_mask(&self) -> u16 {
+        self.header.board_instance_mask.get()
     }
 
     /* Not seen in the wild anymore.

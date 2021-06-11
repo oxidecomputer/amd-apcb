@@ -216,7 +216,7 @@ pub struct APCB_TYPE_HEADER {
     pub priority_mask: u8,
     pub key_size: u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
     pub key_pos: u8,  // Sorting key position of the unit specified of UnitSize
-    pub board_instance_mask: u8, // Board-specific APCB instance mask
+    pub board_instance_mask: U16<LittleEndian>, // Board-specific APCB instance mask
 }
 
 impl Default for APCB_TYPE_HEADER {
@@ -232,7 +232,7 @@ impl Default for APCB_TYPE_HEADER {
             priority_mask: 0x20, // maybe want to change that at runtime
             key_size: 0,
             key_pos: 0,
-            board_instance_mask: 0xFF,
+            board_instance_mask: 0xFFFFu16.into(),
         }
     }
 }
@@ -253,3 +253,19 @@ Type:
     Body
     Alignment
 */
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_struct_sizes() {
+        assert!(size_of::<APCB_V2_HEADER>() == 32);
+        assert!(size_of::<APCB_V2_HEADER>() + size_of::<APCB_V3_HEADER_EXT>() == 128);
+        assert!(size_of::<APCB_V2_HEADER>() % APCB_TYPE_ALIGNMENT == 0);
+        assert!(size_of::<APCB_GROUP_HEADER>() == 16);
+        assert!(size_of::<APCB_GROUP_HEADER>() % APCB_TYPE_ALIGNMENT == 0);
+        assert!(size_of::<APCB_TYPE_HEADER>() == 16);
+        assert!(size_of::<APCB_TYPE_HEADER>() % APCB_TYPE_ALIGNMENT == 0);
+    }
+}
