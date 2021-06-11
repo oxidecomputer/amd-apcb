@@ -8,19 +8,17 @@ use core::mem::{replace, size_of};
 use num_traits::FromPrimitive;
 use zerocopy::LayoutVerified;
 
-/// Given BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing BUF to the next item.
+/// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
 /// If the item cannot be parsed, returns None and does not advance.
-macro_rules! take_header_from_collection {
-    ( $buf:expr, $T:ty ) => {{
-        let xbuf = replace(&mut $buf, &mut []);
-        match LayoutVerified::<_, $T>::new_from_prefix(xbuf) {
-            Some((item, xbuf)) => {
-                $buf = xbuf;
-                Some(item)
-            }
-            None => None,
+fn take_header_from_collection<'a, T: Sized>(buf: &mut &'a mut [u8]) -> Option<LayoutVerified::<&'a mut [u8], T>> {
+    let xbuf = replace(&mut *buf, &mut []);
+    match LayoutVerified::<_, T>::new_from_prefix(xbuf) {
+        Some((item, xbuf)) => {
+            *buf = xbuf;
+            Some(item)
         }
-    }};
+        None => None,
+    }
 }
 
 /// Given BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing BUF to the next item (the new buf is also returned).
@@ -155,7 +153,7 @@ impl<'a> Iterator for Group<'a> {
         if self.buf.len() == 0 {
             return None;
         }
-        let header = take_header_from_collection!(self.buf, APCB_TYPE_HEADER)?;
+        let header = take_header_from_collection::<APCB_TYPE_HEADER>(&mut self.buf)?;
         let _: ContextFormat = FromPrimitive::from_u8(header.context_format).unwrap();
         let _: ContextType = FromPrimitive::from_u8(header.context_type).unwrap();
         assert!(header.group_id.get() == self.header.group_id.get());
@@ -179,7 +177,7 @@ impl<'a> Iterator for APCB<'a> {
         if self.beginning_of_groups.len() == 0 {
             return None;
         }
-        let header = take_header_from_collection!(self.beginning_of_groups, APCB_GROUP_HEADER)?;
+        let header = take_header_from_collection::<APCB_GROUP_HEADER>(&mut self.beginning_of_groups)?;
         let group_size = header.group_size.get() as usize;
         assert!(group_size >= size_of::<APCB_GROUP_HEADER>());
         let payload_size = group_size - size_of::<APCB_GROUP_HEADER>();
@@ -204,7 +202,7 @@ impl<'a> APCB<'a> {
     }
     pub fn load(backing_store: &'a mut [u8]) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
-        let header = take_header_from_collection!(backing_store, APCB_V2_HEADER)
+        let header = take_header_from_collection::<APCB_V2_HEADER>(&mut backing_store)
             .ok_or_else(|| Error::MarshalError)?;
 
         assert!(usize::from(header.header_size) >= size_of::<APCB_V2_HEADER>());
@@ -214,7 +212,7 @@ impl<'a> APCB<'a> {
         let v3_header_ext = if usize::from(header.header_size)
             == size_of::<APCB_V2_HEADER>() + size_of::<APCB_V3_HEADER_EXT>()
         {
-            let value = take_header_from_collection!(backing_store, APCB_V3_HEADER_EXT)
+            let value = take_header_from_collection::<APCB_V3_HEADER_EXT>(&mut backing_store)
                 .ok_or_else(|| Error::MarshalError)?;
             let value = value.into_ref();
             assert!(value.signature == *b"ECB2");
