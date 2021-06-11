@@ -187,7 +187,6 @@ impl<'a> Iterator for APCB<'a> {
         let body = take_body_from_collection!(self.beginning_of_groups, payload_size, 1)?; // breaks?
         self.remaining_used_size -= group_size;
 
-        //let body = &mut self.beginning_of_groups[self.position+size_of::<APCB_GROUP_HEADER>()..group_size];
         Some(Group {
             header: header,
             buf: body,
