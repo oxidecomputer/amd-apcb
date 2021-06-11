@@ -138,7 +138,7 @@ impl<'a> Iterator for APCB<'a> {
     type Item = Group<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.beginning_of_groups.len() == 0 {
+        if self.beginning_of_groups.len() == 0 || self.remaining_used_size == 0 {
             return None;
         }
         let header = take_header_from_collection::<APCB_GROUP_HEADER>(&mut self.beginning_of_groups)?;
