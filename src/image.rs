@@ -186,14 +186,14 @@ impl<'a> APCB<'a> {
             buf: body,
         })
     }
-    pub fn delete_group(&mut self, group_id: u16, signature: [u8; 4]) {
+    pub fn delete_group(&mut self, group_id: u16) {
         loop {
             let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
             if beginning_of_groups.len() == 0 {
                 break;
             }
             let header = *take_header_from_collection::<APCB_GROUP_HEADER>(&mut beginning_of_groups).unwrap(); // copy
-            if header.group_id.get() == group_id && header.signature == signature {
+            if header.group_id.get() == group_id {
                 let group_size = header.group_size.get();
 
                 let apcb_size = self.header.apcb_size.get();
@@ -351,7 +351,7 @@ mod tests {
         let mut groups = APCB::create(&mut buffer[0..]).unwrap();
         groups.insert_group(0x1701, *b"PSPG")?;
         groups.insert_group(0x1704, *b"MEMG")?;
-        groups.delete_group(0x1701, *b"PSPG");
+        groups.delete_group(0x1701);
         let mut count = 0;
         let groups = APCB::load(&mut buffer[0..]).unwrap();
         for group in groups {
@@ -376,7 +376,7 @@ mod tests {
         let mut groups = APCB::create(&mut buffer[0..]).unwrap();
         groups.insert_group(0x1701, *b"PSPG")?;
         groups.insert_group(0x1704, *b"MEMG")?;
-        groups.delete_group(0x1704, *b"MEMG");
+        groups.delete_group(0x1704);
         let mut count = 0;
         let groups = APCB::load(&mut buffer[0..]).unwrap();
         for group in groups {
@@ -401,7 +401,7 @@ mod tests {
         let mut groups = APCB::create(&mut buffer[0..]).unwrap();
         groups.insert_group(0x1701, *b"PSPG")?;
         groups.insert_group(0x1704, *b"MEMG")?;
-        groups.delete_group(0x4711, *b"XXXX");
+        groups.delete_group(0x4711);
         let mut count = 0;
         let groups = APCB::load(&mut buffer[0..]).unwrap();
         for group in groups {
@@ -429,7 +429,7 @@ mod tests {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
         let mut groups = APCB::create(&mut buffer[0..]).unwrap();
         groups.insert_group(0x1701, *b"PSPG")?;
-        groups.delete_group(0x1701, *b"PSPG");
+        groups.delete_group(0x1701);
         let groups = APCB::load(&mut buffer[0..]).unwrap();
         for group in groups {
             assert!(false);
