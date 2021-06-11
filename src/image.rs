@@ -3,42 +3,10 @@ use crate::ondisk::APCB_TYPE_ALIGNMENT;
 use crate::ondisk::APCB_TYPE_HEADER;
 use crate::ondisk::APCB_V2_HEADER;
 use crate::ondisk::APCB_V3_HEADER_EXT;
-pub use crate::ondisk::{ContextFormat, ContextType};
-use core::mem::{replace, size_of};
+pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection, take_body_from_collection};
+use core::mem::{size_of};
 use num_traits::FromPrimitive;
-use zerocopy::{LayoutVerified, FromBytes, AsBytes};
-
-/// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
-/// If the item cannot be parsed, returns None and does not advance.
-fn take_header_from_collection<'a, T: Sized + FromBytes + AsBytes>(buf: &mut &'a mut [u8]) -> Option<&'a mut T> {
-    let xbuf = replace(&mut *buf, &mut []);
-    match LayoutVerified::<_, T>::new_from_prefix(xbuf) {
-        Some((item, xbuf)) => {
-            *buf = xbuf;
-            Some(item.into_mut())
-        }
-        None => None,
-    }
-}
-
-/// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
-/// Assuming that *BUF had been aligned to ALIGNMENT before the call, it also ensures that *BUF is aligned to ALIGNMENT after the call.
-/// If the item cannot be parsed, returns None and does not advance.
-fn take_body_from_collection<'a>(buf: &mut &'a mut [u8], size: usize, alignment: usize) -> Option<&'a mut [u8]> {
-    let xbuf = replace(&mut *buf, &mut []);
-    if xbuf.len() >= size {
-        let (item, xbuf) = xbuf.split_at_mut(size);
-        if size % alignment != 0 && xbuf.len() >= alignment - (size % alignment) {
-            let (_, b) = xbuf.split_at_mut(alignment - (size % alignment));
-            *buf = b;
-        } else {
-            *buf = xbuf;
-        }
-        Some(item)
-    } else {
-        None
-    }
-}
+use zerocopy::LayoutVerified;
 
 pub struct APCB<'a> {
     header: &'a APCB_V2_HEADER,
