@@ -262,7 +262,7 @@ impl<'a> APCB<'a> {
             }
             let group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
             if group.header.group_id.get() == group_id {
-                let mut group = Self::next_item(&mut self.beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
+                let mut group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
                 let entry_size = group.delete_entry(entry_id)?;
                 if entry_size > 0 {
                     let group_size = group.header.group_size.get() - entry_size;
