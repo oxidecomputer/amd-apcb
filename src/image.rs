@@ -142,7 +142,7 @@ impl Group<'_> {
 
                 //self.remaining_used_size = self.remaining_used_size.checked_sub(group_size as usize).ok_or_else(|| Error::MarshalError)?;
                 return Ok(type_size as u32);
-            } else { // copy of Group::next--please keep in sync
+            } else {
                 Self::next_item(&mut self.buf);
             }
         }
@@ -246,7 +246,7 @@ impl<'a> APCB<'a> {
 
                 self.remaining_used_size = self.remaining_used_size.checked_sub(group_size as usize).ok_or_else(|| Error::MarshalError)?;
                 break;
-            } else { // copy of APCB::next--please keep in sync
+            } else {
                 let group = Self::next_item(&mut self.beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
                 let group_size = group.header.group_size.get() as usize;
                 self.remaining_used_size -= group_size;
@@ -261,7 +261,7 @@ impl<'a> APCB<'a> {
                 break;
             }
             let group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
-            if group.header.group_id.get() == group_id { // copy of APCB::next--please keep in sync
+            if group.header.group_id.get() == group_id {
                 let mut group = Self::next_item(&mut self.beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
                 let entry_size = group.delete_entry(entry_id)?;
                 if entry_size > 0 {
