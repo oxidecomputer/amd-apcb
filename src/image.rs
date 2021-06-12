@@ -7,10 +7,13 @@ pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection,
 use core::mem::{size_of};
 use num_traits::FromPrimitive;
 
+type
+    Buffer<'a> = &'a mut [u8];
+
 pub struct APCB<'a> {
     header: &'a mut APCB_V2_HEADER,
     v3_header_ext: Option<APCB_V3_HEADER_EXT>,
-    beginning_of_groups: &'a mut [u8],
+    beginning_of_groups: Buffer<'a>,
     remaining_used_size: usize,
 }
 
@@ -25,7 +28,7 @@ type Result<Q> = core::result::Result<Q, Error>;
 #[derive(Debug)]
 pub struct Entry<'a> {
     pub header: &'a mut APCB_TYPE_HEADER,
-    body: &'a mut [u8],
+    body: Buffer<'a>,
 }
 
 impl Entry<'_> {
@@ -86,7 +89,7 @@ impl Entry<'_> {
 #[derive(Debug)]
 pub struct Group<'a> {
     pub header: &'a mut APCB_GROUP_HEADER,
-    buf: &'a mut [u8],
+    buf: Buffer<'a>,
 }
 
 impl Group<'_> {
@@ -100,7 +103,7 @@ impl Group<'_> {
     }
 
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
-    fn next_item<'a>(buf: &mut &'a mut [u8]) -> Option<Entry<'a>> {
+    fn next_item<'a>(buf: &mut Buffer<'a>) -> Option<Entry<'a>> {
         if buf.len() == 0 {
             return None;
         }
@@ -184,7 +187,7 @@ impl<'a> Iterator for APCB<'a> {
 
 impl<'a> APCB<'a> {
     /// It's useful to have some way of NOT mutating self.beginning_of_groups.  This is what this function does.
-    fn next_item<'b>(buf: &mut &'b mut [u8]) -> Option<Group<'b>> {
+    fn next_item<'b>(buf: &mut Buffer<'b>) -> Option<Group<'b>> {
         if buf.len() == 0 {
             return None;
         }
@@ -283,7 +286,7 @@ impl<'a> APCB<'a> {
         }
         Ok(())
     }
-    pub fn load(backing_store: &'a mut [u8]) -> Result<Self> {
+    pub fn load(backing_store: Buffer<'a>) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
         let header = take_header_from_collection::<APCB_V2_HEADER>(&mut backing_store)
             .ok_or_else(|| Error::MarshalError)?;
@@ -319,7 +322,7 @@ impl<'a> APCB<'a> {
             remaining_used_size: remaining_used_size,
         })
     }
-    pub fn create(backing_store: &'a mut [u8]) -> Result<Self> {
+    pub fn create(backing_store: Buffer<'a>) -> Result<Self> {
         for i in 0..backing_store.len() {
             backing_store[i] = 0xFF;
         }
