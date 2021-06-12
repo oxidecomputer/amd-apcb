@@ -99,6 +99,26 @@ impl Group<'_> {
         self.header.group_id.get()
     }
 
+    /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
+    fn next_item<'a>(buf: &mut &'a mut [u8]) -> Option<Entry<'a>> {
+        if buf.len() == 0 {
+            return None;
+        }
+        let header = take_header_from_collection::<APCB_TYPE_HEADER>(&mut *buf)?;
+        ContextFormat::from_u8(header.context_format).unwrap();
+        ContextType::from_u8(header.context_type).unwrap();
+        let type_size = header.type_size.get() as usize;
+
+        assert!(type_size >= size_of::<APCB_TYPE_HEADER>());
+        let payload_size = type_size - size_of::<APCB_TYPE_HEADER>();
+        let body = take_body_from_collection(&mut *buf, payload_size, APCB_TYPE_ALIGNMENT)?;
+
+        Some(Entry {
+            header: header,
+            body: body,
+        })
+    }
+
     /// Finds the first Entry with the given id, if any, and returns it.
     pub fn first_entry_mut(&mut self, id: u16) -> Option<Entry> {
         for entry in self {
@@ -137,23 +157,13 @@ impl<'a> Iterator for Group<'a> {
     type Item = Entry<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.buf.len() == 0 {
-            return None;
+        match Self::next_item(&mut self.buf) {
+            Some(e) => {
+                assert!(e.header.group_id.get() == self.header.group_id.get());
+                Some(e)
+            },
+            None => None,
         }
-        let header = take_header_from_collection::<APCB_TYPE_HEADER>(&mut self.buf)?;
-        ContextFormat::from_u8(header.context_format).unwrap();
-        ContextType::from_u8(header.context_type).unwrap();
-        assert!(header.group_id.get() == self.header.group_id.get());
-        let type_size = header.type_size.get() as usize;
-
-        assert!(type_size >= size_of::<APCB_TYPE_HEADER>());
-        let payload_size = type_size - size_of::<APCB_TYPE_HEADER>();
-        let body = take_body_from_collection(&mut self.buf, payload_size, APCB_TYPE_ALIGNMENT)?;
-
-        Some(Entry {
-            header: header,
-            body: body,
-        })
     }
 }
 
@@ -161,24 +171,37 @@ impl<'a> Iterator for APCB<'a> {
     type Item = Group<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.beginning_of_groups.len() == 0 || self.remaining_used_size == 0 {
+        if self.remaining_used_size == 0 {
             return None;
         }
-        let header = take_header_from_collection::<APCB_GROUP_HEADER>(&mut self.beginning_of_groups)?;
+        match Self::next_item(&mut self.beginning_of_groups) {
+            Some(e) => {
+                let group_size = e.header.group_size.get() as usize;
+                self.remaining_used_size -= group_size;
+                Some(e)
+            },
+            None => None,
+        }
+    }
+}
+
+impl<'a> APCB<'a> {
+    /// It's useful to have some way of NOT mutating self.beginning_of_groups.  This is what this function does.
+    fn next_item<'b>(buf: &mut &'b mut [u8]) -> Option<Group<'b>> {
+        if buf.len() == 0 {
+            return None;
+        }
+        let header = take_header_from_collection::<APCB_GROUP_HEADER>(&mut *buf)?;
         let group_size = header.group_size.get() as usize;
         assert!(group_size >= size_of::<APCB_GROUP_HEADER>());
         let payload_size = group_size - size_of::<APCB_GROUP_HEADER>();
-        let body = take_body_from_collection(&mut self.beginning_of_groups, payload_size, 1)?;
-        self.remaining_used_size -= group_size;
+        let body = take_body_from_collection(&mut *buf, payload_size, 1)?;
 
         Some(Group {
             header: header,
             buf: body,
         })
     }
-}
-
-impl<'a> APCB<'a> {
     pub fn group_mut(&mut self, group_id: u16) -> Option<Group> {
         for group in self {
             if group.id() == group_id {
