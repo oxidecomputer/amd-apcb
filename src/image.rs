@@ -274,8 +274,8 @@ impl<'a> APCB<'a> {
                     self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).ok_or_else(|| Error::MarshalError)?);
 
                     self.remaining_used_size = self.remaining_used_size.checked_sub(group_size as usize).ok_or_else(|| Error::MarshalError)?;
-                    break 'outer;
                 }
+                break 'outer;
             }
             let group = Self::next_item(&mut self.beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
             let group_size = group.header.group_size.get() as usize;
