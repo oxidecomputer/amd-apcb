@@ -177,7 +177,7 @@ impl Group<'_> {
 
             if entry.header.type_id.get() == id && entry.header.instance_id.get() == instance_id && entry.header.board_instance_mask.get() == board_instance_mask {
                 let type_size = entry.header.type_size.get();
-                self.buf.copy_within((type_size as usize)..self.buf.len(), 0);
+                self.buf.copy_within((type_size as usize)..self.remaining_used_size, 0);
 
                 return Ok(type_size as u32);
             } else {
