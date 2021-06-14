@@ -638,7 +638,7 @@ mod tests {
         let mut groups = APCB::load(&mut buffer[0..]).unwrap();
         groups.delete_entry(0x1701, 96, 0, 0xFFFF)?;
         let mut count = 0;
-        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        let groups = APCB::load(&mut buffer[0..]).unwrap();
         for group in groups {
             match count {
                 0 => {
