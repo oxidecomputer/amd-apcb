@@ -331,9 +331,9 @@ impl<'a> APCB<'a> {
             if beginning_of_groups.len() == 0 {
                 break;
             }
-            let group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
+            let mut group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
             if group.header.group_id.get() == group_id {
-                let mut group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
+                //let mut group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
                 let entry_size = group.delete_entry(entry_id, instance_id, board_instance_mask)?;
                 if entry_size > 0 {
                     assert!(group.header.group_size.get() >= entry_size);
