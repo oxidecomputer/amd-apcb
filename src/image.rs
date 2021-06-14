@@ -408,7 +408,6 @@ impl<'a> APCB<'a> {
 
         assert!(usize::from(header.header_size) >= size_of::<APCB_V2_HEADER>());
         assert!(header.version.get() == 0x30);
-        assert!(header.apcb_size.get() >= header.header_size.get().into());
 
         let v3_header_ext = if usize::from(header.header_size)
             == size_of::<APCB_V2_HEADER>() + size_of::<APCB_V3_HEADER_EXT>()
@@ -427,6 +426,7 @@ impl<'a> APCB<'a> {
             None
         };
 
+        assert!(header.apcb_size.get() >= header.header_size.get().into());
         let remaining_used_size = (header.apcb_size.get() - u32::from(header.header_size)) as usize;
         assert!(backing_store.len() >= remaining_used_size);
 
