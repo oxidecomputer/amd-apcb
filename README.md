@@ -30,11 +30,11 @@ To delete a group:
 
 To insert a new entry:
 
-    apcb.insert_entry(0x1701, 0x0000, 0, 0xFFFF)?;
+    apcb.insert_entry(0x1701, 0x0000, 0, 0xFFFF, 0)?;
 
 To delete an entry:
 
-    apcb.delete_entry(0x1701, 0xFFFF)?;
+    apcb.delete_entry(0x1701, 0x0000, 0, 0xFFFF)?;
 
 Note that all the mutators also move the iterator--so you might want to load the APCB anew before iterating.
 

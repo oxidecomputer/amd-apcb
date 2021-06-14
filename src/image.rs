@@ -86,11 +86,6 @@ impl Entry<'_> {
         }
     */
 
-    pub fn set_instance_id(&mut self, value: u16) -> &mut Self {
-        self.header.instance_id.set(value);
-        self
-    }
-
     pub fn set_context_type(&mut self, value: ContextType) -> &mut Self {
         self.header.context_type = value as u8;
         self
@@ -170,7 +165,7 @@ impl Group<'_> {
         }
         None
     }
-    fn delete_entry(&mut self, id: u16) -> Result<u32> {
+    fn delete_entry(&mut self, id: u16, instance_id: u16, board_instance_mask: u16) -> Result<u32> {
         loop {
             let mut buf = &mut self.buf[..];
             if buf.len() == 0 {
@@ -178,7 +173,7 @@ impl Group<'_> {
             }
             let entry = Self::next_item(&mut buf).ok_or_else(|| Error::MarshalError)?;
 
-            if entry.header.type_id.get() == id {
+            if entry.header.type_id.get() == id && entry.header.instance_id.get() == instance_id && entry.header.board_instance_mask.get() == board_instance_mask {
                 let type_size = entry.header.type_size.get();
                 self.buf.copy_within((type_size as usize)..self.buf.len(), 0);
 
@@ -296,7 +291,7 @@ impl<'a> APCB<'a> {
         }
         Ok(())
     }
-    pub fn delete_entry(&mut self, group_id: u16, entry_id: u16) -> Result<()> {
+    pub fn delete_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
         'outer: loop {
             let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
             if beginning_of_groups.len() == 0 {
@@ -305,7 +300,7 @@ impl<'a> APCB<'a> {
             let group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
             if group.header.group_id.get() == group_id {
                 let mut group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
-                let entry_size = group.delete_entry(entry_id)?;
+                let entry_size = group.delete_entry(entry_id, instance_id, board_instance_mask)?;
                 if entry_size > 0 {
                     let group_size = group.header.group_size.get() - entry_size;
                     group.header.group_size.set(group_size);
@@ -325,7 +320,7 @@ impl<'a> APCB<'a> {
         }
         Ok(())
     }
-    pub fn insert_entry(&mut self, group_id: u16, id: u16, payload_size: u16, board_instance_mask: u16) -> Result<Entry> {
+    pub fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, payload_size: u16) -> Result<Entry> {
         loop {
             let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
             if beginning_of_groups.len() == 0 {
@@ -352,7 +347,8 @@ impl<'a> APCB<'a> {
                         e.header.group_id.set(group_id);
                         e.header.type_id.set(id);
                         e.header.type_size.set(entry_size);
-                        // TODO: The following more via Entry set-accessors: instance_id, context_type, context_formt, unit_size, priority_mask, key_size, key_pos
+                        e.header.instance_id.set(instance_id);
+                        // Note: The following is settable by the user via Entry set-accessors: context_type, context_formt, unit_size, priority_mask, key_size, key_pos
                         e.header.board_instance_mask.set(board_instance_mask);
                         return Ok(e);
                     },
