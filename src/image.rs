@@ -333,16 +333,14 @@ impl<'a> APCB<'a> {
             }
             let mut group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
             if group.header.group_id.get() == group_id {
-                //let mut group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
                 let entry_size = group.delete_entry(entry_id, instance_id, board_instance_mask)?;
                 if entry_size > 0 {
-                    assert!(group.header.group_size.get() >= entry_size);
-                    let group_size = group.header.group_size.get() - entry_size;
-                    group.header.group_size.set(group_size);
+                    let old_group_size = group.header.group_size.get();
+                    let new_group_size = old_group_size.checked_sub(entry_size).ok_or_else(|| Error::MarshalError)?;
+                    group.header.group_size.set(new_group_size);
 
                     let apcb_size = self.header.apcb_size.get();
-                    assert!(apcb_size >= group_size);
-                    self.beginning_of_groups.copy_within((group_size as usize)..(apcb_size as usize), 0);
+                    self.beginning_of_groups.copy_within((old_group_size as usize)..(apcb_size as usize), new_group_size as usize);
                     self.header.apcb_size.set(apcb_size.checked_sub(entry_size as u32).ok_or_else(|| Error::MarshalError)?);
 
                     self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::MarshalError)?;
