@@ -27,5 +27,5 @@ The other APCB elements have unique type_id.
 In order to keep the sort order the same, the key of an existing entry cannot be changed. That includes:
 
 * group_id of existing groups (TODO: Make group header read-only)
-* type_id and board_mask of existing entries (TODO: Make entry header read-only)
+* (group_id, type_id, instance_id, board_instance_mask) of existing entries (TODO: Make entry header read-only)
 * token_id of existing tokens (TODO)
