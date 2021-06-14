@@ -20,5 +20,4 @@ num-traits = { version = "0.2.12", default-features = false }
 zerocopy = "0.5.0"
 
 [features]
-default = ["std"]
-std = []
+default = []
