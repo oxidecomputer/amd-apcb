@@ -285,7 +285,7 @@ impl<'a> APCB<'a> {
         self.remaining_used_size = remaining_used_size.checked_add(size).ok_or_else(|| Error::OutOfSpaceError)?;
         assert!(self.beginning_of_groups.len() >= self.remaining_used_size);
 
-        let mut beginning_of_group = &mut self.beginning_of_groups[remaining_used_size..(remaining_used_size + size)];
+        let mut beginning_of_group = &mut self.beginning_of_groups[remaining_used_size..self.remaining_used_size];
 
         let mut header = take_header_from_collection::<APCB_GROUP_HEADER>(&mut beginning_of_group).ok_or_else(|| Error::MarshalError)?;
         *header = APCB_GROUP_HEADER::default();
