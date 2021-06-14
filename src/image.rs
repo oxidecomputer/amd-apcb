@@ -138,6 +138,7 @@ impl Group<'_> {
     }
 
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
+    /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'a>(buf: &mut Buffer<'a>) -> Option<Entry<'a>> {
         if buf.len() == 0 {
             return None;
@@ -168,7 +169,7 @@ impl Group<'_> {
     }
     fn delete_entry(&mut self, id: u16, instance_id: u16, board_instance_mask: u16) -> Result<u32> {
         loop {
-            let mut buf = &mut self.buf[..];
+            let mut buf = &mut self.buf[..self.remaining_used_size];
             if buf.len() == 0 {
                 break;
             }
@@ -178,10 +179,10 @@ impl Group<'_> {
                 let type_size = entry.header.type_size.get();
                 self.buf.copy_within((type_size as usize)..self.buf.len(), 0);
 
-                //self.remaining_used_size = self.remaining_used_size.checked_sub(group_size as usize).ok_or_else(|| Error::MarshalError)?;
                 return Ok(type_size as u32);
             } else {
-                Self::next_item(&mut self.buf);
+                let entry = Self::next_item(&mut self.buf).ok_or_else(|| Error::MarshalError)?;
+                self.remaining_used_size -= entry.header.type_size.get() as usize;
             }
         }
         Ok(0u32)
@@ -196,7 +197,8 @@ impl Group<'_> {
             match Self::next_item(&mut buf) {
                 Some(e) => {
                     if (group_id, id, instance_id, board_instance_mask) < (e.header.group_id.get(), e.id(), e.instance_id(), e.board_instance_mask()) {
-                        Self::next_item(&mut self.buf);
+                        let entry = Self::next_item(&mut self.buf).unwrap();
+                        self.remaining_used_size -= entry.header.type_size.get() as usize;
                     } else {
                         break;
                     }
@@ -213,6 +215,9 @@ impl<'a> Iterator for Group<'a> {
     type Item = Entry<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        if self.remaining_used_size == 0 {
+            return None;
+        }
         match Self::next_item(&mut self.buf) {
             Some(e) => {
                 assert!(e.header.group_id.get() == self.header.group_id.get());
@@ -245,6 +250,7 @@ impl<'a> Iterator for APCB<'a> {
 
 impl<'a> APCB<'a> {
     /// It's useful to have some way of NOT mutating self.beginning_of_groups.  This is what this function does.
+    /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(buf: &mut Buffer<'b>) -> Option<Group<'b>> {
         if buf.len() == 0 {
             return None;
@@ -330,6 +336,7 @@ impl<'a> APCB<'a> {
                 let mut group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
                 let entry_size = group.delete_entry(entry_id, instance_id, board_instance_mask)?;
                 if entry_size > 0 {
+                    assert!(group.header.group_size.get() >= entry_size);
                     let group_size = group.header.group_size.get() - entry_size;
                     group.header.group_size.set(group_size);
 
@@ -620,7 +627,45 @@ mod tests {
         Ok(())
     }
 
-    // TODO: delete_entry tests.
+    #[test]
+    fn delete_entries() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut groups = APCB::create(&mut buffer[0..]).unwrap();
+        groups.insert_group(0x1701, *b"PSPG")?;
+        groups.insert_group(0x1704, *b"MEMG")?;
+        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        groups.insert_entry(0x1701, 96, 0, 0xFFFF, 48)?;
+        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        groups.delete_entry(0x1701, 96, 0, 0xFFFF)?;
+        let mut count = 0;
+        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        for group in groups {
+            match count {
+                0 => {
+                    assert!(group.id() == 0x1701);
+                    assert!(group.signature() ==*b"PSPG");
+                    let mut entry_count = 0;
+                    for _entry in group {
+                        entry_count += 1;
+                    }
+                    assert!(entry_count == 0);
+                },
+                1 => {
+                    assert!(group.id() == 0x1704);
+                    assert!(group.signature() ==*b"MEMG");
+                    for _entry in group {
+                        assert!(false);
+                    }
+                },
+                _ => {
+                    assert!(false);
+                }
+            }
+            count += 1;
+        }
+        assert!(count == 2);
+        Ok(())
+    }
 
     #[test]
     fn insert_entries() -> Result<(), Error> {
