@@ -52,7 +52,7 @@ impl Entry<'_> {
     pub fn priority_mask(&self) -> u8 {
         self.header.priority_mask
     }
-    /// Note: Applicable iff context_format() != 0. Result <= unit_size.
+    /// Note: Applicable iff context_format() != ContextFormat::Raw. Result <= unit_size.
     pub fn key_size(&self) -> u8 {
         self.header.key_size
     }
@@ -84,6 +84,44 @@ impl Entry<'_> {
             (value >> 13) + 1
         }
     */
+
+    pub fn set_instance_id(&mut self, value: u16) -> &mut Self {
+        self.header.instance_id.set(value);
+        self
+    }
+
+    pub fn set_context_type(&mut self, value: ContextType) -> &mut Self {
+        self.header.context_type = value as u8;
+        self
+    }
+
+    pub fn set_context_format(&mut self, value: ContextFormat) -> &mut Self {
+        self.header.context_format = value as u8;
+        self
+    }
+
+    pub fn set_unit_size(&mut self, value: u8) -> &mut Self {
+        self.header.unit_size = value;
+        self
+    }
+
+    pub fn set_priority_mask(&mut self, value: u8) -> &mut Self {
+        self.header.priority_mask = value;
+        self
+    }
+
+    /// Note: Applicable iff context_format() != ContextFormat::Raw.  value <= unit_size.
+    pub fn set_key_size(&mut self, value: u8) -> &mut Self {
+        self.header.key_size = value;
+        self
+    }
+
+    pub fn set_key_pos(&mut self, value: u8) -> &mut Self {
+        self.header.key_pos = value;
+        self
+    }
+
+    // Note: Because type_id, group_id and board_instance_mask are sort keys, these cannot be mutated.
 }
 
 #[derive(Debug)]
