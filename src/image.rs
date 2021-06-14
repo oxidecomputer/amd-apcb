@@ -124,6 +124,7 @@ impl Entry<'_> {
 pub struct Group<'a> {
     pub header: &'a mut APCB_GROUP_HEADER,
     buf: Buffer<'a>,
+    remaining_used_size: usize,
 }
 
 impl Group<'_> {
@@ -185,6 +186,27 @@ impl Group<'_> {
         }
         Ok(0u32)
     }
+    /// First the place BEFORE which the entry (GROUP_ID, ID, INSTANCE_ID, BOARD_INSTANCE_MASK) is supposed to go.
+    fn move_insertion_point_before(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16) {
+        loop {
+            let mut buf = &mut self.buf[..self.remaining_used_size];
+            if buf.len() == 0 {
+                break;
+            }
+            match Self::next_item(&mut buf) {
+                Some(e) => {
+                    if (group_id, id, instance_id, board_instance_mask) < (e.header.group_id.get(), e.id(), e.instance_id(), e.board_instance_mask()) {
+                        Self::next_item(&mut self.buf);
+                    } else {
+                        break;
+                    }
+                },
+                None => {
+                    break;
+                },
+            }
+        }
+    }
 }
 
 impl<'a> Iterator for Group<'a> {
@@ -194,6 +216,8 @@ impl<'a> Iterator for Group<'a> {
         match Self::next_item(&mut self.buf) {
             Some(e) => {
                 assert!(e.header.group_id.get() == self.header.group_id.get());
+                let entry_size = e.header.type_size.get() as usize;
+                self.remaining_used_size -= entry_size;
                 Some(e)
             },
             None => None,
@@ -230,10 +254,12 @@ impl<'a> APCB<'a> {
         assert!(group_size >= size_of::<APCB_GROUP_HEADER>());
         let payload_size = group_size - size_of::<APCB_GROUP_HEADER>();
         let body = take_body_from_collection(&mut *buf, payload_size, 1)?;
+        let body_len = body.len();
 
         Some(Group {
             header: header,
             buf: body,
+            remaining_used_size: body_len,
         })
     }
     pub fn group_mut(&mut self, group_id: u16) -> Option<Group> {
@@ -260,10 +286,12 @@ impl<'a> APCB<'a> {
         header.signature = signature;
         header.group_id = group_id.into();
         let body = take_body_from_collection(&mut beginning_of_group, 0, 1).ok_or_else(|| Error::MarshalError)?;
+        let body_len = body.len();
 
         Ok(Group {
             header: header,
             buf: body,
+            remaining_used_size: body_len,
         })
     }
     pub fn delete_group(&mut self, group_id: u16) -> Result<()> {
@@ -328,34 +356,39 @@ impl<'a> APCB<'a> {
             }
             let group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
             if group.header.group_id.get() == group_id {
-                let group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
                 let entry_size: u16 = (size_of::<APCB_TYPE_HEADER>() as u16).checked_add(payload_size).ok_or_else(|| Error::OutOfSpaceError)?;
                 let group_size = group.header.group_size.get().checked_add(entry_size as u32).ok_or_else(|| Error::OutOfSpaceError)?;
                 group.header.group_size.set(group_size.into());
 
+                let beginning_of_groups_len = beginning_of_groups.len();
+                let destination = beginning_of_groups.len().checked_add(entry_size.into()).ok_or_else(|| Error::OutOfSpaceError)?;
+                // Move all groups after this group further up
+                self.beginning_of_groups.copy_within(beginning_of_groups_len..self.remaining_used_size, destination);
+
                 let apcb_size = self.header.apcb_size.get();
-                // FIXME move the entries from after where we want to insert.
-                self.beginning_of_groups.copy_within((group_size as usize)..(apcb_size as usize), 0);
                 self.header.apcb_size.set(apcb_size.checked_add(entry_size as u32).ok_or_else(|| Error::OutOfSpaceError)?);
 
                 self.remaining_used_size = self.remaining_used_size.checked_add(entry_size as usize).ok_or_else(|| Error::OutOfSpaceError)?;
 
-                let mut beginning_of_groups = &mut self.beginning_of_groups[0/*FIXME*/..];
-                // FIXME zero entry's data--otherwise next_item is gonna fail.
-                match Group::next_item(&mut beginning_of_groups) {
-                    Some(e) => {
-                        e.header.group_id.set(group_id);
-                        e.header.type_id.set(id);
-                        e.header.type_size.set(entry_size);
-                        e.header.instance_id.set(instance_id);
-                        // Note: The following is settable by the user via Entry set-accessors: context_type, context_formt, unit_size, priority_mask, key_size, key_pos
-                        e.header.board_instance_mask.set(board_instance_mask);
-                        return Ok(e);
-                    },
-                    None => {
-                        return Err(Error::MarshalError);
-                    },
-                }
+                let mut group = Self::next_item(&mut self.beginning_of_groups).ok_or_else(|| Error::MarshalError)?; // reload so we get a bigger slice
+                group.remaining_used_size = group.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::MarshalError)?;
+                group.move_insertion_point_before(group_id, id, instance_id, board_instance_mask);
+
+                // Move the entries from after the insertion point to the right (in order to make room before for our new entry).
+                group.buf.copy_within(0..group.remaining_used_size, entry_size as usize);
+
+                group.remaining_used_size = group.remaining_used_size.checked_add(entry_size as usize).ok_or_else(|| Error::OutOfSpaceError)?;
+
+                let header = take_header_from_collection::<APCB_TYPE_HEADER>(&mut group.buf).ok_or_else(|| Error::MarshalError)?;
+                *header = APCB_TYPE_HEADER::default();
+                header.group_id.set(group_id);
+                header.type_id.set(id);
+                header.type_size.set(entry_size);
+                header.instance_id.set(instance_id);
+                // Note: The following is settable by the user via Entry set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
+                header.board_instance_mask.set(board_instance_mask);
+                let body = take_body_from_collection(&mut group.buf, payload_size.into(), APCB_TYPE_ALIGNMENT).ok_or_else(|| Error::MarshalError)?;
+                return Ok(Entry { header, body });
             }
             let group = Self::next_item(&mut self.beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
             let group_size = group.header.group_size.get() as usize;
@@ -581,11 +614,53 @@ mod tests {
         groups.insert_group(0x1701, *b"PSPG")?;
         groups.delete_group(0x1701)?;
         let groups = APCB::load(&mut buffer[0..]).unwrap();
-        for group in groups {
+        for _group in groups {
             assert!(false);
         }
         Ok(())
     }
 
     // TODO: delete_entry tests.
+
+    #[test]
+    fn insert_entries() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut groups = APCB::create(&mut buffer[0..]).unwrap();
+        groups.insert_group(0x1701, *b"PSPG")?;
+        groups.insert_group(0x1704, *b"MEMG")?;
+        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        groups.insert_entry(0x1701, 96, 0, 0xFFFF, 48)?;
+
+        let mut count = 0;
+        let groups = APCB::load(&mut buffer[0..]).unwrap();
+        for group in groups {
+            match count {
+                0 => {
+                    assert!(group.id() == 0x1701);
+                    assert!(group.signature() ==*b"PSPG");
+                    let mut entry_count = 0;
+                    for entry in group {
+                        assert!(entry.id() == 96);
+                        assert!(entry.instance_id() == 0);
+                        assert!(entry.board_instance_mask() == 0xFFFF);
+                        entry_count += 1;
+                    }
+                    assert!(entry_count == 1);
+                },
+                1 => {
+                    assert!(group.id() == 0x1704);
+                    assert!(group.signature() ==*b"MEMG");
+                    for _entry in group {
+                        assert!(false);
+                    }
+                },
+                _ => {
+                    assert!(false);
+                }
+            }
+            count += 1;
+        }
+        assert!(count == 2);
+        Ok(())
+    }
 }
