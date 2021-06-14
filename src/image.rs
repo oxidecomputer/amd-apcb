@@ -117,7 +117,7 @@ impl Entry<'_> {
         self
     }
 
-    // Note: Because type_id, group_id and board_instance_mask are sort keys, these cannot be mutated.
+    // Note: Because type_id, instance_id, group_id and board_instance_mask are sort keys, these cannot be mutated.
 }
 
 #[derive(Debug)]
