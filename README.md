@@ -43,7 +43,3 @@ Note that all the mutators also move the iterator--so you might want to load the
 Run
 
     cargo test --features std
-
-# Implementation design decisions
-
-* It's meant to run in a no_std, no_alloc environment.  That means that almost all serialization crates are disqualified, leaving only `ssmarshal` and maybe `packed_struct`.  `binread` would be otherwise nice, but it is `alloc`.  Right now, using `zerocopy` crate instead--but it's very verbose and quirky.  It will be reassessed in the future whether `ssmarshal` is better after all.
