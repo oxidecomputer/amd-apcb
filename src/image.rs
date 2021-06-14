@@ -139,20 +139,30 @@ impl Group<'_> {
 
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'a>(buf: &mut Buffer<'a>) -> Option<Entry<'a>> {
+    fn next_item<'a>(buf: &mut Buffer<'a>) -> Result<Entry<'a>> {
         if buf.len() == 0 {
-            return None;
+            return Err(Error::MarshalError);
         }
-        let header = take_header_from_collection::<APCB_TYPE_HEADER>(&mut *buf)?;
+        let header = match take_header_from_collection::<APCB_TYPE_HEADER>(&mut *buf) {
+            Some(item) => item,
+            None => {
+                return Err(Error::MarshalError);
+            }
+        };
         ContextFormat::from_u8(header.context_format).unwrap();
         ContextType::from_u8(header.context_type).unwrap();
         let type_size = header.type_size.get() as usize;
 
         assert!(type_size >= size_of::<APCB_TYPE_HEADER>());
         let payload_size = type_size - size_of::<APCB_TYPE_HEADER>();
-        let body = take_body_from_collection(&mut *buf, payload_size, APCB_TYPE_ALIGNMENT)?;
+        let body = match take_body_from_collection(&mut *buf, payload_size, APCB_TYPE_ALIGNMENT) {
+            Some(item) => item,
+            None => {
+                return Err(Error::MarshalError);
+            },
+        };
 
-        Some(Entry {
+        Ok(Entry {
             header: header,
             body: body,
         })
@@ -173,7 +183,7 @@ impl Group<'_> {
             if buf.len() == 0 {
                 break;
             }
-            let entry = Self::next_item(&mut buf).ok_or_else(|| Error::MarshalError)?;
+            let entry = Self::next_item(&mut buf)?;
 
             if entry.header.type_id.get() == id && entry.header.instance_id.get() == instance_id && entry.header.board_instance_mask.get() == board_instance_mask {
                 let type_size = entry.header.type_size.get();
@@ -181,7 +191,7 @@ impl Group<'_> {
 
                 return Ok(type_size as u32);
             } else {
-                let entry = Self::next_item(&mut self.buf).ok_or_else(|| Error::MarshalError)?;
+                let entry = Self::next_item(&mut self.buf)?;
                 let entry_size = entry.header.type_size.get() as usize;
                 assert!(self.remaining_used_size >= entry_size);
                 self.remaining_used_size -= entry_size;
@@ -190,14 +200,14 @@ impl Group<'_> {
         Ok(0u32)
     }
     /// First the place BEFORE which the entry (GROUP_ID, ID, INSTANCE_ID, BOARD_INSTANCE_MASK) is supposed to go.
-    fn move_insertion_point_before(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16) {
+    fn move_insertion_point_before(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
         loop {
             let mut buf = &mut self.buf[..self.remaining_used_size];
             if buf.len() == 0 {
                 break;
             }
             match Self::next_item(&mut buf) {
-                Some(e) => {
+                Ok(e) => {
                     if (e.header.group_id.get(), e.id(), e.instance_id(), e.board_instance_mask()) < (group_id, id, instance_id, board_instance_mask) {
                         let entry = Self::next_item(&mut self.buf).unwrap();
                         let entry_size = entry.header.type_size.get() as usize;
@@ -207,11 +217,12 @@ impl Group<'_> {
                         break;
                     }
                 },
-                None => {
-                    break;
+                Err(e) => {
+                    return Err(e);
                 },
             }
         }
+        Ok(())
     }
 }
 
@@ -223,14 +234,16 @@ impl<'a> Iterator for Group<'a> {
             return None;
         }
         match Self::next_item(&mut self.buf) {
-            Some(e) => {
+            Ok(e) => {
                 assert!(e.header.group_id.get() == self.header.group_id.get());
                 let entry_size = e.header.type_size.get() as usize;
                 assert!(self.remaining_used_size >= entry_size);
                 self.remaining_used_size -= entry_size;
                 Some(e)
             },
-            None => None,
+            Err(e) => {
+                None
+            },
         }
     }
 }
@@ -243,13 +256,15 @@ impl<'a> Iterator for APCB<'a> {
             return None;
         }
         match Self::next_item(&mut self.beginning_of_groups) {
-            Some(e) => {
+            Ok(e) => {
                 let group_size = e.header.group_size.get() as usize;
                 assert!(self.remaining_used_size >= group_size);
                 self.remaining_used_size -= group_size;
                 Some(e)
             },
-            None => None,
+            Err(e) => {
+                None
+            },
         }
     }
 }
@@ -257,18 +272,28 @@ impl<'a> Iterator for APCB<'a> {
 impl<'a> APCB<'a> {
     /// It's useful to have some way of NOT mutating self.beginning_of_groups.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'b>(buf: &mut Buffer<'b>) -> Option<Group<'b>> {
+    fn next_item<'b>(buf: &mut Buffer<'b>) -> Result<Group<'b>> {
         if buf.len() == 0 {
-            return None;
+            return Err(Error::MarshalError);
         }
-        let header = take_header_from_collection::<APCB_GROUP_HEADER>(&mut *buf)?;
+        let header = match take_header_from_collection::<APCB_GROUP_HEADER>(&mut *buf) {
+             Some(item) => item,
+             None => {
+                 return Err(Error::MarshalError);
+             },
+        };
         let group_size = header.group_size.get() as usize;
         assert!(group_size >= size_of::<APCB_GROUP_HEADER>());
         let payload_size = group_size - size_of::<APCB_GROUP_HEADER>();
-        let body = take_body_from_collection(&mut *buf, payload_size, 1)?;
+        let body = match take_body_from_collection(&mut *buf, payload_size, 1) {
+            Some(item) => item,
+            None => {
+                return Err(Error::MarshalError);
+            },
+        };
         let body_len = body.len();
 
-        Some(Group {
+        Ok(Group {
             header: header,
             buf: body,
             remaining_used_size: body_len,
@@ -312,7 +337,7 @@ impl<'a> APCB<'a> {
             if beginning_of_groups.len() == 0 {
                 break;
             }
-            let group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
+            let group = Self::next_item(&mut beginning_of_groups)?;
             if group.header.group_id.get() == group_id {
                 let group_size = group.header.group_size.get();
 
@@ -324,7 +349,7 @@ impl<'a> APCB<'a> {
                 self.remaining_used_size = self.remaining_used_size.checked_sub(group_size as usize).ok_or_else(|| Error::MarshalError)?;
                 break;
             } else {
-                let group = Self::next_item(&mut self.beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
+                let group = Self::next_item(&mut self.beginning_of_groups)?;
                 let group_size = group.header.group_size.get() as usize;
                 assert!(self.remaining_used_size >= group_size);
                 self.remaining_used_size -= group_size;
@@ -338,7 +363,7 @@ impl<'a> APCB<'a> {
             if beginning_of_groups.len() == 0 {
                 break;
             }
-            let mut group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
+            let mut group = Self::next_item(&mut beginning_of_groups)?;
             if group.header.group_id.get() == group_id {
                 let entry_size = group.delete_entry(entry_id, instance_id, board_instance_mask)?;
                 if entry_size > 0 {
@@ -354,7 +379,7 @@ impl<'a> APCB<'a> {
                 }
                 break 'outer;
             }
-            let group = Self::next_item(&mut self.beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
+            let group = Self::next_item(&mut self.beginning_of_groups)?;
             let group_size = group.header.group_size.get() as usize;
             assert!(self.remaining_used_size >= group_size);
             self.remaining_used_size -= group_size;
@@ -367,7 +392,7 @@ impl<'a> APCB<'a> {
             if beginning_of_groups.len() == 0 {
                 break;
             }
-            let group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
+            let group = Self::next_item(&mut beginning_of_groups)?;
             if group.header.group_id.get() == group_id {
                 let entry_size: u16 = (size_of::<APCB_TYPE_HEADER>() as u16).checked_add(payload_size).ok_or_else(|| Error::OutOfSpaceError)?;
                 let group_size = group.header.group_size.get().checked_add(entry_size as u32).ok_or_else(|| Error::OutOfSpaceError)?;
@@ -383,9 +408,9 @@ impl<'a> APCB<'a> {
 
                 self.remaining_used_size = self.remaining_used_size.checked_add(entry_size as usize).ok_or_else(|| Error::OutOfSpaceError)?;
 
-                let mut group = Self::next_item(&mut self.beginning_of_groups).ok_or_else(|| Error::MarshalError)?; // reload so we get a bigger slice
+                let mut group = Self::next_item(&mut self.beginning_of_groups)?; // reload so we get a bigger slice
                 group.remaining_used_size = group.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::MarshalError)?;
-                group.move_insertion_point_before(group_id, id, instance_id, board_instance_mask);
+                group.move_insertion_point_before(group_id, id, instance_id, board_instance_mask)?;
 
                 // Move the entries from after the insertion point to the right (in order to make room before for our new entry).
                 group.buf.copy_within(0..group.remaining_used_size, entry_size as usize);
@@ -403,7 +428,7 @@ impl<'a> APCB<'a> {
                 let body = take_body_from_collection(&mut group.buf, payload_size.into(), APCB_TYPE_ALIGNMENT).ok_or_else(|| Error::MarshalError)?;
                 return Ok(Entry { header, body });
             }
-            let group = Self::next_item(&mut self.beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
+            let group = Self::next_item(&mut self.beginning_of_groups)?;
             let group_size = group.header.group_size.get() as usize;
             assert!(self.remaining_used_size >= group_size);
             self.remaining_used_size -= group_size;
