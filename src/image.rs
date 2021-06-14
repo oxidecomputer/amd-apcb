@@ -196,7 +196,7 @@ impl Group<'_> {
             }
             match Self::next_item(&mut buf) {
                 Some(e) => {
-                    if (group_id, id, instance_id, board_instance_mask) < (e.header.group_id.get(), e.id(), e.instance_id(), e.board_instance_mask()) {
+                    if (e.header.group_id.get(), e.id(), e.instance_id(), e.board_instance_mask()) < (group_id, id, instance_id, board_instance_mask) {
                         let entry = Self::next_item(&mut self.buf).unwrap();
                         self.remaining_used_size -= entry.header.type_size.get() as usize;
                     } else {
@@ -675,6 +675,8 @@ mod tests {
         groups.insert_group(0x1704, *b"MEMG")?;
         let mut groups = APCB::load(&mut buffer[0..]).unwrap();
         groups.insert_entry(0x1701, 96, 0, 0xFFFF, 48)?;
+        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        groups.insert_entry(0x1701, 97, 0, 0xFFFF, 1)?;
 
         let mut count = 0;
         let groups = APCB::load(&mut buffer[0..]).unwrap();
@@ -685,12 +687,23 @@ mod tests {
                     assert!(group.signature() ==*b"PSPG");
                     let mut entry_count = 0;
                     for entry in group {
-                        assert!(entry.id() == 96);
-                        assert!(entry.instance_id() == 0);
-                        assert!(entry.board_instance_mask() == 0xFFFF);
+                        match entry_count {
+                            0 => {
+                                assert!(entry.id() == 96);
+                                assert!(entry.instance_id() == 0);
+                                assert!(entry.board_instance_mask() == 0xFFFF);
+                            },
+                            1 => {
+                                assert!(entry.id() == 97);
+                                assert!(entry.instance_id() == 0);
+                                assert!(entry.board_instance_mask() == 0xFFFF);
+                            },
+                            _ => {
+                            },
+                        }
                         entry_count += 1;
                     }
-                    assert!(entry_count == 1);
+                    assert!(entry_count == 2);
                 },
                 1 => {
                     assert!(group.id() == 0x1704);
