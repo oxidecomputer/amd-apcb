@@ -182,7 +182,9 @@ impl Group<'_> {
                 return Ok(type_size as u32);
             } else {
                 let entry = Self::next_item(&mut self.buf).ok_or_else(|| Error::MarshalError)?;
-                self.remaining_used_size -= entry.header.type_size.get() as usize;
+                let entry_size = entry.header.type_size.get() as usize;
+                assert!(self.remaining_used_size >= entry_size);
+                self.remaining_used_size -= entry_size;
             }
         }
         Ok(0u32)
@@ -198,7 +200,9 @@ impl Group<'_> {
                 Some(e) => {
                     if (e.header.group_id.get(), e.id(), e.instance_id(), e.board_instance_mask()) < (group_id, id, instance_id, board_instance_mask) {
                         let entry = Self::next_item(&mut self.buf).unwrap();
-                        self.remaining_used_size -= entry.header.type_size.get() as usize;
+                        let entry_size = entry.header.type_size.get() as usize;
+                        assert!(self.remaining_used_size >= entry_size);
+                        self.remaining_used_size -= entry_size;
                     } else {
                         break;
                     }
@@ -222,6 +226,7 @@ impl<'a> Iterator for Group<'a> {
             Some(e) => {
                 assert!(e.header.group_id.get() == self.header.group_id.get());
                 let entry_size = e.header.type_size.get() as usize;
+                assert!(self.remaining_used_size >= entry_size);
                 self.remaining_used_size -= entry_size;
                 Some(e)
             },
@@ -240,6 +245,7 @@ impl<'a> Iterator for APCB<'a> {
         match Self::next_item(&mut self.beginning_of_groups) {
             Some(e) => {
                 let group_size = e.header.group_size.get() as usize;
+                assert!(self.remaining_used_size >= group_size);
                 self.remaining_used_size -= group_size;
                 Some(e)
             },
@@ -320,6 +326,7 @@ impl<'a> APCB<'a> {
             } else {
                 let group = Self::next_item(&mut self.beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
                 let group_size = group.header.group_size.get() as usize;
+                assert!(self.remaining_used_size >= group_size);
                 self.remaining_used_size -= group_size;
             }
         }
@@ -349,6 +356,7 @@ impl<'a> APCB<'a> {
             }
             let group = Self::next_item(&mut self.beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
             let group_size = group.header.group_size.get() as usize;
+            assert!(self.remaining_used_size >= group_size);
             self.remaining_used_size -= group_size;
         }
         Ok(())
@@ -397,6 +405,7 @@ impl<'a> APCB<'a> {
             }
             let group = Self::next_item(&mut self.beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
             let group_size = group.header.group_size.get() as usize;
+            assert!(self.remaining_used_size >= group_size);
             self.remaining_used_size -= group_size;
         }
         Err(Error::GroupNotFoundError)
