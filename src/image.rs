@@ -21,6 +21,7 @@ pub struct APCB<'a> {
 pub enum Error {
     MarshalError,
     OutOfSpaceError,
+    GroupNotFoundError,
 }
 
 type Result<Q> = core::result::Result<Q, Error>;
@@ -323,6 +324,48 @@ impl<'a> APCB<'a> {
             self.remaining_used_size -= group_size;
         }
         Ok(())
+    }
+    pub fn insert_entry(&mut self, group_id: u16, id: u16, payload_size: u16, board_instance_mask: u16) -> Result<Entry> {
+        loop {
+            let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
+            if beginning_of_groups.len() == 0 {
+                break;
+            }
+            let group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
+            if group.header.group_id.get() == group_id {
+                let group = Self::next_item(&mut beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
+                let entry_size: u16 = (size_of::<APCB_TYPE_HEADER>() as u16).checked_add(payload_size).ok_or_else(|| Error::OutOfSpaceError)?;
+                let group_size = group.header.group_size.get().checked_add(entry_size as u32).ok_or_else(|| Error::OutOfSpaceError)?;
+                group.header.group_size.set(group_size.into());
+
+                let apcb_size = self.header.apcb_size.get();
+                // FIXME move the entries from after where we want to insert.
+                self.beginning_of_groups.copy_within((group_size as usize)..(apcb_size as usize), 0);
+                self.header.apcb_size.set(apcb_size.checked_add(entry_size as u32).ok_or_else(|| Error::OutOfSpaceError)?);
+
+                self.remaining_used_size = self.remaining_used_size.checked_add(entry_size as usize).ok_or_else(|| Error::OutOfSpaceError)?;
+
+                let mut beginning_of_groups = &mut self.beginning_of_groups[0/*FIXME*/..];
+                // FIXME zero entry's data--otherwise next_item is gonna fail.
+                match Group::next_item(&mut beginning_of_groups) {
+                    Some(e) => {
+                        e.header.group_id.set(group_id);
+                        e.header.type_id.set(id);
+                        e.header.type_size.set(entry_size);
+                        // TODO: The following more via Entry set-accessors: instance_id, context_type, context_formt, unit_size, priority_mask, key_size, key_pos
+                        e.header.board_instance_mask.set(board_instance_mask);
+                        return Ok(e);
+                    },
+                    None => {
+                        return Err(Error::MarshalError);
+                    },
+                }
+            }
+            let group = Self::next_item(&mut self.beginning_of_groups).ok_or_else(|| Error::MarshalError)?;
+            let group_size = group.header.group_size.get() as usize;
+            self.remaining_used_size -= group_size;
+        }
+        Err(Error::GroupNotFoundError)
     }
     pub fn load(backing_store: Buffer<'a>) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
