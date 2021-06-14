@@ -312,9 +312,9 @@ impl<'a> APCB<'a> {
                     let apcb_size = self.header.apcb_size.get();
                     assert!(apcb_size >= group_size);
                     self.beginning_of_groups.copy_within((group_size as usize)..(apcb_size as usize), 0);
-                    self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).ok_or_else(|| Error::MarshalError)?);
+                    self.header.apcb_size.set(apcb_size.checked_sub(entry_size as u32).ok_or_else(|| Error::MarshalError)?);
 
-                    self.remaining_used_size = self.remaining_used_size.checked_sub(group_size as usize).ok_or_else(|| Error::MarshalError)?;
+                    self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::MarshalError)?;
                 }
                 break 'outer;
             }
