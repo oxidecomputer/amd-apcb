@@ -448,7 +448,6 @@ impl<'a> ApcbIterMut<'a> {
             remaining_used_size: body_len,
         })
     }
-
     pub fn delete_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
         'outer: loop {
             let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
@@ -686,6 +685,16 @@ impl<'a> APCB<'a> {
         }
         Ok(())
     }
+    pub fn delete_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
+        self.groups_mut().delete_entry(group_id, entry_id, instance_id, board_instance_mask)
+    }
+    pub fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, payload_size: u16) -> Result<()> {
+        match self.groups_mut().insert_entry(group_id, id, instance_id, board_instance_mask, payload_size) {
+            Ok(e) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
     pub fn load(backing_store: Buffer<'a>) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
         let header = take_header_from_collection_mut::<APCB_V2_HEADER>(&mut backing_store)
