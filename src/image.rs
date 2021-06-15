@@ -138,10 +138,93 @@ impl Entry<'_> {
 }
 
 #[derive(Debug)]
+pub struct EntryItem<'a> {
+    pub header: &'a APCB_TYPE_HEADER,
+    body: ReadOnlyBuffer<'a>,
+}
+
+impl EntryItem<'_> {
+    // pub fn group_id(&self) -> u16  ; suppressed--replaced by an assert on read.
+    pub fn id(&self) -> u16 {
+        self.header.type_id.get()
+    }
+    pub fn instance_id(&self) -> u16 {
+        self.header.instance_id.get()
+    }
+    pub fn context_type(&self) -> ContextType {
+        FromPrimitive::from_u8(self.header.context_type).unwrap()
+    }
+    pub fn context_format(&self) -> ContextFormat {
+        FromPrimitive::from_u8(self.header.context_format).unwrap()
+    }
+    /// Note: Applicable iff context_type() == 2.  Usual value then: 8.  If inapplicable, value is 0.
+    pub fn unit_size(&self) -> u8 {
+        self.header.unit_size
+    }
+    pub fn priority_mask(&self) -> u8 {
+        self.header.priority_mask
+    }
+    /// Note: Applicable iff context_format() != ContextFormat::Raw. Result <= unit_size.
+    pub fn key_size(&self) -> u8 {
+        self.header.key_size
+    }
+    pub fn key_pos(&self) -> u8 {
+        self.header.key_pos
+    }
+    pub fn board_instance_mask(&self) -> u16 {
+        self.header.board_instance_mask.get()
+    }
+
+    /* Not seen in the wild anymore.
+        /// If the value is a Parameter, returns its time point
+        pub fn parameter_time_point(&self) -> u8 {
+            assert!(self.context_type() == ContextType::Parameter);
+            self.body[0]
+        }
+
+        /// If the value is a Parameter, returns its token
+        pub fn parameter_token(&self) -> u16 {
+            assert!(self.context_type() == ContextType::Parameter);
+            let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
+            value & 0x1FFF
+        }
+
+        // If the value is a Parameter, returns its size
+        pub fn parameter_size(&self) -> u16 {
+            assert!(self.context_type() == ContextType::Parameter);
+            let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
+            (value >> 13) + 1
+        }
+    */
+}
+
+#[derive(Debug)]
 pub struct GroupItem<'a> {
     pub header: &'a APCB_GROUP_HEADER,
     buf: ReadOnlyBuffer<'a>,
     remaining_used_size: usize,
+}
+
+impl<'a> Iterator for GroupItem<'a> {
+    type Item = EntryItem<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.remaining_used_size == 0 {
+            return None;
+        }
+        match Self::next_item(&mut self.buf) {
+            Ok(e) => {
+                assert!(e.header.group_id.get() == self.header.group_id.get());
+                let entry_size = e.header.type_size.get() as usize;
+                assert!(self.remaining_used_size >= entry_size);
+                self.remaining_used_size -= entry_size;
+                Some(e)
+            },
+            Err(e) => {
+                None
+            },
+        }
+    }
 }
 
 impl GroupItem<'_> {
@@ -153,6 +236,49 @@ impl GroupItem<'_> {
     pub fn id(&self) -> u16 {
         self.header.group_id.get()
     }
+
+    /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
+    /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
+    fn next_item<'a>(buf: &mut ReadOnlyBuffer<'a>) -> Result<EntryItem<'a>> {
+        if buf.len() == 0 {
+            return Err(Error::MarshalError);
+        }
+        let header = match take_header_from_collection::<APCB_TYPE_HEADER>(&mut *buf) {
+            Some(item) => item,
+            None => {
+                return Err(Error::MarshalError);
+            }
+        };
+        ContextFormat::from_u8(header.context_format).unwrap();
+        ContextType::from_u8(header.context_type).unwrap();
+        let type_size = header.type_size.get() as usize;
+
+        assert!(type_size >= size_of::<APCB_TYPE_HEADER>());
+        let payload_size = type_size - size_of::<APCB_TYPE_HEADER>();
+        let body = match take_body_from_collection(&mut *buf, payload_size, APCB_TYPE_ALIGNMENT) {
+            Some(item) => item,
+            None => {
+                return Err(Error::MarshalError);
+            },
+        };
+
+        Ok(EntryItem {
+            header: header,
+            body: body,
+        })
+    }
+
+/* TODO:
+    /// Finds the first Entry with the given id, if any, and returns it.
+    pub fn first_entry(&self, id: u16) -> Option<EntryItem> {
+        for entry in self {
+            if entry.id() == id {
+                return Some(entry);
+            }
+        }
+        None
+    }
+*/
 }
 
 #[derive(Debug)]
@@ -630,7 +756,7 @@ mod tests {
     fn create_empty_too_small_image() {
         let mut buffer: [u8; 1] = [0];
         let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
-        let groups = apcb.groups_mut();
+        let groups = apcb.groups();
         for _ in groups {
             assert!(false);
         }
@@ -641,7 +767,7 @@ mod tests {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
         let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
-        let mut groups = apcb.groups_mut();
+        let groups = apcb.groups();
         let mut count = 0;
         for _item in groups {
             count += 1;
@@ -656,7 +782,7 @@ mod tests {
         let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
-        let mut groups = apcb.groups_mut();
+        let mut groups = apcb.groups();
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() == *b"PSPG");
@@ -674,9 +800,8 @@ mod tests {
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.delete_group(0x1701)?;
-        let mut groups = apcb.groups_mut();
         let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
-        let mut groups = apcb.groups_mut();
+        let mut groups = apcb.groups();
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1704);
         assert!(group.signature() ==*b"MEMG");
@@ -691,9 +816,8 @@ mod tests {
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.delete_group(0x1704)?;
-        let mut groups = apcb.groups_mut();
         let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
-        let mut groups = apcb.groups_mut();
+        let mut groups = apcb.groups();
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
@@ -709,7 +833,7 @@ mod tests {
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.delete_group(0x4711)?;
         let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
-        let mut groups = apcb.groups_mut();
+        let mut groups = apcb.groups();
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
@@ -727,7 +851,7 @@ mod tests {
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.delete_group(0x1701)?;
         let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
-        let mut groups = apcb.groups_mut();
+        let groups = apcb.groups();
         for _group in groups {
             assert!(false);
         }
@@ -747,7 +871,7 @@ mod tests {
         let mut groups = apcb.groups_mut();
         groups.delete_entry(0x1701, 96, 0, 0xFFFF)?;
         let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
-        let mut groups = apcb.groups_mut();
+        let mut groups = apcb.groups();
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
@@ -778,7 +902,7 @@ mod tests {
         groups.insert_entry(0x1701, 97, 0, 0xFFFF, 1)?;
 
         let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
-        let mut groups = apcb.groups_mut();
+        let mut groups = apcb.groups();
 
         let mut group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1701);
