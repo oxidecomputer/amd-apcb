@@ -128,13 +128,13 @@ impl Entry<'_> {
 }
 
 #[derive(Debug)]
-pub struct Group<'a> {
+pub struct GroupMutItem<'a> {
     pub header: &'a mut APCB_GROUP_HEADER,
     buf: Buffer<'a>,
     remaining_used_size: usize,
 }
 
-impl Group<'_> {
+impl GroupMutItem<'_> {
     /// Note: ASCII
     pub fn signature(&self) -> [u8; 4] {
         self.header.signature
@@ -233,7 +233,7 @@ impl Group<'_> {
     }
 }
 
-impl<'a> Iterator for Group<'a> {
+impl<'a> Iterator for GroupMutItem<'a> {
     type Item = Entry<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -258,7 +258,7 @@ impl<'a> Iterator for Group<'a> {
 impl<'a> ApcbIterMut<'a> {
     /// It's useful to have some way of NOT mutating self.beginning_of_groups.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'b>(buf: &mut Buffer<'b>) -> Result<Group<'b>> {
+    fn next_item<'b>(buf: &mut Buffer<'b>) -> Result<GroupMutItem<'b>> {
         if buf.len() == 0 {
             return Err(Error::MarshalError);
         }
@@ -279,7 +279,7 @@ impl<'a> ApcbIterMut<'a> {
         };
         let body_len = body.len();
 
-        Ok(Group {
+        Ok(GroupMutItem {
             header: header,
             buf: body,
             remaining_used_size: body_len,
@@ -367,7 +367,7 @@ impl<'a> ApcbIterMut<'a> {
 }
 
 impl<'a> Iterator for ApcbIterMut<'a> {
-    type Item = Group<'a>;
+    type Item = GroupMutItem<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.remaining_used_size == 0 {
@@ -396,7 +396,7 @@ impl<'a> APCB<'a> {
             remaining_used_size: self.remaining_used_size,
         }
     }
-    pub fn group_mut(&mut self, group_id: u16) -> Option<Group> {
+    pub fn group_mut(&mut self, group_id: u16) -> Option<GroupMutItem> {
         for group in self.groups_mut() {
             if group.id() == group_id {
                 return Some(group);
@@ -404,7 +404,7 @@ impl<'a> APCB<'a> {
         }
         None
     }
-    pub fn insert_group(&mut self, group_id: u16, signature: [u8; 4]) -> Result<Group> {
+    pub fn insert_group(&mut self, group_id: u16, signature: [u8; 4]) -> Result<GroupMutItem> {
         // TODO: insert sorted.
         let size = size_of::<APCB_GROUP_HEADER>();
         let apcb_size = self.header.apcb_size.get();
@@ -422,7 +422,7 @@ impl<'a> APCB<'a> {
         let body = take_body_from_collection(&mut beginning_of_group, 0, 1).ok_or_else(|| Error::MarshalError)?;
         let body_len = body.len();
 
-        Ok(Group {
+        Ok(GroupMutItem {
             header: header,
             buf: body,
             remaining_used_size: body_len,
