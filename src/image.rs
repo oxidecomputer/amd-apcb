@@ -577,13 +577,7 @@ mod tests {
         assert!(group.id() == 0x1704);
         assert!(group.signature() == *b"MEMG");
         eprintln!("THIRD");
-        match groups.next() {
-            None => {
-            },
-            _ => {
-                assert!(false);
-            }
-        }
+        assert!(matches!(groups.next(), None));
         Ok(())
     }
 
@@ -600,13 +594,7 @@ mod tests {
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1704);
         assert!(group.signature() ==*b"MEMG");
-        match groups.next() {
-            None => {
-            },
-            _ => {
-                assert!(false);
-            }
-        }
+        assert!(matches!(groups.next(), None));
         Ok(())
     }
 
@@ -623,13 +611,7 @@ mod tests {
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
-        match groups.next() {
-            None => {
-            },
-            _ => {
-                assert!(false);
-            }
-        }
+        assert!(matches!(groups.next(), None));
         Ok(())
     }
 
@@ -648,13 +630,7 @@ mod tests {
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1704);
         assert!(group.signature() ==*b"MEMG");
-        match groups.next() {
-            None => {
-            },
-            _ => {
-                assert!(false);
-            }
-        }
+        assert!(matches!(groups.next(), None));
         Ok(())
     }
 
@@ -732,13 +708,7 @@ mod tests {
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
-        match group.next() {
-            None => {
-            },
-            _ => {
-                assert!(false);
-            }
-        }
+        assert!(matches!(group.next(), None));
 
         let mut group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1704);
@@ -747,13 +717,7 @@ mod tests {
             assert!(false);
         }
 
-        match groups.next() {
-            None => {
-            },
-            _ => {
-                assert!(false);
-            }
-        }
+        assert!(matches!(groups.next(), None));
         Ok(())
     }
 }
