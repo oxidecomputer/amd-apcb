@@ -595,7 +595,7 @@ impl<'a> Iterator for ApcbIter<'a> {
 }
 
 impl<'a> APCB<'a> {
-    pub fn groups(&mut self) -> ApcbIter {
+    pub fn groups(&self) -> ApcbIter {
         ApcbIter {
             header: self.header,
             v3_header_ext: self.v3_header_ext,
