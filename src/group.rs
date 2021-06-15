@@ -98,7 +98,7 @@ pub struct GroupMutItem<'a> {
     pub(crate) remaining_used_size: usize, // FIXME: private
 }
 
-impl GroupMutItem<'_> {
+impl<'a> GroupMutItem<'a> {
     /// Note: ASCII
     pub fn signature(&self) -> [u8; 4] {
         self.header.signature
@@ -110,7 +110,7 @@ impl GroupMutItem<'_> {
 
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'a>(buf: &mut Buffer<'a>) -> Result<EntryMutItem<'a>> {
+    fn next_item<'b>(buf: &mut Buffer<'b>) -> Result<EntryMutItem<'b>> {
         if buf.len() == 0 {
             return Err(Error::FileSystemError("unexpected EOF while reading header of Entry", ""));
         }
@@ -193,7 +193,7 @@ impl GroupMutItem<'_> {
         }
         Ok(())
     }
-    pub(crate) fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, entry_size: u16, payload_size: u16) -> Result<EntryMutItem> {
+    pub(crate) fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, entry_size: u16, payload_size: u16) -> Result<EntryMutItem<'a>> {
         self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "APCB_TYPE_HEADER::entry_size"))?;
         self.move_insertion_point_before(group_id, id, instance_id, board_instance_mask)?;
 

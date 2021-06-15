@@ -111,24 +111,7 @@ impl<'a> ApcbIterMut<'a> {
                 self.remaining_used_size = self.remaining_used_size.checked_add(entry_size as usize).ok_or_else(|| Error::OutOfSpaceError)?;
 
                 let mut group = Self::next_item(&mut self.beginning_of_groups)?; // reload so we get a bigger slice
-                // doesn't work: return group.insert_entry(group_id, id, instance_id, board_instance_mask, entry_size, payload_size); so pasting here.
-                group.remaining_used_size = group.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "APCB_TYPE_HEADER::entry_size"))?;
-                group.move_insertion_point_before(group_id, id, instance_id, board_instance_mask)?;
-
-                // Move the entries from after the insertion point to the right (in order to make room before for our new entry).
-                group.buf.copy_within(0..group.remaining_used_size, entry_size as usize);
-
-                group.remaining_used_size = group.remaining_used_size.checked_add(entry_size as usize).ok_or_else(|| Error::OutOfSpaceError)?;
-                let header = take_header_from_collection_mut::<APCB_TYPE_HEADER>(&mut group.buf).ok_or_else(|| Error::FileSystemError("could not read header of Entry", ""))?;
-                *header = APCB_TYPE_HEADER::default();
-                header.group_id.set(group_id);
-                header.type_id.set(id);
-                header.type_size.set(entry_size);
-                header.instance_id.set(instance_id);
-                // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
-                header.board_instance_mask.set(board_instance_mask);
-                let body = take_body_from_collection_mut(&mut group.buf, payload_size.into(), APCB_TYPE_ALIGNMENT).ok_or_else(|| Error::FileSystemError("could not read body of Entry", ""))?;
-                return Ok(EntryMutItem { header, body });
+                return group.insert_entry(group_id, id, instance_id, board_instance_mask, entry_size, payload_size);
             }
             let group = Self::next_item(&mut self.beginning_of_groups)?;
             let group_size = group.header.group_size.get() as usize;
