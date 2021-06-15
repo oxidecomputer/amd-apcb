@@ -43,6 +43,15 @@ pub enum Error {
 
 type Result<Q> = core::result::Result<Q, Error>;
 
+/* Note: high-level interface is:
+
+   enum EntryMutItem {
+       Raw(&[u8]),
+       Tokens(Token...),
+       Params(Param...), // not seen in the wild anymore
+   }
+
+*/
 #[derive(Debug)]
 pub struct EntryMutItem<'a> {
     pub header: &'a mut APCB_TYPE_HEADER,
