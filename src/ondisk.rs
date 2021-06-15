@@ -314,8 +314,14 @@ Group:
                 [Type * alignment(4 Byte)]
 Type:
     Header
-    Body
+    Body:
+        If Header.context_format == token:
+            [Token]
     Alignment
+
+Token:
+    id
+    value
 */
 
 #[cfg(test)]
