@@ -7,7 +7,7 @@ use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32};
 
 /// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
 /// If the item cannot be parsed, returns None and does not advance.
-pub fn take_header_from_collection<'a, T: Sized + FromBytes + AsBytes>(buf: &mut &'a mut [u8]) -> Option<&'a mut T> {
+pub fn take_header_from_collection_mut<'a, T: Sized + FromBytes + AsBytes>(buf: &mut &'a mut [u8]) -> Option<&'a mut T> {
     let xbuf = replace(&mut *buf, &mut []);
     match LayoutVerified::<_, T>::new_from_prefix(xbuf) {
         Some((item, xbuf)) => {
@@ -21,12 +21,44 @@ pub fn take_header_from_collection<'a, T: Sized + FromBytes + AsBytes>(buf: &mut
 /// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
 /// Assuming that *BUF had been aligned to ALIGNMENT before the call, it also ensures that *BUF is aligned to ALIGNMENT after the call.
 /// If the item cannot be parsed, returns None and does not advance.
-pub fn take_body_from_collection<'a>(buf: &mut &'a mut [u8], size: usize, alignment: usize) -> Option<&'a mut [u8]> {
+pub fn take_body_from_collection_mut<'a>(buf: &mut &'a mut [u8], size: usize, alignment: usize) -> Option<&'a mut [u8]> {
     let xbuf = replace(&mut *buf, &mut []);
     if xbuf.len() >= size {
         let (item, xbuf) = xbuf.split_at_mut(size);
         if size % alignment != 0 && xbuf.len() >= alignment - (size % alignment) {
             let (_, b) = xbuf.split_at_mut(alignment - (size % alignment));
+            *buf = b;
+        } else {
+            *buf = xbuf;
+        }
+        Some(item)
+    } else {
+        None
+    }
+}
+
+/// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
+/// If the item cannot be parsed, returns None and does not advance.
+pub fn take_header_from_collection<'a, T: Sized + FromBytes>(buf: &mut &'a [u8]) -> Option<&'a T> {
+    let xbuf = replace(&mut *buf, &mut []);
+    match LayoutVerified::<_, T>::new_from_prefix(xbuf) {
+        Some((item, xbuf)) => {
+            *buf = xbuf;
+            Some(item.into_ref())
+        }
+        None => None,
+    }
+}
+
+/// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
+/// Assuming that *BUF had been aligned to ALIGNMENT before the call, it also ensures that *BUF is aligned to ALIGNMENT after the call.
+/// If the item cannot be parsed, returns None and does not advance.
+pub fn take_body_from_collection<'a>(buf: &mut &'a [u8], size: usize, alignment: usize) -> Option<&'a [u8]> {
+    let xbuf = replace(&mut *buf, &mut []);
+    if xbuf.len() >= size {
+        let (item, xbuf) = xbuf.split_at(size);
+        if size % alignment != 0 && xbuf.len() >= alignment - (size % alignment) {
+            let (_, b) = xbuf.split_at(alignment - (size % alignment));
             *buf = b;
         } else {
             *buf = xbuf;

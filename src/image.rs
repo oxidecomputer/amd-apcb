@@ -3,12 +3,15 @@ use crate::ondisk::APCB_TYPE_ALIGNMENT;
 use crate::ondisk::APCB_TYPE_HEADER;
 use crate::ondisk::APCB_V2_HEADER;
 use crate::ondisk::APCB_V3_HEADER_EXT;
-pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection, take_body_from_collection};
+pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
 use core::mem::{size_of};
 use num_traits::FromPrimitive;
 
 type
     Buffer<'a> = &'a mut [u8];
+
+type
+    ReadOnlyBuffer<'a> = &'a [u8];
 
 pub struct APCB<'a> {
     header: &'a mut APCB_V2_HEADER,
@@ -21,6 +24,13 @@ pub struct ApcbIterMut<'a> {
     header: &'a mut APCB_V2_HEADER,
     v3_header_ext: Option<APCB_V3_HEADER_EXT>,
     beginning_of_groups: Buffer<'a>,
+    remaining_used_size: usize,
+}
+
+pub struct ApcbIter<'a> {
+    header: &'a APCB_V2_HEADER,
+    v3_header_ext: Option<APCB_V3_HEADER_EXT>,
+    beginning_of_groups: ReadOnlyBuffer<'a>,
     remaining_used_size: usize,
 }
 
@@ -128,6 +138,24 @@ impl Entry<'_> {
 }
 
 #[derive(Debug)]
+pub struct GroupItem<'a> {
+    pub header: &'a APCB_GROUP_HEADER,
+    buf: ReadOnlyBuffer<'a>,
+    remaining_used_size: usize,
+}
+
+impl GroupItem<'_> {
+    /// Note: ASCII
+    pub fn signature(&self) -> [u8; 4] {
+        self.header.signature
+    }
+    /// Note: See ondisk::GroupId
+    pub fn id(&self) -> u16 {
+        self.header.group_id.get()
+    }
+}
+
+#[derive(Debug)]
 pub struct GroupMutItem<'a> {
     pub header: &'a mut APCB_GROUP_HEADER,
     buf: Buffer<'a>,
@@ -150,7 +178,7 @@ impl GroupMutItem<'_> {
         if buf.len() == 0 {
             return Err(Error::MarshalError);
         }
-        let header = match take_header_from_collection::<APCB_TYPE_HEADER>(&mut *buf) {
+        let header = match take_header_from_collection_mut::<APCB_TYPE_HEADER>(&mut *buf) {
             Some(item) => item,
             None => {
                 return Err(Error::MarshalError);
@@ -162,7 +190,7 @@ impl GroupMutItem<'_> {
 
         assert!(type_size >= size_of::<APCB_TYPE_HEADER>());
         let payload_size = type_size - size_of::<APCB_TYPE_HEADER>();
-        let body = match take_body_from_collection(&mut *buf, payload_size, APCB_TYPE_ALIGNMENT) {
+        let body = match take_body_from_collection_mut(&mut *buf, payload_size, APCB_TYPE_ALIGNMENT) {
             Some(item) => item,
             None => {
                 return Err(Error::MarshalError);
@@ -262,7 +290,7 @@ impl<'a> ApcbIterMut<'a> {
         if buf.len() == 0 {
             return Err(Error::MarshalError);
         }
-        let header = match take_header_from_collection::<APCB_GROUP_HEADER>(&mut *buf) {
+        let header = match take_header_from_collection_mut::<APCB_GROUP_HEADER>(&mut *buf) {
              Some(item) => item,
              None => {
                  return Err(Error::MarshalError);
@@ -271,7 +299,7 @@ impl<'a> ApcbIterMut<'a> {
         let group_size = header.group_size.get() as usize;
         assert!(group_size >= size_of::<APCB_GROUP_HEADER>());
         let payload_size = group_size - size_of::<APCB_GROUP_HEADER>();
-        let body = match take_body_from_collection(&mut *buf, payload_size, 1) {
+        let body = match take_body_from_collection_mut(&mut *buf, payload_size, 1) {
             Some(item) => item,
             None => {
                 return Err(Error::MarshalError);
@@ -346,7 +374,7 @@ impl<'a> ApcbIterMut<'a> {
 
                 group.remaining_used_size = group.remaining_used_size.checked_add(entry_size as usize).ok_or_else(|| Error::OutOfSpaceError)?;
 
-                let header = take_header_from_collection::<APCB_TYPE_HEADER>(&mut group.buf).ok_or_else(|| Error::MarshalError)?;
+                let header = take_header_from_collection_mut::<APCB_TYPE_HEADER>(&mut group.buf).ok_or_else(|| Error::MarshalError)?;
                 *header = APCB_TYPE_HEADER::default();
                 header.group_id.set(group_id);
                 header.type_id.set(id);
@@ -354,7 +382,7 @@ impl<'a> ApcbIterMut<'a> {
                 header.instance_id.set(instance_id);
                 // Note: The following is settable by the user via Entry set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
                 header.board_instance_mask.set(board_instance_mask);
-                let body = take_body_from_collection(&mut group.buf, payload_size.into(), APCB_TYPE_ALIGNMENT).ok_or_else(|| Error::MarshalError)?;
+                let body = take_body_from_collection_mut(&mut group.buf, payload_size.into(), APCB_TYPE_ALIGNMENT).ok_or_else(|| Error::MarshalError)?;
                 return Ok(Entry { header, body });
             }
             let group = Self::next_item(&mut self.beginning_of_groups)?;
@@ -387,7 +415,68 @@ impl<'a> Iterator for ApcbIterMut<'a> {
     }
 }
 
+impl<'a> ApcbIter<'a> {
+    /// It's useful to have some way of NOT mutating self.beginning_of_groups.  This is what this function does.
+    /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
+    fn next_item<'b>(buf: &mut ReadOnlyBuffer<'b>) -> Result<GroupItem<'b>> {
+        if buf.len() == 0 {
+            return Err(Error::MarshalError);
+        }
+        let header = match take_header_from_collection::<APCB_GROUP_HEADER>(&mut *buf) {
+             Some(item) => item,
+             None => {
+                 return Err(Error::MarshalError);
+             },
+        };
+        let group_size = header.group_size.get() as usize;
+        assert!(group_size >= size_of::<APCB_GROUP_HEADER>());
+        let payload_size = group_size - size_of::<APCB_GROUP_HEADER>();
+        let body = match take_body_from_collection(&mut *buf, payload_size, 1) {
+            Some(item) => item,
+            None => {
+                return Err(Error::MarshalError);
+            },
+        };
+        let body_len = body.len();
+
+        Ok(GroupItem {
+            header: header,
+            buf: body,
+            remaining_used_size: body_len,
+        })
+    }
+}
+
+impl<'a> Iterator for ApcbIter<'a> {
+    type Item = GroupItem<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.remaining_used_size == 0 {
+            return None;
+        }
+        match Self::next_item(&mut self.beginning_of_groups) {
+            Ok(e) => {
+                let group_size = e.header.group_size.get() as usize;
+                assert!(self.remaining_used_size >= group_size);
+                self.remaining_used_size -= group_size;
+                Some(e)
+            },
+            Err(e) => {
+                None
+            },
+        }
+    }
+}
+
 impl<'a> APCB<'a> {
+    pub fn groups(&mut self) -> ApcbIter {
+        ApcbIter {
+            header: self.header,
+            v3_header_ext: self.v3_header_ext,
+            beginning_of_groups: self.beginning_of_groups,
+            remaining_used_size: self.remaining_used_size,
+        }
+    }
     pub fn groups_mut(&mut self) -> ApcbIterMut {
         ApcbIterMut {
             header: self.header,
@@ -415,11 +504,11 @@ impl<'a> APCB<'a> {
 
         let mut beginning_of_group = &mut self.beginning_of_groups[remaining_used_size..self.remaining_used_size];
 
-        let mut header = take_header_from_collection::<APCB_GROUP_HEADER>(&mut beginning_of_group).ok_or_else(|| Error::MarshalError)?;
+        let mut header = take_header_from_collection_mut::<APCB_GROUP_HEADER>(&mut beginning_of_group).ok_or_else(|| Error::MarshalError)?;
         *header = APCB_GROUP_HEADER::default();
         header.signature = signature;
         header.group_id = group_id.into();
-        let body = take_body_from_collection(&mut beginning_of_group, 0, 1).ok_or_else(|| Error::MarshalError)?;
+        let body = take_body_from_collection_mut(&mut beginning_of_group, 0, 1).ok_or_else(|| Error::MarshalError)?;
         let body_len = body.len();
 
         Ok(GroupMutItem {
@@ -456,7 +545,7 @@ impl<'a> APCB<'a> {
     }
     pub fn load(backing_store: Buffer<'a>) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
-        let header = take_header_from_collection::<APCB_V2_HEADER>(&mut backing_store)
+        let header = take_header_from_collection_mut::<APCB_V2_HEADER>(&mut backing_store)
             .ok_or_else(|| Error::MarshalError)?;
 
         assert!(usize::from(header.header_size) >= size_of::<APCB_V2_HEADER>());
@@ -465,7 +554,7 @@ impl<'a> APCB<'a> {
         let v3_header_ext = if usize::from(header.header_size)
             == size_of::<APCB_V2_HEADER>() + size_of::<APCB_V3_HEADER_EXT>()
         {
-            let value = take_header_from_collection::<APCB_V3_HEADER_EXT>(&mut backing_store)
+            let value = take_header_from_collection_mut::<APCB_V3_HEADER_EXT>(&mut backing_store)
                 .ok_or_else(|| Error::MarshalError)?;
             assert!(value.signature == *b"ECB2");
             assert!(value.struct_version.get() == 0x12);
@@ -496,11 +585,11 @@ impl<'a> APCB<'a> {
         }
         {
             let mut backing_store = &mut *backing_store;
-            let header = take_header_from_collection::<APCB_V2_HEADER>(&mut backing_store)
+            let header = take_header_from_collection_mut::<APCB_V2_HEADER>(&mut backing_store)
                     .ok_or_else(|| Error::MarshalError)?;
             *header = Default::default();
 
-            let v3_header_ext = take_header_from_collection::<APCB_V3_HEADER_EXT>(&mut backing_store)
+            let v3_header_ext = take_header_from_collection_mut::<APCB_V3_HEADER_EXT>(&mut backing_store)
                     .ok_or_else(|| Error::MarshalError)?;
             *v3_header_ext = Default::default();
 
@@ -530,7 +619,7 @@ mod tests {
     fn create_empty_image() {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
         let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
-        let groups = apcb.groups_mut();
+        let groups = apcb.groups();
         for _item in groups {
             assert!(false);
         }
