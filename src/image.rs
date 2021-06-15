@@ -40,6 +40,7 @@ pub enum Error {
     MarshalError,
     OutOfSpaceError,
     GroupNotFoundError,
+    EntryNotFoundError,
 }
 
 type Result<Q> = core::result::Result<Q, Error>;
@@ -834,10 +835,10 @@ mod tests {
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         let mut groups = apcb.groups();
-        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() == *b"PSPG");
-        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1704);
         assert!(group.signature() == *b"MEMG");
         assert!(matches!(groups.next(), None));
@@ -853,7 +854,7 @@ mod tests {
         apcb.delete_group(0x1701)?;
         let apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
-        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1704);
         assert!(group.signature() ==*b"MEMG");
         assert!(matches!(groups.next(), None));
@@ -869,7 +870,7 @@ mod tests {
         apcb.delete_group(0x1704)?;
         let apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
-        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
         assert!(matches!(groups.next(), None));
@@ -885,10 +886,10 @@ mod tests {
         apcb.delete_group(0x4711)?;
         let apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
-        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
-        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1704);
         assert!(group.signature() ==*b"MEMG");
         assert!(matches!(groups.next(), None));
@@ -923,14 +924,14 @@ mod tests {
         groups.delete_entry(0x1701, 96, 0, 0xFFFF)?;
         let apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
-        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
         for _entry in group {
             assert!(false);
         }
 
-        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1704);
         assert!(group.signature() ==*b"MEMG");
         for _entry in group {
@@ -955,23 +956,23 @@ mod tests {
         let apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
 
-        let mut group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        let mut group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
 
-        let entry = group.next().ok_or_else(|| Error::MarshalError)?;
+        let entry = group.next().ok_or_else(|| Error::EntryNotFoundError)?;
         assert!(entry.id() == 96);
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
-        let entry = group.next().ok_or_else(|| Error::MarshalError)?;
+        let entry = group.next().ok_or_else(|| Error::EntryNotFoundError)?;
         assert!(entry.id() == 97);
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
         assert!(matches!(group.next(), None));
 
-        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1704);
         assert!(group.signature() ==*b"MEMG");
         for _entry in group {
