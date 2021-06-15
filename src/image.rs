@@ -262,8 +262,7 @@ impl GroupItem<'_> {
         ContextType::from_u8(header.context_type).unwrap();
         let type_size = header.type_size.get() as usize;
 
-        assert!(type_size >= size_of::<APCB_TYPE_HEADER>());
-        let payload_size = type_size - size_of::<APCB_TYPE_HEADER>();
+        let payload_size = type_size.checked_sub(size_of::<APCB_TYPE_HEADER>()).ok_or_else(|| Error::MarshalError)?;
         let body = match take_body_from_collection(&mut *buf, payload_size, APCB_TYPE_ALIGNMENT) {
             Some(item) => item,
             None => {
@@ -323,8 +322,7 @@ impl GroupMutItem<'_> {
         ContextType::from_u8(header.context_type).unwrap();
         let type_size = header.type_size.get() as usize;
 
-        assert!(type_size >= size_of::<APCB_TYPE_HEADER>());
-        let payload_size = type_size - size_of::<APCB_TYPE_HEADER>();
+        let payload_size = type_size.checked_sub(size_of::<APCB_TYPE_HEADER>()).ok_or_else(|| Error::MarshalError)?;
         let body = match take_body_from_collection_mut(&mut *buf, payload_size, APCB_TYPE_ALIGNMENT) {
             Some(item) => item,
             None => {
@@ -363,8 +361,7 @@ impl GroupMutItem<'_> {
             } else {
                 let entry = Self::next_item(&mut self.buf)?;
                 let entry_size = entry.header.type_size.get() as usize;
-                assert!(self.remaining_used_size >= entry_size);
-                self.remaining_used_size -= entry_size;
+                self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::MarshalError)?;
             }
         }
         Ok(0u32)
@@ -382,7 +379,7 @@ impl GroupMutItem<'_> {
                         let entry = Self::next_item(&mut self.buf).unwrap();
                         let entry_size = entry.header.type_size.get() as usize;
                         assert!(self.remaining_used_size >= entry_size);
-                        self.remaining_used_size -= entry_size;
+                        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::MarshalError)?;
                     } else {
                         break;
                     }
@@ -432,8 +429,7 @@ impl<'a> ApcbIterMut<'a> {
              },
         };
         let group_size = header.group_size.get() as usize;
-        assert!(group_size >= size_of::<APCB_GROUP_HEADER>());
-        let payload_size = group_size - size_of::<APCB_GROUP_HEADER>();
+        let payload_size = group_size.checked_sub(size_of::<APCB_GROUP_HEADER>()).ok_or_else(|| Error::MarshalError)?;
         let body = match take_body_from_collection_mut(&mut *buf, payload_size, 1) {
             Some(item) => item,
             None => {
@@ -472,8 +468,7 @@ impl<'a> ApcbIterMut<'a> {
             }
             let group = Self::next_item(&mut self.beginning_of_groups)?;
             let group_size = group.header.group_size.get() as usize;
-            assert!(self.remaining_used_size >= group_size);
-            self.remaining_used_size -= group_size;
+            self.remaining_used_size = self.remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::MarshalError)?;
         }
         Ok(())
     }
@@ -521,8 +516,7 @@ impl<'a> ApcbIterMut<'a> {
             }
             let group = Self::next_item(&mut self.beginning_of_groups)?;
             let group_size = group.header.group_size.get() as usize;
-            assert!(self.remaining_used_size >= group_size);
-            self.remaining_used_size -= group_size;
+            self.remaining_used_size = self.remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::MarshalError)?;
         }
         Err(Error::GroupNotFoundError)
     }
@@ -537,7 +531,9 @@ impl<'a> ApcbIterMut<'a> {
                 let group_size = group.header.group_size.get();
 
                 let apcb_size = self.header.apcb_size.get();
-                assert!(apcb_size >= group_size);
+                if apcb_size < group_size {
+                    return Err(Error::MarshalError);
+                }
                 self.beginning_of_groups.copy_within((group_size as usize)..(apcb_size as usize), 0);
                 self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).ok_or_else(|| Error::MarshalError)?);
 
@@ -547,7 +543,7 @@ impl<'a> ApcbIterMut<'a> {
                 let group = Self::next_item(&mut self.beginning_of_groups)?;
                 let group_size = group.header.group_size.get() as usize;
                 assert!(self.remaining_used_size >= group_size);
-                self.remaining_used_size -= group_size;
+                self.remaining_used_size = self.remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::MarshalError)?;
             }
         }
         Ok(())
@@ -589,8 +585,7 @@ impl<'a> ApcbIter<'a> {
              },
         };
         let group_size = header.group_size.get() as usize;
-        assert!(group_size >= size_of::<APCB_GROUP_HEADER>());
-        let payload_size = group_size - size_of::<APCB_GROUP_HEADER>();
+        let payload_size = group_size.checked_sub(size_of::<APCB_GROUP_HEADER>()).ok_or_else(|| Error::MarshalError)?;
         let body = match take_body_from_collection(&mut *buf, payload_size, 1) {
             Some(item) => item,
             None => {
@@ -668,7 +663,9 @@ impl<'a> APCB<'a> {
         self.header.apcb_size.set(apcb_size.checked_add(size as u32).ok_or_else(|| Error::OutOfSpaceError)?);
         let remaining_used_size = self.remaining_used_size;
         self.remaining_used_size = remaining_used_size.checked_add(size).ok_or_else(|| Error::OutOfSpaceError)?;
-        assert!(self.beginning_of_groups.len() >= self.remaining_used_size);
+        if self.beginning_of_groups.len() < self.remaining_used_size {
+            return Err(Error::MarshalError);
+        }
 
         let mut beginning_of_group = &mut self.beginning_of_groups[remaining_used_size..self.remaining_used_size];
 
@@ -704,29 +701,31 @@ impl<'a> APCB<'a> {
         let header = take_header_from_collection_mut::<APCB_V2_HEADER>(&mut backing_store)
             .ok_or_else(|| Error::MarshalError)?;
 
-        assert!(usize::from(header.header_size) >= size_of::<APCB_V2_HEADER>());
-        assert!(header.version.get() == 0x30);
+        if usize::from(header.header_size) >= size_of::<APCB_V2_HEADER>() && header.version.get() == 0x30 {
+        } else {
+            return Err(Error::MarshalError);
+        }
 
         let v3_header_ext = if usize::from(header.header_size)
             == size_of::<APCB_V2_HEADER>() + size_of::<APCB_V3_HEADER_EXT>()
         {
             let value = take_header_from_collection_mut::<APCB_V3_HEADER_EXT>(&mut backing_store)
                 .ok_or_else(|| Error::MarshalError)?;
-            assert!(value.signature == *b"ECB2");
-            assert!(value.struct_version.get() == 0x12);
-            assert!(value.data_version.get() == 0x100);
-            assert!(value.ext_header_size.get() == 96);
-            assert!(u32::from(value.data_offset.get()) == 88);
-            assert!(value.signature_ending == *b"BCBA");
+            if value.signature == *b"ECB2" && value.struct_version.get() == 0x12 && value.data_version.get() == 0x100 && value.ext_header_size.get() == 96 && u32::from(value.data_offset.get()) == 88 && value.signature_ending == *b"BCBA" {
+            } else {
+                return Err(Error::MarshalError);
+            }
             Some(*value)
         } else {
             //// TODO: Maybe skip weird header
             None
         };
 
-        assert!(header.apcb_size.get() >= header.header_size.get().into());
-        let remaining_used_size = (header.apcb_size.get() - u32::from(header.header_size)) as usize;
-        assert!(backing_store.len() >= remaining_used_size);
+        let remaining_used_size = header.apcb_size.get().checked_sub(u32::from(header.header_size.get())).ok_or_else(|| Error::MarshalError)? as usize;
+        if backing_store.len() >= remaining_used_size {
+        } else {
+            return Err(Error::MarshalError);
+        }
 
         Ok(Self {
             header: header,
