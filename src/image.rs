@@ -773,7 +773,7 @@ mod tests {
     #[test]
     fn create_empty_image() {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        let apcb = APCB::create(&mut buffer[0..]).unwrap();
         let groups = apcb.groups();
         for _item in groups {
             assert!(false);
@@ -784,7 +784,7 @@ mod tests {
     #[should_panic]
     fn create_empty_too_small_image() {
         let mut buffer: [u8; 1] = [0];
-        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        let apcb = APCB::create(&mut buffer[0..]).unwrap();
         let groups = apcb.groups();
         for _ in groups {
             assert!(false);
@@ -829,7 +829,7 @@ mod tests {
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.delete_group(0x1701)?;
-        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1704);
@@ -845,7 +845,7 @@ mod tests {
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.delete_group(0x1704)?;
-        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1701);
@@ -861,7 +861,7 @@ mod tests {
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.delete_group(0x4711)?;
-        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1701);
@@ -879,7 +879,7 @@ mod tests {
         let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.delete_group(0x1701)?;
-        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let apcb = APCB::load(&mut buffer[0..]).unwrap();
         let groups = apcb.groups();
         for _group in groups {
             assert!(false);
@@ -899,7 +899,7 @@ mod tests {
         let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups_mut();
         groups.delete_entry(0x1701, 96, 0, 0xFFFF)?;
-        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1701);
@@ -930,7 +930,7 @@ mod tests {
         let mut groups = apcb.groups_mut();
         groups.insert_entry(0x1701, 97, 0, 0xFFFF, 1)?;
 
-        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
 
         let mut group = groups.next().ok_or_else(|| Error::MarshalError)?;
@@ -949,7 +949,7 @@ mod tests {
 
         assert!(matches!(group.next(), None));
 
-        let mut group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1704);
         assert!(group.signature() ==*b"MEMG");
         for _entry in group {
