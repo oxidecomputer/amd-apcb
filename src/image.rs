@@ -37,7 +37,6 @@ pub struct ApcbIter<'a> {
 #[derive(Debug)]
 pub enum Error {
     FileSystemError(&'static str, &'static str), // message, field name
-    MarshalError,
     OutOfSpaceError,
     GroupNotFoundError,
     EntryNotFoundError,
