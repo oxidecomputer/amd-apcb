@@ -526,6 +526,32 @@ impl<'a> ApcbIterMut<'a> {
         }
         Err(Error::GroupNotFoundError)
     }
+    pub fn delete_group(&mut self, group_id: u16) -> Result<()> {
+        loop {
+            let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
+            if beginning_of_groups.len() == 0 {
+                break;
+            }
+            let group = Self::next_item(&mut beginning_of_groups)?;
+            if group.header.group_id.get() == group_id {
+                let group_size = group.header.group_size.get();
+
+                let apcb_size = self.header.apcb_size.get();
+                assert!(apcb_size >= group_size);
+                self.beginning_of_groups.copy_within((group_size as usize)..(apcb_size as usize), 0);
+                self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).ok_or_else(|| Error::MarshalError)?);
+
+                self.remaining_used_size = self.remaining_used_size.checked_sub(group_size as usize).ok_or_else(|| Error::MarshalError)?;
+                break;
+            } else {
+                let group = Self::next_item(&mut self.beginning_of_groups)?;
+                let group_size = group.header.group_size.get() as usize;
+                assert!(self.remaining_used_size >= group_size);
+                self.remaining_used_size -= group_size;
+            }
+        }
+        Ok(())
+    }
 }
 
 impl<'a> Iterator for ApcbIterMut<'a> {
@@ -659,32 +685,6 @@ impl<'a> APCB<'a> {
             remaining_used_size: body_len,
         })
     }
-    pub fn delete_group(&mut self, group_id: u16) -> Result<()> {
-        loop {
-            let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
-            if beginning_of_groups.len() == 0 {
-                break;
-            }
-            let group = ApcbIterMut::next_item(&mut beginning_of_groups)?;
-            if group.header.group_id.get() == group_id {
-                let group_size = group.header.group_size.get();
-
-                let apcb_size = self.header.apcb_size.get();
-                assert!(apcb_size >= group_size);
-                self.beginning_of_groups.copy_within((group_size as usize)..(apcb_size as usize), 0);
-                self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).ok_or_else(|| Error::MarshalError)?);
-
-                self.remaining_used_size = self.remaining_used_size.checked_sub(group_size as usize).ok_or_else(|| Error::MarshalError)?;
-                break;
-            } else {
-                let group = ApcbIterMut::next_item(&mut self.beginning_of_groups)?;
-                let group_size = group.header.group_size.get() as usize;
-                assert!(self.remaining_used_size >= group_size);
-                self.remaining_used_size -= group_size;
-            }
-        }
-        Ok(())
-    }
     pub fn delete_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
         self.groups_mut().delete_entry(group_id, entry_id, instance_id, board_instance_mask)
     }
@@ -693,6 +693,10 @@ impl<'a> APCB<'a> {
             Ok(e) => Ok(()),
             Err(e) => Err(e),
         }
+    }
+
+    pub fn delete_group(&mut self, group_id: u16) -> Result<()> {
+        self.groups_mut().delete_group(group_id)
     }
 
     pub fn load(backing_store: Buffer<'a>) -> Result<Self> {
