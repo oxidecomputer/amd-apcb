@@ -17,6 +17,13 @@ pub struct APCB<'a> {
     remaining_used_size: usize,
 }
 
+pub struct ApcbIterMut<'a> {
+    header: &'a mut APCB_V2_HEADER,
+    v3_header_ext: Option<APCB_V3_HEADER_EXT>,
+    beginning_of_groups: Buffer<'a>,
+    remaining_used_size: usize,
+}
+
 #[derive(Debug)]
 pub enum Error {
     MarshalError,
@@ -248,28 +255,7 @@ impl<'a> Iterator for Group<'a> {
     }
 }
 
-impl<'a> Iterator for APCB<'a> {
-    type Item = Group<'a>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.remaining_used_size == 0 {
-            return None;
-        }
-        match Self::next_item(&mut self.beginning_of_groups) {
-            Ok(e) => {
-                let group_size = e.header.group_size.get() as usize;
-                assert!(self.remaining_used_size >= group_size);
-                self.remaining_used_size -= group_size;
-                Some(e)
-            },
-            Err(e) => {
-                None
-            },
-        }
-    }
-}
-
-impl<'a> APCB<'a> {
+impl<'a> ApcbIterMut<'a> {
     /// It's useful to have some way of NOT mutating self.beginning_of_groups.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(buf: &mut Buffer<'b>) -> Result<Group<'b>> {
@@ -299,64 +285,7 @@ impl<'a> APCB<'a> {
             remaining_used_size: body_len,
         })
     }
-    pub fn group_mut(&mut self, group_id: u16) -> Option<Group> {
-        for group in self {
-            if group.id() == group_id {
-                return Some(group);
-            }
-        }
-        None
-    }
-    pub fn insert_group(&mut self, group_id: u16, signature: [u8; 4]) -> Result<Group> {
-        // TODO: insert sorted.
-        let size = size_of::<APCB_GROUP_HEADER>();
-        let apcb_size = self.header.apcb_size.get();
-        self.header.apcb_size.set(apcb_size.checked_add(size as u32).ok_or_else(|| Error::OutOfSpaceError)?);
-        let remaining_used_size = self.remaining_used_size;
-        self.remaining_used_size = remaining_used_size.checked_add(size).ok_or_else(|| Error::OutOfSpaceError)?;
-        assert!(self.beginning_of_groups.len() >= self.remaining_used_size);
 
-        let mut beginning_of_group = &mut self.beginning_of_groups[remaining_used_size..self.remaining_used_size];
-
-        let mut header = take_header_from_collection::<APCB_GROUP_HEADER>(&mut beginning_of_group).ok_or_else(|| Error::MarshalError)?;
-        *header = APCB_GROUP_HEADER::default();
-        header.signature = signature;
-        header.group_id = group_id.into();
-        let body = take_body_from_collection(&mut beginning_of_group, 0, 1).ok_or_else(|| Error::MarshalError)?;
-        let body_len = body.len();
-
-        Ok(Group {
-            header: header,
-            buf: body,
-            remaining_used_size: body_len,
-        })
-    }
-    pub fn delete_group(&mut self, group_id: u16) -> Result<()> {
-        loop {
-            let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
-            if beginning_of_groups.len() == 0 {
-                break;
-            }
-            let group = Self::next_item(&mut beginning_of_groups)?;
-            if group.header.group_id.get() == group_id {
-                let group_size = group.header.group_size.get();
-
-                let apcb_size = self.header.apcb_size.get();
-                assert!(apcb_size >= group_size);
-                self.beginning_of_groups.copy_within((group_size as usize)..(apcb_size as usize), 0);
-                self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).ok_or_else(|| Error::MarshalError)?);
-
-                self.remaining_used_size = self.remaining_used_size.checked_sub(group_size as usize).ok_or_else(|| Error::MarshalError)?;
-                break;
-            } else {
-                let group = Self::next_item(&mut self.beginning_of_groups)?;
-                let group_size = group.header.group_size.get() as usize;
-                assert!(self.remaining_used_size >= group_size);
-                self.remaining_used_size -= group_size;
-            }
-        }
-        Ok(())
-    }
     pub fn delete_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
         'outer: loop {
             let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
@@ -435,6 +364,96 @@ impl<'a> APCB<'a> {
         }
         Err(Error::GroupNotFoundError)
     }
+}
+
+impl<'a> Iterator for ApcbIterMut<'a> {
+    type Item = Group<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.remaining_used_size == 0 {
+            return None;
+        }
+        match Self::next_item(&mut self.beginning_of_groups) {
+            Ok(e) => {
+                let group_size = e.header.group_size.get() as usize;
+                assert!(self.remaining_used_size >= group_size);
+                self.remaining_used_size -= group_size;
+                Some(e)
+            },
+            Err(e) => {
+                None
+            },
+        }
+    }
+}
+
+impl<'a> APCB<'a> {
+    pub fn groups_mut(&mut self) -> ApcbIterMut {
+        ApcbIterMut {
+            header: self.header,
+            v3_header_ext: self.v3_header_ext,
+            beginning_of_groups: self.beginning_of_groups,
+            remaining_used_size: self.remaining_used_size,
+        }
+    }
+    pub fn group_mut(&mut self, group_id: u16) -> Option<Group> {
+        for group in self.groups_mut() {
+            if group.id() == group_id {
+                return Some(group);
+            }
+        }
+        None
+    }
+    pub fn insert_group(&mut self, group_id: u16, signature: [u8; 4]) -> Result<Group> {
+        // TODO: insert sorted.
+        let size = size_of::<APCB_GROUP_HEADER>();
+        let apcb_size = self.header.apcb_size.get();
+        self.header.apcb_size.set(apcb_size.checked_add(size as u32).ok_or_else(|| Error::OutOfSpaceError)?);
+        let remaining_used_size = self.remaining_used_size;
+        self.remaining_used_size = remaining_used_size.checked_add(size).ok_or_else(|| Error::OutOfSpaceError)?;
+        assert!(self.beginning_of_groups.len() >= self.remaining_used_size);
+
+        let mut beginning_of_group = &mut self.beginning_of_groups[remaining_used_size..self.remaining_used_size];
+
+        let mut header = take_header_from_collection::<APCB_GROUP_HEADER>(&mut beginning_of_group).ok_or_else(|| Error::MarshalError)?;
+        *header = APCB_GROUP_HEADER::default();
+        header.signature = signature;
+        header.group_id = group_id.into();
+        let body = take_body_from_collection(&mut beginning_of_group, 0, 1).ok_or_else(|| Error::MarshalError)?;
+        let body_len = body.len();
+
+        Ok(Group {
+            header: header,
+            buf: body,
+            remaining_used_size: body_len,
+        })
+    }
+    pub fn delete_group(&mut self, group_id: u16) -> Result<()> {
+        loop {
+            let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
+            if beginning_of_groups.len() == 0 {
+                break;
+            }
+            let group = ApcbIterMut::next_item(&mut beginning_of_groups)?;
+            if group.header.group_id.get() == group_id {
+                let group_size = group.header.group_size.get();
+
+                let apcb_size = self.header.apcb_size.get();
+                assert!(apcb_size >= group_size);
+                self.beginning_of_groups.copy_within((group_size as usize)..(apcb_size as usize), 0);
+                self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).ok_or_else(|| Error::MarshalError)?);
+
+                self.remaining_used_size = self.remaining_used_size.checked_sub(group_size as usize).ok_or_else(|| Error::MarshalError)?;
+                break;
+            } else {
+                let group = ApcbIterMut::next_item(&mut self.beginning_of_groups)?;
+                let group_size = group.header.group_size.get() as usize;
+                assert!(self.remaining_used_size >= group_size);
+                self.remaining_used_size -= group_size;
+            }
+        }
+        Ok(())
+    }
     pub fn load(backing_store: Buffer<'a>) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
         let header = take_header_from_collection::<APCB_V2_HEADER>(&mut backing_store)
@@ -510,7 +529,8 @@ mod tests {
     #[test]
     fn create_empty_image() {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let groups = APCB::create(&mut buffer[0..]).unwrap();
+        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        let groups = apcb.groups_mut();
         for _item in groups {
             assert!(false);
         }
@@ -520,7 +540,8 @@ mod tests {
     #[should_panic]
     fn create_empty_too_small_image() {
         let mut buffer: [u8; 1] = [0];
-        let groups = APCB::create(&mut buffer[0..]).unwrap();
+        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        let groups = apcb.groups_mut();
         for _ in groups {
             assert!(false);
         }
@@ -529,8 +550,9 @@ mod tests {
     #[test]
     fn create_image_with_one_group() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut groups = APCB::create(&mut buffer[0..]).unwrap();
-        groups.insert_group(0x1701, *b"PSPG")?;
+        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        apcb.insert_group(0x1701, *b"PSPG")?;
+        let mut groups = apcb.groups_mut();
         let mut count = 0;
         for _item in groups {
             count += 1;
@@ -542,16 +564,19 @@ mod tests {
     #[test]
     fn create_image_with_two_groups() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut groups = APCB::create(&mut buffer[0..]).unwrap();
-        groups.insert_group(0x1701, *b"PSPG")?;
-        groups.insert_group(0x1704, *b"MEMG")?;
-        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        apcb.insert_group(0x1701, *b"PSPG")?;
+        apcb.insert_group(0x1704, *b"MEMG")?;
+        let mut groups = apcb.groups_mut();
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        eprintln!("FIRST");
         assert!(group.id() == 0x1701);
         assert!(group.signature() == *b"PSPG");
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        eprintln!("SECOND");
         assert!(group.id() == 0x1704);
         assert!(group.signature() == *b"MEMG");
+        eprintln!("THIRD");
         match groups.next() {
             None => {
             },
@@ -565,11 +590,13 @@ mod tests {
     #[test]
     fn create_image_with_two_groups_delete_first_group() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut groups = APCB::create(&mut buffer[0..]).unwrap();
-        groups.insert_group(0x1701, *b"PSPG")?;
-        groups.insert_group(0x1704, *b"MEMG")?;
-        groups.delete_group(0x1701)?;
-        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        apcb.insert_group(0x1701, *b"PSPG")?;
+        apcb.insert_group(0x1704, *b"MEMG")?;
+        apcb.delete_group(0x1701)?;
+        let mut groups = apcb.groups_mut();
+        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let mut groups = apcb.groups_mut();
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1704);
         assert!(group.signature() ==*b"MEMG");
@@ -586,11 +613,13 @@ mod tests {
     #[test]
     fn create_image_with_two_groups_delete_second_group() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut groups = APCB::create(&mut buffer[0..]).unwrap();
-        groups.insert_group(0x1701, *b"PSPG")?;
-        groups.insert_group(0x1704, *b"MEMG")?;
-        groups.delete_group(0x1704)?;
-        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        apcb.insert_group(0x1701, *b"PSPG")?;
+        apcb.insert_group(0x1704, *b"MEMG")?;
+        apcb.delete_group(0x1704)?;
+        let mut groups = apcb.groups_mut();
+        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let mut groups = apcb.groups_mut();
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
@@ -607,11 +636,12 @@ mod tests {
     #[test]
     fn create_image_with_two_groups_delete_unknown_group() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut groups = APCB::create(&mut buffer[0..]).unwrap();
-        groups.insert_group(0x1701, *b"PSPG")?;
-        groups.insert_group(0x1704, *b"MEMG")?;
-        groups.delete_group(0x4711)?;
-        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        apcb.insert_group(0x1701, *b"PSPG")?;
+        apcb.insert_group(0x1704, *b"MEMG")?;
+        apcb.delete_group(0x4711)?;
+        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let mut groups = apcb.groups_mut();
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
@@ -631,10 +661,11 @@ mod tests {
     #[test]
     fn create_image_with_group_delete_group() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut groups = APCB::create(&mut buffer[0..]).unwrap();
-        groups.insert_group(0x1701, *b"PSPG")?;
-        groups.delete_group(0x1701)?;
-        let groups = APCB::load(&mut buffer[0..]).unwrap();
+        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        apcb.insert_group(0x1701, *b"PSPG")?;
+        apcb.delete_group(0x1701)?;
+        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let mut groups = apcb.groups_mut();
         for _group in groups {
             assert!(false);
         }
@@ -644,14 +675,17 @@ mod tests {
     #[test]
     fn delete_entries() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut groups = APCB::create(&mut buffer[0..]).unwrap();
-        groups.insert_group(0x1701, *b"PSPG")?;
-        groups.insert_group(0x1704, *b"MEMG")?;
-        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        apcb.insert_group(0x1701, *b"PSPG")?;
+        apcb.insert_group(0x1704, *b"MEMG")?;
+        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let mut groups = apcb.groups_mut();
         groups.insert_entry(0x1701, 96, 0, 0xFFFF, 48)?;
-        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let mut groups = apcb.groups_mut();
         groups.delete_entry(0x1701, 96, 0, 0xFFFF)?;
-        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let mut groups = apcb.groups_mut();
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
@@ -671,15 +705,18 @@ mod tests {
     #[test]
     fn insert_entries() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut groups = APCB::create(&mut buffer[0..]).unwrap();
-        groups.insert_group(0x1701, *b"PSPG")?;
-        groups.insert_group(0x1704, *b"MEMG")?;
-        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        apcb.insert_group(0x1701, *b"PSPG")?;
+        apcb.insert_group(0x1704, *b"MEMG")?;
+        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let mut groups = apcb.groups_mut();
         groups.insert_entry(0x1701, 96, 0, 0xFFFF, 48)?;
-        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let mut groups = apcb.groups_mut();
         groups.insert_entry(0x1701, 97, 0, 0xFFFF, 1)?;
 
-        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let mut groups = apcb.groups_mut();
 
         let mut group = groups.next().ok_or_else(|| Error::MarshalError)?;
         assert!(group.id() == 0x1701);
