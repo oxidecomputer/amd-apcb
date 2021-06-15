@@ -290,9 +290,9 @@ impl Default for APCB_TYPE_HEADER {
             type_id: 0u16.into(),                         // probably invalid
             type_size: (size_of::<Self>() as u16).into(), // probably invalid
             instance_id: 0u16.into(),                     // probably invalid
-            context_type: 2,
+            context_type: 0,
             context_format: 0,
-            unit_size: 8,
+            unit_size: 0,
             priority_mask: 0x20, // maybe want to change that at runtime
             key_size: 0,
             key_pos: 0,
