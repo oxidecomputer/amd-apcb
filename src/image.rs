@@ -545,25 +545,20 @@ mod tests {
         let mut groups = APCB::create(&mut buffer[0..]).unwrap();
         groups.insert_group(0x1701, *b"PSPG")?;
         groups.insert_group(0x1704, *b"MEMG")?;
-        let mut count = 0;
-        let groups = APCB::load(&mut buffer[0..]).unwrap();
-        for group in groups {
-            match count {
-                0 => {
-                    assert!(group.id() == 0x1701);
-                    assert!(group.signature() ==*b"PSPG");
-                },
-                1 => {
-                    assert!(group.id() == 0x1704);
-                    assert!(group.signature() ==*b"MEMG");
-                },
-                _ => {
-                    assert!(false);
-                }
+        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        assert!(group.id() == 0x1701);
+        assert!(group.signature() == *b"PSPG");
+        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        assert!(group.id() == 0x1704);
+        assert!(group.signature() == *b"MEMG");
+        match groups.next() {
+            None => {
+            },
+            _ => {
+                assert!(false);
             }
-            count += 1;
         }
-        assert!(count == 2);
         Ok(())
     }
 
@@ -574,21 +569,17 @@ mod tests {
         groups.insert_group(0x1701, *b"PSPG")?;
         groups.insert_group(0x1704, *b"MEMG")?;
         groups.delete_group(0x1701)?;
-        let mut count = 0;
-        let groups = APCB::load(&mut buffer[0..]).unwrap();
-        for group in groups {
-            match count {
-                0 => {
-                    assert!(group.id() == 0x1704);
-                    assert!(group.signature() ==*b"MEMG");
-                },
-                _ => {
-                    assert!(false);
-                }
+        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        assert!(group.id() == 0x1704);
+        assert!(group.signature() ==*b"MEMG");
+        match groups.next() {
+            None => {
+            },
+            _ => {
+                assert!(false);
             }
-            count += 1;
         }
-        assert!(count == 1);
         Ok(())
     }
 
@@ -599,21 +590,17 @@ mod tests {
         groups.insert_group(0x1701, *b"PSPG")?;
         groups.insert_group(0x1704, *b"MEMG")?;
         groups.delete_group(0x1704)?;
-        let mut count = 0;
-        let groups = APCB::load(&mut buffer[0..]).unwrap();
-        for group in groups {
-            match count {
-                0 => {
-                    assert!(group.id() == 0x1701);
-                    assert!(group.signature() ==*b"PSPG");
-                },
-                _ => {
-                    assert!(false);
-                }
+        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        assert!(group.id() == 0x1701);
+        assert!(group.signature() ==*b"PSPG");
+        match groups.next() {
+            None => {
+            },
+            _ => {
+                assert!(false);
             }
-            count += 1;
         }
-        assert!(count == 1);
         Ok(())
     }
 
@@ -624,25 +611,20 @@ mod tests {
         groups.insert_group(0x1701, *b"PSPG")?;
         groups.insert_group(0x1704, *b"MEMG")?;
         groups.delete_group(0x4711)?;
-        let mut count = 0;
-        let groups = APCB::load(&mut buffer[0..]).unwrap();
-        for group in groups {
-            match count {
-                0 => {
-                    assert!(group.id() == 0x1701);
-                    assert!(group.signature() ==*b"PSPG");
-                },
-                1 => {
-                    assert!(group.id() == 0x1704);
-                    assert!(group.signature() ==*b"MEMG");
-                },
-                _ => {
-                    assert!(false);
-                }
+        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        assert!(group.id() == 0x1701);
+        assert!(group.signature() ==*b"PSPG");
+        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        assert!(group.id() == 0x1704);
+        assert!(group.signature() ==*b"MEMG");
+        match groups.next() {
+            None => {
+            },
+            _ => {
+                assert!(false);
             }
-            count += 1;
         }
-        assert!(count == 2);
         Ok(())
     }
 
@@ -669,33 +651,20 @@ mod tests {
         groups.insert_entry(0x1701, 96, 0, 0xFFFF, 48)?;
         let mut groups = APCB::load(&mut buffer[0..]).unwrap();
         groups.delete_entry(0x1701, 96, 0, 0xFFFF)?;
-        let mut count = 0;
-        let groups = APCB::load(&mut buffer[0..]).unwrap();
-        for group in groups {
-            match count {
-                0 => {
-                    assert!(group.id() == 0x1701);
-                    assert!(group.signature() ==*b"PSPG");
-                    let mut entry_count = 0;
-                    for _entry in group {
-                        entry_count += 1;
-                    }
-                    assert!(entry_count == 0);
-                },
-                1 => {
-                    assert!(group.id() == 0x1704);
-                    assert!(group.signature() ==*b"MEMG");
-                    for _entry in group {
-                        assert!(false);
-                    }
-                },
-                _ => {
-                    assert!(false);
-                }
-            }
-            count += 1;
+        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        assert!(group.id() == 0x1701);
+        assert!(group.signature() ==*b"PSPG");
+        for _entry in group {
+            assert!(false);
         }
-        assert!(count == 2);
+
+        let group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        assert!(group.id() == 0x1704);
+        assert!(group.signature() ==*b"MEMG");
+        for _entry in group {
+            assert!(false);
+        }
         Ok(())
     }
 
@@ -710,47 +679,44 @@ mod tests {
         let mut groups = APCB::load(&mut buffer[0..]).unwrap();
         groups.insert_entry(0x1701, 97, 0, 0xFFFF, 1)?;
 
-        let mut count = 0;
-        let groups = APCB::load(&mut buffer[0..]).unwrap();
-        for group in groups {
-            match count {
-                0 => {
-                    assert!(group.id() == 0x1701);
-                    assert!(group.signature() ==*b"PSPG");
-                    let mut entry_count = 0;
-                    for entry in group {
-                        match entry_count {
-                            0 => {
-                                assert!(entry.id() == 96);
-                                assert!(entry.instance_id() == 0);
-                                assert!(entry.board_instance_mask() == 0xFFFF);
-                            },
-                            1 => {
-                                assert!(entry.id() == 97);
-                                assert!(entry.instance_id() == 0);
-                                assert!(entry.board_instance_mask() == 0xFFFF);
-                            },
-                            _ => {
-                            },
-                        }
-                        entry_count += 1;
-                    }
-                    assert!(entry_count == 2);
-                },
-                1 => {
-                    assert!(group.id() == 0x1704);
-                    assert!(group.signature() ==*b"MEMG");
-                    for _entry in group {
-                        assert!(false);
-                    }
-                },
-                _ => {
-                    assert!(false);
-                }
+        let mut groups = APCB::load(&mut buffer[0..]).unwrap();
+
+        let mut group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        assert!(group.id() == 0x1701);
+        assert!(group.signature() ==*b"PSPG");
+
+        let entry = group.next().ok_or_else(|| Error::MarshalError)?;
+        assert!(entry.id() == 96);
+        assert!(entry.instance_id() == 0);
+        assert!(entry.board_instance_mask() == 0xFFFF);
+
+        let entry = group.next().ok_or_else(|| Error::MarshalError)?;
+        assert!(entry.id() == 97);
+        assert!(entry.instance_id() == 0);
+        assert!(entry.board_instance_mask() == 0xFFFF);
+
+        match group.next() {
+            None => {
+            },
+            _ => {
+                assert!(false);
             }
-            count += 1;
         }
-        assert!(count == 2);
+
+        let mut group = groups.next().ok_or_else(|| Error::MarshalError)?;
+        assert!(group.id() == 0x1704);
+        assert!(group.signature() ==*b"MEMG");
+        for _entry in group {
+            assert!(false);
+        }
+
+        match groups.next() {
+            None => {
+            },
+            _ => {
+                assert!(false);
+            }
+        }
         Ok(())
     }
 }
