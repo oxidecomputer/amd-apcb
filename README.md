@@ -14,7 +14,7 @@ To iterate, you can do:
 
     let mut buffer: [u8; 8*1024] = ... load from file;
     let apcb = APCB::load(&mut buffer[0..]).unwrap();
-    for group in apcb {
+    for group in apcb.groups() {
         for entry in group {
             ...
         }
@@ -35,8 +35,6 @@ To insert a new entry:
 To delete an entry:
 
     apcb.delete_entry(0x1701, 0x0000, 0, 0xFFFF)?;
-
-Note that all the mutators also move the iterator--so you might want to load the APCB anew before iterating.
 
 # Testing
 
