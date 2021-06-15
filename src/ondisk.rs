@@ -69,7 +69,7 @@ pub fn take_body_from_collection<'a>(buf: &mut &'a [u8], size: usize, alignment:
     }
 }
 
-#[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
+#[derive(FromBytes, AsBytes, Unaligned)]
 #[repr(C, packed)]
 pub struct APCB_V2_HEADER {
     pub signature: [u8; 4],
@@ -227,7 +227,7 @@ pub enum MemoryTypeId {
     PlatformTuning = 0x75,
 }
 
-#[derive(FromBytes, AsBytes, Unaligned, Clone, Copy, Debug)]
+#[derive(FromBytes, AsBytes, Unaligned, Debug)]
 #[repr(C, packed)]
 pub struct APCB_GROUP_HEADER {
     pub signature: [u8; 4],
@@ -267,7 +267,7 @@ impl Default for APCB_GROUP_HEADER {
     }
 }
 
-#[derive(FromBytes, AsBytes, Unaligned, Clone, Copy, Debug)]
+#[derive(FromBytes, AsBytes, Unaligned, Debug)]
 #[repr(C, packed)]
 pub struct APCB_TYPE_HEADER {
     pub group_id: U16<LittleEndian>, // should be equal to the group's group_id
