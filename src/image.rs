@@ -44,12 +44,12 @@ pub enum Error {
 type Result<Q> = core::result::Result<Q, Error>;
 
 #[derive(Debug)]
-pub struct Entry<'a> {
+pub struct EntryMutItem<'a> {
     pub header: &'a mut APCB_TYPE_HEADER,
     body: Buffer<'a>,
 }
 
-impl Entry<'_> {
+impl EntryMutItem<'_> {
     // pub fn group_id(&self) -> u16  ; suppressed--replaced by an assert on read.
     pub fn id(&self) -> u16 {
         self.header.type_id.get()
@@ -269,7 +269,7 @@ impl GroupItem<'_> {
     }
 
 /* TODO:
-    /// Finds the first Entry with the given id, if any, and returns it.
+    /// Finds the first EntryMutItem with the given id, if any, and returns it.
     pub fn first_entry(&self, id: u16) -> Option<EntryItem> {
         for entry in self {
             if entry.id() == id {
@@ -300,7 +300,7 @@ impl GroupMutItem<'_> {
 
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'a>(buf: &mut Buffer<'a>) -> Result<Entry<'a>> {
+    fn next_item<'a>(buf: &mut Buffer<'a>) -> Result<EntryMutItem<'a>> {
         if buf.len() == 0 {
             return Err(Error::MarshalError);
         }
@@ -323,14 +323,14 @@ impl GroupMutItem<'_> {
             },
         };
 
-        Ok(Entry {
+        Ok(EntryMutItem {
             header: header,
             body: body,
         })
     }
 
-    /// Finds the first Entry with the given id, if any, and returns it.
-    pub fn first_entry_mut(&mut self, id: u16) -> Option<Entry> {
+    /// Finds the first EntryMutItem with the given id, if any, and returns it.
+    pub fn first_entry_mut(&mut self, id: u16) -> Option<EntryMutItem> {
         for entry in self {
             if entry.id() == id {
                 return Some(entry);
@@ -388,7 +388,7 @@ impl GroupMutItem<'_> {
 }
 
 impl<'a> Iterator for GroupMutItem<'a> {
-    type Item = Entry<'a>;
+    type Item = EntryMutItem<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.remaining_used_size == 0 {
@@ -469,7 +469,7 @@ impl<'a> ApcbIterMut<'a> {
         }
         Ok(())
     }
-    pub fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, payload_size: u16) -> Result<Entry> {
+    pub fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, payload_size: u16) -> Result<EntryMutItem> {
         loop {
             let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
             if beginning_of_groups.len() == 0 {
@@ -506,10 +506,10 @@ impl<'a> ApcbIterMut<'a> {
                 header.type_id.set(id);
                 header.type_size.set(entry_size);
                 header.instance_id.set(instance_id);
-                // Note: The following is settable by the user via Entry set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
+                // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
                 header.board_instance_mask.set(board_instance_mask);
                 let body = take_body_from_collection_mut(&mut group.buf, payload_size.into(), APCB_TYPE_ALIGNMENT).ok_or_else(|| Error::MarshalError)?;
-                return Ok(Entry { header, body });
+                return Ok(EntryMutItem { header, body });
             }
             let group = Self::next_item(&mut self.beginning_of_groups)?;
             let group_size = group.header.group_size.get() as usize;
