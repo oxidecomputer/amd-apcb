@@ -36,6 +36,7 @@ pub struct ApcbIter<'a> {
 
 #[derive(Debug)]
 pub enum Error {
+    FileSystemError(&'static str, &'static str), // message, field name
     MarshalError,
     OutOfSpaceError,
     GroupNotFoundError,
@@ -250,23 +251,23 @@ impl GroupItem<'_> {
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'a>(buf: &mut ReadOnlyBuffer<'a>) -> Result<EntryItem<'a>> {
         if buf.len() == 0 {
-            return Err(Error::MarshalError);
+            return Err(Error::FileSystemError("unexpected EOF while reading header of Entry", ""));
         }
         let header = match take_header_from_collection::<APCB_TYPE_HEADER>(&mut *buf) {
             Some(item) => item,
             None => {
-                return Err(Error::MarshalError);
+                return Err(Error::FileSystemError("could not read header of Entry", ""));
             }
         };
         ContextFormat::from_u8(header.context_format).unwrap();
         ContextType::from_u8(header.context_type).unwrap();
         let type_size = header.type_size.get() as usize;
 
-        let payload_size = type_size.checked_sub(size_of::<APCB_TYPE_HEADER>()).ok_or_else(|| Error::MarshalError)?;
+        let payload_size = type_size.checked_sub(size_of::<APCB_TYPE_HEADER>()).ok_or_else(|| Error::FileSystemError("could not locate body of Entry", ""))?;
         let body = match take_body_from_collection(&mut *buf, payload_size, APCB_TYPE_ALIGNMENT) {
             Some(item) => item,
             None => {
-                return Err(Error::MarshalError);
+                return Err(Error::FileSystemError("could not read body of Entry", ""));
             },
         };
 
@@ -310,23 +311,23 @@ impl GroupMutItem<'_> {
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'a>(buf: &mut Buffer<'a>) -> Result<EntryMutItem<'a>> {
         if buf.len() == 0 {
-            return Err(Error::MarshalError);
+            return Err(Error::FileSystemError("unexpected EOF while reading header of Entry", ""));
         }
         let header = match take_header_from_collection_mut::<APCB_TYPE_HEADER>(&mut *buf) {
             Some(item) => item,
             None => {
-                return Err(Error::MarshalError);
+                return Err(Error::FileSystemError("could not read header of Entry", ""));
             }
         };
         ContextFormat::from_u8(header.context_format).unwrap();
         ContextType::from_u8(header.context_type).unwrap();
         let type_size = header.type_size.get() as usize;
 
-        let payload_size = type_size.checked_sub(size_of::<APCB_TYPE_HEADER>()).ok_or_else(|| Error::MarshalError)?;
+        let payload_size = type_size.checked_sub(size_of::<APCB_TYPE_HEADER>()).ok_or_else(|| Error::FileSystemError("unexpected EOF while locating body of Entry", ""))?;
         let body = match take_body_from_collection_mut(&mut *buf, payload_size, APCB_TYPE_ALIGNMENT) {
             Some(item) => item,
             None => {
-                return Err(Error::MarshalError);
+                return Err(Error::FileSystemError("could not read body of Entry", ""));
             },
         };
 
@@ -361,7 +362,7 @@ impl GroupMutItem<'_> {
             } else {
                 let entry = Self::next_item(&mut self.buf)?;
                 let entry_size = entry.header.type_size.get() as usize;
-                self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::MarshalError)?;
+                self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "APCB_TYPE_HEADER::type_size"))?;
             }
         }
         Ok(0u32)
@@ -379,7 +380,7 @@ impl GroupMutItem<'_> {
                         let entry = Self::next_item(&mut self.buf).unwrap();
                         let entry_size = entry.header.type_size.get() as usize;
                         assert!(self.remaining_used_size >= entry_size);
-                        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::MarshalError)?;
+                        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", ""))?;
                     } else {
                         break;
                     }
@@ -420,20 +421,20 @@ impl<'a> ApcbIterMut<'a> {
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(buf: &mut Buffer<'b>) -> Result<GroupMutItem<'b>> {
         if buf.len() == 0 {
-            return Err(Error::MarshalError);
+            return Err(Error::FileSystemError("unexpected EOF while reading header of Group", ""));
         }
         let header = match take_header_from_collection_mut::<APCB_GROUP_HEADER>(&mut *buf) {
              Some(item) => item,
              None => {
-                 return Err(Error::MarshalError);
+                 return Err(Error::FileSystemError("could not read header of Group", ""));
              },
         };
         let group_size = header.group_size.get() as usize;
-        let payload_size = group_size.checked_sub(size_of::<APCB_GROUP_HEADER>()).ok_or_else(|| Error::MarshalError)?;
+        let payload_size = group_size.checked_sub(size_of::<APCB_GROUP_HEADER>()).ok_or_else(|| Error::FileSystemError("could not located body of Group", ""))?;
         let body = match take_body_from_collection_mut(&mut *buf, payload_size, 1) {
             Some(item) => item,
             None => {
-                return Err(Error::MarshalError);
+                return Err(Error::FileSystemError("could not read body of Group", ""));
             },
         };
         let body_len = body.len();
@@ -455,20 +456,20 @@ impl<'a> ApcbIterMut<'a> {
                 let entry_size = group.delete_entry(entry_id, instance_id, board_instance_mask)?;
                 if entry_size > 0 {
                     let old_group_size = group.header.group_size.get();
-                    let new_group_size = old_group_size.checked_sub(entry_size).ok_or_else(|| Error::MarshalError)?;
+                    let new_group_size = old_group_size.checked_sub(entry_size).ok_or_else(|| Error::FileSystemError("Group is smaller than Entry in Group", "APCB_GROUP_HEADER::group_size"))?;
                     group.header.group_size.set(new_group_size);
 
                     let apcb_size = self.header.apcb_size.get();
                     self.beginning_of_groups.copy_within((old_group_size as usize)..(apcb_size as usize), new_group_size as usize);
-                    self.header.apcb_size.set(apcb_size.checked_sub(entry_size as u32).ok_or_else(|| Error::MarshalError)?);
+                    self.header.apcb_size.set(apcb_size.checked_sub(entry_size as u32).ok_or_else(|| Error::FileSystemError("APCB is smaller than Entry in Group", "APCB_HEADER_V2::apcb_size"))?);
 
-                    self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::MarshalError)?;
+                    self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "APCB_TYPE_HEADER::type_size"))?;
                 }
                 break 'outer;
             }
             let group = Self::next_item(&mut self.beginning_of_groups)?;
             let group_size = group.header.group_size.get() as usize;
-            self.remaining_used_size = self.remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::MarshalError)?;
+            self.remaining_used_size = self.remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "APCB_GROUP_HEADER::group_size"))?;
         }
         Ok(())
     }
@@ -495,7 +496,7 @@ impl<'a> ApcbIterMut<'a> {
                 self.remaining_used_size = self.remaining_used_size.checked_add(entry_size as usize).ok_or_else(|| Error::OutOfSpaceError)?;
 
                 let mut group = Self::next_item(&mut self.beginning_of_groups)?; // reload so we get a bigger slice
-                group.remaining_used_size = group.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::MarshalError)?;
+                group.remaining_used_size = group.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "APCB_TYPE_HEADER::entry_size"))?;
                 group.move_insertion_point_before(group_id, id, instance_id, board_instance_mask)?;
 
                 // Move the entries from after the insertion point to the right (in order to make room before for our new entry).
@@ -503,7 +504,7 @@ impl<'a> ApcbIterMut<'a> {
 
                 group.remaining_used_size = group.remaining_used_size.checked_add(entry_size as usize).ok_or_else(|| Error::OutOfSpaceError)?;
 
-                let header = take_header_from_collection_mut::<APCB_TYPE_HEADER>(&mut group.buf).ok_or_else(|| Error::MarshalError)?;
+                let header = take_header_from_collection_mut::<APCB_TYPE_HEADER>(&mut group.buf).ok_or_else(|| Error::FileSystemError("could not read header of Entry", ""))?;
                 *header = APCB_TYPE_HEADER::default();
                 header.group_id.set(group_id);
                 header.type_id.set(id);
@@ -511,12 +512,12 @@ impl<'a> ApcbIterMut<'a> {
                 header.instance_id.set(instance_id);
                 // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
                 header.board_instance_mask.set(board_instance_mask);
-                let body = take_body_from_collection_mut(&mut group.buf, payload_size.into(), APCB_TYPE_ALIGNMENT).ok_or_else(|| Error::MarshalError)?;
+                let body = take_body_from_collection_mut(&mut group.buf, payload_size.into(), APCB_TYPE_ALIGNMENT).ok_or_else(|| Error::FileSystemError("could not read body of Entry", ""))?;
                 return Ok(EntryMutItem { header, body });
             }
             let group = Self::next_item(&mut self.beginning_of_groups)?;
             let group_size = group.header.group_size.get() as usize;
-            self.remaining_used_size = self.remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::MarshalError)?;
+            self.remaining_used_size = self.remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "APCB_GROUP_HEADER::group_size"))?;
         }
         Err(Error::GroupNotFoundError)
     }
@@ -531,19 +532,16 @@ impl<'a> ApcbIterMut<'a> {
                 let group_size = group.header.group_size.get();
 
                 let apcb_size = self.header.apcb_size.get();
-                if apcb_size < group_size {
-                    return Err(Error::MarshalError);
-                }
                 self.beginning_of_groups.copy_within((group_size as usize)..(apcb_size as usize), 0);
-                self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).ok_or_else(|| Error::MarshalError)?);
+                self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).ok_or_else(|| Error::FileSystemError("Group is bigger than APCB", "APCB_HEADER_V2::apcb_size"))?);
 
-                self.remaining_used_size = self.remaining_used_size.checked_sub(group_size as usize).ok_or_else(|| Error::MarshalError)?;
+                self.remaining_used_size = self.remaining_used_size.checked_sub(group_size as usize).ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "APCB_GROUP_HEADER::group_size"))?;
                 break;
             } else {
                 let group = Self::next_item(&mut self.beginning_of_groups)?;
                 let group_size = group.header.group_size.get() as usize;
                 assert!(self.remaining_used_size >= group_size);
-                self.remaining_used_size = self.remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::MarshalError)?;
+                self.remaining_used_size = self.remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "APCB_GROUP_HEADER::group_size"))?;
             }
         }
         Ok(())
@@ -576,20 +574,20 @@ impl<'a> ApcbIter<'a> {
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(buf: &mut ReadOnlyBuffer<'b>) -> Result<GroupItem<'b>> {
         if buf.len() == 0 {
-            return Err(Error::MarshalError);
+            return Err(Error::FileSystemError("unexpected EOF while reading Group", ""));
         }
         let header = match take_header_from_collection::<APCB_GROUP_HEADER>(&mut *buf) {
              Some(item) => item,
              None => {
-                 return Err(Error::MarshalError);
+                 return Err(Error::FileSystemError("could not read header of Group", ""));
              },
         };
         let group_size = header.group_size.get() as usize;
-        let payload_size = group_size.checked_sub(size_of::<APCB_GROUP_HEADER>()).ok_or_else(|| Error::MarshalError)?;
+        let payload_size = group_size.checked_sub(size_of::<APCB_GROUP_HEADER>()).ok_or_else(|| Error::FileSystemError("could not locate body of Group", ""))?;
         let body = match take_body_from_collection(&mut *buf, payload_size, 1) {
             Some(item) => item,
             None => {
-                return Err(Error::MarshalError);
+                return Err(Error::FileSystemError("could not read body of Group", ""));
             },
         };
         let body_len = body.len();
@@ -664,16 +662,16 @@ impl<'a> APCB<'a> {
         let remaining_used_size = self.remaining_used_size;
         self.remaining_used_size = remaining_used_size.checked_add(size).ok_or_else(|| Error::OutOfSpaceError)?;
         if self.beginning_of_groups.len() < self.remaining_used_size {
-            return Err(Error::MarshalError);
+            return Err(Error::FileSystemError("Iterator allocation is smaller than Iterator size", ""));
         }
 
         let mut beginning_of_group = &mut self.beginning_of_groups[remaining_used_size..self.remaining_used_size];
 
-        let mut header = take_header_from_collection_mut::<APCB_GROUP_HEADER>(&mut beginning_of_group).ok_or_else(|| Error::MarshalError)?;
+        let mut header = take_header_from_collection_mut::<APCB_GROUP_HEADER>(&mut beginning_of_group).ok_or_else(|| Error::FileSystemError("could not read header of Group", ""))?;
         *header = APCB_GROUP_HEADER::default();
         header.signature = signature;
         header.group_id = group_id.into();
-        let body = take_body_from_collection_mut(&mut beginning_of_group, 0, 1).ok_or_else(|| Error::MarshalError)?;
+        let body = take_body_from_collection_mut(&mut beginning_of_group, 0, 1).ok_or_else(|| Error::FileSystemError("could not read body of Group", ""))?;
         let body_len = body.len();
 
         Ok(GroupMutItem {
@@ -699,21 +697,45 @@ impl<'a> APCB<'a> {
     pub fn load(backing_store: Buffer<'a>) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
         let header = take_header_from_collection_mut::<APCB_V2_HEADER>(&mut backing_store)
-            .ok_or_else(|| Error::MarshalError)?;
+            .ok_or_else(|| Error::FileSystemError("could not read APCB header", ""))?;
 
-        if usize::from(header.header_size) >= size_of::<APCB_V2_HEADER>() && header.version.get() == 0x30 {
+        if usize::from(header.header_size) >= size_of::<APCB_V2_HEADER>() {
         } else {
-            return Err(Error::MarshalError);
+            return Err(Error::FileSystemError("APCB header is too small", "APCB_V2_HEADER::header_size"));
+        }
+        if header.version.get() == 0x30 {
+        } else {
+            return Err(Error::FileSystemError("APCB header version mismatch", "APCB_V2_HEADER::version"));
         }
 
         let v3_header_ext = if usize::from(header.header_size)
             == size_of::<APCB_V2_HEADER>() + size_of::<APCB_V3_HEADER_EXT>()
         {
             let value = take_header_from_collection_mut::<APCB_V3_HEADER_EXT>(&mut backing_store)
-                .ok_or_else(|| Error::MarshalError)?;
-            if value.signature == *b"ECB2" && value.struct_version.get() == 0x12 && value.data_version.get() == 0x100 && value.ext_header_size.get() == 96 && u32::from(value.data_offset.get()) == 88 && value.signature_ending == *b"BCBA" {
+                .ok_or_else(|| Error::FileSystemError("could not read extended header of APCB", ""))?;
+            if value.signature == *b"ECB2" {
             } else {
-                return Err(Error::MarshalError);
+                return Err(Error::FileSystemError("header validation failed", "APCB_V3_HEADER_EXT::signature"));
+            }
+            if value.struct_version.get() == 0x12 {
+            } else {
+                return Err(Error::FileSystemError("header validation failed", "APCB_V3_HEADER_EXT::struct_version"));
+            }
+            if value.data_version.get() == 0x100 {
+            } else {
+                return Err(Error::FileSystemError("header validation failed", "APCB_V3_HEADER_EXT::data_version"));
+            }
+            if value.ext_header_size.get() == 96 {
+            } else {
+                return Err(Error::FileSystemError("header validation failed", "APCB_V3_HEADER_EXT::ext_header_size"));
+            }
+            if u32::from(value.data_offset.get()) == 88 {
+            } else {
+                return Err(Error::FileSystemError("header validation failed", "APCB_V3_HEADER_EXT::data_offset"));
+            }
+            if value.signature_ending == *b"BCBA" {
+            } else {
+                return Err(Error::FileSystemError("header validation failed", "APCB_V3_HEADER_EXT::signature_ending"));
             }
             Some(*value)
         } else {
@@ -721,10 +743,10 @@ impl<'a> APCB<'a> {
             None
         };
 
-        let remaining_used_size = header.apcb_size.get().checked_sub(u32::from(header.header_size.get())).ok_or_else(|| Error::MarshalError)? as usize;
-        if backing_store.len() >= remaining_used_size {
+        let remaining_used_size = header.apcb_size.get().checked_sub(u32::from(header.header_size.get())).ok_or_else(|| Error::FileSystemError("Iterator size is smaller than header size", "APCB_V2_HEADER::header_size"))? as usize;
+        if remaining_used_size <= backing_store.len() {
         } else {
-            return Err(Error::MarshalError);
+            return Err(Error::FileSystemError("Iterator size bigger than allocation", ""));
         }
 
         Ok(Self {
@@ -741,11 +763,11 @@ impl<'a> APCB<'a> {
         {
             let mut backing_store = &mut *backing_store;
             let header = take_header_from_collection_mut::<APCB_V2_HEADER>(&mut backing_store)
-                    .ok_or_else(|| Error::MarshalError)?;
+                    .ok_or_else(|| Error::FileSystemError("could not write APCB header", ""))?;
             *header = Default::default();
 
             let v3_header_ext = take_header_from_collection_mut::<APCB_V3_HEADER_EXT>(&mut backing_store)
-                    .ok_or_else(|| Error::MarshalError)?;
+                    .ok_or_else(|| Error::FileSystemError("could not write APCB extended header", ""))?;
             *v3_header_ext = Default::default();
 
             header
