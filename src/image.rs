@@ -569,14 +569,11 @@ mod tests {
         apcb.insert_group(0x1704, *b"MEMG")?;
         let mut groups = apcb.groups_mut();
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
-        eprintln!("FIRST");
         assert!(group.id() == 0x1701);
         assert!(group.signature() == *b"PSPG");
         let group = groups.next().ok_or_else(|| Error::MarshalError)?;
-        eprintln!("SECOND");
         assert!(group.id() == 0x1704);
         assert!(group.signature() == *b"MEMG");
-        eprintln!("THIRD");
         assert!(matches!(groups.next(), None));
         Ok(())
     }
