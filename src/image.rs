@@ -603,6 +603,14 @@ impl<'a> APCB<'a> {
             remaining_used_size: self.remaining_used_size,
         }
     }
+    pub fn group(&self, group_id: u16) -> Option<GroupItem> {
+        for group in self.groups() {
+            if group.id() == group_id {
+                return Some(group);
+            }
+        }
+        None
+    }
     pub fn groups_mut(&mut self) -> ApcbIterMut {
         ApcbIterMut {
             header: self.header,
