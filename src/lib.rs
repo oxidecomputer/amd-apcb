@@ -12,3 +12,4 @@ mod tests;
 pub use apcb::APCB;
 pub use types::Result;
 pub use types::Error;
+pub use entry::EntryItemBody;
