@@ -39,6 +39,7 @@ impl<BufferType> TokensEntryBodyItem<BufferType> {
 
 #[derive(Debug)]
 pub struct TokensEntryItemMut<'a> {
+    type_id: TokenType,
     entry: &'a mut APCB_TOKEN_ENTRY,
 }
 
@@ -47,13 +48,18 @@ impl<'a> TokensEntryItemMut<'a> {
         self.entry.key.get()
     }
     pub fn value(&self) -> u32 { // TODO: Clamp.
-        self.entry.value.get()
+        self.entry.value.get() & match self.type_id {
+            TokenType::Bool => 0x1,
+            TokenType::Byte => 0xFF,
+            TokenType::Word => 0xFFFF,
+            TokenType::DWord => 0xFFFF_FFFF,
+        }
     }
 
     pub fn set_key(&mut self, value: u32) {
         self.entry.key.set(value)
     }
-    pub fn set_value(&mut self, value: u32) { // TODO: Clamp.
+    pub fn set_value(&mut self, value: u32) {
         self.entry.value.set(value)
     }
 }
@@ -61,7 +67,7 @@ impl<'a> TokensEntryItemMut<'a> {
 impl TokensEntryIterMut<'_> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'a>(buf: &mut Buffer<'a>) -> Result<TokensEntryItemMut<'a>> {
+    fn next_item<'a>(type_id: TokenType, buf: &mut Buffer<'a>) -> Result<TokensEntryItemMut<'a>> {
         if buf.len() == 0 {
             return Err(Error::FileSystemError("unexpected EOF while reading header of Token Entry", ""));
         }
@@ -72,6 +78,7 @@ impl TokensEntryIterMut<'_> {
             }
         };
         Ok(TokensEntryItemMut {
+            type_id,
             entry: header,
         })
     }
@@ -84,7 +91,7 @@ impl<'a> Iterator for TokensEntryIterMut<'a> {
         if self.remaining_used_size == 0 {
             return None;
         }
-        match Self::next_item(&mut self.buf) {
+        match Self::next_item(self.type_id, &mut self.buf) {
             Ok(e) => {
                 assert!(self.remaining_used_size >= 8);
                 self.remaining_used_size -= 8;
@@ -99,13 +106,14 @@ impl<'a> Iterator for TokensEntryIterMut<'a> {
 
 #[derive(Debug)]
 pub struct TokensEntryItem<'a> {
+    type_id: TokenType,
     entry: &'a APCB_TOKEN_ENTRY,
 }
 
 impl TokensEntryIter<'_> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'a>(buf: &mut ReadOnlyBuffer<'a>) -> Result<TokensEntryItem<'a>> {
+    fn next_item<'a>(type_id: TokenType, buf: &mut ReadOnlyBuffer<'a>) -> Result<TokensEntryItem<'a>> {
         if buf.len() == 0 {
             return Err(Error::FileSystemError("unexpected EOF while reading header of Token Entry", ""));
         }
@@ -116,6 +124,7 @@ impl TokensEntryIter<'_> {
             }
         };
         Ok(TokensEntryItem {
+            type_id,
             entry: header,
         })
     }
@@ -128,7 +137,7 @@ impl<'a> Iterator for TokensEntryIter<'a> {
         if self.remaining_used_size == 0 {
             return None;
         }
-        match Self::next_item(&mut self.buf) {
+        match Self::next_item(self.type_id, &mut self.buf) {
             Ok(e) => {
                 assert!(self.remaining_used_size >= 8);
                 self.remaining_used_size -= 8;
