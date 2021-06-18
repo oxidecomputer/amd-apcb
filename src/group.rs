@@ -1,8 +1,8 @@
 use crate::types::{Error, Result, Buffer, ReadOnlyBuffer};
 
-use crate::ondisk::APCB_GROUP_HEADER;
-use crate::ondisk::APCB_TYPE_ALIGNMENT;
-use crate::ondisk::APCB_TYPE_HEADER;
+use crate::ondisk::GROUP_HEADER;
+use crate::ondisk::TYPE_ALIGNMENT;
+use crate::ondisk::TYPE_HEADER;
 pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
 use core::mem::{size_of};
 use num_traits::FromPrimitive;
@@ -11,7 +11,7 @@ use crate::entry::{EntryItem, EntryMutItem, EntryItemBody};
 
 #[derive(Debug)]
 pub struct GroupItem<'a> {
-    pub header: &'a APCB_GROUP_HEADER,
+    pub header: &'a GROUP_HEADER,
     pub(crate) buf: ReadOnlyBuffer<'a>, // FIXME: private
     pub(crate) remaining_used_size: usize, // FIXME: private
 }
@@ -54,7 +54,7 @@ impl GroupItem<'_> {
         if buf.len() == 0 {
             return Err(Error::FileSystemError("unexpected EOF while reading header of Entry", ""));
         }
-        let header = match take_header_from_collection::<APCB_TYPE_HEADER>(&mut *buf) {
+        let header = match take_header_from_collection::<TYPE_HEADER>(&mut *buf) {
             Some(item) => item,
             None => {
                 return Err(Error::FileSystemError("could not read header of Entry", ""));
@@ -64,8 +64,8 @@ impl GroupItem<'_> {
         let context_type = ContextType::from_u8(header.context_type).unwrap();
         let type_size = header.type_size.get() as usize;
 
-        let payload_size = type_size.checked_sub(size_of::<APCB_TYPE_HEADER>()).ok_or_else(|| Error::FileSystemError("could not locate body of Entry", ""))?;
-        let body = match take_body_from_collection(&mut *buf, payload_size, APCB_TYPE_ALIGNMENT) {
+        let payload_size = type_size.checked_sub(size_of::<TYPE_HEADER>()).ok_or_else(|| Error::FileSystemError("could not locate body of Entry", ""))?;
+        let body = match take_body_from_collection(&mut *buf, payload_size, TYPE_ALIGNMENT) {
             Some(item) => item,
             None => {
                 return Err(Error::FileSystemError("could not read body of Entry", ""));
@@ -95,7 +95,7 @@ impl GroupItem<'_> {
 
 #[derive(Debug)]
 pub struct GroupMutItem<'a> {
-    pub header: &'a mut APCB_GROUP_HEADER,
+    pub header: &'a mut GROUP_HEADER,
     pub(crate) buf: Buffer<'a>, // FIXME: private
     pub(crate) remaining_used_size: usize, // FIXME: private
 }
@@ -116,7 +116,7 @@ impl<'a> GroupMutItem<'a> {
         if buf.len() == 0 {
             return Err(Error::FileSystemError("unexpected EOF while reading header of Entry", ""));
         }
-        let header = match take_header_from_collection_mut::<APCB_TYPE_HEADER>(&mut *buf) {
+        let header = match take_header_from_collection_mut::<TYPE_HEADER>(&mut *buf) {
             Some(item) => item,
             None => {
                 return Err(Error::FileSystemError("could not read header of Entry", ""));
@@ -126,8 +126,8 @@ impl<'a> GroupMutItem<'a> {
         let context_type = ContextType::from_u8(header.context_type).unwrap();
         let type_size = header.type_size.get() as usize;
 
-        let payload_size = type_size.checked_sub(size_of::<APCB_TYPE_HEADER>()).ok_or_else(|| Error::FileSystemError("unexpected EOF while locating body of Entry", ""))?;
-        let body = match take_body_from_collection_mut(&mut *buf, payload_size, APCB_TYPE_ALIGNMENT) {
+        let payload_size = type_size.checked_sub(size_of::<TYPE_HEADER>()).ok_or_else(|| Error::FileSystemError("unexpected EOF while locating body of Entry", ""))?;
+        let body = match take_body_from_collection_mut(&mut *buf, payload_size, TYPE_ALIGNMENT) {
             Some(item) => item,
             None => {
                 return Err(Error::FileSystemError("could not read body of Entry", ""));
@@ -167,7 +167,7 @@ impl<'a> GroupMutItem<'a> {
             } else {
                 let entry = Self::next_item(&mut self.buf)?;
                 let entry_size = entry.header.type_size.get() as usize;
-                self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "APCB_TYPE_HEADER::type_size"))?;
+                self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "TYPE_HEADER::type_size"))?;
             }
         }
         Ok(0u32)
@@ -198,15 +198,15 @@ impl<'a> GroupMutItem<'a> {
         Ok(())
     }
     pub(crate) fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, entry_size: u16, context_type: ContextType, payload_size: u16) -> Result<EntryMutItem<'a>> {
-        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "APCB_TYPE_HEADER::entry_size"))?;
+        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "TYPE_HEADER::entry_size"))?;
         self.move_insertion_point_before(group_id, id, instance_id, board_instance_mask)?;
 
         // Move the entries from after the insertion point to the right (in order to make room before for our new entry).
         self.buf.copy_within(0..self.remaining_used_size, entry_size as usize);
 
         self.remaining_used_size = self.remaining_used_size.checked_add(entry_size as usize).ok_or_else(|| Error::OutOfSpaceError)?;
-        let header = take_header_from_collection_mut::<APCB_TYPE_HEADER>(&mut self.buf).ok_or_else(|| Error::FileSystemError("could not read header of Entry", ""))?;
-        *header = APCB_TYPE_HEADER::default();
+        let header = take_header_from_collection_mut::<TYPE_HEADER>(&mut self.buf).ok_or_else(|| Error::FileSystemError("could not read header of Entry", ""))?;
+        *header = TYPE_HEADER::default();
         header.group_id.set(group_id);
         header.type_id.set(id);
         header.type_size.set(entry_size);
@@ -224,7 +224,7 @@ impl<'a> GroupMutItem<'a> {
 
         // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
         header.board_instance_mask.set(board_instance_mask);
-        let body = take_body_from_collection_mut(&mut self.buf, payload_size.into(), APCB_TYPE_ALIGNMENT).ok_or_else(|| Error::FileSystemError("could not read body of Entry", ""))?;
+        let body = take_body_from_collection_mut(&mut self.buf, payload_size.into(), TYPE_ALIGNMENT).ok_or_else(|| Error::FileSystemError("could not read body of Entry", ""))?;
         Ok(EntryMutItem { header, body: EntryItemBody::<Buffer>::from_slice(unit_size, id, context_type, body)? })
     }
 }

@@ -1,6 +1,6 @@
 
 use crate::types::{Buffer, ReadOnlyBuffer, Result, Error};
-use crate::ondisk::{APCB_TOKEN_ENTRY, TokenType, take_header_from_collection, take_header_from_collection_mut};
+use crate::ondisk::{TOKEN_ENTRY, TokenType, take_header_from_collection, take_header_from_collection_mut};
 use num_traits::FromPrimitive;
 
 #[derive(Debug)]
@@ -26,11 +26,11 @@ pub struct TokensEntryIterMut<'a> {
 impl<BufferType> TokensEntryBodyItem<BufferType> {
     pub(crate) fn new(unit_size: u8, type_id: u16, buf: BufferType, used_size: usize) -> Result<Self> {
         if unit_size != 8 {
-            return Err(Error::FileSystemError("unit_size of token is unknown", "APCB_TYPE_HEADER::unit_size"));
+            return Err(Error::FileSystemError("unit_size of token is unknown", "TYPE_HEADER::unit_size"));
         }
         Ok(Self {
             unit_size,
-            type_id: TokenType::from_u16(type_id).ok_or_else(|| Error::FileSystemError("type_id of token is unknown", "APCB_TYPE_HEADER::type_id"))?,
+            type_id: TokenType::from_u16(type_id).ok_or_else(|| Error::FileSystemError("type_id of token is unknown", "TYPE_HEADER::type_id"))?,
             buf,
             used_size,
         })
@@ -40,7 +40,7 @@ impl<BufferType> TokensEntryBodyItem<BufferType> {
 #[derive(Debug)]
 pub struct TokensEntryItemMut<'a> {
     type_id: TokenType,
-    entry: &'a mut APCB_TOKEN_ENTRY,
+    entry: &'a mut TOKEN_ENTRY,
 }
 
 impl<'a> TokensEntryItemMut<'a> {
@@ -71,7 +71,7 @@ impl TokensEntryIterMut<'_> {
         if buf.len() == 0 {
             return Err(Error::FileSystemError("unexpected EOF while reading header of Token Entry", ""));
         }
-        let header = match take_header_from_collection_mut::<APCB_TOKEN_ENTRY>(&mut *buf) {
+        let header = match take_header_from_collection_mut::<TOKEN_ENTRY>(&mut *buf) {
             Some(item) => item,
             None => {
                 return Err(Error::FileSystemError("could not read header of Token Entry", ""));
@@ -107,7 +107,7 @@ impl<'a> Iterator for TokensEntryIterMut<'a> {
 #[derive(Debug)]
 pub struct TokensEntryItem<'a> {
     type_id: TokenType,
-    entry: &'a APCB_TOKEN_ENTRY,
+    entry: &'a TOKEN_ENTRY,
 }
 
 impl TokensEntryIter<'_> {
@@ -117,7 +117,7 @@ impl TokensEntryIter<'_> {
         if buf.len() == 0 {
             return Err(Error::FileSystemError("unexpected EOF while reading header of Token Entry", ""));
         }
-        let header = match take_header_from_collection::<APCB_TOKEN_ENTRY>(&mut *buf) {
+        let header = match take_header_from_collection::<TOKEN_ENTRY>(&mut *buf) {
             Some(item) => item,
             None => {
                 return Err(Error::FileSystemError("could not read header of Token Entry", ""));

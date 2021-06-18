@@ -71,9 +71,9 @@ pub fn take_body_from_collection<'a>(buf: &mut &'a [u8], size: usize, alignment:
 
 #[derive(FromBytes, AsBytes, Unaligned)]
 #[repr(C, packed)]
-pub struct APCB_V2_HEADER {
+pub struct V2_HEADER {
     pub signature: [u8; 4],
-    pub header_size: U16<LittleEndian>, // == sizeof(APCB_V2_HEADER); but 128 for V3
+    pub header_size: U16<LittleEndian>, // == sizeof(V2_HEADER); but 128 for V3
     pub version: U16<LittleEndian>,     // == 0x30
     pub apcb_size: U32<LittleEndian>,
     pub unique_apcb_instance: U32<LittleEndian>,
@@ -82,7 +82,7 @@ pub struct APCB_V2_HEADER {
     reserved2: [U32<LittleEndian>; 3], // 0
 }
 
-impl Default for APCB_V2_HEADER {
+impl Default for V2_HEADER {
     fn default() -> Self {
         Self {
             signature: *b"APCB",
@@ -99,7 +99,7 @@ impl Default for APCB_V2_HEADER {
 
 #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
 #[repr(C, packed)]
-pub struct APCB_V3_HEADER_EXT {
+pub struct V3_HEADER_EXT {
     pub signature: [u8; 4],        // "ECB2"
     reserved_1: U16<LittleEndian>, // 0
     reserved_2: U16<LittleEndian>, // 0x10
@@ -120,7 +120,7 @@ pub struct APCB_V3_HEADER_EXT {
     pub signature_ending: [u8; 4],       // "BCBA"
 }
 
-impl Default for APCB_V3_HEADER_EXT {
+impl Default for V3_HEADER_EXT {
     fn default() -> Self {
         Self {
             signature: *b"ECB2",
@@ -229,10 +229,10 @@ pub enum MemoryTypeId {
 
 #[derive(FromBytes, AsBytes, Unaligned, Debug)]
 #[repr(C, packed)]
-pub struct APCB_GROUP_HEADER {
+pub struct GROUP_HEADER {
     pub signature: [u8; 4],
     pub group_id: U16<LittleEndian>,
-    pub header_size: U16<LittleEndian>, // == sizeof(APCB_GROUP_HEADER)
+    pub header_size: U16<LittleEndian>, // == sizeof(GROUP_HEADER)
     pub version: U16<LittleEndian>,     // == 0 << 4 | 1
     reserved: U16<LittleEndian>,
     pub group_size: U32<LittleEndian>, // including header!
@@ -263,7 +263,7 @@ pub enum TokenType {
     DWord = 3,
 }
 
-impl Default for APCB_GROUP_HEADER {
+impl Default for GROUP_HEADER {
     fn default() -> Self {
         Self {
             signature: *b"    ",   // probably invalid
@@ -278,7 +278,7 @@ impl Default for APCB_GROUP_HEADER {
 
 #[derive(FromBytes, AsBytes, Unaligned, Debug)]
 #[repr(C, packed)]
-pub struct APCB_TYPE_HEADER {
+pub struct TYPE_HEADER {
     pub group_id: U16<LittleEndian>, // should be equal to the group's group_id
     pub type_id: U16<LittleEndian>,  // meaning depends on context_type
     pub type_size: U16<LittleEndian>, // including header
@@ -292,7 +292,7 @@ pub struct APCB_TYPE_HEADER {
     pub board_instance_mask: U16<LittleEndian>, // Board-specific APCB instance mask
 }
 
-impl Default for APCB_TYPE_HEADER {
+impl Default for TYPE_HEADER {
     fn default() -> Self {
         Self {
             group_id: 0u16.into(),                        // probably invalid
@@ -310,11 +310,11 @@ impl Default for APCB_TYPE_HEADER {
     }
 }
 
-pub const APCB_TYPE_ALIGNMENT: usize = 4;
+pub const TYPE_ALIGNMENT: usize = 4;
 
 #[derive(FromBytes, AsBytes, Debug)]
 #[repr(C, packed)]
-pub struct APCB_TOKEN_ENTRY {
+pub struct TOKEN_ENTRY {
     pub key: U32<LittleEndian>,
     pub value: U32<LittleEndian>,
 }
@@ -347,12 +347,12 @@ mod tests {
 
     #[test]
     fn test_struct_sizes() {
-        assert!(size_of::<APCB_V2_HEADER>() == 32);
-        assert!(size_of::<APCB_V2_HEADER>() + size_of::<APCB_V3_HEADER_EXT>() == 128);
-        assert!(size_of::<APCB_V2_HEADER>() % APCB_TYPE_ALIGNMENT == 0);
-        assert!(size_of::<APCB_GROUP_HEADER>() == 16);
-        assert!(size_of::<APCB_GROUP_HEADER>() % APCB_TYPE_ALIGNMENT == 0);
-        assert!(size_of::<APCB_TYPE_HEADER>() == 16);
-        assert!(size_of::<APCB_TYPE_HEADER>() % APCB_TYPE_ALIGNMENT == 0);
+        assert!(size_of::<V2_HEADER>() == 32);
+        assert!(size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>() == 128);
+        assert!(size_of::<V2_HEADER>() % TYPE_ALIGNMENT == 0);
+        assert!(size_of::<GROUP_HEADER>() == 16);
+        assert!(size_of::<GROUP_HEADER>() % TYPE_ALIGNMENT == 0);
+        assert!(size_of::<TYPE_HEADER>() == 16);
+        assert!(size_of::<TYPE_HEADER>() % TYPE_ALIGNMENT == 0);
     }
 }

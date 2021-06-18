@@ -1,6 +1,6 @@
 use crate::types::{Buffer, ReadOnlyBuffer, Result, Error};
 
-use crate::ondisk::APCB_TYPE_HEADER;
+use crate::ondisk::TYPE_HEADER;
 pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
 use num_traits::FromPrimitive;
 use crate::entry_tokens::TokensEntryBodyItem;
@@ -27,7 +27,7 @@ impl<'a> EntryItemBody<Buffer<'a>> {
         Ok(match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
-                     return Err(Error::FileSystemError("unit_size != 0 is invalid for context_type = raw", "APCB_TYPE_HEADER::unit_size"));
+                     return Err(Error::FileSystemError("unit_size != 0 is invalid for context_type = raw", "TYPE_HEADER::unit_size"));
                 }
                 Self::Struct(b)
             },
@@ -47,7 +47,7 @@ impl<'a> EntryItemBody<ReadOnlyBuffer<'a>> {
         Ok(match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
-                     return Err(Error::FileSystemError("unit_size != 0 is invalid for context_type = raw", "APCB_TYPE_HEADER::unit_size"));
+                     return Err(Error::FileSystemError("unit_size != 0 is invalid for context_type = raw", "TYPE_HEADER::unit_size"));
                 }
                 Self::Struct(b)
             },
@@ -64,7 +64,7 @@ impl<'a> EntryItemBody<ReadOnlyBuffer<'a>> {
 
 #[derive(Debug)]
 pub struct EntryMutItem<'a> {
-    pub header: &'a mut APCB_TYPE_HEADER,
+    pub header: &'a mut TYPE_HEADER,
     pub body: EntryItemBody<Buffer<'a>>,
 }
 
@@ -158,7 +158,7 @@ impl EntryMutItem<'_> {
 
 #[derive(Debug)]
 pub struct EntryItem<'a> {
-    pub header: &'a APCB_TYPE_HEADER,
+    pub header: &'a TYPE_HEADER,
     pub body: EntryItemBody<ReadOnlyBuffer<'a>>,
 }
 
