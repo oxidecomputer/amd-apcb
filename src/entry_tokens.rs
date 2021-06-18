@@ -44,7 +44,7 @@ pub struct TokensEntryItemMut<'a> {
 }
 
 impl<'a> TokensEntryItemMut<'a> {
-    pub fn key(&self) -> u32 {
+    pub fn id(&self) -> u32 {
         self.entry.key.get()
     }
     pub fn value(&self) -> u32 { // TODO: Clamp.
@@ -56,7 +56,7 @@ impl<'a> TokensEntryItemMut<'a> {
         }
     }
 
-    // Since the key is a sort key, it cannot be mutated.
+    // Since the id is a sort key, it cannot be mutated.
 
     pub fn set_value(&mut self, value: u32) {
         self.entry.value.set(value)
@@ -108,6 +108,21 @@ pub struct TokensEntryItem<'a> {
     type_id: TokenType,
     entry: &'a TOKEN_ENTRY,
 }
+
+impl<'a> TokensEntryItem<'a> {
+    pub fn id(&self) -> u32 {
+        self.entry.key.get()
+    }
+    pub fn value(&self) -> u32 { // TODO: Clamp.
+        self.entry.value.get() & match self.type_id {
+            TokenType::Bool => 0x1,
+            TokenType::Byte => 0xFF,
+            TokenType::Word => 0xFFFF,
+            TokenType::DWord => 0xFFFF_FFFF,
+        }
+    }
+}
+
 
 impl TokensEntryIter<'_> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
