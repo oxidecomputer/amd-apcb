@@ -12,10 +12,11 @@ The other APCB elements have unique type_id.
 
 * Creating a new group
 * Deleting a group from APCB
-* Inserting an entry into a group
+* Resizing a group
+  * Inserting entry into group
+  * Deleting entry from group
 * Querying/modifying existing tokens in entry (by token_id and entry type (Bool, DWord etc))
   * Hardcode and check: unit_size = 8
-* Deleting entry from group
 
 # Modification actions that need to be supported
 
