@@ -195,7 +195,7 @@ impl<'a> GroupMutItem<'a> {
         }
         Ok(())
     }
-    pub(crate) fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, entry_size: u16, context_type: ContextType, payload_size: u16) -> Result<EntryMutItem<'a>> {
+    pub(crate) fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, entry_size: u16, context_type: ContextType, payload_size: u16, priority_mask: u8) -> Result<EntryMutItem<'a>> {
         self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "TYPE_HEADER::entry_size"))?;
         self.move_insertion_point_before(group_id, id, instance_id, board_instance_mask)?;
 
@@ -220,6 +220,7 @@ impl<'a> GroupMutItem<'a> {
             header.key_size = 4;
             header.key_pos = 0;
         }
+        header.priority_mask = priority_mask;
         let unit_size = header.unit_size;
 
         // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos

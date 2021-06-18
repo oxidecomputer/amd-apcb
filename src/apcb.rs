@@ -129,11 +129,11 @@ impl<'a> ApcbIterMut<'a> {
             self.remaining_used_size = self.remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "GROUP_HEADER::group_size"))?;
         }
     }
-    pub(crate) fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: u16) -> Result<EntryMutItem> {
+    pub(crate) fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: u16, priority_mask: u8) -> Result<EntryMutItem> {
         let entry_size: u16 = (size_of::<TYPE_HEADER>() as u16).checked_add(payload_size).ok_or_else(|| Error::OutOfSpaceError)?;
         self.resize_group(group_id, entry_size.into())?;
         let mut group = Self::next_item(&mut self.beginning_of_groups)?; // reload so we get a bigger slice
-        return group.insert_entry(group_id, id, instance_id, board_instance_mask, entry_size, context_type, payload_size);
+        return group.insert_entry(group_id, id, instance_id, board_instance_mask, entry_size, context_type, payload_size, priority_mask);
     }
     /// Side effect: Moves iterator to unspecified item
     pub(crate) fn insert_token(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u16) -> Result<()> {
@@ -306,8 +306,8 @@ impl<'a> APCB<'a> {
     pub fn delete_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
         self.groups_mut().delete_entry(group_id, entry_id, instance_id, board_instance_mask)
     }
-    pub fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: u16) -> Result<()> {
-        match self.groups_mut().insert_entry(group_id, id, instance_id, board_instance_mask, context_type, payload_size) {
+    pub fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: u16, priority_mask: u8) -> Result<()> {
+        match self.groups_mut().insert_entry(group_id, id, instance_id, board_instance_mask, context_type, payload_size, priority_mask) {
             Ok(e) => Ok(()),
             Err(e) => Err(e),
         }
