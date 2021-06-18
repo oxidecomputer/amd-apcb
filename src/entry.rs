@@ -69,10 +69,10 @@ impl EntryMutItem<'_> {
         self.header.instance_id.get()
     }
     pub fn context_type(&self) -> ContextType {
-        FromPrimitive::from_u8(self.header.context_type).unwrap()
+        ContextType::from_u8(self.header.context_type).unwrap()
     }
     pub fn context_format(&self) -> ContextFormat {
-        FromPrimitive::from_u8(self.header.context_format).unwrap()
+        ContextFormat::from_u8(self.header.context_format).unwrap()
     }
     /// Note: Applicable iff context_type() == 2.  Usual value then: 8.  If inapplicable, value is 0.
     pub fn unit_size(&self) -> u8 {
@@ -163,10 +163,10 @@ impl EntryItem<'_> {
         self.header.instance_id.get()
     }
     pub fn context_type(&self) -> ContextType {
-        FromPrimitive::from_u8(self.header.context_type).unwrap()
+        ContextType::from_u8(self.header.context_type).unwrap()
     }
     pub fn context_format(&self) -> ContextFormat {
-        FromPrimitive::from_u8(self.header.context_format).unwrap()
+        ContextFormat::from_u8(self.header.context_format).unwrap()
     }
     /// Note: Applicable iff context_type() == 2.  Usual value then: 8.  If inapplicable, value is 0.
     pub fn unit_size(&self) -> u8 {
