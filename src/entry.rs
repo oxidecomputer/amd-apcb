@@ -1,4 +1,4 @@
-use crate::types::{Buffer, ReadOnlyBuffer, Result};
+use crate::types::{Buffer, ReadOnlyBuffer, Result, Error};
 
 use crate::ondisk::APCB_TYPE_HEADER;
 pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
@@ -26,6 +26,9 @@ impl<'a> EntryItemBody<Buffer<'a>> {
     pub(crate) fn from_slice(unit_size: u8, type_id: u16, context_type: ContextType, b: Buffer<'a>) -> Result<EntryItemBody<Buffer<'a>>> {
         Ok(match context_type {
             ContextType::Struct => {
+                if unit_size != 0 {
+                     return Err(Error::FileSystemError("unit_size != 0 is invalid for context_type = raw", "APCB_TYPE_HEADER::unit_size"));
+                }
                 Self::Struct(b)
             },
             ContextType::Tokens => {
@@ -42,6 +45,9 @@ impl<'a> EntryItemBody<ReadOnlyBuffer<'a>> {
     pub(crate) fn from_slice(unit_size: u8, type_id: u16, context_type: ContextType, b: ReadOnlyBuffer<'a>) -> Result<EntryItemBody<ReadOnlyBuffer<'a>>> {
         Ok(match context_type {
             ContextType::Struct => {
+                if unit_size != 0 {
+                     return Err(Error::FileSystemError("unit_size != 0 is invalid for context_type = raw", "APCB_TYPE_HEADER::unit_size"));
+                }
                 Self::Struct(b)
             },
             ContextType::Tokens => {
