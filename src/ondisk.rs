@@ -311,6 +311,14 @@ impl Default for APCB_TYPE_HEADER {
 }
 
 pub const APCB_TYPE_ALIGNMENT: usize = 4;
+
+#[derive(FromBytes, AsBytes, Debug)]
+#[repr(C, packed)]
+pub struct APCB_TOKEN_ENTRY {
+    pub key: U32<LittleEndian>,
+    pub value: U32<LittleEndian>,
+}
+
 /*
 APCB:
         Header V2
