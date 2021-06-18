@@ -122,34 +122,8 @@ impl EntryMutItem<'_> {
         }
     */
 
-    pub fn set_context_type(&mut self, value: ContextType) -> &mut Self {
-        self.header.context_type = value as u8;
-        self
-    }
-
-    pub fn set_context_format(&mut self, value: ContextFormat) -> &mut Self {
-        self.header.context_format = value as u8;
-        self
-    }
-
-    pub fn set_unit_size(&mut self, value: u8) -> &mut Self {
-        self.header.unit_size = value;
-        self
-    }
-
     pub fn set_priority_mask(&mut self, value: u8) -> &mut Self {
         self.header.priority_mask = value;
-        self
-    }
-
-    /// Note: Applicable iff context_format() != ContextFormat::Raw.  value <= unit_size.
-    pub fn set_key_size(&mut self, value: u8) -> &mut Self {
-        self.header.key_size = value;
-        self
-    }
-
-    pub fn set_key_pos(&mut self, value: u8) -> &mut Self {
-        self.header.key_pos = value;
         self
     }
 
