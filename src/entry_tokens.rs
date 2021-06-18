@@ -1,5 +1,5 @@
 
-use crate::types::{Buffer, ReadOnlyBuffer};
+use crate::types::{Buffer, ReadOnlyBuffer, Result};
 
 #[derive(Debug)]
 pub struct TokensEntryBodyItem<BufferType> {
@@ -8,10 +8,10 @@ pub struct TokensEntryBodyItem<BufferType> {
 }
 
 impl<BufferType> TokensEntryBodyItem<BufferType> {
-    pub(crate) fn new(type_id: u16, buf: BufferType) -> Self {
-        Self {
+    pub(crate) fn new(type_id: u16, buf: BufferType) -> Result<Self> {
+        Ok(Self {
             type_id,
             buf
-        }
+        })
     }
 }

@@ -1,4 +1,4 @@
-use crate::types::{Buffer, ReadOnlyBuffer};
+use crate::types::{Buffer, ReadOnlyBuffer, Result};
 
 use crate::ondisk::APCB_TYPE_HEADER;
 pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
@@ -23,34 +23,34 @@ pub enum EntryItemBody<BufferType> {
 }
 
 impl<'a> EntryItemBody<Buffer<'a>> {
-    pub(crate) fn from_slice(type_id: u16, context_type: ContextType, b: Buffer<'a>) -> EntryItemBody<Buffer<'a>> {
-        match context_type {
+    pub(crate) fn from_slice(type_id: u16, context_type: ContextType, b: Buffer<'a>) -> Result<EntryItemBody<Buffer<'a>>> {
+        Ok(match context_type {
             ContextType::Struct => {
                 Self::Struct(b)
             },
             ContextType::Tokens => {
-                Self::Tokens(TokensEntryBodyItem::<Buffer>::new(type_id, b))
+                Self::Tokens(TokensEntryBodyItem::<Buffer>::new(type_id, b)?)
             },
             ContextType::Parameters => {
                 Self::Parameters(b)
             },
-        }
+        })
     }
 }
 
 impl<'a> EntryItemBody<ReadOnlyBuffer<'a>> {
-    pub(crate) fn from_slice(type_id: u16, context_type: ContextType, b: ReadOnlyBuffer<'a>) -> EntryItemBody<ReadOnlyBuffer<'a>> {
-        match context_type {
+    pub(crate) fn from_slice(type_id: u16, context_type: ContextType, b: ReadOnlyBuffer<'a>) -> Result<EntryItemBody<ReadOnlyBuffer<'a>>> {
+        Ok(match context_type {
             ContextType::Struct => {
                 Self::Struct(b)
             },
             ContextType::Tokens => {
-                Self::Tokens(TokensEntryBodyItem::<ReadOnlyBuffer>::new(type_id, b))
+                Self::Tokens(TokensEntryBodyItem::<ReadOnlyBuffer>::new(type_id, b)?)
             },
             ContextType::Parameters => {
                 Self::Parameters(b)
             },
-        }
+        })
     }
 }
 
