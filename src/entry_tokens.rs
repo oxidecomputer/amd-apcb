@@ -56,9 +56,8 @@ impl<'a> TokensEntryItemMut<'a> {
         }
     }
 
-    pub fn set_key(&mut self, value: u32) {
-        self.entry.key.set(value)
-    }
+    // Since the key is a sort key, it cannot be mutated.
+
     pub fn set_value(&mut self, value: u32) {
         self.entry.value.set(value)
     }
