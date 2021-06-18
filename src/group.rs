@@ -172,7 +172,7 @@ impl<'a> GroupMutItem<'a> {
         }
         Ok(0u32)
     }
-    /// First the place BEFORE which the entry (GROUP_ID, ID, INSTANCE_ID, BOARD_INSTANCE_MASK) is supposed to go.
+    /// Find the place BEFORE which the entry (GROUP_ID, ID, INSTANCE_ID, BOARD_INSTANCE_MASK) is supposed to go.
     pub(crate) fn move_insertion_point_before(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
         loop {
             let mut buf = &mut self.buf[..self.remaining_used_size];
@@ -226,6 +226,46 @@ impl<'a> GroupMutItem<'a> {
         header.board_instance_mask.set(board_instance_mask);
         let body = take_body_from_collection_mut(&mut self.buf, payload_size.into(), TYPE_ALIGNMENT).ok_or_else(|| Error::FileSystemError("could not read body of Entry", ""))?;
         Ok(EntryMutItem { header, body: EntryItemBody::<Buffer>::from_slice(unit_size, id, context_type, body)? })
+    }
+    /// Resizes the given entry.
+    pub(crate) fn resize_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: u16) -> Result<(EntryMutItem<'a>, i32)> {
+        loop {
+            let mut buf = &mut self.buf[..self.remaining_used_size];
+            if buf.len() == 0 {
+                return Err(Error::EntryNotFoundError);
+            }
+            let entry = Self::next_item(&mut buf)?;
+            if entry.header.type_id.get() == id && entry.header.instance_id.get() == instance_id && entry.header.board_instance_mask.get() == board_instance_mask {
+                let type_size = entry.header.type_size.get();
+                let new_type_size = payload_size.checked_add(size_of::<TYPE_HEADER>() as u16).ok_or_else(|| Error::OutOfSpaceError)?;
+                if new_type_size > type_size {
+                    let diff_size = new_type_size - type_size;
+                    // Increase used size
+                    let remaining_used_size = self.remaining_used_size.checked_add(diff_size as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "TYPE_HEADER::entry_size"))?;
+
+                    if self.buf.len() >= remaining_used_size {
+                    } else {
+                        return Err(Error::OutOfSpaceError);
+                    }
+                    self.buf.copy_within((type_size as usize)..self.remaining_used_size, new_type_size as usize);
+                    self.remaining_used_size = remaining_used_size;
+                } else if new_type_size < type_size {
+                    let diff_size = type_size - new_type_size;
+                    self.buf.copy_within((type_size as usize)..self.remaining_used_size, new_type_size as usize);
+                    // Decrease used size
+                    self.remaining_used_size = self.remaining_used_size.checked_sub(diff_size as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "TYPE_HEADER::entry_size"))?;
+                }
+                let header = take_header_from_collection_mut::<TYPE_HEADER>(&mut self.buf).ok_or_else(|| Error::FileSystemError("could not read header of Entry", ""))?;
+                let unit_size = header.unit_size;
+
+                let body = take_body_from_collection_mut(&mut self.buf, payload_size.into(), TYPE_ALIGNMENT).ok_or_else(|| Error::FileSystemError("could not read body of Entry", ""))?;
+                return Ok((EntryMutItem { header, body: EntryItemBody::<Buffer>::from_slice(unit_size, id, context_type, body)? }, new_type_size as i32 - type_size as i32));
+            } else {
+                let entry = Self::next_item(&mut self.buf)?;
+                let entry_size = entry.header.type_size.get() as usize;
+                self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "TYPE_HEADER::type_size"))?;
+            }
+        }
     }
 }
 
