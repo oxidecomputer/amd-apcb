@@ -212,6 +212,8 @@ impl<'a> GroupMutItem<'a> {
         header.context_type = context_type as u8;
         header.context_format = ContextFormat::Raw as u8;
         header.unit_size = 0;
+        header.key_size = 0;
+        header.key_pos = 0;
         if context_type == ContextType::Tokens {
             header.context_format = ContextFormat::SortAscending as u8;
             header.unit_size = 8;
