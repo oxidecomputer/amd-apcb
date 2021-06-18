@@ -87,45 +87,14 @@ impl<'a> ApcbIterMut<'a> {
         }
         Ok(())
     }
-    pub(crate) fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: u16) -> Result<EntryMutItem> {
+    /// Side effect: Moves cursor to the group so resized.
+    pub(crate) fn resize_group(&mut self, group_id: u16, size_diff: i64) -> Result<()> {
+        let apcb_size = self.header.apcb_size.get();
+        let self_beginning_of_groups_len = self.beginning_of_groups.len();
         loop {
             let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
             if beginning_of_groups.len() == 0 {
-                break;
-            }
-            let group = Self::next_item(&mut beginning_of_groups)?;
-            if group.header.group_id.get() == group_id {
-                let apcb_size = self.header.apcb_size.get();
-                let entry_size: u16 = (size_of::<TYPE_HEADER>() as u16).checked_add(payload_size).ok_or_else(|| Error::OutOfSpaceError)?;
-                let old_group_size = group.header.group_size.get();
-                let new_group_size = old_group_size.checked_add(entry_size as u32).ok_or_else(|| Error::OutOfSpaceError)?;
-                let remaining_used_size = self.remaining_used_size.checked_add(entry_size as usize).ok_or_else(|| Error::OutOfSpaceError)?;
-
-                let beginning_of_groups_len = beginning_of_groups.len();
-
-                self.header.apcb_size.set(apcb_size.checked_add(entry_size as u32).ok_or_else(|| Error::OutOfSpaceError)?);
-                group.header.group_size.set(new_group_size.into());
-
-                // Move all groups after this group further up
-                self.beginning_of_groups.copy_within((old_group_size as usize)..self.remaining_used_size, new_group_size as usize);
-                self.remaining_used_size = remaining_used_size;
-
-                let mut group = Self::next_item(&mut self.beginning_of_groups)?; // reload so we get a bigger slice
-                return group.insert_entry(group_id, id, instance_id, board_instance_mask, entry_size, context_type, payload_size);
-            }
-            let group = Self::next_item(&mut self.beginning_of_groups)?;
-            let group_size = group.header.group_size.get() as usize;
-            self.remaining_used_size = self.remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "GROUP_HEADER::group_size"))?;
-        }
-        Err(Error::GroupNotFoundError)
-    }
-    pub(crate) fn resize_group(&mut self, group_id: u16, size_diff: i32) -> Result<()> {
-        let apcb_size = self.header.apcb_size.get();
-        let self_beginning_of_groups_len = self.beginning_of_groups.len();
-        'outer: loop {
-            let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
-            if beginning_of_groups.len() == 0 {
-                break;
+                return Err(Error::GroupNotFoundError);
             }
             let mut group = Self::next_item(&mut beginning_of_groups)?;
             let old_group_size = group.header.group_size.get();
@@ -153,13 +122,18 @@ impl<'a> ApcbIterMut<'a> {
                     self.beginning_of_groups.copy_within((old_group_size as usize)..self.remaining_used_size, new_group_size as usize);
                     self.remaining_used_size = remaining_used_size;
                 }
-                break 'outer;
+                return Ok(());
             }
             let group = Self::next_item(&mut self.beginning_of_groups)?;
             let group_size = group.header.group_size.get() as usize;
             self.remaining_used_size = self.remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "GROUP_HEADER::group_size"))?;
         }
-        Ok(())
+    }
+    pub(crate) fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: u16) -> Result<EntryMutItem> {
+        let entry_size: u16 = (size_of::<TYPE_HEADER>() as u16).checked_add(payload_size).ok_or_else(|| Error::OutOfSpaceError)?;
+        self.resize_group(group_id, entry_size.into())?;
+        let mut group = Self::next_item(&mut self.beginning_of_groups)?; // reload so we get a bigger slice
+        return group.insert_entry(group_id, id, instance_id, board_instance_mask, entry_size, context_type, payload_size);
     }
     pub fn delete_group(&mut self, group_id: u16) -> Result<()> {
         let apcb_size = self.header.apcb_size.get();
