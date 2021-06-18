@@ -12,15 +12,17 @@ The other APCB elements have unique type_id.
 
 * Creating a new group
 * Deleting a group from APCB
+* Inserting an entry into a group
+* Querying/modifying existing tokens in entry (by token_id and entry type (Bool, DWord etc))
+  * Hardcode and check: unit_size = 8
+* Deleting entry from group
 
 # Modification actions that need to be supported
 
 * Creating a new group; order doesn't matter--although it's usually ascending by group_id (TODO)
-* Inserting an entry into a group (type_id alone DOES NOT have to be unique); order doesn't matter--although it's usually ascending by (type_id, board_mask) (TODO)
 * Growing an existing entry; especially for adding tokens (which have to be sorted) (TODO)
 * Querying/adding/REMOVEing tokens in entry (by token_id and entry type (Bool, DWord etc)) (TODO)
-  * Hardcode and check: unit_size = 8, key_size = 4, key_pos = 0
-* Deleting entry from group (TODO)
+  * Hardcode and check: key_size = 4, key_pos = 0
 
 # Limitations
 
