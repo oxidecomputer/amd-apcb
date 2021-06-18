@@ -87,7 +87,7 @@ impl<'a> ApcbIterMut<'a> {
         }
         Ok(())
     }
-    pub fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, payload_size: u16) -> Result<EntryMutItem> {
+    pub fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: u16) -> Result<EntryMutItem> {
         loop {
             let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
             if beginning_of_groups.len() == 0 {
@@ -110,7 +110,7 @@ impl<'a> ApcbIterMut<'a> {
                 self.remaining_used_size = self.remaining_used_size.checked_add(entry_size as usize).ok_or_else(|| Error::OutOfSpaceError)?;
 
                 let mut group = Self::next_item(&mut self.beginning_of_groups)?; // reload so we get a bigger slice
-                return group.insert_entry(group_id, id, instance_id, board_instance_mask, entry_size, payload_size);
+                return group.insert_entry(group_id, id, instance_id, board_instance_mask, entry_size, context_type, payload_size);
             }
             let group = Self::next_item(&mut self.beginning_of_groups)?;
             let group_size = group.header.group_size.get() as usize;
@@ -280,8 +280,8 @@ impl<'a> APCB<'a> {
     pub fn delete_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
         self.groups_mut().delete_entry(group_id, entry_id, instance_id, board_instance_mask)
     }
-    pub fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, payload_size: u16) -> Result<()> {
-        match self.groups_mut().insert_entry(group_id, id, instance_id, board_instance_mask, payload_size) {
+    pub fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: u16) -> Result<()> {
+        match self.groups_mut().insert_entry(group_id, id, instance_id, board_instance_mask, context_type, payload_size) {
             Ok(e) => Ok(()),
             Err(e) => Err(e),
         }

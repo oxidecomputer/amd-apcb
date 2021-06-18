@@ -17,22 +17,40 @@ use crate::entry_tokens::TokensEntryBodyItem;
 
 #[derive(Debug)]
 pub enum EntryItemBody<BufferType> {
-    Raw(BufferType),
-    Tokens(TokensEntryBodyItem<BufferType>),
+    Struct(BufferType),
+    Tokens(TokensEntryBodyItem::<BufferType>),
+    Parameters(BufferType), // not seen in the wild anymore
 }
 
-// ContextType::Token
-impl<'a> EntryItemBody<&'a mut [u8]> {
-    pub(crate) fn from_slice(b: Buffer<'a>) -> EntryItemBody<Buffer<'a>> {
-        // FIXME
-        Self::Raw(b)
+impl<'a> EntryItemBody<Buffer<'a>> {
+    pub(crate) fn from_slice(context_type: ContextType, b: Buffer<'a>) -> EntryItemBody<Buffer<'a>> {
+        match context_type {
+            ContextType::Struct => {
+                Self::Struct(b)
+            },
+            ContextType::Tokens => {
+                Self::Tokens(TokensEntryBodyItem::<Buffer>::new(b))
+            },
+            ContextType::Parameters => {
+                Self::Parameters(b)
+            },
+        }
     }
 }
 
-impl<'a> EntryItemBody<&'a [u8]> {
-    pub(crate) fn from_slice(b: ReadOnlyBuffer<'a>) -> EntryItemBody<ReadOnlyBuffer<'a>> {
-        // FIXME
-        Self::Raw(b)
+impl<'a> EntryItemBody<ReadOnlyBuffer<'a>> {
+    pub(crate) fn from_slice(context_type: ContextType, b: ReadOnlyBuffer<'a>) -> EntryItemBody<ReadOnlyBuffer<'a>> {
+        match context_type {
+            ContextType::Struct => {
+                Self::Struct(b)
+            },
+            ContextType::Tokens => {
+                Self::Tokens(TokensEntryBodyItem::<ReadOnlyBuffer>::new(b))
+            },
+            ContextType::Parameters => {
+                Self::Parameters(b)
+            },
+        }
     }
 }
 

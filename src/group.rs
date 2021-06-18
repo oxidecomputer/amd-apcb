@@ -74,7 +74,7 @@ impl GroupItem<'_> {
 
         Ok(EntryItem {
             header: header,
-            body: EntryItemBody::<ReadOnlyBuffer>::from_slice(body),
+            body: EntryItemBody::<ReadOnlyBuffer>::from_slice(context_type, body),
         })
     }
 
@@ -121,7 +121,7 @@ impl<'a> GroupMutItem<'a> {
             }
         };
         ContextFormat::from_u8(header.context_format).unwrap();
-        ContextType::from_u8(header.context_type).unwrap();
+        let context_type = ContextType::from_u8(header.context_type).unwrap();
         let type_size = header.type_size.get() as usize;
 
         let payload_size = type_size.checked_sub(size_of::<APCB_TYPE_HEADER>()).ok_or_else(|| Error::FileSystemError("unexpected EOF while locating body of Entry", ""))?;
@@ -134,7 +134,7 @@ impl<'a> GroupMutItem<'a> {
 
         Ok(EntryMutItem {
             header: header,
-            body: EntryItemBody::<Buffer>::from_slice(body),
+            body: EntryItemBody::<Buffer>::from_slice(context_type, body),
         })
     }
 
@@ -193,7 +193,7 @@ impl<'a> GroupMutItem<'a> {
         }
         Ok(())
     }
-    pub(crate) fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, entry_size: u16, payload_size: u16) -> Result<EntryMutItem<'a>> {
+    pub(crate) fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, entry_size: u16, context_type: ContextType, payload_size: u16) -> Result<EntryMutItem<'a>> {
         self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "APCB_TYPE_HEADER::entry_size"))?;
         self.move_insertion_point_before(group_id, id, instance_id, board_instance_mask)?;
 
@@ -207,10 +207,17 @@ impl<'a> GroupMutItem<'a> {
         header.type_id.set(id);
         header.type_size.set(entry_size);
         header.instance_id.set(instance_id);
+        header.context_type = context_type as u8;
+        header.context_format = match context_type {
+            ContextType::Struct => ContextFormat::Raw,
+            ContextType::Parameters => ContextFormat::Raw, // TODO: verify
+            ContextType::Tokens => ContextFormat::SortAscending,
+        } as u8;
+
         // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
         header.board_instance_mask.set(board_instance_mask);
         let body = take_body_from_collection_mut(&mut self.buf, payload_size.into(), APCB_TYPE_ALIGNMENT).ok_or_else(|| Error::FileSystemError("could not read body of Entry", ""))?;
-        Ok(EntryMutItem { header, body: EntryItemBody::<Buffer>::from_slice(body) })
+        Ok(EntryMutItem { header, body: EntryItemBody::<Buffer>::from_slice(context_type, body) })
     }
 }
 

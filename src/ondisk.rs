@@ -239,7 +239,7 @@ pub struct APCB_GROUP_HEADER {
 }
 
 #[repr(u8)]
-#[derive(Debug, PartialEq, FromPrimitive)]
+#[derive(Debug, PartialEq, FromPrimitive, Copy, Clone)]
 pub enum ContextFormat {
     Raw = 0,
     SortAscending = 1,  // (sort by unit size)
@@ -247,11 +247,11 @@ pub enum ContextFormat {
 }
 
 #[repr(u8)]
-#[derive(Debug, PartialEq, FromPrimitive)]
+#[derive(Debug, PartialEq, FromPrimitive, Copy, Clone)]
 pub enum ContextType {
     Struct = 0,
-    Parameter = 1,
-    Token = 2, // then, type_id means something else
+    Parameters = 1,
+    Tokens = 2, // then, type_id means something else
 }
 
 impl Default for APCB_GROUP_HEADER {

@@ -2,6 +2,7 @@
 mod tests {
     use crate::APCB;
     use crate::Error;
+    use crate::ondisk::ContextType;
 
     #[test]
     #[should_panic]
@@ -135,7 +136,7 @@ mod tests {
         apcb.insert_group(0x1704, *b"MEMG")?;
         let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups_mut();
-        groups.insert_entry(0x1701, 96, 0, 0xFFFF, 48)?;
+        groups.insert_entry(0x1701, 96, 0, 0xFFFF, ContextType::Struct, 48)?;
         let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups_mut();
         groups.delete_entry(0x1701, 96, 0, 0xFFFF)?;
@@ -165,10 +166,10 @@ mod tests {
         apcb.insert_group(0x1704, *b"MEMG")?;
         let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups_mut();
-        groups.insert_entry(0x1701, 96, 0, 0xFFFF, 48)?;
+        groups.insert_entry(0x1701, 96, 0, 0xFFFF, ContextType::Struct, 48)?;
         let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups_mut();
-        groups.insert_entry(0x1701, 97, 0, 0xFFFF, 1)?;
+        groups.insert_entry(0x1701, 97, 0, 0xFFFF, ContextType::Struct, 1)?;
 
         let apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
