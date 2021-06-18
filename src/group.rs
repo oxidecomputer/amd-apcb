@@ -80,17 +80,15 @@ impl GroupItem<'_> {
         })
     }
 
-/* TODO:
-    /// Finds the first EntryMutItem with the given id, if any, and returns it.
-    pub fn first_entry(&self, id: u16) -> Option<EntryItem> {
+    /// Side effect: Moves the iterator!
+    pub fn entry(&mut self, id: u16, instance_id: u16, board_instance_mask: u16) -> Option<EntryItem> {
         for entry in self {
-            if entry.id() == id {
+            if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() == board_instance_mask {
                 return Some(entry);
             }
         }
         None
     }
-*/
 }
 
 #[derive(Debug)]

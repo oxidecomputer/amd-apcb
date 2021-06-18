@@ -4,7 +4,7 @@ use crate::ondisk::GROUP_HEADER;
 use crate::ondisk::TYPE_HEADER;
 use crate::ondisk::V2_HEADER;
 use crate::ondisk::V3_HEADER_EXT;
-pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
+pub use crate::ondisk::{ContextFormat, ContextType, TokenType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
 use core::mem::{size_of};
 use crate::group::{GroupItem, GroupMutItem};
 use crate::entry::EntryMutItem;
@@ -135,6 +135,15 @@ impl<'a> ApcbIterMut<'a> {
         let mut group = Self::next_item(&mut self.beginning_of_groups)?; // reload so we get a bigger slice
         return group.insert_entry(group_id, id, instance_id, board_instance_mask, entry_size, context_type, payload_size);
     }
+    /// Side effect: Moves iterator to unspecified item
+    pub(crate) fn insert_token(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u16) -> Result<()> {
+        // FIXME: Find insertion location
+        self.resize_group(group_id, 8)?;
+        // FIXME: move existing entries up
+        // FIXME: actually insert the token at the spot
+        Ok(())
+    }
+
     pub(crate) fn delete_group(&mut self, group_id: u16) -> Result<()> {
         let apcb_size = self.header.apcb_size.get();
         loop {
@@ -302,6 +311,12 @@ impl<'a> APCB<'a> {
             Ok(e) => Ok(()),
             Err(e) => Err(e),
         }
+    }
+    pub fn insert_token(&mut self, group_id: u16, type_id: TokenType, instance_id: u16, board_instance_mask: u16, token_id: u16) -> Result<()> {
+        let mut group = self.group(group_id).ok_or_else(|| Error::GroupNotFoundError)?;
+        // Make sure that the entry exists
+        group.entry(type_id as u16, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFoundError)?;
+        self.groups_mut().insert_token(group_id, type_id as u16, instance_id, board_instance_mask, token_id)
     }
 
     pub fn delete_group(&mut self, group_id: u16) -> Result<()> {
