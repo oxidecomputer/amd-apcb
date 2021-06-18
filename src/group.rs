@@ -72,9 +72,10 @@ impl GroupItem<'_> {
             },
         };
 
+        let type_id = header.type_id.get();
         Ok(EntryItem {
             header: header,
-            body: EntryItemBody::<ReadOnlyBuffer>::from_slice(context_type, body),
+            body: EntryItemBody::<ReadOnlyBuffer>::from_slice(type_id, context_type, body),
         })
     }
 
@@ -132,9 +133,10 @@ impl<'a> GroupMutItem<'a> {
             },
         };
 
+        let type_id = header.type_id.get();
         Ok(EntryMutItem {
             header: header,
-            body: EntryItemBody::<Buffer>::from_slice(context_type, body),
+            body: EntryItemBody::<Buffer>::from_slice(type_id, context_type, body),
         })
     }
 
@@ -217,7 +219,7 @@ impl<'a> GroupMutItem<'a> {
         // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
         header.board_instance_mask.set(board_instance_mask);
         let body = take_body_from_collection_mut(&mut self.buf, payload_size.into(), APCB_TYPE_ALIGNMENT).ok_or_else(|| Error::FileSystemError("could not read body of Entry", ""))?;
-        Ok(EntryMutItem { header, body: EntryItemBody::<Buffer>::from_slice(context_type, body) })
+        Ok(EntryMutItem { header, body: EntryItemBody::<Buffer>::from_slice(id, context_type, body) })
     }
 }
 
