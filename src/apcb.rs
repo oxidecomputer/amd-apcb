@@ -135,7 +135,7 @@ impl<'a> ApcbIterMut<'a> {
         let mut group = Self::next_item(&mut self.beginning_of_groups)?; // reload so we get a bigger slice
         return group.insert_entry(group_id, id, instance_id, board_instance_mask, entry_size, context_type, payload_size);
     }
-    pub fn delete_group(&mut self, group_id: u16) -> Result<()> {
+    pub(crate) fn delete_group(&mut self, group_id: u16) -> Result<()> {
         let apcb_size = self.header.apcb_size.get();
         loop {
             let mut beginning_of_groups = &mut self.beginning_of_groups[..self.remaining_used_size];
