@@ -254,6 +254,15 @@ pub enum ContextType {
     Tokens = 2, // then, type_id means something else
 }
 
+#[repr(u16)]
+#[derive(Debug, PartialEq, FromPrimitive, Copy, Clone)]
+pub enum TokenType {
+    Bool = 0,
+    Byte = 1,
+    Word = 2,
+    DWord = 3,
+}
+
 impl Default for APCB_GROUP_HEADER {
     fn default() -> Self {
         Self {
