@@ -1,7 +1,6 @@
 use crate::types::{Error, Result, Buffer, ReadOnlyBuffer};
 
 use crate::ondisk::APCB_GROUP_HEADER;
-use crate::ondisk::APCB_TYPE_ALIGNMENT;
 use crate::ondisk::APCB_TYPE_HEADER;
 use crate::ondisk::APCB_V2_HEADER;
 use crate::ondisk::APCB_V3_HEADER_EXT;
