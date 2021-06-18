@@ -157,7 +157,7 @@ impl EntryMutItem<'_> {
 #[derive(Debug)]
 pub struct EntryItem<'a> {
     pub header: &'a APCB_TYPE_HEADER,
-    pub(crate) body: EntryItemBody<ReadOnlyBuffer<'a>>, // FIXME: private
+    pub body: EntryItemBody<ReadOnlyBuffer<'a>>,
 }
 
 impl EntryItem<'_> {
