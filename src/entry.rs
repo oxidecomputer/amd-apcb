@@ -3,6 +3,7 @@ use crate::types::{Buffer, ReadOnlyBuffer};
 use crate::ondisk::APCB_TYPE_HEADER;
 pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
 use num_traits::FromPrimitive;
+use crate::entry_tokens::TokensEntryBodyItem;
 
 /* Note: high-level interface is:
 
@@ -13,10 +14,32 @@ use num_traits::FromPrimitive;
    }
 
 */
+
+#[derive(Debug)]
+pub enum EntryItemBody<BufferType> {
+    Raw(BufferType),
+    Tokens(TokensEntryBodyItem<BufferType>),
+}
+
+// ContextType::Token
+impl<'a> EntryItemBody<&'a mut [u8]> {
+    pub(crate) fn from_slice(b: Buffer<'a>) -> EntryItemBody<Buffer<'a>> {
+        // FIXME
+        Self::Raw(b)
+    }
+}
+
+impl<'a> EntryItemBody<&'a [u8]> {
+    pub(crate) fn from_slice(b: ReadOnlyBuffer<'a>) -> EntryItemBody<ReadOnlyBuffer<'a>> {
+        // FIXME
+        Self::Raw(b)
+    }
+}
+
 #[derive(Debug)]
 pub struct EntryMutItem<'a> {
     pub header: &'a mut APCB_TYPE_HEADER,
-    pub(crate) body: Buffer<'a>, // FIXME: private
+    pub body: EntryItemBody<Buffer<'a>>,
 }
 
 impl EntryMutItem<'_> {
@@ -110,7 +133,7 @@ impl EntryMutItem<'_> {
 #[derive(Debug)]
 pub struct EntryItem<'a> {
     pub header: &'a APCB_TYPE_HEADER,
-    pub(crate) body: ReadOnlyBuffer<'a>, // FIXME: private
+    pub(crate) body: EntryItemBody<ReadOnlyBuffer<'a>>, // FIXME: private
 }
 
 impl EntryItem<'_> {

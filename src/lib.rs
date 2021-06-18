@@ -4,6 +4,7 @@
 
 mod types;
 mod apcb;
+mod entry_tokens;
 mod entry;
 mod group;
 mod ondisk;

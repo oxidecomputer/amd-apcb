@@ -7,7 +7,7 @@ pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection,
 use core::mem::{size_of};
 use num_traits::FromPrimitive;
 
-use crate::entry::{EntryItem, EntryMutItem};
+use crate::entry::{EntryItem, EntryMutItem, EntryItemBody};
 
 #[derive(Debug)]
 pub struct GroupItem<'a> {
@@ -61,7 +61,7 @@ impl GroupItem<'_> {
             }
         };
         ContextFormat::from_u8(header.context_format).unwrap();
-        ContextType::from_u8(header.context_type).unwrap();
+        let context_type = ContextType::from_u8(header.context_type).unwrap();
         let type_size = header.type_size.get() as usize;
 
         let payload_size = type_size.checked_sub(size_of::<APCB_TYPE_HEADER>()).ok_or_else(|| Error::FileSystemError("could not locate body of Entry", ""))?;
@@ -74,7 +74,7 @@ impl GroupItem<'_> {
 
         Ok(EntryItem {
             header: header,
-            body: body,
+            body: EntryItemBody::<ReadOnlyBuffer>::from_slice(body),
         })
     }
 
@@ -134,7 +134,7 @@ impl<'a> GroupMutItem<'a> {
 
         Ok(EntryMutItem {
             header: header,
-            body: body,
+            body: EntryItemBody::<Buffer>::from_slice(body),
         })
     }
 
@@ -210,7 +210,7 @@ impl<'a> GroupMutItem<'a> {
         // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
         header.board_instance_mask.set(board_instance_mask);
         let body = take_body_from_collection_mut(&mut self.buf, payload_size.into(), APCB_TYPE_ALIGNMENT).ok_or_else(|| Error::FileSystemError("could not read body of Entry", ""))?;
-        Ok(EntryMutItem { header, body })
+        Ok(EntryMutItem { header, body: EntryItemBody::<Buffer>::from_slice(body) })
     }
 }
 
