@@ -72,10 +72,11 @@ impl GroupItem<'_> {
             },
         };
 
+        let unit_size = header.unit_size;
         let type_id = header.type_id.get();
         Ok(EntryItem {
             header: header,
-            body: EntryItemBody::<ReadOnlyBuffer>::from_slice(type_id, context_type, body)?,
+            body: EntryItemBody::<ReadOnlyBuffer>::from_slice(unit_size, type_id, context_type, body)?,
         })
     }
 
@@ -133,10 +134,11 @@ impl<'a> GroupMutItem<'a> {
             },
         };
 
+        let unit_size = header.unit_size;
         let type_id = header.type_id.get();
         Ok(EntryMutItem {
             header: header,
-            body: EntryItemBody::<Buffer>::from_slice(type_id, context_type, body)?,
+            body: EntryItemBody::<Buffer>::from_slice(unit_size, type_id, context_type, body)?,
         })
     }
 
@@ -210,16 +212,20 @@ impl<'a> GroupMutItem<'a> {
         header.type_size.set(entry_size);
         header.instance_id.set(instance_id);
         header.context_type = context_type as u8;
-        header.context_format = match context_type {
-            ContextType::Struct => ContextFormat::Raw,
-            ContextType::Parameters => ContextFormat::Raw, // TODO: verify
-            ContextType::Tokens => ContextFormat::SortAscending,
-        } as u8;
+        header.context_format = ContextFormat::Raw as u8;
+        header.unit_size = 0;
+        if context_type == ContextType::Tokens {
+            header.context_format = ContextFormat::SortAscending as u8;
+            header.unit_size = 8;
+            header.key_size = 4;
+            header.key_pos = 0;
+        }
+        let unit_size = header.unit_size;
 
         // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
         header.board_instance_mask.set(board_instance_mask);
         let body = take_body_from_collection_mut(&mut self.buf, payload_size.into(), APCB_TYPE_ALIGNMENT).ok_or_else(|| Error::FileSystemError("could not read body of Entry", ""))?;
-        Ok(EntryMutItem { header, body: EntryItemBody::<Buffer>::from_slice(id, context_type, body)? })
+        Ok(EntryMutItem { header, body: EntryItemBody::<Buffer>::from_slice(unit_size, id, context_type, body)? })
     }
 }
 
