@@ -195,7 +195,10 @@ impl<'a> GroupMutItem<'a> {
         }
         Ok(())
     }
+    /// Inserts the given entry data at the right spot.
+    /// Precondition: Caller already increased the group size by entry_size.
     pub(crate) fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, entry_size: u16, context_type: ContextType, payload_size: u16, priority_mask: u8) -> Result<EntryMutItem<'a>> {
+        // Make sure that move_insertion_point_before does not notice the new uninitialized entry
         self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "TYPE_HEADER::entry_size"))?;
         self.move_insertion_point_before(group_id, id, instance_id, board_instance_mask)?;
 
