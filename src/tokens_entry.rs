@@ -93,11 +93,7 @@ impl<'a> TokensEntryIterMut<'a> {
             match Self::next_item(self.type_id, &mut buf) {
                 Ok(e) => {
                     if e.entry.key.get() < token_id {
-                        let entry = Self::next_item(self.type_id, &mut self.buf).unwrap();
-                        let entry_size = size_of::<TOKEN_ENTRY>();
-                        assert!(self.remaining_used_size >= entry_size);
-                        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining
- Iterator size", ""))?;
+                        self.next().unwrap();
                     } else {
                         break;
                     }
