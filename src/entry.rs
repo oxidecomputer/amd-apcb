@@ -3,7 +3,7 @@ use crate::types::{Buffer, ReadOnlyBuffer, Result, Error};
 use crate::ondisk::TYPE_HEADER;
 pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
 use num_traits::FromPrimitive;
-use crate::entry_tokens::TokensEntryBodyItem;
+use crate::tokens_entry::TokensEntryBodyItem;
 
 /* Note: high-level interface is:
 
