@@ -128,6 +128,17 @@ impl EntryMutItem<'_> {
     }
 
     // Note: Because type_id, instance_id, group_id and board_instance_mask are sort keys, these cannot be mutated.
+
+    pub(crate) fn insert_token(&mut self, token_id: u32, token_value: u32) -> Result<()> {
+        match &mut self.body {
+            EntryItemBody::<_>::Tokens(a) => {
+                a.insert_token(token_id, token_value)
+            },
+            _ => {
+                Err(Error::EntryTypeMismatchError)
+            },
+        }
+    }
 }
 
 #[derive(Debug)]

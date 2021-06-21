@@ -2,6 +2,7 @@ use crate::types::{Error, Result, Buffer, ReadOnlyBuffer};
 
 use crate::ondisk::GROUP_HEADER;
 use crate::ondisk::TYPE_HEADER;
+use crate::ondisk::TOKEN_ENTRY;
 use crate::ondisk::V2_HEADER;
 use crate::ondisk::V3_HEADER_EXT;
 pub use crate::ondisk::{ContextFormat, ContextType, TokenType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
@@ -88,7 +89,7 @@ impl<'a> ApcbIterMut<'a> {
         Ok(())
     }
     /// Side effect: Moves cursor to the group so resized.
-    pub(crate) fn resize_group(&mut self, group_id: u16, size_diff: i64) -> Result<()> {
+    pub(crate) fn resize_group_by(&mut self, group_id: u16, size_diff: i64) -> Result<()> {
         let apcb_size = self.header.apcb_size.get();
         let self_beginning_of_groups_len = self.beginning_of_groups.len();
         loop {
@@ -129,19 +130,20 @@ impl<'a> ApcbIterMut<'a> {
             self.remaining_used_size = self.remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "GROUP_HEADER::group_size"))?;
         }
     }
-    pub(crate) fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: u16, priority_mask: u8) -> Result<EntryMutItem> {
+    pub(crate) fn insert_entry(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: u16, priority_mask: u8) -> Result<EntryMutItem> {
         let entry_size: u16 = (size_of::<TYPE_HEADER>() as u16).checked_add(payload_size).ok_or_else(|| Error::OutOfSpaceError)?;
-        self.resize_group(group_id, entry_size.into())?;
+        self.resize_group_by(group_id, entry_size.into())?;
         let mut group = Self::next_item(&mut self.beginning_of_groups)?; // reload so we get a bigger slice
-        return group.insert_entry(group_id, id, instance_id, board_instance_mask, entry_size, context_type, payload_size, priority_mask);
+        // Note: On some errors, group.remaining_used_size will be reduced by insert_entry again!
+        group.insert_entry(group_id, type_id, instance_id, board_instance_mask, entry_size, context_type, payload_size, priority_mask)
     }
     /// Side effect: Moves iterator to unspecified item
-    pub(crate) fn insert_token(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u16) -> Result<()> {
-        // FIXME: Find insertion location
-        self.resize_group(group_id, 8)?;
-        // FIXME: move existing entries up
-        // FIXME: actually insert the token at the spot
-        Ok(())
+    pub(crate) fn insert_token(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
+        let token_size = size_of::<TOKEN_ENTRY>() as u16;
+        self.resize_group_by(group_id, token_size.into())?;
+        let mut group = Self::next_item(&mut self.beginning_of_groups)?; // reload so we get a bigger slice
+        // FIXME: Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  This is bad when iterating over the group members until the end--it will not end well.
+        group.insert_token(group_id, type_id, instance_id, board_instance_mask, token_id, token_value)
     }
 
     pub(crate) fn delete_group(&mut self, group_id: u16) -> Result<()> {
@@ -312,11 +314,11 @@ impl<'a> APCB<'a> {
             Err(e) => Err(e),
         }
     }
-    pub fn insert_token(&mut self, group_id: u16, type_id: TokenType, instance_id: u16, board_instance_mask: u16, token_id: u16) -> Result<()> {
+    pub fn insert_token(&mut self, group_id: u16, type_id: TokenType, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         let mut group = self.group(group_id).ok_or_else(|| Error::GroupNotFoundError)?;
         // Make sure that the entry exists
         group.entry(type_id as u16, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFoundError)?;
-        self.groups_mut().insert_token(group_id, type_id as u16, instance_id, board_instance_mask, token_id)
+        self.groups_mut().insert_token(group_id, type_id as u16, instance_id, board_instance_mask, token_id, token_value)
     }
 
     pub fn delete_group(&mut self, group_id: u16) -> Result<()> {

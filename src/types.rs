@@ -10,6 +10,7 @@ pub enum Error {
     OutOfSpaceError,
     GroupNotFoundError,
     EntryNotFoundError,
+    EntryTypeMismatchError,
 }
 
 pub type Result<Q> = core::result::Result<Q, Error>;

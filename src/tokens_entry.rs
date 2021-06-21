@@ -2,6 +2,7 @@
 use crate::types::{Buffer, ReadOnlyBuffer, Result, Error};
 use crate::ondisk::{TOKEN_ENTRY, TokenType, take_header_from_collection, take_header_from_collection_mut};
 use num_traits::FromPrimitive;
+use core::mem::size_of;
 
 #[derive(Debug)]
 pub struct TokensEntryBodyItem<BufferType> {
@@ -63,22 +64,75 @@ impl<'a> TokensEntryItemMut<'a> {
     }
 }
 
-impl TokensEntryIterMut<'_> {
+impl<'a> TokensEntryIterMut<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'a>(type_id: TokenType, buf: &mut Buffer<'a>) -> Result<TokensEntryItemMut<'a>> {
+    fn next_item<'b>(type_id: TokenType, buf: &mut Buffer<'b>) -> Result<TokensEntryItemMut<'b>> {
         if buf.len() == 0 {
             return Err(Error::FileSystemError("unexpected EOF while reading header of Token Entry", ""));
         }
-        let header = match take_header_from_collection_mut::<TOKEN_ENTRY>(&mut *buf) {
+        let entry = match take_header_from_collection_mut::<TOKEN_ENTRY>(&mut *buf) {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystemError("could not read header of Token Entry", ""));
+                return Err(Error::FileSystemError("could not read Token Entry", ""));
             }
         };
         Ok(TokensEntryItemMut {
             type_id,
-            entry: header,
+            entry: entry,
+        })
+    }
+
+    /// Find the place BEFORE which the entry TOKEN_ID is supposed to go.
+    pub(crate) fn move_insertion_point_before(&mut self, token_id: u32) -> Result<()> {
+        loop {
+            let mut buf = &mut self.buf[..self.remaining_used_size];
+            if buf.len() == 0 {
+                break;
+            }
+            match Self::next_item(self.type_id, &mut buf) {
+                Ok(e) => {
+                    if e.entry.key.get() < token_id {
+                        let entry = Self::next_item(self.type_id, &mut self.buf).unwrap();
+                        let entry_size = size_of::<TOKEN_ENTRY>();
+                        assert!(self.remaining_used_size >= entry_size);
+                        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining
+ Iterator size", ""))?;
+                    } else {
+                        break;
+                    }
+                },
+                Err(e) => {
+                    return Err(e);
+                },
+            }
+        }
+        Ok(())
+    }
+
+    /// Inserts the given entry data at the right spot.
+    /// Precondition: Caller already increased the group size by entry_size.
+    pub(crate) fn insert_token(&mut self, token_id: u32, token_value: u32) -> Result<TokensEntryItemMut<'a>> {
+        let entry_size = size_of::<TOKEN_ENTRY>();
+
+        // Make sure that move_insertion_point_before does not notice the new uninitialized entry
+        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::FileSystemError("Tokens Entry is bigger than remaining iterator size", ""))?;
+        self.move_insertion_point_before(token_id)?;
+        // Move the entries from after the insertion point to the right (in order to make room before for our new entry).
+        self.buf.copy_within(0..self.remaining_used_size, entry_size as usize);
+
+        self.remaining_used_size = self.remaining_used_size.checked_add(entry_size as usize).ok_or_else(|| Error::FileSystemError("Tokens Entry is bigger than remaining iterator size", ""))?;
+        let entry = match take_header_from_collection_mut::<TOKEN_ENTRY>(&mut self.buf) {
+            Some(item) => item,
+            None => {
+                return Err(Error::FileSystemError("could not read Token Entry", ""));
+            }
+        };
+        entry.key.set(token_id);
+        entry.value.set(token_value);
+        Ok(TokensEntryItemMut {
+            type_id: self.type_id,
+            entry,
         })
     }
 }
@@ -122,7 +176,6 @@ impl<'a> TokensEntryItem<'a> {
         }
     }
 }
-
 
 impl TokensEntryIter<'_> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
@@ -178,6 +231,13 @@ impl<'a> TokensEntryBodyItem<Buffer<'a>> {
             type_id: self.type_id,
             buf: self.buf,
             remaining_used_size: self.used_size,
+        }
+    }
+
+    pub(crate) fn insert_token(&mut self, token_id: u32, token_value: u32) -> Result<()> {
+        match self.iter_mut().insert_token(token_id, token_value) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
         }
     }
 }
