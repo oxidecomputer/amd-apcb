@@ -165,9 +165,7 @@ impl<'a> GroupMutItem<'a> {
 
                 return Ok(type_size as u32);
             } else {
-                let entry = Self::next_item(&mut self.buf)?;
-                let entry_size = entry.header.type_size.get() as usize;
-                self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "TYPE_HEADER::type_size"))?;
+                self.next().unwrap();
             }
         }
         Ok(0u32)
@@ -182,10 +180,7 @@ impl<'a> GroupMutItem<'a> {
             match Self::next_item(&mut buf) {
                 Ok(e) => {
                     if (e.header.group_id.get(), e.id(), e.instance_id(), e.board_instance_mask()) < (group_id, id, instance_id, board_instance_mask) {
-                        let entry = Self::next_item(&mut self.buf).unwrap();
-                        let entry_size = entry.header.type_size.get() as usize;
-                        assert!(self.remaining_used_size >= entry_size);
-                        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", ""))?;
+                        self.next().unwrap();
                     } else {
                         break;
                     }
@@ -208,7 +203,8 @@ impl<'a> GroupMutItem<'a> {
         // Move the entries from after the insertion point to the right (in order to make room before for our new entry).
         self.buf.copy_within(0..self.remaining_used_size, entry_size as usize);
 
-        let header = take_header_from_collection_mut::<TYPE_HEADER>(&mut self.buf).ok_or_else(|| Error::FileSystemError("could not read header of Entry", ""))?;
+        let mut buf = &mut self.buf[..(self.remaining_used_size + entry_size as usize)];
+        let header = take_header_from_collection_mut::<TYPE_HEADER>(&mut buf).ok_or_else(|| Error::FileSystemError("could not read header of Entry", ""))?;
         *header = TYPE_HEADER::default();
         header.group_id.set(group_id);
         header.type_id.set(id);
@@ -230,9 +226,9 @@ impl<'a> GroupMutItem<'a> {
 
         // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
         header.board_instance_mask.set(board_instance_mask);
-        let body = take_body_from_collection_mut(&mut self.buf, payload_size.into(), TYPE_ALIGNMENT).ok_or_else(|| Error::FileSystemError("could not read body of Entry", ""))?;
+        let body = take_body_from_collection_mut(&mut buf, payload_size.into(), TYPE_ALIGNMENT).ok_or_else(|| Error::FileSystemError("could not read body of Entry", ""))?;
         self.remaining_used_size = remaining_used_size;
-        Ok(EntryMutItem { header, body: EntryItemBody::<Buffer>::from_slice(unit_size, id, context_type, body)? })
+        self.next().ok_or_else(|| Error::FileSystemError("cannot read what was written just now", ""))
     }
     /// Resizes the given entry by SIZE_DIFF.
     /// Precondition: If SIZE_DIFF > 0, caller needs to have expanded the group by SIZE_DIFF already.
@@ -268,10 +264,7 @@ impl<'a> GroupMutItem<'a> {
                     // Decrease used size
                     self.remaining_used_size = self.remaining_used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "TYPE_HEADER::entry_size"))?;
                 }
-                let header = take_header_from_collection_mut::<TYPE_HEADER>(&mut self.buf).ok_or_else(|| Error::FileSystemError("could not read header of Entry", ""))?;                let unit_size = header.unit_size;
-                let payload_size = new_type_size.checked_sub(size_of::<TYPE_HEADER>() as u16).ok_or_else(|| Error::FileSystemError("Entry is smaller than Entry header", "TYPE_HEADER::entry_size"))?;
-                let body = take_body_from_collection_mut(&mut self.buf, payload_size.into(), TYPE_ALIGNMENT).ok_or_else(|| Error::FileSystemError("could not read body ff Entry", ""))?;
-                return Ok(EntryMutItem { header, body: EntryItemBody::<Buffer>::from_slice(unit_size, id, context_type, body)? });
+                return self.next().ok_or_else(|| Error::FileSystemError("cannot read what was just written", ""))
             } else {
                 let entry = Self::next_item(&mut self.buf)?;
                 let entry_size = entry.header.type_size.get() as usize;
