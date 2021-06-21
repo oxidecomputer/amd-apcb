@@ -51,6 +51,7 @@ impl<'a> ApcbIterMut<'a> {
         let body = match take_body_from_collection_mut(&mut *buf, payload_size, 1) {
             Some(item) => item,
             None => {
+                panic!("XX");
                 return Err(Error::FileSystemError("could not read body of Groupxx", ""));
             },
         };
@@ -172,76 +173,57 @@ impl<'a> APCB<'a> {
     }
     pub fn delete_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
         let apcb_size = self.header.apcb_size.get();
-        let mut remaining_used_size = self.used_size;
-        'outer: loop {
-            let mut beginning_of_groups = &mut self.beginning_of_groups[..remaining_used_size];
-            if beginning_of_groups.len() == 0 {
-                break;
-            }
-            let mut group = ApcbIterMut::next_item(&mut beginning_of_groups)?;
-            if group.header.group_id.get() == group_id {
-                let size_diff = group.delete_entry(entry_id, instance_id, board_instance_mask)?;
-                if size_diff > 0 {
-                    let old_group_size = group.header.group_size.get();
-                    let new_group_size = old_group_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystemError("Group is smaller than Entry in Group", "GROUP_HEADER::group_size"))?;
-                    group.header.group_size.set(new_group_size);
+        let mut group = self.group_mut(group_id).ok_or_else(|| Error::GroupNotFoundError)?;
+        let size_diff = group.delete_entry(entry_id, instance_id, board_instance_mask)?;
+        if size_diff > 0 {
+            let old_group_size = group.header.group_size.get();
+            let new_group_size = old_group_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystemError("Group is smaller than Entry in Group", "GROUP_HEADER::group_size"))?;
+            group.header.group_size.set(new_group_size);
 
-                    self.beginning_of_groups.copy_within((old_group_size as usize)..self.used_size, new_group_size as usize);
-                    self.header.apcb_size.set(apcb_size.checked_sub(size_diff as u32).ok_or_else(|| Error::FileSystemError("APCB is smaller than Entry in Group", "HEADER_V2::apcb_size"))?);
+            self.beginning_of_groups.copy_within((old_group_size as usize)..self.used_size, new_group_size as usize);
+            self.header.apcb_size.set(apcb_size.checked_sub(size_diff as u32).ok_or_else(|| Error::FileSystemError("APCB is smaller than Entry in Group", "HEADER_V2::apcb_size"))?);
 
-                    self.used_size = self.used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "TYPE_HEADER::type_size"))?;
-                }
-                break 'outer;
-            }
-            let group = ApcbIterMut::next_item(&mut self.beginning_of_groups)?;
-            let group_size = group.header.group_size.get() as usize;
-            remaining_used_size = remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "GROUP_HEADER::group_size"))?;
+            self.used_size = self.used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "TYPE_HEADER::type_size"))?;
         }
         Ok(())
     }
     /// Side effect: Moves cursor to the group so resized.
     pub fn resize_group_by(&mut self, group_id: u16, size_diff: i64) -> Result<GroupMutItem> {
+        let old_used_size = self.used_size;
         let apcb_size = self.header.apcb_size.get();
-        let self_beginning_of_groups_len = self.beginning_of_groups.len();
-        let mut remainder_used_size = self.used_size;
-        loop {
-            let mut beginning_of_groups = &mut self.beginning_of_groups[..remainder_used_size];
-            if beginning_of_groups.len() == 0 {
-                return Err(Error::GroupNotFoundError);
-            }
-            let mut group = ApcbIterMut::next_item(&mut beginning_of_groups)?;
-            if group.header.group_id.get() == group_id {
-                let old_group_size = group.header.group_size.get();
-                if size_diff > 0 {
-                    // Grow
-
-                    let size_diff: u32 = (size_diff as u64).try_into().unwrap();
-                    let new_group_size = old_group_size.checked_add(size_diff).ok_or_else(|| Error::FileSystemError("Group is too big for format", "GROUP_HEADER::group_size"))?;
-                    let used_size = self.used_size.checked_add(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "TYPE_HEADER::type_size"))?;
-                    if used_size <= self_beginning_of_groups_len {
-                    } else {
-                        return Err(Error::OutOfSpaceError);
-                    }
-                    self.header.apcb_size.set(apcb_size.checked_add(size_diff).ok_or_else(|| Error::FileSystemError("APCB is too big for format", "HEADER_V2::apcb_size"))?);
-                    group.header.group_size.set(new_group_size);
-                    self.beginning_of_groups.copy_within((old_group_size as usize)..self.used_size, new_group_size as usize);
-                    self.used_size = used_size;
-                } else if size_diff < 0 {
-                    let size_diff: u32 = ((-size_diff) as u64).try_into().unwrap();
-                    let new_group_size = old_group_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystemError("Group is smaller than Entry in Group", "GROUP_HEADER::group_size"))?;
-                    let used_size = self.used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "TYPE_HEADER::type_size"))?;
-                    self.header.apcb_size.set(apcb_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystemError("APCB is smaller than Entry in Group", "HEADER_V2::apcb_size"))?);
-                    group.header.group_size.set(new_group_size);
-                    self.beginning_of_groups.copy_within((old_group_size as usize)..self.used_size, new_group_size as usize);
-                    self.used_size = used_size;
-                }
-                return ApcbIterMut::next_item(&mut self.beginning_of_groups);
-                //remainder_used_size = remainder_used_size.checked_sub(item.header.group_size).ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "GROUP_HEADER::group_size"))?;
-                //self.next().ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "GROUP_HEADER::group_size"));
-            }
-            let item = ApcbIterMut::next_item(&mut self.beginning_of_groups)?;
-            remainder_used_size = remainder_used_size.checked_sub(item.header.group_size.get() as usize).ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "GROUP_HEADER::group_size"))?;
+        if size_diff > 0 {
+            let size_diff: u32 = (size_diff as u64).try_into().unwrap();
+            self.header.apcb_size.set(apcb_size.checked_add(size_diff).ok_or_else(|| Error::FileSystemError("APCB is too big for format", "HEADER_V2::apcb_size"))?);
+        } else {
+            let size_diff: u32 = ((-size_diff) as u64).try_into().unwrap();
+            self.header.apcb_size.set(apcb_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystemError("APCB is smaller than Entry in Group", "HEADER_V2::apcb_size"))?);
         }
+
+        let self_beginning_of_groups_len = self.beginning_of_groups.len();
+        let group = self.group_mut(group_id).ok_or_else(|| Error::GroupNotFoundError)?;
+        let old_group_size = group.header.group_size.get();
+        if size_diff > 0 {
+            // Grow
+
+            let size_diff: u32 = (size_diff as u64).try_into().unwrap();
+            let new_group_size = old_group_size.checked_add(size_diff).ok_or_else(|| Error::FileSystemError("Group is too big for format", "GROUP_HEADER::group_size"))?;
+            let new_used_size = old_used_size.checked_add(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "TYPE_HEADER::type_size"))?;
+            if new_used_size <= self_beginning_of_groups_len {
+            } else {
+                return Err(Error::OutOfSpaceError);
+            }
+            group.header.group_size.set(new_group_size);
+            self.beginning_of_groups.copy_within((old_group_size as usize)..old_used_size, new_group_size as usize);
+            self.used_size = new_used_size;
+        } else if size_diff < 0 {
+            let size_diff: u32 = ((-size_diff) as u64).try_into().unwrap();
+            let new_group_size = old_group_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystemError("Group is smaller than Entry in Group", "GROUP_HEADER::group_size"))?;
+            let new_used_size = old_used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "TYPE_HEADER::type_size"))?;
+            group.header.group_size.set(new_group_size);
+            self.beginning_of_groups.copy_within((old_group_size as usize)..old_used_size, new_group_size as usize);
+            self.used_size = new_used_size;
+        }
+        self.group_mut(group_id).ok_or_else(|| Error::GroupNotFoundError)
     }
     pub fn insert_entry(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<EntryMutItem> {
         let mut entry_allocation: u16 = (size_of::<TYPE_HEADER>() as u16).checked_add(payload.len().try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?;
