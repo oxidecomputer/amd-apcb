@@ -1,6 +1,6 @@
 use crate::types::{Buffer, ReadOnlyBuffer, Result, Error};
 
-use crate::ondisk::TYPE_HEADER;
+use crate::ondisk::ENTRY_HEADER;
 pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
 use num_traits::FromPrimitive;
 use crate::tokens_entry::TokensEntryBodyItem;
@@ -23,17 +23,17 @@ pub enum EntryItemBody<BufferType> {
 }
 
 impl<'a> EntryItemBody<Buffer<'a>> {
-    pub(crate) fn from_slice(unit_size: u8, type_id: u16, context_type: ContextType, b: Buffer<'a>) -> Result<EntryItemBody<Buffer<'a>>> {
+    pub(crate) fn from_slice(unit_size: u8, entry_id: u16, context_type: ContextType, b: Buffer<'a>) -> Result<EntryItemBody<Buffer<'a>>> {
         Ok(match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
-                     return Err(Error::FileSystemError("unit_size != 0 is invalid for context_type = raw", "TYPE_HEADER::unit_size"));
+                     return Err(Error::FileSystemError("unit_size != 0 is invalid for context_type = raw", "ENTRY_HEADER::unit_size"));
                 }
                 Self::Struct(b)
             },
             ContextType::Tokens => {
                 let used_size = b.len();
-                Self::Tokens(TokensEntryBodyItem::<Buffer>::new(unit_size, type_id, b, used_size)?)
+                Self::Tokens(TokensEntryBodyItem::<Buffer>::new(unit_size, entry_id, b, used_size)?)
             },
             ContextType::Parameters => {
                 Self::Parameters(b)
@@ -43,17 +43,17 @@ impl<'a> EntryItemBody<Buffer<'a>> {
 }
 
 impl<'a> EntryItemBody<ReadOnlyBuffer<'a>> {
-    pub(crate) fn from_slice(unit_size: u8, type_id: u16, context_type: ContextType, b: ReadOnlyBuffer<'a>) -> Result<EntryItemBody<ReadOnlyBuffer<'a>>> {
+    pub(crate) fn from_slice(unit_size: u8, entry_id: u16, context_type: ContextType, b: ReadOnlyBuffer<'a>) -> Result<EntryItemBody<ReadOnlyBuffer<'a>>> {
         Ok(match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
-                     return Err(Error::FileSystemError("unit_size != 0 is invalid for context_type = raw", "TYPE_HEADER::unit_size"));
+                     return Err(Error::FileSystemError("unit_size != 0 is invalid for context_type = raw", "ENTRY_HEADER::unit_size"));
                 }
                 Self::Struct(b)
             },
             ContextType::Tokens => {
                 let used_size = b.len();
-                Self::Tokens(TokensEntryBodyItem::<ReadOnlyBuffer>::new(unit_size, type_id, b, used_size)?)
+                Self::Tokens(TokensEntryBodyItem::<ReadOnlyBuffer>::new(unit_size, entry_id, b, used_size)?)
             },
             ContextType::Parameters => {
                 Self::Parameters(b)
@@ -64,14 +64,14 @@ impl<'a> EntryItemBody<ReadOnlyBuffer<'a>> {
 
 #[derive(Debug)]
 pub struct EntryMutItem<'a> {
-    pub header: &'a mut TYPE_HEADER,
+    pub header: &'a mut ENTRY_HEADER,
     pub body: EntryItemBody<Buffer<'a>>,
 }
 
 impl EntryMutItem<'_> {
     // pub fn group_id(&self) -> u16  ; suppressed--replaced by an assert on read.
     pub fn id(&self) -> u16 {
-        self.header.type_id.get()
+        self.header.entry_id.get()
     }
     pub fn instance_id(&self) -> u16 {
         self.header.instance_id.get()
@@ -127,7 +127,7 @@ impl EntryMutItem<'_> {
         self
     }
 
-    // Note: Because type_id, instance_id, group_id and board_instance_mask are sort keys, these cannot be mutated.
+    // Note: Because entry_id, instance_id, group_id and board_instance_mask are sort keys, these cannot be mutated.
 
     pub(crate) fn insert_token(&mut self, token_id: u32, token_value: u32) -> Result<()> {
         match &mut self.body {
@@ -143,14 +143,14 @@ impl EntryMutItem<'_> {
 
 #[derive(Debug)]
 pub struct EntryItem<'a> {
-    pub header: &'a TYPE_HEADER,
+    pub header: &'a ENTRY_HEADER,
     pub body: EntryItemBody<ReadOnlyBuffer<'a>>,
 }
 
 impl EntryItem<'_> {
     // pub fn group_id(&self) -> u16  ; suppressed--replaced by an assert on read.
     pub fn id(&self) -> u16 {
-        self.header.type_id.get()
+        self.header.entry_id.get()
     }
     pub fn instance_id(&self) -> u16 {
         self.header.instance_id.get()

@@ -1,11 +1,11 @@
 use crate::types::{Error, Result, Buffer, ReadOnlyBuffer};
 
 use crate::ondisk::GROUP_HEADER;
-use crate::ondisk::TYPE_HEADER;
+use crate::ondisk::ENTRY_HEADER;
 use crate::ondisk::TOKEN_ENTRY;
 use crate::ondisk::V2_HEADER;
 use crate::ondisk::V3_HEADER_EXT;
-use crate::ondisk::TYPE_ALIGNMENT;
+use crate::ondisk::ENTRY_ALIGNMENT;
 pub use crate::ondisk::{ContextFormat, ContextType, TokenType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
 use core::convert::TryInto;
 use core::mem::{size_of};
@@ -183,7 +183,7 @@ impl<'a> APCB<'a> {
             self.beginning_of_groups.copy_within((old_group_size as usize)..self.used_size, new_group_size as usize);
             self.header.apcb_size.set(apcb_size.checked_sub(size_diff as u32).ok_or_else(|| Error::FileSystemError("APCB is smaller than Entry in Group", "HEADER_V2::apcb_size"))?);
 
-            self.used_size = self.used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "TYPE_HEADER::type_size"))?;
+            self.used_size = self.used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
         }
         Ok(())
     }
@@ -207,7 +207,7 @@ impl<'a> APCB<'a> {
 
             let size_diff: u32 = (size_diff as u64).try_into().unwrap();
             let new_group_size = old_group_size.checked_add(size_diff).ok_or_else(|| Error::FileSystemError("Group is too big for format", "GROUP_HEADER::group_size"))?;
-            let new_used_size = old_used_size.checked_add(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "TYPE_HEADER::type_size"))?;
+            let new_used_size = old_used_size.checked_add(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
             if new_used_size <= self_beginning_of_groups_len {
             } else {
                 return Err(Error::OutOfSpaceError);
@@ -218,32 +218,32 @@ impl<'a> APCB<'a> {
         } else if size_diff < 0 {
             let size_diff: u32 = ((-size_diff) as u64).try_into().unwrap();
             let new_group_size = old_group_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystemError("Group is smaller than Entry in Group", "GROUP_HEADER::group_size"))?;
-            let new_used_size = old_used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "TYPE_HEADER::type_size"))?;
+            let new_used_size = old_used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
             group.header.group_size.set(new_group_size);
             self.beginning_of_groups.copy_within((old_group_size as usize)..old_used_size, new_group_size as usize);
             self.used_size = new_used_size;
         }
         self.group_mut(group_id).ok_or_else(|| Error::GroupNotFoundError)
     }
-    pub fn insert_entry(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<EntryMutItem> {
-        let mut entry_allocation: u16 = (size_of::<TYPE_HEADER>() as u16).checked_add(payload.len().try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?;
-        while entry_allocation % (TYPE_ALIGNMENT as u16) != 0 {
+    pub fn insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<EntryMutItem> {
+        let mut entry_allocation: u16 = (size_of::<ENTRY_HEADER>() as u16).checked_add(payload.len().try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?;
+        while entry_allocation % (ENTRY_ALIGNMENT as u16) != 0 {
             entry_allocation += 1;
         }
         let mut group = self.resize_group_by(group_id, entry_allocation.into())?;
         // Note: On some errors, group.used_size will be reduced by insert_entry again!
-        group.insert_entry(group_id, type_id, instance_id, board_instance_mask, entry_allocation, context_type, payload, priority_mask)
+        group.insert_entry(group_id, entry_id, instance_id, board_instance_mask, entry_allocation, context_type, payload, priority_mask)
     }
     /// Side effect: Moves iterator to unspecified item
-    pub fn insert_token(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
+    pub fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         // Make sure that the entry exists before resizing the group
         let mut group = self.group(group_id).ok_or_else(|| Error::GroupNotFoundError)?;
-        group.entry(type_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFoundError)?;
+        group.entry(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFoundError)?;
         let token_size = size_of::<TOKEN_ENTRY>() as u16;
-        assert!(token_size % (TYPE_ALIGNMENT as u16) == 0);
+        assert!(token_size % (ENTRY_ALIGNMENT as u16) == 0);
         let mut group = self.resize_group_by(group_id, token_size.into())?;
         // Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  group.insert_token has special logic in order to survive that.
-        group.insert_token(group_id, type_id, instance_id, board_instance_mask, token_id, token_value)
+        group.insert_token(group_id, entry_id, instance_id, board_instance_mask, token_id, token_value)
     }
 
     pub fn delete_group(&mut self, group_id: u16) -> Result<()> {

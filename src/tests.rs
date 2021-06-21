@@ -209,7 +209,7 @@ mod tests {
         // Insert empty "Token Entry"
         apcb.insert_entry(0x1001, 0, 0, 1, ContextType::Tokens, &[], 32)?;
 
-        // pub(crate) fn insert_token(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
+        // pub(crate) fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         apcb.insert_token(0x1001, TokenType::Bool as u16, 0, 1, 0x014FBF20, 1)?;
 
         let apcb = APCB::load(&mut buffer[0..]).unwrap();
@@ -263,7 +263,7 @@ mod tests {
 
         let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
 
-        // pub(crate) fn insert_token(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
+        // pub(crate) fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         apcb.insert_token(0x1001, TokenType::Bool as u16, 0, 1, 0x014FBF20, 1)?;
 
         let apcb = APCB::load(&mut buffer[0..]).unwrap();

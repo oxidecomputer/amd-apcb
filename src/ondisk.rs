@@ -251,7 +251,7 @@ pub enum ContextFormat {
 pub enum ContextType {
     Struct = 0,
     Parameters = 1,
-    Tokens = 2, // then, type_id means something else
+    Tokens = 2, // then, entry_id means something else
 }
 
 #[repr(u16)]
@@ -278,10 +278,10 @@ impl Default for GROUP_HEADER {
 
 #[derive(FromBytes, AsBytes, Unaligned, Debug)]
 #[repr(C, packed)]
-pub struct TYPE_HEADER {
+pub struct ENTRY_HEADER {
     pub group_id: U16<LittleEndian>, // should be equal to the group's group_id
-    pub type_id: U16<LittleEndian>,  // meaning depends on context_type
-    pub type_size: U16<LittleEndian>, // including header
+    pub entry_id: U16<LittleEndian>,  // meaning depends on context_type
+    pub entry_size: U16<LittleEndian>, // including header
     pub instance_id: U16<LittleEndian>,
     pub context_type: u8,   // see ContextType enum
     pub context_format: u8, // see ContextFormat enum
@@ -292,12 +292,12 @@ pub struct TYPE_HEADER {
     pub board_instance_mask: U16<LittleEndian>, // Board-specific APCB instance mask
 }
 
-impl Default for TYPE_HEADER {
+impl Default for ENTRY_HEADER {
     fn default() -> Self {
         Self {
             group_id: 0u16.into(),                        // probably invalid
-            type_id: 0u16.into(),                         // probably invalid
-            type_size: (size_of::<Self>() as u16).into(), // probably invalid
+            entry_id: 0u16.into(),                         // probably invalid
+            entry_size: (size_of::<Self>() as u16).into(), // probably invalid
             instance_id: 0u16.into(),                     // probably invalid
             context_type: 0,
             context_format: 0,
@@ -310,7 +310,7 @@ impl Default for TYPE_HEADER {
     }
 }
 
-pub const TYPE_ALIGNMENT: usize = 4;
+pub const ENTRY_ALIGNMENT: usize = 4;
 
 #[derive(FromBytes, AsBytes, Debug)]
 #[repr(C, packed)]
@@ -349,10 +349,10 @@ mod tests {
     fn test_struct_sizes() {
         assert!(size_of::<V2_HEADER>() == 32);
         assert!(size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>() == 128);
-        assert!(size_of::<V2_HEADER>() % TYPE_ALIGNMENT == 0);
+        assert!(size_of::<V2_HEADER>() % ENTRY_ALIGNMENT == 0);
         assert!(size_of::<GROUP_HEADER>() == 16);
-        assert!(size_of::<GROUP_HEADER>() % TYPE_ALIGNMENT == 0);
-        assert!(size_of::<TYPE_HEADER>() == 16);
-        assert!(size_of::<TYPE_HEADER>() % TYPE_ALIGNMENT == 0);
+        assert!(size_of::<GROUP_HEADER>() % ENTRY_ALIGNMENT == 0);
+        assert!(size_of::<ENTRY_HEADER>() == 16);
+        assert!(size_of::<ENTRY_HEADER>() % ENTRY_ALIGNMENT == 0);
     }
 }
