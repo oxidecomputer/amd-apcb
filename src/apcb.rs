@@ -5,6 +5,7 @@ use crate::ondisk::TYPE_HEADER;
 use crate::ondisk::TOKEN_ENTRY;
 use crate::ondisk::V2_HEADER;
 use crate::ondisk::V3_HEADER_EXT;
+use crate::ondisk::TYPE_ALIGNMENT;
 pub use crate::ondisk::{ContextFormat, ContextType, TokenType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
 use core::mem::{size_of};
 use crate::group::{GroupItem, GroupMutItem};
@@ -131,7 +132,10 @@ impl<'a> ApcbIterMut<'a> {
         }
     }
     pub(crate) fn insert_entry(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: u16, priority_mask: u8) -> Result<EntryMutItem> {
-        let entry_size: u16 = (size_of::<TYPE_HEADER>() as u16).checked_add(payload_size).ok_or_else(|| Error::OutOfSpaceError)?;
+        let mut entry_size: u16 = (size_of::<TYPE_HEADER>() as u16).checked_add(payload_size).ok_or_else(|| Error::OutOfSpaceError)?;
+        while entry_size % (TYPE_ALIGNMENT as u16) != 0 {
+            entry_size += 1;
+        }
         self.resize_group_by(group_id, entry_size.into())?;
         let mut group = Self::next_item(&mut self.beginning_of_groups)?; // reload so we get a bigger slice
         // Note: On some errors, group.remaining_used_size will be reduced by insert_entry again!
@@ -140,6 +144,7 @@ impl<'a> ApcbIterMut<'a> {
     /// Side effect: Moves iterator to unspecified item
     pub(crate) fn insert_token(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         let token_size = size_of::<TOKEN_ENTRY>() as u16;
+        assert!(token_size % (TYPE_ALIGNMENT as u16) == 0);
         self.resize_group_by(group_id, token_size.into())?;
         let mut group = Self::next_item(&mut self.beginning_of_groups)?; // reload so we get a bigger slice
         // FIXME: Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  This is bad when iterating over the group members until the end--it will not end well.
@@ -212,7 +217,7 @@ impl<'a> ApcbIter<'a> {
         let body = match take_body_from_collection(&mut *buf, payload_size, 1) {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystemError("could not read body of Group", ""));
+                return Err(Error::FileSystemError("could not read body of Group2", ""));
             },
         };
         let body_len = body.len();
@@ -410,4 +415,3 @@ impl<'a> APCB<'a> {
         Self::load(backing_store)
     }
 }
-
