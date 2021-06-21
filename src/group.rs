@@ -194,11 +194,11 @@ impl<'a> GroupMutItem<'a> {
     }
     /// Inserts the given entry data at the right spot.
     /// Precondition: Caller already increased the group size by entry_allocation.
-    pub(crate) fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<EntryMutItem<'a>> {
+    pub(crate) fn insert_entry(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<EntryMutItem<'a>> {
         let payload_size = payload.len();
         // Make sure that move_insertion_point_before does not notice the new uninitialized entry
         self.remaining_used_size = self.remaining_used_size.checked_sub(entry_allocation as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "TYPE_HEADER::entry_size"))?;
-        self.move_insertion_point_before(group_id, id, instance_id, board_instance_mask)?;
+        self.move_insertion_point_before(group_id, type_id, instance_id, board_instance_mask)?;
 
         // Move the entries from after the insertion point to the right (in order to make room before for our new entry).
         self.buf.copy_within(0..self.remaining_used_size, entry_allocation as usize);
@@ -207,7 +207,7 @@ impl<'a> GroupMutItem<'a> {
         let header = take_header_from_collection_mut::<TYPE_HEADER>(&mut buf).ok_or_else(|| Error::FileSystemError("could not read header of Entry", ""))?;
         *header = TYPE_HEADER::default();
         header.group_id.set(group_id);
-        header.type_id.set(id);
+        header.type_id.set(type_id);
         header.type_size.set(entry_allocation); // FIXME: Verify
         header.instance_id.set(instance_id);
         header.context_type = context_type as u8;
