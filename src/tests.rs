@@ -247,4 +247,52 @@ mod tests {
         assert!(matches!(groups.next(), None));
         Ok(())
     }
+
+    #[test]
+    fn insert_tokens_easy() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        apcb.insert_group(0x1701, *b"PSPG")?;
+        apcb.insert_group(0x1704, *b"MEMG")?;
+        apcb.insert_group(0x3000, *b"TOKN")?;
+        apcb.insert_entry(0x1701, 96, 0, 0xFFFF, ContextType::Struct, 48, 33)?;
+        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        apcb.insert_entry(0x1701, 97, 0, 0xFFFF, ContextType::Struct, 1, 32)?; // breaks
+        // XXXlet mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+
+        // Insert empty "Token Entry"
+        apcb.insert_entry(0x1001, 0, 0, 1, ContextType::Tokens, 0, 32)?; // breaks
+
+        // pub(crate) fn insert_token(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
+        apcb.insert_token(0x1001, TokenType::Bool, 0, 1, 0x014FBF20, 1)?;
+
+        let apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let mut groups = apcb.groups();
+
+        let mut group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
+        assert!(group.id() == 0x1701);
+        assert!(group.signature() ==*b"PSPG");
+
+        let entry = group.next().ok_or_else(|| Error::EntryNotFoundError)?;
+        assert!(entry.id() == 96);
+        assert!(entry.instance_id() == 0);
+        assert!(entry.board_instance_mask() == 0xFFFF);
+
+        let entry = group.next().ok_or_else(|| Error::EntryNotFoundError)?;
+        assert!(entry.id() == 97);
+        assert!(entry.instance_id() == 0);
+        assert!(entry.board_instance_mask() == 0xFFFF);
+
+        assert!(matches!(group.next(), None));
+
+        let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
+        assert!(group.id() == 0x1704);
+        assert!(group.signature() ==*b"MEMG");
+        for _entry in group {
+            assert!(false);
+        }
+
+        assert!(matches!(groups.next(), None));
+        Ok(())
+    }
 }
