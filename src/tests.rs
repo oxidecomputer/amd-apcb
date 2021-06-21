@@ -136,11 +136,8 @@ mod tests {
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
-        let mut groups = apcb.groups_mut();
-        groups.insert_entry(0x1701, 96, 0, 0xFFFF, ContextType::Struct, &[0u8; 48], 33)?;
-        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
-        let mut groups = apcb.groups_mut();
-        groups.delete_entry(0x1701, 96, 0, 0xFFFF)?;
+        apcb.insert_entry(0x1701, 96, 0, 0xFFFF, ContextType::Struct, &[0u8; 48], 33)?;
+        apcb.delete_entry(0x1701, 96, 0, 0xFFFF)?;
         let apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
         let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
@@ -166,11 +163,8 @@ mod tests {
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
-        let mut groups = apcb.groups_mut();
-        groups.insert_entry(0x1701, 96, 0, 0xFFFF, ContextType::Struct, &[1u8; 48], 33)?;
-        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
-        let mut groups = apcb.groups_mut();
-        groups.insert_entry(0x1701, 97, 0, 0xFFFF, ContextType::Struct, &[2u8; 1], 32)?;
+        apcb.insert_entry(0x1701, 96, 0, 0xFFFF, ContextType::Struct, &[1u8; 48], 33)?;
+        apcb.insert_entry(0x1701, 97, 0, 0xFFFF, ContextType::Struct, &[2u8; 4], 32)?;
 
         let apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
@@ -216,10 +210,14 @@ mod tests {
         apcb.insert_entry(0x1001, 0, 0, 1, ContextType::Tokens, &[], 32)?;
 
         // pub(crate) fn insert_token(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
-        apcb.insert_token(0x1001, TokenType::Bool, 0, 1, 0x014FBF20, 1)?;
+        apcb.insert_token(0x1001, TokenType::Bool as u16, 0, 1, 0x014FBF20, 1)?;
 
         let apcb = APCB::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
+
+        let mut group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
+        assert!(group.id() == 0x1001);
+        assert!(group.signature() ==*b"TOKN");
 
         let mut group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1701);
@@ -252,24 +250,21 @@ mod tests {
     fn insert_tokens_easy() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
         let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
-        eprintln!("BEFORE GROUP INSERTIONS");
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.insert_group(0x3000, *b"TOKN")?;
-        eprintln!("BEFORE ENTRY INSERTIONS");
+        //let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
         apcb.insert_entry(0x1701, 96, 0, 0xFFFF, ContextType::Struct, &[1u8; 48], 33)?;
-        eprintln!("BEFORE ENTRY INSERTIONS 2");
+        // makes it work let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
         apcb.insert_entry(0x1701, 97, 0, 0xFFFF, ContextType::Struct, &[2u8; 1], 32)?; // breaks
-        eprintln!("BEFORE ENTRY INSERTIONS 3");
 
         // Insert empty "Token Entry"
         apcb.insert_entry(0x1001, 0, 0, 1, ContextType::Tokens, &[], 32)?; // breaks
-        eprintln!("BEFORE RELOAD");
 
         let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
 
         // pub(crate) fn insert_token(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
-        apcb.insert_token(0x1001, TokenType::Bool, 0, 1, 0x014FBF20, 1)?;
+        apcb.insert_token(0x1001, TokenType::Bool as u16, 0, 1, 0x014FBF20, 1)?;
 
         let apcb = APCB::load(&mut buffer[0..]).unwrap();
 
@@ -296,6 +291,13 @@ mod tests {
         assert!(group.signature() ==*b"MEMG");
         for _entry in group {
             assert!(false);
+        }
+
+        let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
+        assert!(group.id() == 0x3000);
+        assert!(group.signature() ==*b"TOKN");
+        for _entry in group {
+            assert!(false); // FIXME
         }
 
         assert!(matches!(groups.next(), None));
