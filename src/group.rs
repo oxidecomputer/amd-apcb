@@ -196,9 +196,8 @@ impl<'a> GroupMutItem<'a> {
     /// Precondition: Caller already increased the group size by entry_allocation.
     pub(crate) fn insert_entry(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<EntryMutItem<'a>> {
         let payload_size = payload.len();
-        let remaining_used_size = self.remaining_used_size;
         // Make sure that move_insertion_point_before does not notice the new uninitialized entry
-        self.remaining_used_size = remaining_used_size.checked_sub(entry_allocation as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "TYPE_HEADER::entry_size"))?;
+        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_allocation as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "TYPE_HEADER::entry_size"))?;
         self.move_insertion_point_before(group_id, id, instance_id, board_instance_mask)?;
 
         // Move the entries from after the insertion point to the right (in order to make room before for our new entry).
@@ -228,8 +227,8 @@ impl<'a> GroupMutItem<'a> {
         // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
         header.board_instance_mask.set(board_instance_mask);
         let body = take_body_from_collection_mut(&mut buf, payload_size.into(), TYPE_ALIGNMENT).ok_or_else(|| Error::FileSystemError("could not read body of Entry", ""))?;
-        // FIXME *body = *payload;
-        self.remaining_used_size = remaining_used_size;
+        body.copy_from_slice(payload);
+        self.remaining_used_size = self.remaining_used_size.checked_add(entry_allocation as usize).ok_or_else(|| Error::OutOfSpaceError)?;
         self.next().ok_or_else(|| Error::FileSystemError("cannot read what was written just now", ""))
     }
     /// Resizes the given entry by SIZE_DIFF.
