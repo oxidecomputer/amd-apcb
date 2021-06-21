@@ -9,7 +9,7 @@ mod entry;
 mod group;
 mod ondisk;
 mod tests;
-pub use apcb::APCB;
+pub use apcb::Apcb;
 pub use types::Result;
 pub use types::Error;
 pub use entry::EntryItemBody;

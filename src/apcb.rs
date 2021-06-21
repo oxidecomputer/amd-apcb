@@ -12,7 +12,7 @@ use core::mem::{size_of};
 use crate::group::{GroupItem, GroupMutItem};
 use crate::entry::EntryMutItem;
 
-pub struct APCB<'a> {
+pub struct Apcb<'a> {
     header: &'a mut V2_HEADER,
     v3_header_ext: Option<V3_HEADER_EXT>,
     beginning_of_groups: Buffer<'a>,
@@ -138,7 +138,7 @@ impl<'a> Iterator for ApcbIter<'a> {
     }
 }
 
-impl<'a> APCB<'a> {
+impl<'a> Apcb<'a> {
     pub fn groups(&self) -> ApcbIter {
         ApcbIter {
             header: self.header,
@@ -181,7 +181,7 @@ impl<'a> APCB<'a> {
             group.header.group_size.set(new_group_size);
 
             self.beginning_of_groups.copy_within((old_group_size as usize)..self.used_size, new_group_size as usize);
-            self.header.apcb_size.set(apcb_size.checked_sub(size_diff as u32).ok_or_else(|| Error::FileSystemError("APCB is smaller than Entry in Group", "HEADER_V2::apcb_size"))?);
+            self.header.apcb_size.set(apcb_size.checked_sub(size_diff as u32).ok_or_else(|| Error::FileSystemError("Apcb is smaller than Entry in Group", "HEADER_V2::apcb_size"))?);
 
             self.used_size = self.used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
         }
@@ -193,10 +193,10 @@ impl<'a> APCB<'a> {
         let apcb_size = self.header.apcb_size.get();
         if size_diff > 0 {
             let size_diff: u32 = (size_diff as u64).try_into().unwrap();
-            self.header.apcb_size.set(apcb_size.checked_add(size_diff).ok_or_else(|| Error::FileSystemError("APCB is too big for format", "HEADER_V2::apcb_size"))?);
+            self.header.apcb_size.set(apcb_size.checked_add(size_diff).ok_or_else(|| Error::FileSystemError("Apcb is too big for format", "HEADER_V2::apcb_size"))?);
         } else {
             let size_diff: u32 = ((-size_diff) as u64).try_into().unwrap();
-            self.header.apcb_size.set(apcb_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystemError("APCB is smaller than Entry in Group", "HEADER_V2::apcb_size"))?);
+            self.header.apcb_size.set(apcb_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystemError("Apcb is smaller than Entry in Group", "HEADER_V2::apcb_size"))?);
         }
 
         let self_beginning_of_groups_len = self.beginning_of_groups.len();
@@ -257,7 +257,7 @@ impl<'a> APCB<'a> {
             let group = ApcbIterMut::next_item(&mut beginning_of_groups)?;
             if group.header.group_id.get() == group_id {
                 let group_size = group.header.group_size.get();
-                self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).ok_or_else(|| Error::FileSystemError("Group is bigger than APCB", "HEADER_V2::apcb_size"))?);
+                self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).ok_or_else(|| Error::FileSystemError("Group is bigger than Apcb", "HEADER_V2::apcb_size"))?);
 
                 self.beginning_of_groups.copy_within((group_size as usize)..(apcb_size as usize), 0);
 
@@ -303,22 +303,22 @@ impl<'a> APCB<'a> {
     pub fn load(backing_store: Buffer<'a>) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
         let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
-            .ok_or_else(|| Error::FileSystemError("could not read APCB header", ""))?;
+            .ok_or_else(|| Error::FileSystemError("could not read Apcb header", ""))?;
 
         if usize::from(header.header_size) >= size_of::<V2_HEADER>() {
         } else {
-            return Err(Error::FileSystemError("APCB header is too small", "V2_HEADER::header_size"));
+            return Err(Error::FileSystemError("Apcb header is too small", "V2_HEADER::header_size"));
         }
         if header.version.get() == 0x30 {
         } else {
-            return Err(Error::FileSystemError("APCB header version mismatch", "V2_HEADER::version"));
+            return Err(Error::FileSystemError("Apcb header version mismatch", "V2_HEADER::version"));
         }
 
         let v3_header_ext = if usize::from(header.header_size)
             == size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>()
         {
             let value = take_header_from_collection_mut::<V3_HEADER_EXT>(&mut backing_store)
-                .ok_or_else(|| Error::FileSystemError("could not read extended header of APCB", ""))?;
+                .ok_or_else(|| Error::FileSystemError("could not read extended header of Apcb", ""))?;
             if value.signature == *b"ECB2" {
             } else {
                 return Err(Error::FileSystemError("header validation failed", "V3_HEADER_EXT::signature"));
@@ -369,11 +369,11 @@ impl<'a> APCB<'a> {
         {
             let mut backing_store = &mut *backing_store;
             let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
-                    .ok_or_else(|| Error::FileSystemError("could not write APCB header", ""))?;
+                    .ok_or_else(|| Error::FileSystemError("could not write Apcb header", ""))?;
             *header = Default::default();
 
             let v3_header_ext = take_header_from_collection_mut::<V3_HEADER_EXT>(&mut backing_store)
-                    .ok_or_else(|| Error::FileSystemError("could not write APCB extended header", ""))?;
+                    .ok_or_else(|| Error::FileSystemError("could not write Apcb extended header", ""))?;
             *v3_header_ext = Default::default();
 
             header

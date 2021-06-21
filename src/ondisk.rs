@@ -1,4 +1,4 @@
-// This file contains the APCB on-disk format.  Please only change it in coordination with the AMD PSP team.  Even then, you probably shouldn't.
+// This file contains the Apcb on-disk format.  Please only change it in coordination with the AMD PSP team.  Even then, you probably shouldn't.
 
 use byteorder::LittleEndian;
 use core::mem::{replace, size_of};
@@ -289,7 +289,7 @@ pub struct ENTRY_HEADER {
     pub priority_mask: u8,
     pub key_size: u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
     pub key_pos: u8,  // Sorting key position of the unit specified of UnitSize
-    pub board_instance_mask: U16<LittleEndian>, // Board-specific APCB instance mask
+    pub board_instance_mask: U16<LittleEndian>, // Board-specific Apcb instance mask
 }
 
 impl Default for ENTRY_HEADER {
@@ -320,7 +320,7 @@ pub struct TOKEN_ENTRY {
 }
 
 /*
-APCB:
+Apcb:
         Header V2
         V3 Header Ext
         [Group]

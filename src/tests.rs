@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::APCB;
+    use crate::Apcb;
     use crate::Error;
     use crate::ondisk::ContextType;
     use crate::ondisk::TokenType;
@@ -9,13 +9,13 @@ mod tests {
     #[should_panic]
     fn load_garbage_image() {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        APCB::load(&mut buffer[0..]).unwrap();
+        Apcb::load(&mut buffer[0..]).unwrap();
     }
 
     #[test]
     fn create_empty_image() {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let apcb = APCB::create(&mut buffer[0..]).unwrap();
+        let apcb = Apcb::create(&mut buffer[0..]).unwrap();
         let groups = apcb.groups();
         for _item in groups {
             assert!(false);
@@ -26,7 +26,7 @@ mod tests {
     #[should_panic]
     fn create_empty_too_small_image() {
         let mut buffer: [u8; 1] = [0];
-        let apcb = APCB::create(&mut buffer[0..]).unwrap();
+        let apcb = Apcb::create(&mut buffer[0..]).unwrap();
         let groups = apcb.groups();
         for _ in groups {
             assert!(false);
@@ -36,7 +36,7 @@ mod tests {
     #[test]
     fn create_image_with_one_group() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         let groups = apcb.groups();
         let mut count = 0;
@@ -50,7 +50,7 @@ mod tests {
     #[test]
     fn create_image_with_two_groups() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         let mut groups = apcb.groups();
@@ -67,11 +67,11 @@ mod tests {
     #[test]
     fn create_image_with_two_groups_delete_first_group() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.delete_group(0x1701)?;
-        let apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
         let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1704);
@@ -83,11 +83,11 @@ mod tests {
     #[test]
     fn create_image_with_two_groups_delete_second_group() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.delete_group(0x1704)?;
-        let apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
         let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1701);
@@ -99,11 +99,11 @@ mod tests {
     #[test]
     fn create_image_with_two_groups_delete_unknown_group() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.delete_group(0x4711)?;
-        let apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
         let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1701);
@@ -118,10 +118,10 @@ mod tests {
     #[test]
     fn create_image_with_group_delete_group() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.delete_group(0x1701)?;
-        let apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let groups = apcb.groups();
         for _group in groups {
             assert!(false);
@@ -132,13 +132,14 @@ mod tests {
     #[test]
     fn delete_entries() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
-        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         apcb.insert_entry(0x1701, 96, 0, 0xFFFF, ContextType::Struct, &[0u8; 48], 33)?;
+        //let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         apcb.delete_entry(0x1701, 96, 0, 0xFFFF)?;
-        let apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
         let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1701);
@@ -159,14 +160,14 @@ mod tests {
     #[test]
     fn insert_entries() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
-        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         apcb.insert_entry(0x1701, 96, 0, 0xFFFF, ContextType::Struct, &[1u8; 48], 33)?;
         apcb.insert_entry(0x1701, 97, 0, 0xFFFF, ContextType::Struct, &[2u8; 4], 32)?;
 
-        let apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
 
         let mut group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
@@ -199,7 +200,7 @@ mod tests {
     #[test]
     fn insert_tokens() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
         apcb.insert_group(0x1001, *b"TOKN")?; // this group id should be 0x3000--but I want this test to test a complicated case even should we ever change insert_group to automatically sort.
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
@@ -212,7 +213,7 @@ mod tests {
         // pub(crate) fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         apcb.insert_token(0x1001, TokenType::Bool as u16, 0, 1, 0x014FBF20, 1)?;
 
-        let apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
 
         let mut group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
@@ -249,24 +250,24 @@ mod tests {
     #[test]
     fn insert_tokens_easy() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = APCB::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.insert_group(0x3000, *b"TOKN")?;
-        //let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        //let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         apcb.insert_entry(0x1701, 96, 0, 0xFFFF, ContextType::Struct, &[1u8; 48], 33)?;
-        // makes it work let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        // makes it work let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         apcb.insert_entry(0x1701, 97, 0, 0xFFFF, ContextType::Struct, &[2u8; 1], 32)?; // breaks
 
         // Insert empty "Token Entry"
         apcb.insert_entry(0x1001, 0, 0, 1, ContextType::Tokens, &[], 32)?; // breaks
 
-        let mut apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
         // pub(crate) fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         apcb.insert_token(0x1001, TokenType::Bool as u16, 0, 1, 0x014FBF20, 1)?;
 
-        let apcb = APCB::load(&mut buffer[0..]).unwrap();
+        let apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
         let mut groups = apcb.groups();
 
