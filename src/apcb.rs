@@ -236,10 +236,13 @@ impl<'a> APCB<'a> {
     }
     /// Side effect: Moves iterator to unspecified item
     pub fn insert_token(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
+        // Make sure that the entry exists before resizing the group
+        let mut group = self.group(group_id).ok_or_else(|| Error::GroupNotFoundError)?;
+        group.entry(type_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFoundError)?;
         let token_size = size_of::<TOKEN_ENTRY>() as u16;
         assert!(token_size % (TYPE_ALIGNMENT as u16) == 0);
         let mut group = self.resize_group_by(group_id, token_size.into())?;
-        // ?? Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  This is bad when iterating over the group members until the end--it will not end well.
+        // Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  group.insert_token has special logic in order to survive that.
         group.insert_token(group_id, type_id, instance_id, board_instance_mask, token_id, token_value)
     }
 
