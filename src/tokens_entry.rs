@@ -214,7 +214,7 @@ impl<'a> Iterator for TokensEntryIter<'a> {
 }
 
 impl<'a> TokensEntryBodyItem<Buffer<'a>> {
-    pub fn iter(&self) -> TokensEntryIter {
+    pub fn iter(&self) -> TokensEntryIter<'_> {
         TokensEntryIter {
             entry_id: self.entry_id,
             buf: self.buf,
@@ -222,7 +222,7 @@ impl<'a> TokensEntryBodyItem<Buffer<'a>> {
         }
     }
 
-    pub fn iter_mut(&mut self) -> TokensEntryIterMut {
+    pub fn iter_mut(&mut self) -> TokensEntryIterMut<'_> {
         TokensEntryIterMut {
             entry_id: self.entry_id,
             buf: self.buf,
@@ -239,7 +239,7 @@ impl<'a> TokensEntryBodyItem<Buffer<'a>> {
 }
 
 impl<'a> TokensEntryBodyItem<ReadOnlyBuffer<'a>> {
-    pub fn iter(&self) -> TokensEntryIter {
+    pub fn iter(&self) -> TokensEntryIter<'_> {
         TokensEntryIter {
             entry_id: self.entry_id,
             buf: self.buf,

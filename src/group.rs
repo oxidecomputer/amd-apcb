@@ -78,12 +78,12 @@ impl GroupItem<'_> {
         let entry_id = header.entry_id.get();
         Ok(EntryItem {
             header: header,
-            body: EntryItemBody::<ReadOnlyBuffer>::from_slice(unit_size, entry_id, context_type, body)?,
+            body: EntryItemBody::<ReadOnlyBuffer<'_>>::from_slice(unit_size, entry_id, context_type, body)?,
         })
     }
 
     /// Side effect: Moves the iterator!
-    pub fn entry(&mut self, id: u16, instance_id: u16, board_instance_mask: u16) -> Option<EntryItem> {
+    pub fn entry(&mut self, id: u16, instance_id: u16, board_instance_mask: u16) -> Option<EntryItem<'_>> {
         for entry in self {
             if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() == board_instance_mask {
                 return Some(entry);
@@ -138,12 +138,12 @@ impl<'a> GroupMutItem<'a> {
         let entry_id = header.entry_id.get();
         Ok(EntryMutItem {
             header: header,
-            body: EntryItemBody::<Buffer>::from_slice(unit_size, entry_id, context_type, body)?,
+            body: EntryItemBody::<Buffer<'_>>::from_slice(unit_size, entry_id, context_type, body)?,
         })
     }
 
     /// Finds the first EntryMutItem with the given id, if any, and returns it.
-    pub fn entry_mut(&mut self, id: u16, instance_id: u16, board_instance_mask: u16) -> Option<EntryMutItem> {
+    pub fn entry_mut(&mut self, id: u16, instance_id: u16, board_instance_mask: u16) -> Option<EntryMutItem<'_>> {
         for entry in self {
             if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() == board_instance_mask {
                 return Some(entry);

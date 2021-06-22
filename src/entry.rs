@@ -33,7 +33,7 @@ impl<'a> EntryItemBody<Buffer<'a>> {
             },
             ContextType::Tokens => {
                 let used_size = b.len();
-                Self::Tokens(TokensEntryBodyItem::<Buffer>::new(unit_size, entry_id, b, used_size)?)
+                Self::Tokens(TokensEntryBodyItem::<Buffer<'_>>::new(unit_size, entry_id, b, used_size)?)
             },
             ContextType::Parameters => {
                 Self::Parameters(b)
@@ -53,7 +53,7 @@ impl<'a> EntryItemBody<ReadOnlyBuffer<'a>> {
             },
             ContextType::Tokens => {
                 let used_size = b.len();
-                Self::Tokens(TokensEntryBodyItem::<ReadOnlyBuffer>::new(unit_size, entry_id, b, used_size)?)
+                Self::Tokens(TokensEntryBodyItem::<ReadOnlyBuffer<'_>>::new(unit_size, entry_id, b, used_size)?)
             },
             ContextType::Parameters => {
                 Self::Parameters(b)

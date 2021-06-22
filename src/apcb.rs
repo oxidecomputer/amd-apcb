@@ -139,7 +139,7 @@ impl<'a> Iterator for ApcbIter<'a> {
 }
 
 impl<'a> Apcb<'a> {
-    pub fn groups(&self) -> ApcbIter {
+    pub fn groups(&self) -> ApcbIter<'_> {
         ApcbIter {
             header: self.header,
             v3_header_ext: self.v3_header_ext,
@@ -147,7 +147,7 @@ impl<'a> Apcb<'a> {
             remaining_used_size: self.used_size,
         }
     }
-    pub fn group(&self, group_id: u16) -> Option<GroupItem> {
+    pub fn group(&self, group_id: u16) -> Option<GroupItem<'_>> {
         for group in self.groups() {
             if group.id() == group_id {
                 return Some(group);
@@ -155,7 +155,7 @@ impl<'a> Apcb<'a> {
         }
         None
     }
-    pub fn groups_mut(&mut self) -> ApcbIterMut {
+    pub fn groups_mut(&mut self) -> ApcbIterMut<'_> {
         ApcbIterMut {
             header: self.header,
             v3_header_ext: self.v3_header_ext,
@@ -163,7 +163,7 @@ impl<'a> Apcb<'a> {
             remaining_used_size: self.used_size,
         }
     }
-    pub fn group_mut(&mut self, group_id: u16) -> Option<GroupMutItem> {
+    pub fn group_mut(&mut self, group_id: u16) -> Option<GroupMutItem<'_>> {
         for group in self.groups_mut() {
             if group.id() == group_id {
                 return Some(group);
@@ -188,7 +188,7 @@ impl<'a> Apcb<'a> {
         Ok(())
     }
     /// Side effect: Moves cursor to the group so resized.
-    pub fn resize_group_by(&mut self, group_id: u16, size_diff: i64) -> Result<GroupMutItem> {
+    pub fn resize_group_by(&mut self, group_id: u16, size_diff: i64) -> Result<GroupMutItem<'_>> {
         let old_used_size = self.used_size;
         let apcb_size = self.header.apcb_size.get();
         if size_diff > 0 {
@@ -225,7 +225,7 @@ impl<'a> Apcb<'a> {
         }
         self.group_mut(group_id).ok_or_else(|| Error::GroupNotFoundError)
     }
-    pub fn insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<EntryMutItem> {
+    pub fn insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<EntryMutItem<'_>> {
         let mut entry_allocation: u16 = (size_of::<ENTRY_HEADER>() as u16).checked_add(payload.len().try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?;
         while entry_allocation % (ENTRY_ALIGNMENT as u16) != 0 {
             entry_allocation += 1;
@@ -273,7 +273,7 @@ impl<'a> Apcb<'a> {
         Ok(())
     }
 
-    pub fn insert_group(&mut self, group_id: u16, signature: [u8; 4]) -> Result<GroupMutItem> {
+    pub fn insert_group(&mut self, group_id: u16, signature: [u8; 4]) -> Result<GroupMutItem<'_>> {
         // TODO: insert sorted.
         let size = size_of::<GROUP_HEADER>();
         let apcb_size = self.header.apcb_size.get();
