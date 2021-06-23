@@ -260,12 +260,12 @@ mod tests {
         apcb.insert_entry(0x1701, 97, 0, 0xFFFF, ContextType::Struct, &[2u8; 1], 32)?; // breaks
 
         // Insert empty "Token Entry"
-        apcb.insert_entry(0x1001, 0, 0, 1, ContextType::Tokens, &[], 32)?; // breaks
+        apcb.insert_entry(0x3000, 0, 0, 1, ContextType::Tokens, &[], 32)?; // breaks
 
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
         // pub(crate) fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
-        apcb.insert_token(0x1001, TokenType::Bool as u16, 0, 1, 0x014FBF20, 1)?;
+        apcb.insert_token(0x3000, TokenType::Bool as u16, 0, 1, 0x014FBF20, 1)?;
 
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
@@ -303,5 +303,27 @@ mod tests {
 
         assert!(matches!(groups.next(), None));
         Ok(())
+    }
+
+    #[test]
+    fn insert_tokens_group_not_found() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
+        apcb.insert_group(0x1701, *b"PSPG")?;
+        apcb.insert_group(0x1704, *b"MEMG")?;
+        apcb.insert_group(0x3000, *b"TOKN")?;
+
+        // Insert empty "Token Entry"
+        match apcb.insert_entry(0x1001, 0, 0, 1, ContextType::Tokens, &[], 32) {
+            Ok(_) => {
+               panic!("insert_entry should not succeed");
+            },
+            Err(Error::GroupNotFoundError) => {
+                Ok(())
+            },
+            Err(s) => {
+                Err(s)
+            },
+        }
     }
 }
