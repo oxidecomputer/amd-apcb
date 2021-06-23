@@ -20,6 +20,27 @@ pub enum EntryItemBody<BufferType> {
     Struct(BufferType),
     Tokens(TokensEntryBodyItem::<BufferType>),
     Parameters(BufferType), // not seen in the wild anymore
+    /* Not seen in the wild anymore.
+        /// If the value is a Parameter, returns its time point
+        pub fn parameter_time_point(&self) -> u8 {
+            assert!(self.context_type() == ContextType::Parameter);
+            self.body[0]
+        }
+
+        /// If the value is a Parameter, returns its token
+        pub fn parameter_token(&self) -> u16 {
+            assert!(self.context_type() == ContextType::Parameter);
+            let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
+            value & 0x1FFF
+        }
+
+        // If the value is a Parameter, returns its size
+        pub fn parameter_size(&self) -> u16 {
+            assert!(self.context_type() == ContextType::Parameter);
+            let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
+            (value >> 13) + 1
+        }
+    */
 }
 
 impl<'a> EntryItemBody<Buffer<'a>> {
@@ -178,27 +199,5 @@ impl EntryItem<'_> {
     pub fn board_instance_mask(&self) -> u16 {
         self.header.board_instance_mask.get()
     }
-
-    /* Not seen in the wild anymore.
-        /// If the value is a Parameter, returns its time point
-        pub fn parameter_time_point(&self) -> u8 {
-            assert!(self.context_type() == ContextType::Parameter);
-            self.body[0]
-        }
-
-        /// If the value is a Parameter, returns its token
-        pub fn parameter_token(&self) -> u16 {
-            assert!(self.context_type() == ContextType::Parameter);
-            let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
-            value & 0x1FFF
-        }
-
-        // If the value is a Parameter, returns its size
-        pub fn parameter_size(&self) -> u16 {
-            assert!(self.context_type() == ContextType::Parameter);
-            let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
-            (value >> 13) + 1
-        }
-    */
 }
 
