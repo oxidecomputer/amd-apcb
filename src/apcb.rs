@@ -276,15 +276,17 @@ impl<'a> Apcb<'a> {
     pub fn insert_group(&mut self, group_id: u16, signature: [u8; 4]) -> Result<GroupMutItem<'_>> {
         // TODO: insert sorted.
         let size = size_of::<GROUP_HEADER>();
-        let apcb_size = self.header.apcb_size.get();
-        self.header.apcb_size.set(apcb_size.checked_add(size as u32).ok_or_else(|| Error::OutOfSpaceError)?);
-        let used_size = self.used_size;
-        self.used_size = used_size.checked_add(size).ok_or_else(|| Error::OutOfSpaceError)?;
-        if self.beginning_of_groups.len() < self.used_size {
+        let old_apcb_size = self.header.apcb_size.get();
+        let new_apcb_size = old_apcb_size.checked_add(size as u32).ok_or_else(|| Error::OutOfSpaceError)?;
+        let old_used_size = self.used_size;
+        let new_used_size = old_used_size.checked_add(size).ok_or_else(|| Error::OutOfSpaceError)?;
+        if self.beginning_of_groups.len() < new_used_size {
             return Err(Error::FileSystemError("Iterator allocation is smaller than Iterator size", ""));
         }
+        self.header.apcb_size.set(new_apcb_size);
+        self.used_size = new_used_size;
 
-        let mut beginning_of_group = &mut self.beginning_of_groups[used_size..self.used_size];
+        let mut beginning_of_group = &mut self.beginning_of_groups[old_used_size..new_used_size];
 
         let mut header = take_header_from_collection_mut::<GROUP_HEADER>(&mut beginning_of_group).ok_or_else(|| Error::FileSystemError("could not read header of Group", ""))?;
         *header = GROUP_HEADER::default();
