@@ -174,7 +174,7 @@ impl<'a> GroupMutIter<'a> {
     }
     /// Inserts the given entry data at the right spot.
     /// Precondition: Caller already increased the group size by entry_allocation.
-    pub(crate) fn insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<EntryMutItem<'a>> {
+    pub(crate) fn insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<()> {
         let payload_size = payload.len();
         // Make sure that move_insertion_point_before does not notice the new uninitialized entry
         self.remaining_used_size = self.remaining_used_size.checked_sub(entry_allocation as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?;
@@ -209,7 +209,7 @@ impl<'a> GroupMutIter<'a> {
         let body = take_body_from_collection_mut(&mut buf, payload_size.into(), ENTRY_ALIGNMENT).ok_or_else(|| Error::FileSystemError("could not read body of Entry", ""))?;
         body.copy_from_slice(payload);
         self.remaining_used_size = self.remaining_used_size.checked_add(entry_allocation as usize).ok_or_else(|| Error::OutOfSpaceError)?;
-        self.next().ok_or_else(|| Error::FileSystemError("cannot read what was written just now", ""))
+        Ok(())
     }
 }
 
@@ -248,14 +248,12 @@ impl<'a> GroupMutItem<'a> {
             }
             let entry = GroupMutIter::next_item(&mut buf)?;
 
+            let entry_size = entry.header.entry_size.get() as usize;
             if entry.header.entry_id.get() == id && entry.header.instance_id.get() == instance_id && entry.header.board_instance_mask.get() == board_instance_mask {
-                let entry_size = entry.header.entry_size.get();
-                self.buf.copy_within((entry_size as usize)..remaining_used_size, 0);
+                self.buf.copy_within(entry_size..remaining_used_size, 0);
 
                 return Ok(entry_size as u32);
             } else {
-                let entry = GroupMutIter::next_item(&mut buf)?;
-                let entry_size = entry.header.entry_size.get() as usize;
                 remaining_used_size = remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
             }
         }
