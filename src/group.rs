@@ -301,9 +301,7 @@ impl<'a> GroupMutItem<'a> {
         let token_size = size_of::<TOKEN_ENTRY>();
         // Note: Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  This is bad when iterating over the group members until the end--it will iterate over garbage.
         // Therefore, mask the new area out for the iterator--and reinstate it only after resize_entry_by (which has been adapted specially) is finished with Ok.
-        //self.used_size = self.used_size.checked_sub(token_size).ok_or_else(|| Error::FileSystemError("Cannot iterate over old Entries", ""))?;
         let mut entry = self.resize_entry_by(group_id, entry_id, instance_id, board_instance_mask, ContextType::Tokens, (token_size as i64).into())?;
-        //self.used_size = self.used_size.checked_add(token_size).ok_or_else(|| Error::FileSystemError("Cannot iterate over old Entries", ""))?;
         entry.insert_token(token_id, token_value)
     }
 
