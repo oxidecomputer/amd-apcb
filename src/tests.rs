@@ -136,7 +136,8 @@ mod tests {
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
-        apcb.insert_entry(0x1701, 96, 0, 0xFFFF, ContextType::Struct, &[0u8; 48], 33)?;
+        apcb.insert_entry(0x1701, 96, 0, 0xFFFF, ContextType::Struct, &[1u8; 48], 33)?;
+        apcb.insert_entry(0x1701, 97, 0, 0xFFFF, ContextType::Struct, &[2u8; 48], 31)?;
         //let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         apcb.delete_entry(0x1701, 96, 0, 0xFFFF)?;
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
@@ -144,9 +145,13 @@ mod tests {
         let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
-        for _entry in group.entries() {
-            assert!(false);
-        }
+
+        let mut entries = group.entries();
+
+        let entry = entries.next().ok_or_else(|| Error::EntryNotFoundError)?;
+        assert!(entry.id() == 97);
+
+        assert!(matches!(entries.next(), None));
 
         let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1704);
