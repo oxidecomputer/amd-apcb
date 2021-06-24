@@ -187,7 +187,7 @@ impl<'a> Apcb<'a> {
         }
         Ok(())
     }
-    /// Side effect: Moves cursor to the group so resized.
+    /// Side effect: Moves cursor to an unspecified item.
     pub fn resize_group_by(&mut self, group_id: u16, size_diff: i64) -> Result<GroupMutItem<'_>> {
         let old_used_size = self.used_size;
         let apcb_size = self.header.apcb_size.get();
