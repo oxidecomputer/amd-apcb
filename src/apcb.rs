@@ -60,7 +60,7 @@ impl<'a> ApcbIterMut<'a> {
         Ok(GroupMutItem {
             header: header,
             buf: body,
-            remaining_used_size: body_len,
+            used_size: body_len,
         })
     }
 }
@@ -112,7 +112,7 @@ impl<'a> ApcbIter<'a> {
         Ok(GroupItem {
             header: header,
             buf: body,
-            remaining_used_size: body_len,
+            used_size: body_len,
         })
     }
 }
@@ -225,14 +225,19 @@ impl<'a> Apcb<'a> {
         }
         self.group_mut(group_id).ok_or_else(|| Error::GroupNotFoundError)
     }
-    pub fn insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<EntryMutItem<'_>> {
+    pub fn insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<()> {
         let mut entry_allocation: u16 = (size_of::<ENTRY_HEADER>() as u16).checked_add(payload.len().try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?;
         while entry_allocation % (ENTRY_ALIGNMENT as u16) != 0 {
             entry_allocation += 1;
         }
         let mut group = self.resize_group_by(group_id, entry_allocation.into())?;
+        // FIXME increase size here
+        let mut entries = group.entries_mut();
         // Note: On some errors, group.used_size will be reduced by insert_entry again!
-        group.insert_entry(group_id, entry_id, instance_id, board_instance_mask, entry_allocation, context_type, payload, priority_mask)
+        match entries.insert_entry(group_id, entry_id, instance_id, board_instance_mask, entry_allocation, context_type, payload, priority_mask) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        }
     }
     /// Side effect: Moves iterator to unspecified item
     pub fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
@@ -298,7 +303,7 @@ impl<'a> Apcb<'a> {
         Ok(GroupMutItem {
             header: header,
             buf: body,
-            remaining_used_size: body_len,
+            used_size: body_len,
         })
     }
 

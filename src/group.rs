@@ -15,10 +15,17 @@ use crate::entry::{EntryItem, EntryMutItem, EntryItemBody};
 pub struct GroupItem<'a> {
     pub header: &'a GROUP_HEADER,
     pub(crate) buf: ReadOnlyBuffer<'a>, // FIXME: private
+    pub(crate) used_size: usize, // FIXME: private
+}
+
+#[derive(Debug)]
+pub struct GroupIter<'a> {
+    pub header: &'a GROUP_HEADER,
+    pub(crate) buf: ReadOnlyBuffer<'a>, // FIXME: private
     pub(crate) remaining_used_size: usize, // FIXME: private
 }
 
-impl<'a> Iterator for GroupItem<'a> {
+impl<'a> Iterator for GroupIter<'a> {
     type Item = EntryItem<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -39,17 +46,7 @@ impl<'a> Iterator for GroupItem<'a> {
         }
     }
 }
-
-impl GroupItem<'_> {
-    /// Note: ASCII
-    pub fn signature(&self) -> [u8; 4] {
-        self.header.signature
-    }
-    /// Note: See ondisk::GroupId
-    pub fn id(&self) -> u16 {
-        self.header.group_id.get()
-    }
-
+impl GroupIter<'_> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'a>(buf: &mut ReadOnlyBuffer<'a>) -> Result<EntryItem<'a>> {
@@ -82,25 +79,9 @@ impl GroupItem<'_> {
         })
     }
 
-    /// Side effect: Moves the iterator!
-    pub fn entry(&mut self, id: u16, instance_id: u16, board_instance_mask: u16) -> Option<EntryItem<'_>> {
-        for entry in self {
-            if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() == board_instance_mask {
-                return Some(entry);
-            }
-        }
-        None
-    }
 }
 
-#[derive(Debug)]
-pub struct GroupMutItem<'a> {
-    pub header: &'a mut GROUP_HEADER,
-    pub(crate) buf: Buffer<'a>, // FIXME: private
-    pub(crate) remaining_used_size: usize, // FIXME: private
-}
-
-impl<'a> GroupMutItem<'a> {
+impl GroupItem<'_> {
     /// Note: ASCII
     pub fn signature(&self) -> [u8; 4] {
         self.header.signature
@@ -110,6 +91,33 @@ impl<'a> GroupMutItem<'a> {
         self.header.group_id.get()
     }
 
+    /// Side effect: Moves the iterator!
+    pub fn entry(&mut self, id: u16, instance_id: u16, board_instance_mask: u16) -> Option<EntryItem<'_>> {
+        for entry in self.entries() {
+            if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() == board_instance_mask {
+                return Some(entry);
+            }
+        }
+        None
+    }
+
+    pub fn entries(&self) -> GroupIter<'_> {
+        GroupIter {
+            header: self.header,
+            buf: self.buf,
+            remaining_used_size: self.used_size,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct GroupMutIter<'a> {
+    pub header: &'a mut GROUP_HEADER,
+    pub(crate) buf: Buffer<'a>, // FIXME: private
+    pub(crate) remaining_used_size: usize, // FIXME: private
+}
+
+impl<'a> GroupMutIter<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(buf: &mut Buffer<'b>) -> Result<EntryMutItem<'b>> {
@@ -142,34 +150,6 @@ impl<'a> GroupMutItem<'a> {
         })
     }
 
-    /// Finds the first EntryMutItem with the given id, if any, and returns it.
-    pub fn entry_mut(&mut self, id: u16, instance_id: u16, board_instance_mask: u16) -> Option<EntryMutItem<'_>> {
-        for entry in self {
-            if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() == board_instance_mask {
-                return Some(entry);
-            }
-        }
-        None
-    }
-    pub(crate) fn delete_entry(&mut self, id: u16, instance_id: u16, board_instance_mask: u16) -> Result<u32> {
-        loop {
-            let mut buf = &mut self.buf[..self.remaining_used_size];
-            if buf.len() == 0 {
-                break;
-            }
-            let entry = Self::next_item(&mut buf)?;
-
-            if entry.header.entry_id.get() == id && entry.header.instance_id.get() == instance_id && entry.header.board_instance_mask.get() == board_instance_mask {
-                let entry_size = entry.header.entry_size.get();
-                self.buf.copy_within((entry_size as usize)..self.remaining_used_size, 0);
-
-                return Ok(entry_size as u32);
-            } else {
-                self.next().unwrap();
-            }
-        }
-        Ok(0u32)
-    }
     /// Find the place BEFORE which the entry (GROUP_ID, ID, INSTANCE_ID, BOARD_INSTANCE_MASK) is supposed to go.
     pub(crate) fn move_insertion_point_before(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
         loop {
@@ -231,65 +211,120 @@ impl<'a> GroupMutItem<'a> {
         self.remaining_used_size = self.remaining_used_size.checked_add(entry_allocation as usize).ok_or_else(|| Error::OutOfSpaceError)?;
         self.next().ok_or_else(|| Error::FileSystemError("cannot read what was written just now", ""))
     }
-    /// Resizes the given entry by SIZE_DIFF.
-    /// Precondition: If SIZE_DIFF > 0, caller needs to have expanded the group by SIZE_DIFF already.
-    pub(crate) fn resize_entry_by(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, size_diff: i64) -> Result<EntryMutItem<'a>> {
-        loop {
-            let mut buf = &mut self.buf[..self.remaining_used_size];
-            if buf.len() == 0 {
-                return Err(Error::EntryNotFoundError);
-            }
-            let entry = Self::next_item(&mut buf)?;
-            if entry.header.group_id.get() == group_id && entry.header.entry_id.get() == id && entry.header.instance_id.get() == instance_id && entry.header.board_instance_mask.get() == board_instance_mask {
-                let entry_size = entry.header.entry_size.get();
-                let new_entry_size = if size_diff > 0 {
-                    let size_diff = size_diff as u64;
-                    entry_size.checked_add(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?
-                } else {
-                    let size_diff = (-size_diff) as u64;
-                    entry_size.checked_sub(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?
-                };
-                let remaining_used_size = if size_diff > 0 {
-                    self.remaining_used_size.checked_add(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?
-                } else {
-                    self.remaining_used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?
-                };
-                entry.header.entry_size.set(new_entry_size);
-                if size_diff > 0 {
-                    // Increase used size
-                    if self.buf.len() >= remaining_used_size {
-                    } else {
-                        return Err(Error::OutOfSpaceError);
-                    }
-                    self.buf.copy_within((entry_size as usize)..self.remaining_used_size, new_entry_size as usize);
-                    self.remaining_used_size = remaining_used_size;
-                } else if size_diff < 0 {
-                    let size_diff = -size_diff;
-                    self.buf.copy_within((entry_size as usize)..self.remaining_used_size, new_entry_size as usize);
-                    // Decrease used size
-                    self.remaining_used_size = remaining_used_size;
-                }
-                return self.next().ok_or_else(|| Error::FileSystemError("cannot read what was just written", ""))
-            } else {
-                let entry = Self::next_item(&mut self.buf)?;
-                let entry_size = entry.header.entry_size.get() as usize;
-                self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
+}
+
+#[derive(Debug)]
+pub struct GroupMutItem<'a> {
+    pub header: &'a mut GROUP_HEADER,
+    pub(crate) buf: Buffer<'a>, // FIXME: private
+    pub(crate) used_size: usize, // FIXME: private
+}
+
+impl<'a> GroupMutItem<'a> {
+    /// Note: ASCII
+    pub fn signature(&self) -> [u8; 4] {
+        self.header.signature
+    }
+    /// Note: See ondisk::GroupId
+    pub fn id(&self) -> u16 {
+        self.header.group_id.get()
+    }
+
+    /// Finds the first EntryMutItem with the given id, if any, and returns it.
+    pub fn entry_mut(&mut self, id: u16, instance_id: u16, board_instance_mask: u16) -> Option<EntryMutItem<'_>> {
+        for entry in self.entries_mut() {
+            if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() == board_instance_mask {
+                return Some(entry);
             }
         }
+        None
+    }
+    pub(crate) fn delete_entry(&mut self, id: u16, instance_id: u16, board_instance_mask: u16) -> Result<u32> {
+        let mut remaining_used_size = self.used_size;
+        loop {
+            let mut buf = &mut self.buf[..remaining_used_size];
+            if buf.len() == 0 {
+                break;
+            }
+            let entry = GroupMutIter::next_item(&mut buf)?;
+
+            if entry.header.entry_id.get() == id && entry.header.instance_id.get() == instance_id && entry.header.board_instance_mask.get() == board_instance_mask {
+                let entry_size = entry.header.entry_size.get();
+                self.buf.copy_within((entry_size as usize)..remaining_used_size, 0);
+
+                return Ok(entry_size as u32);
+            } else {
+                let entry = GroupMutIter::next_item(&mut buf)?;
+                let entry_size = entry.header.entry_size.get() as usize;
+                remaining_used_size = remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
+            }
+        }
+        Ok(0u32)
+    }
+    /// Resizes the given entry by SIZE_DIFF.
+    /// Precondition: If SIZE_DIFF > 0, caller needs to have expanded the group by SIZE_DIFF already.
+    pub(crate) fn resize_entry_by(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, size_diff: i64) -> Result<EntryMutItem<'_>> {
+        let old_used_size = self.used_size;
+        let entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFoundError)?;
+        let old_entry_size = entry.header.entry_size.get();
+        let new_entry_size = if size_diff > 0 {
+            let size_diff = size_diff as u64;
+            old_entry_size.checked_add(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?
+        } else {
+            let size_diff = (-size_diff) as u64;
+            old_entry_size.checked_sub(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?
+        };
+        let new_used_size = if size_diff > 0 {
+            old_used_size.checked_add(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?
+        } else {
+            old_used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?
+        };
+        entry.header.entry_size.set(new_entry_size);
+        if size_diff > 0 {
+            // Increase used size
+            if self.buf.len() >= new_used_size {
+            } else {
+                return Err(Error::OutOfSpaceError);
+            }
+            self.buf.copy_within((old_entry_size as usize)..old_used_size, new_entry_size as usize);
+        } else if size_diff < 0 {
+            let size_diff = -size_diff;
+            self.buf.copy_within((old_entry_size as usize)..old_used_size, new_entry_size as usize);
+            // Decrease used size
+        }
+        self.used_size = new_used_size;
+        let entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFoundError)?;
+        Ok(entry)
     }
     /// Inserts the given token.
     pub(crate) fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         let token_size = size_of::<TOKEN_ENTRY>();
         // Note: Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  This is bad when iterating over the group members until the end--it will iterate over garbage.
         // Therefore, mask the new area out for the iterator--and reinstate it only after resize_entry_by (which has been adapted specially) is finished with Ok.
-        self.remaining_used_size = self.remaining_used_size.checked_sub(token_size).ok_or_else(|| Error::FileSystemError("Cannot iterate over old Entries", ""))?;
+        //self.used_size = self.used_size.checked_sub(token_size).ok_or_else(|| Error::FileSystemError("Cannot iterate over old Entries", ""))?;
         let mut entry = self.resize_entry_by(group_id, entry_id, instance_id, board_instance_mask, ContextType::Tokens, (token_size as i64).into())?;
-        self.remaining_used_size = self.remaining_used_size.checked_add(token_size).ok_or_else(|| Error::FileSystemError("Cannot iterate over old Entries", ""))?;
+        //self.used_size = self.used_size.checked_add(token_size).ok_or_else(|| Error::FileSystemError("Cannot iterate over old Entries", ""))?;
         entry.insert_token(token_id, token_value)
+    }
+
+    pub fn entries(&self) -> GroupIter<'_> {
+        GroupIter {
+            header: self.header,
+            buf: self.buf,
+            remaining_used_size: self.used_size,
+        }
+    }
+
+    pub fn entries_mut(&mut self) -> GroupMutIter<'_> {
+        GroupMutIter {
+            header: self.header,
+            buf: self.buf,
+            remaining_used_size: self.used_size,
+        }
     }
 }
 
-impl<'a> Iterator for GroupMutItem<'a> {
+impl<'a> Iterator for GroupMutIter<'a> {
     type Item = EntryMutItem<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -310,4 +345,3 @@ impl<'a> Iterator for GroupMutItem<'a> {
         }
     }
 }
-

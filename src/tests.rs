@@ -144,14 +144,14 @@ mod tests {
         let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
-        for _entry in group {
+        for _entry in group.entries() {
             assert!(false);
         }
 
         let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1704);
         assert!(group.signature() ==*b"MEMG");
-        for _entry in group {
+        for _entry in group.entries() {
             assert!(false);
         }
         Ok(())
@@ -174,22 +174,24 @@ mod tests {
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
 
-        let entry = group.next().ok_or_else(|| Error::EntryNotFoundError)?;
+        let mut entries = group.entries();
+
+        let entry = entries.next().ok_or_else(|| Error::EntryNotFoundError)?;
         assert!(entry.id() == 96);
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
-        let entry = group.next().ok_or_else(|| Error::EntryNotFoundError)?;
+        let entry = entries.next().ok_or_else(|| Error::EntryNotFoundError)?;
         assert!(entry.id() == 97);
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
-        assert!(matches!(group.next(), None));
+        assert!(matches!(entries.next(), None));
 
         let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1704);
         assert!(group.signature() ==*b"MEMG");
-        for _entry in group {
+        for _entry in group.entries() {
             assert!(false);
         }
 
@@ -224,22 +226,24 @@ mod tests {
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
 
-        let entry = group.next().ok_or_else(|| Error::EntryNotFoundError)?;
+        let mut entries = group.entries();
+
+        let entry = entries.next().ok_or_else(|| Error::EntryNotFoundError)?;
         assert!(entry.id() == 96);
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
-        let entry = group.next().ok_or_else(|| Error::EntryNotFoundError)?;
+        let entry = entries.next().ok_or_else(|| Error::EntryNotFoundError)?;
         assert!(entry.id() == 97);
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
-        assert!(matches!(group.next(), None));
+        assert!(matches!(entries.next(), None));
 
         let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1704);
         assert!(group.signature() ==*b"MEMG");
-        for _entry in group {
+        for _entry in group.entries() {
             assert!(false);
         }
 
@@ -257,7 +261,9 @@ mod tests {
         //let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         apcb.insert_entry(0x1701, 96, 0, 0xFFFF, ContextType::Struct, &[1u8; 48], 33)?;
         // makes it work let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
-        apcb.insert_entry(0x1701, 97, 0, 0xFFFF, ContextType::Struct, &[2u8; 1], 32)?; // breaks
+        apcb.insert_entry(0x1701, 97, 0, 0xFFFF, ContextType::Struct, &[2u8; 1], 32)?;
+
+        let mut apcb = Apcb::load(&mut buffer[0..]).unwrap(); // FIXME: Remove
 
         // Insert empty "Token Entry"
         apcb.insert_entry(0x3000, 0, 0, 1, ContextType::Tokens, &[], 32)?; // breaks
@@ -275,29 +281,31 @@ mod tests {
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
 
-        let entry = group.next().ok_or_else(|| Error::EntryNotFoundError)?;
+        let mut entries = group.entries();
+
+        let entry = entries.next().ok_or_else(|| Error::EntryNotFoundError)?;
         assert!(entry.id() == 96);
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
-        let entry = group.next().ok_or_else(|| Error::EntryNotFoundError)?;
+        let entry = entries.next().ok_or_else(|| Error::EntryNotFoundError)?;
         assert!(entry.id() == 97);
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
-        assert!(matches!(group.next(), None));
+        assert!(matches!(entries.next(), None));
 
         let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1704);
         assert!(group.signature() ==*b"MEMG");
-        for _entry in group {
+        for _entry in group.entries() {
             assert!(false);
         }
 
         let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x3000);
         assert!(group.signature() ==*b"TOKN");
-        for _entry in group {
+        for _entry in group.entries() {
             assert!(false); // FIXME
         }
 
