@@ -249,11 +249,14 @@ impl<'a> GroupMutItem<'a> {
                     let size_diff = (-size_diff) as u64;
                     entry_size.checked_sub(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?
                 };
+                let remaining_used_size = if size_diff > 0 {
+                    self.remaining_used_size.checked_add(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?
+                } else {
+                    self.remaining_used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?
+                };
                 entry.header.entry_size.set(new_entry_size);
                 if size_diff > 0 {
                     // Increase used size
-                    let remaining_used_size = self.remaining_used_size.checked_add(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?;
-
                     if self.buf.len() >= remaining_used_size {
                     } else {
                         return Err(Error::OutOfSpaceError);
@@ -264,7 +267,7 @@ impl<'a> GroupMutItem<'a> {
                     let size_diff = -size_diff;
                     self.buf.copy_within((entry_size as usize)..self.remaining_used_size, new_entry_size as usize);
                     // Decrease used size
-                    self.remaining_used_size = self.remaining_used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?;
+                    self.remaining_used_size = remaining_used_size;
                 }
                 return self.next().ok_or_else(|| Error::FileSystemError("cannot read what was just written", ""))
             } else {
