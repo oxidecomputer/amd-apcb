@@ -176,18 +176,11 @@ impl<'a> Apcb<'a> {
         let mut group = self.group_mut(group_id).ok_or_else(|| Error::GroupNotFoundError)?;
         let size_diff = group.delete_entry(entry_id, instance_id, board_instance_mask)?;
         if size_diff > 0 {
-            let old_group_size = group.header.group_size.get();
-            let new_group_size = old_group_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystemError("Group is smaller than Entry in Group", "GROUP_HEADER::group_size"))?;
-            group.header.group_size.set(new_group_size);
-
-            self.beginning_of_groups.copy_within((old_group_size as usize)..self.used_size, new_group_size as usize);
-            self.header.apcb_size.set(apcb_size.checked_sub(size_diff as u32).ok_or_else(|| Error::FileSystemError("Apcb is smaller than Entry in Group", "HEADER_V2::apcb_size"))?);
-
-            self.used_size = self.used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
+            let size_diff = size_diff as i64;
+            self.resize_group_by(group_id, -size_diff)?;
         }
         Ok(())
     }
-    /// Side effect: Moves cursor to an unspecified item.
     pub fn resize_group_by(&mut self, group_id: u16, size_diff: i64) -> Result<GroupMutItem<'_>> {
         let old_used_size = self.used_size;
         let apcb_size = self.header.apcb_size.get();
