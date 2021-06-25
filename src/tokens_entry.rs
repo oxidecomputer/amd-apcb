@@ -105,6 +105,27 @@ impl<'a> TokensEntryIterMut<'a> {
         }
         Ok(())
     }
+    /// Find the place BEFORE which the entry TOKEN_ID is supposed to go.
+    pub(crate) fn move_point_to(&mut self, token_id: u32) -> Result<()> {
+        loop {
+            let mut buf = &mut self.buf[..self.remaining_used_size];
+            if buf.len() == 0 {
+                return Err(Error::TokenNotFoundError);
+            }
+            match Self::next_item(self.entry_id, &mut buf) {
+                Ok(e) => {
+                    if e.entry.key.get() != token_id {
+                        self.next().unwrap();
+                    } else {
+                        return Ok(());
+                    }
+                },
+                Err(e) => {
+                    return Err(e);
+                },
+            }
+        }
+    }
 
     /// Inserts the given entry data at the right spot.
     /// Precondition: Caller already increased the group size by entry_size.
@@ -130,6 +151,17 @@ impl<'a> TokensEntryIterMut<'a> {
             entry_id: self.entry_id,
             entry,
         })
+    }
+
+    /// Delete the token TOKEN_ID from the entry.
+    /// Postcondition: Caller resizes the containers afterwards.
+    pub(crate) fn delete_token(&mut self, token_id: u32) -> Result<()> {
+        self.move_point_to(token_id)?;
+        let token_size = size_of::<TOKEN_ENTRY>();
+        // Move the tokens behind this one to the left
+        self.buf.copy_within(token_size..self.remaining_used_size, 0);
+        self.remaining_used_size = self.remaining_used_size.checked_sub(token_size as usize).ok_or_else(|| Error::FileSystemError("Tokens Entry is bigger than remaining iterator size", ""))?;
+        Ok(())
     }
 }
 
@@ -235,6 +267,10 @@ impl<'a> TokensEntryBodyItem<Buffer<'a>> {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }
+    }
+
+    pub(crate) fn delete_token(&mut self, token_id: u32) -> Result<()> {
+        self.iter_mut().delete_token(token_id)
     }
 }
 

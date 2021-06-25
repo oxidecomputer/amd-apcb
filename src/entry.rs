@@ -160,6 +160,17 @@ impl EntryMutItem<'_> {
             },
         }
     }
+
+    pub(crate) fn delete_token(&mut self, token_id: u32) -> Result<()> {
+        match &mut self.body {
+            EntryItemBody::<_>::Tokens(a) => {
+                a.delete_token(token_id)
+            },
+            _ => {
+                Err(Error::EntryTypeMismatchError)
+            },
+        }
+    }
 }
 
 #[derive(Debug)]
