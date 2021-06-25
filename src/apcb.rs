@@ -252,7 +252,6 @@ impl<'a> Apcb<'a> {
             entry_allocation += 1;
         }
         let mut group = self.resize_group_by(group_id, entry_allocation.into())?;
-        // FIXME increase size here
         let mut entries = group.entries_mut();
         // Note: On some errors, group.used_size will be reduced by insert_entry again!
         match entries.insert_entry(group_id, entry_id, instance_id, board_instance_mask, entry_allocation, context_type, payload, priority_mask) {
