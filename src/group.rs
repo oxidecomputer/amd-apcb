@@ -14,15 +14,15 @@ use crate::entry::{EntryItem, EntryMutItem, EntryItemBody};
 #[derive(Debug)]
 pub struct GroupItem<'a> {
     pub header: &'a GROUP_HEADER,
-    pub(crate) buf: ReadOnlyBuffer<'a>, // FIXME: private
-    pub(crate) used_size: usize, // FIXME: private
+    pub(crate) buf: ReadOnlyBuffer<'a>,
+    pub(crate) used_size: usize,
 }
 
 #[derive(Debug)]
 pub struct GroupIter<'a> {
     pub header: &'a GROUP_HEADER,
-    pub(crate) buf: ReadOnlyBuffer<'a>, // FIXME: private
-    pub(crate) remaining_used_size: usize, // FIXME: private
+    buf: ReadOnlyBuffer<'a>,
+    remaining_used_size: usize,
 }
 
 impl<'a> Iterator for GroupIter<'a> {
@@ -113,8 +113,8 @@ impl GroupItem<'_> {
 #[derive(Debug)]
 pub struct GroupMutIter<'a> {
     pub header: &'a mut GROUP_HEADER,
-    pub(crate) buf: Buffer<'a>, // FIXME: private
-    pub(crate) remaining_used_size: usize, // FIXME: private
+    buf: Buffer<'a>,
+    remaining_used_size: usize,
 }
 
 impl<'a> GroupMutIter<'a> {
@@ -246,8 +246,8 @@ impl<'a> GroupMutIter<'a> {
 #[derive(Debug)]
 pub struct GroupMutItem<'a> {
     pub header: &'a mut GROUP_HEADER,
-    pub(crate) buf: Buffer<'a>, // FIXME: private
-    pub(crate) used_size: usize, // FIXME: private
+    pub(crate) buf: Buffer<'a>,
+    pub(crate) used_size: usize,
 }
 
 impl<'a> GroupMutItem<'a> {
