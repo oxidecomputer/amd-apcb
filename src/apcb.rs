@@ -258,7 +258,6 @@ impl<'a> Apcb<'a> {
             Err(e) => Err(e),
         }
     }
-    /// Side effect: Moves iterator to unspecified item
     pub fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         // Make sure that the entry exists before resizing the group
         let mut group = self.group(group_id).ok_or_else(|| Error::GroupNotFoundError)?;
