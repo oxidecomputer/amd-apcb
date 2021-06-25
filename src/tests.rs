@@ -4,6 +4,7 @@ mod tests {
     use crate::Error;
     use crate::ondisk::ContextType;
     use crate::ondisk::TokenType;
+    use crate::EntryItemBody;
 
     #[test]
     #[should_panic]
@@ -319,7 +320,18 @@ mod tests {
         let mut entries = group.entries();
 
         let entry = entries.next().ok_or_else(|| Error::EntryNotFoundError)?;
-        // TODO: traverse tokens
+        match entry.body {
+            EntryItemBody::<_>::Tokens(tokens) => {
+                let mut tokens = tokens.iter();
+                let token = tokens.next().ok_or_else(|| Error::TokenNotFoundError)?;
+                assert!(token.id() == 0x014FBF20);
+                assert!(token.value() == 1);
+                assert!(matches!(tokens.next(), None));
+            },
+            _ => {
+                panic!("unexpected entry type");
+            }
+        }
         assert!(matches!(entries.next(), None));
 
         assert!(matches!(groups.next(), None));

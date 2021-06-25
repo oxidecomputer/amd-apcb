@@ -11,6 +11,7 @@ pub enum Error {
     GroupNotFoundError,
     EntryNotFoundError,
     EntryTypeMismatchError,
+    TokenNotFoundError,
 }
 
 pub type Result<Q> = core::result::Result<Q, Error>;
