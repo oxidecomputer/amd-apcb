@@ -1,0 +1,85 @@
+Apcb:
+[OK]	delete_entry
+		copy_within call is broken!
+		calls GroupMutItem.delete_entry to delete the entry from the group
+		calls self.resize_group_by to shrink the group.
+	resize_group_by
+		Error checking is slightly wrong
+[OK]		copy_within call is broken; would be easy to hardcode-fix
+[OK?]	insert_entry
+		uses resize_group_by; used apcb used_size for groups
+		then uses GroupMutIter.insert_entry (so delegated to iterator); but that doesn't touch used_size
+[OK]	insert_token
+		uses resize_group_by
+		then uses GroupMutItem.insert_token
+[OK]	delete_group
+		copy_within call is wrong
+		used_size is updated
+		test fixed
+[OK]	insert_group
+		header apcb_size is updated
+		used_size is updated
+		group is appended at the end, and returned
+	delete_token
+		MISSING
+
+GroupMutIter: (iterates over Entrys)
+[OK]	insert_entry
+		hide new entry from remaining_used_size
+		move insertion point
+		shift stuff to the right [assumes that buf already contains the new entry as well!]
+		init entry data
+		copy payload
+		then shows new entry to remaining_used_size (extra, not necessary so much)
+
+GroupMutItem: "the real group"
+[OK]	delete_entry
+		needs to shift the other entries; copy_within is wrong; would be easy to hardcode-fix
+		DOES NOT use resize_entry_by
+[OK]	resize_entry_by
+		increases entry_size
+		copy_within is wrong; harder to fix
+		increases used_size of the group; but that's maybe also done by resize_group_by anyway
+		returns entry--maybe don't ?
+	insert_token
+		uses resize_entry_by
+		then EntryMutItem.insert_token
+
+EntryMutItem:
+	insert_token
+		uses EntryItemBody::TokensEntryItemMut; then doesn't adapt anything in self ?
+
+TokensEntryItem: (a token) ; name bad
+	no insert_*
+
+Long term
+	Move insert_group, delete_group, resize_group_by into ApcbIterMut (the iterator that is giving Groups)
+		make them return the adjustment for Apcb.used_size and apcb_size
+	Move insert_entry, delete_entry into GroupMutIter (the iterator that is giving Entrys)
+		make them return the adjustment for GroupMutItem.used_size and group_size (!)
+	Move insert_token, delete_token into TokensEntryItemMut (the iterator that is giving Tokens)
+		make them return the adjustment for Entry.used_size and entry_size
+	[OK] All the iterators need to be constructed WITHOUT cutting off things.
+		Since overlaps are probably bad, that's still not good.
+
+Important:
+	If deleting entry,
+		(1) shrink entry
+		(2) shrink group
+	If inserting entry,
+		(1) grow group
+		(2) grow entry
+
+* move_insertion_point_before: Maybe return the rest of the buf, consuming the iterator!!! (insert_entry is also in the iterator, so maybe not; and some users also next() the thing)
+* move_point_to: Maybe return the rest of the buf, consuming the iterator! (easy)
+
+insert_entry should maybe not be in the iter?  It's really strange to use now
+
+resize_group_by should be split:
+	(1) resize apcb for any reason
+	(2) resize group
+resize_entry_by likewise should be split:
+	(1) resize group for any reason
+	(2) resize entry
+
+insert_token: Decrease available size before using iter to find the entry?
