@@ -48,7 +48,7 @@ impl<'a> EntryItemBody<Buffer<'a>> {
         Ok(match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
-                     return Err(Error::FileSystemError("unit_size != 0 is invalid for context_type = raw", "ENTRY_HEADER::unit_size"));
+                     return Err(Error::FileSystem("unit_size != 0 is invalid for context_type = raw", "ENTRY_HEADER::unit_size"));
                 }
                 Self::Struct(b)
             },
@@ -68,7 +68,7 @@ impl<'a> EntryItemBody<ReadOnlyBuffer<'a>> {
         Ok(match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
-                     return Err(Error::FileSystemError("unit_size != 0 is invalid for context_type = raw", "ENTRY_HEADER::unit_size"));
+                     return Err(Error::FileSystem("unit_size != 0 is invalid for context_type = raw", "ENTRY_HEADER::unit_size"));
                 }
                 Self::Struct(b)
             },
@@ -156,7 +156,7 @@ impl EntryMutItem<'_> {
                 a.insert_token(token_id, token_value)
             },
             _ => {
-                Err(Error::EntryTypeMismatchError)
+                Err(Error::EntryTypeMismatch)
             },
         }
     }
@@ -167,7 +167,7 @@ impl EntryMutItem<'_> {
                 a.delete_token(token_id)
             },
             _ => {
-                Err(Error::EntryTypeMismatchError)
+                Err(Error::EntryTypeMismatch)
             },
         }
     }

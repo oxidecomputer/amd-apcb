@@ -51,23 +51,23 @@ impl GroupIter<'_> {
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'a>(buf: &mut ReadOnlyBuffer<'a>) -> Result<EntryItem<'a>> {
         if buf.len() == 0 {
-            return Err(Error::FileSystemError("unexpected EOF while reading header of Entry", ""));
+            return Err(Error::FileSystem("unexpected EOF while reading header of Entry", ""));
         }
         let header = match take_header_from_collection::<ENTRY_HEADER>(&mut *buf) {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystemError("could not read header of Entry", ""));
+                return Err(Error::FileSystem("could not read header of Entry", ""));
             }
         };
         ContextFormat::from_u8(header.context_format).unwrap();
         let context_type = ContextType::from_u8(header.context_type).unwrap();
         let entry_size = header.entry_size.get() as usize;
 
-        let payload_size = entry_size.checked_sub(size_of::<ENTRY_HEADER>()).ok_or_else(|| Error::FileSystemError("could not locate body of Entry", ""))?;
+        let payload_size = entry_size.checked_sub(size_of::<ENTRY_HEADER>()).ok_or_else(|| Error::FileSystem("could not locate body of Entry", ""))?;
         let body = match take_body_from_collection(&mut *buf, payload_size, ENTRY_ALIGNMENT) {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystemError("could not read body of Entry", ""));
+                return Err(Error::FileSystem("could not read body of Entry", ""));
             },
         };
 
@@ -122,23 +122,23 @@ impl<'a> GroupMutIter<'a> {
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(buf: &mut Buffer<'b>) -> Result<EntryMutItem<'b>> {
         if buf.len() == 0 {
-            return Err(Error::FileSystemError("unexpected EOF while reading header of Entry", ""));
+            return Err(Error::FileSystem("unexpected EOF while reading header of Entry", ""));
         }
         let header = match take_header_from_collection_mut::<ENTRY_HEADER>(&mut *buf) {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystemError("could not read header of Entry", ""));
+                return Err(Error::FileSystem("could not read header of Entry", ""));
             }
         };
         ContextFormat::from_u8(header.context_format).unwrap();
         let context_type = ContextType::from_u8(header.context_type).unwrap();
         let entry_size = header.entry_size.get() as usize;
 
-        let payload_size = entry_size.checked_sub(size_of::<ENTRY_HEADER>()).ok_or_else(|| Error::FileSystemError("unexpected EOF while locating body of Entry", ""))?;
+        let payload_size = entry_size.checked_sub(size_of::<ENTRY_HEADER>()).ok_or_else(|| Error::FileSystem("unexpected EOF while locating body of Entry", ""))?;
         let body = match take_body_from_collection_mut(&mut *buf, payload_size, ENTRY_ALIGNMENT) {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystemError("could not read body of Entry", ""));
+                return Err(Error::FileSystem("could not read body of Entry", ""));
             },
         };
 
@@ -180,7 +180,7 @@ impl<'a> GroupMutIter<'a> {
         loop {
             let mut buf = &mut self.buf[..self.remaining_used_size];
             if buf.len() == 0 {
-                return Err(Error::EntryNotFoundError);
+                return Err(Error::EntryNotFound);
             }
             match Self::next_item(&mut buf) {
                 Ok(e) => {
@@ -206,7 +206,7 @@ impl<'a> GroupMutIter<'a> {
     pub(crate) fn insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<()> {
         let payload_size = payload.len();
         // Make sure that move_insertion_point_before does not notice the new uninitialized entry
-        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_allocation as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?;
+        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_allocation as usize).ok_or_else(|| Error::FileSystem("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?;
         self.move_insertion_point_before(group_id, entry_id, instance_id, board_instance_mask)?;
 
         let mut buf = &mut self.buf[..]; // already done: offset
@@ -214,7 +214,7 @@ impl<'a> GroupMutIter<'a> {
         buf.copy_within(0..self.remaining_used_size, entry_allocation as usize);
 
         //let mut buf = &mut self.buf[..(self.remaining_used_size + entry_allocation as usize)];
-        let header = take_header_from_collection_mut::<ENTRY_HEADER>(&mut buf).ok_or_else(|| Error::FileSystemError("could not read header of Entry", ""))?;
+        let header = take_header_from_collection_mut::<ENTRY_HEADER>(&mut buf).ok_or_else(|| Error::FileSystem("could not read header of Entry", ""))?;
         *header = ENTRY_HEADER::default();
         header.group_id.set(group_id);
         header.entry_id.set(entry_id);
@@ -236,9 +236,9 @@ impl<'a> GroupMutIter<'a> {
 
         // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
         header.board_instance_mask.set(board_instance_mask);
-        let body = take_body_from_collection_mut(&mut buf, payload_size.into(), ENTRY_ALIGNMENT).ok_or_else(|| Error::FileSystemError("could not read body of Entry", ""))?;
+        let body = take_body_from_collection_mut(&mut buf, payload_size.into(), ENTRY_ALIGNMENT).ok_or_else(|| Error::FileSystem("could not read body of Entry", ""))?;
         body.copy_from_slice(payload);
-        self.remaining_used_size = self.remaining_used_size.checked_add(entry_allocation as usize).ok_or_else(|| Error::OutOfSpaceError)?;
+        self.remaining_used_size = self.remaining_used_size.checked_add(entry_allocation as usize).ok_or_else(|| Error::OutOfSpace)?;
         Ok(())
     }
 }
@@ -285,7 +285,7 @@ impl<'a> GroupMutItem<'a> {
         let mut entries = self.entries_mut();
         let (offset, entry_size) = entries.move_point_to(entry_id, instance_id, board_instance_mask)?;
         let entry_size: u16 = entry_size.try_into().unwrap();
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFoundError)?;
+        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
 
         if size_diff > 0 {
             let size_diff: usize = size_diff.try_into().unwrap();
@@ -294,16 +294,16 @@ impl<'a> GroupMutItem<'a> {
         let old_entry_size = entry_size;
         let new_entry_size: u16 = if size_diff > 0 {
             let size_diff = size_diff as u64;
-            old_entry_size.checked_add(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?
+            old_entry_size.checked_add(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpace)?
         } else {
             let size_diff = (-size_diff) as u64;
-            old_entry_size.checked_sub(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?
+            old_entry_size.checked_sub(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpace)?
         };
 
         entry.header.entry_size.set(new_entry_size);
         let buf = &mut self.buf[offset..];
         buf.copy_within(old_entry_size as usize..old_used_size, new_entry_size as usize);
-        let entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFoundError)?;
+        let entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
         Ok(entry)
     }
     /// Inserts the given token.
@@ -324,7 +324,7 @@ impl<'a> GroupMutItem<'a> {
         // FIXME ensure that token exists
         // Note: Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  This is bad when iterating over the group members until the end--it will iterate over garbage.
         // Therefore, mask the new area out for the iterator--and reinstate it only after resize_entry_by (which has been adapted specially) is finished with Ok.
-        let mut entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFoundError)?;
+        let mut entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
         entry.delete_token(token_id)?;
         let mut token_size_diff: i64 = token_size.try_into().unwrap();
         token_size_diff = -token_size_diff;

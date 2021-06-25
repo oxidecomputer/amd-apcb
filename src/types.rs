@@ -6,12 +6,12 @@ pub(crate) type
 
 #[derive(Debug)]
 pub enum Error {
-    FileSystemError(&'static str, &'static str), // message, field name
-    OutOfSpaceError,
-    GroupNotFoundError,
-    EntryNotFoundError,
-    EntryTypeMismatchError,
-    TokenNotFoundError,
+    FileSystem(&'static str, &'static str), // message, field name
+    OutOfSpace,
+    GroupNotFound,
+    EntryNotFound,
+    EntryTypeMismatch,
+    TokenNotFound,
 }
 
 pub type Result<Q> = core::result::Result<Q, Error>;
