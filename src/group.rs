@@ -263,37 +263,49 @@ impl<'a> GroupMutItem<'a> {
     /// Resizes the given entry by SIZE_DIFF.
     /// Precondition: If SIZE_DIFF > 0, caller needs to have expanded the group by SIZE_DIFF already.
     pub(crate) fn resize_entry_by(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, size_diff: i64) -> Result<EntryMutItem<'_>> {
-        let old_used_size = self.used_size;
-        let entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFoundError)?;
-        let old_entry_size = entry.header.entry_size.get();
-        let new_entry_size = if size_diff > 0 {
-            let size_diff = size_diff as u64;
-            old_entry_size.checked_add(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?
-        } else {
-            let size_diff = (-size_diff) as u64;
-            old_entry_size.checked_sub(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?
-        };
-        let new_used_size = if size_diff > 0 {
-            old_used_size.checked_add(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?
-        } else {
-            old_used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?
-        };
-        entry.header.entry_size.set(new_entry_size);
-        if size_diff > 0 {
-            // Increase used size
-            if self.buf.len() >= new_used_size {
-            } else {
-                return Err(Error::OutOfSpaceError);
+        let mut remaining_used_size = self.used_size;
+        let mut offset = 0usize;
+        let mut buf = &mut self.buf[..remaining_used_size];
+        loop {
+            if buf.len() == 0 {
+                break;
             }
-            self.buf.copy_within((old_entry_size as usize)..old_used_size, new_entry_size as usize);
-        } else if size_diff < 0 {
-            let size_diff = -size_diff;
-            self.buf.copy_within((old_entry_size as usize)..old_used_size, new_entry_size as usize);
-            // Decrease used size
+            let entry = GroupMutIter::next_item(&mut buf)?;
+
+            let entry_size = entry.header.entry_size.get();
+            if entry.header.entry_id.get() == entry_id && entry.header.instance_id.get() == instance_id && entry.header.board_instance_mask.get() == board_instance_mask {
+                let old_used_size = self.used_size;
+                let old_entry_size = entry_size;
+                let new_entry_size: u16 = if size_diff > 0 {
+                    let size_diff = size_diff as u64;
+                    old_entry_size.checked_add(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?
+                } else {
+                    let size_diff = (-size_diff) as u64;
+                    old_entry_size.checked_sub(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?
+                };
+                let new_used_size = if size_diff > 0 {
+                    old_used_size.checked_add(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?
+                } else {
+                    old_used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?
+                };
+                entry.header.entry_size.set(new_entry_size);
+                if size_diff > 0 {
+                    // Increase used size
+                    if self.buf.len() >= new_used_size {
+                    } else {
+                        return Err(Error::OutOfSpaceError);
+                    }
+                }
+                self.buf.copy_within(offset.checked_add(old_entry_size as usize).unwrap()..old_used_size, offset.checked_add(new_entry_size as usize).unwrap());
+                self.used_size = new_used_size;
+                let entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFoundError)?;
+                return Ok(entry)
+            } else {
+                offset = offset.checked_add(entry_size as usize).unwrap();
+                remaining_used_size = remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
+            }
         }
-        self.used_size = new_used_size;
-        let entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFoundError)?;
-        Ok(entry)
+        Err(Error::EntryNotFoundError)
     }
     /// Inserts the given token.
     pub(crate) fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
