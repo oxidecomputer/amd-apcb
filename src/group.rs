@@ -239,21 +239,22 @@ impl<'a> GroupMutItem<'a> {
         }
         None
     }
-    pub(crate) fn delete_entry(&mut self, id: u16, instance_id: u16, board_instance_mask: u16) -> Result<u32> {
+    pub(crate) fn delete_entry(&mut self, entry_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<u32> {
         let mut remaining_used_size = self.used_size;
+        let mut offset = 0usize;
+        let mut buf = &mut self.buf[..remaining_used_size];
         loop {
-            let mut buf = &mut self.buf[..remaining_used_size];
             if buf.len() == 0 {
                 break;
             }
             let entry = GroupMutIter::next_item(&mut buf)?;
 
             let entry_size = entry.header.entry_size.get() as usize;
-            if entry.header.entry_id.get() == id && entry.header.instance_id.get() == instance_id && entry.header.board_instance_mask.get() == board_instance_mask {
-                self.buf.copy_within(entry_size..remaining_used_size, 0);
-
+            if entry.header.entry_id.get() == entry_id && entry.header.instance_id.get() == instance_id && entry.header.board_instance_mask.get() == board_instance_mask {
+                self.buf.copy_within(offset.checked_add(entry_size).unwrap()..remaining_used_size, offset);
                 return Ok(entry_size as u32);
             } else {
+                offset = offset.checked_add(entry_size).unwrap();
                 remaining_used_size = remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
             }
         }
