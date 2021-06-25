@@ -161,7 +161,7 @@ impl<'a> GroupMutIter<'a> {
                 Ok(e) => {
                     if (e.header.group_id.get(), e.id(), e.instance_id(), e.board_instance_mask()) < (group_id, id, instance_id, board_instance_mask) {
                         let entry_size = e.header.entry_size;
-                        self.next().unwrap();
+                        self.next().ok_or_else(|| Error::Internal)?;
                     } else {
                         break;
                     }
@@ -186,10 +186,10 @@ impl<'a> GroupMutIter<'a> {
                 Ok(e) => {
                     let entry_size = e.header.entry_size.get();
                     if (e.id(), e.instance_id(), e.board_instance_mask()) != (entry_id, instance_id, board_instance_mask) {
-                        self.next().unwrap();
-                        offset = offset.checked_add(entry_size.into()).unwrap();
+                        self.next().ok_or_else(|| Error::Internal)?;
+                        offset = offset.checked_add(entry_size.into()).ok_or_else(|| Error::ArithmeticOverflow)?;
                         while offset % ENTRY_ALIGNMENT != 0 {
-                            offset = offset.checked_add(1).unwrap();
+                            offset = offset.checked_add(1).ok_or_else(|| Error::ArithmeticOverflow)?;
                         }
                     } else {
                         return Ok((offset, entry_size.into()));
@@ -284,20 +284,20 @@ impl<'a> GroupMutItem<'a> {
 
         let mut entries = self.entries_mut();
         let (offset, entry_size) = entries.move_point_to(entry_id, instance_id, board_instance_mask)?;
-        let entry_size: u16 = entry_size.try_into().unwrap();
+        let entry_size: u16 = entry_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
         let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
 
         if size_diff > 0 {
-            let size_diff: usize = size_diff.try_into().unwrap();
+            let size_diff: usize = size_diff.try_into().map_err(|_| Error::ArithmeticOverflow)?;
             old_used_size = old_used_size.checked_sub(size_diff).unwrap();
         }
         let old_entry_size = entry_size;
         let new_entry_size: u16 = if size_diff > 0 {
             let size_diff = size_diff as u64;
-            old_entry_size.checked_add(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpace)?
+            old_entry_size.checked_add(size_diff.try_into().map_err(|_| Error::ArithmeticOverflow)?).ok_or_else(|| Error::OutOfSpace)?
         } else {
             let size_diff = (-size_diff) as u64;
-            old_entry_size.checked_sub(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpace)?
+            old_entry_size.checked_sub(size_diff.try_into().map_err(|_| Error::ArithmeticOverflow)?).ok_or_else(|| Error::OutOfSpace)?
         };
 
         entry.header.entry_size.set(new_entry_size);
@@ -326,7 +326,7 @@ impl<'a> GroupMutItem<'a> {
         // Therefore, mask the new area out for the iterator--and reinstate it only after resize_entry_by (which has been adapted specially) is finished with Ok.
         let mut entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
         entry.delete_token(token_id)?;
-        let mut token_size_diff: i64 = token_size.try_into().unwrap();
+        let mut token_size_diff: i64 = token_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
         token_size_diff = -token_size_diff;
         self.resize_entry_by(group_id, entry_id, instance_id, board_instance_mask, ContextType::Tokens, token_size_diff)?;
         Ok(token_size_diff)

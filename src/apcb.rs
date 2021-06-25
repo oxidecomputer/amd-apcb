@@ -78,7 +78,7 @@ impl<'a> ApcbIterMut<'a> {
             } else {
                 let group = ApcbIterMut::next_item(&mut self.buf)?;
                 let group_size = group.header.group_size.get() as usize;
-                offset = offset.checked_add(group_size).unwrap();
+                offset = offset.checked_add(group_size).ok_or_else(|| Error::ArithmeticOverflow)?;
                 remaining_used_size = remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystem("Group is bigger than remaining Iterator size", "GROUP_HEADER::group_size"))?;
             }
         }
@@ -206,10 +206,10 @@ impl<'a> Apcb<'a> {
         let old_used_size = self.used_size;
         let apcb_size = self.header.apcb_size.get();
         if size_diff > 0 {
-            let size_diff: u32 = (size_diff as u64).try_into().unwrap();
+            let size_diff: u32 = (size_diff as u64).try_into().map_err(|_| Error::ArithmeticOverflow)?;
             self.header.apcb_size.set(apcb_size.checked_add(size_diff).ok_or_else(|| Error::FileSystem("Apcb is too big for format", "HEADER_V2::apcb_size"))?);
         } else {
-            let size_diff: u32 = ((-size_diff) as u64).try_into().unwrap();
+            let size_diff: u32 = ((-size_diff) as u64).try_into().map_err(|_| Error::ArithmeticOverflow)?;
             self.header.apcb_size.set(apcb_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystem("Apcb is smaller than Entry in Group", "HEADER_V2::apcb_size"))?);
         }
 
@@ -219,8 +219,8 @@ impl<'a> Apcb<'a> {
         if size_diff > 0 {
             // Grow
 
-            let old_group_size: u32 = old_group_size.try_into().unwrap();
-            let size_diff: u32 = (size_diff as u64).try_into().unwrap();
+            let old_group_size: u32 = old_group_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
+            let size_diff: u32 = (size_diff as u64).try_into().map_err(|_| Error::ArithmeticOverflow)?;
             let new_group_size = old_group_size.checked_add(size_diff).ok_or_else(|| Error::FileSystem("Group is too big for format", "GROUP_HEADER::group_size"))?;
             let new_used_size = old_used_size.checked_add(size_diff as usize).ok_or_else(|| Error::FileSystem("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
             if new_used_size <= self_beginning_of_groups_len {
@@ -233,8 +233,8 @@ impl<'a> Apcb<'a> {
             buf.copy_within((old_group_size as usize)..old_used_size, new_group_size as usize);
             self.used_size = new_used_size;
         } else if size_diff < 0 {
-            let old_group_size: u32 = old_group_size.try_into().unwrap();
-            let size_diff: u32 = ((-size_diff) as u64).try_into().unwrap();
+            let old_group_size: u32 = old_group_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
+            let size_diff: u32 = ((-size_diff) as u64).try_into().map_err(|_| Error::ArithmeticOverflow)?;
             let new_group_size = old_group_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystem("Group is smaller than Entry in Group", "GROUP_HEADER::group_size"))?;
             let new_used_size = old_used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystem("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
             let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
@@ -246,7 +246,7 @@ impl<'a> Apcb<'a> {
         self.group_mut(group_id).ok_or_else(|| Error::GroupNotFound)
     }
     pub fn insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<()> {
-        let mut entry_allocation: u16 = (size_of::<ENTRY_HEADER>() as u16).checked_add(payload.len().try_into().unwrap()).ok_or_else(|| Error::OutOfSpace)?;
+        let mut entry_allocation: u16 = (size_of::<ENTRY_HEADER>() as u16).checked_add(payload.len().try_into().map_err(|_| Error::ArithmeticOverflow)?).ok_or_else(|| Error::OutOfSpace)?;
         while entry_allocation % (ENTRY_ALIGNMENT as u16) != 0 {
             entry_allocation += 1;
         }

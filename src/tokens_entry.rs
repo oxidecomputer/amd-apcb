@@ -99,7 +99,7 @@ impl<'a> TokensEntryIterMut<'a> {
             match Self::next_item(self.entry_id, &mut buf) {
                 Ok(e) => {
                     if e.id() < token_id {
-                        self.next().unwrap();
+                        self.next().ok_or_else(|| Error::Internal)?;
                     } else {
                         break;
                     }
@@ -121,7 +121,7 @@ impl<'a> TokensEntryIterMut<'a> {
             match Self::next_item(self.entry_id, &mut buf) {
                 Ok(e) => {
                     if e.id() != token_id {
-                        self.next().unwrap();
+                        self.next().ok_or_else(|| Error::Internal)?;
                     } else {
                         return Ok(());
                     }

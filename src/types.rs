@@ -6,6 +6,8 @@ pub(crate) type
 
 #[derive(Debug)]
 pub enum Error {
+    ArithmeticOverflow,
+    Internal,
     FileSystem(&'static str, &'static str), // message, field name
     OutOfSpace,
     GroupNotFound,
