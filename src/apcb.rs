@@ -63,6 +63,7 @@ impl<'a> ApcbIterMut<'a> {
         })
     }
 
+    /// Moves the point to the group with the given GROUP_ID.  Returns (offset, group_size) of it.
     pub(crate) fn move_point_to(&mut self, group_id: u16) -> Result<(usize, usize)> {
         let mut remaining_used_size = self.remaining_used_size;
         let mut offset = 0usize;
