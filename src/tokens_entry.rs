@@ -41,15 +41,15 @@ impl<BufferType> TokensEntryBodyItem<BufferType> {
 #[derive(Debug)]
 pub struct TokensEntryItemMut<'a> {
     entry_id: TokenType,
-    entry: &'a mut TOKEN_ENTRY,
+    token: &'a mut TOKEN_ENTRY,
 }
 
 impl<'a> TokensEntryItemMut<'a> {
     pub fn id(&self) -> u32 {
-        self.entry.key.get()
+        self.token.key.get()
     }
     pub fn value(&self) -> u32 { // TODO: Clamp.
-        self.entry.value.get() & match self.entry_id {
+        self.token.value.get() & match self.entry_id {
             TokenType::Bool => 0x1,
             TokenType::Byte => 0xFF,
             TokenType::Word => 0xFFFF,
@@ -60,7 +60,13 @@ impl<'a> TokensEntryItemMut<'a> {
     // Since the id is a sort key, it cannot be mutated.
 
     pub fn set_value(&mut self, value: u32) {
-        self.entry.value.set(value)
+        assert!(value == (value & match self.entry_id {
+            TokenType::Bool => 0x1,
+            TokenType::Byte => 0xFF,
+            TokenType::Word => 0xFFFF,
+            TokenType::DWord => 0xFFFF_FFFF,
+        }));
+        self.token.value.set(value)
     }
 }
 
@@ -71,7 +77,7 @@ impl<'a> TokensEntryIterMut<'a> {
         if buf.len() == 0 {
             return Err(Error::FileSystemError("unexpected EOF while reading header of Token Entry", ""));
         }
-        let entry = match take_header_from_collection_mut::<TOKEN_ENTRY>(&mut *buf) {
+        let token = match take_header_from_collection_mut::<TOKEN_ENTRY>(&mut *buf) {
             Some(item) => item,
             None => {
                 return Err(Error::FileSystemError("could not read Token Entry", ""));
@@ -79,7 +85,7 @@ impl<'a> TokensEntryIterMut<'a> {
         };
         Ok(TokensEntryItemMut {
             entry_id,
-            entry: entry,
+            token: token,
         })
     }
 
@@ -92,7 +98,7 @@ impl<'a> TokensEntryIterMut<'a> {
             }
             match Self::next_item(self.entry_id, &mut buf) {
                 Ok(e) => {
-                    if e.entry.key.get() < token_id {
+                    if e.id() < token_id {
                         self.next().unwrap();
                     } else {
                         break;
@@ -114,7 +120,7 @@ impl<'a> TokensEntryIterMut<'a> {
             }
             match Self::next_item(self.entry_id, &mut buf) {
                 Ok(e) => {
-                    if e.entry.key.get() != token_id {
+                    if e.id() != token_id {
                         self.next().unwrap();
                     } else {
                         return Ok(());
@@ -130,27 +136,32 @@ impl<'a> TokensEntryIterMut<'a> {
     /// Inserts the given entry data at the right spot.
     /// Precondition: Caller already increased the group size by entry_size.
     pub(crate) fn insert_token(&mut self, token_id: u32, token_value: u32) -> Result<TokensEntryItemMut<'a>> {
-        let entry_size = size_of::<TOKEN_ENTRY>();
+        let token_size = size_of::<TOKEN_ENTRY>();
 
-        // Make sure that move_insertion_point_before does not notice the new uninitialized entry
-        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::FileSystemError("Tokens Entry is bigger than remaining iterator size", ""))?;
+        // Make sure that move_insertion_point_before does not notice the new uninitialized token
+        self.remaining_used_size = self.remaining_used_size.checked_sub(token_size as usize).ok_or_else(|| Error::FileSystemError("Tokens Entry is bigger than remaining iterator size", ""))?;
         self.move_insertion_point_before(token_id)?;
         // Move the entries from after the insertion point to the right (in order to make room before for our new entry).
-        self.buf.copy_within(0..self.remaining_used_size, entry_size as usize);
+        self.buf.copy_within(0..self.remaining_used_size, token_size as usize);
 
-        self.remaining_used_size = self.remaining_used_size.checked_add(entry_size as usize).ok_or_else(|| Error::FileSystemError("Tokens Entry is bigger than remaining iterator size", ""))?;
-        let entry = match take_header_from_collection_mut::<TOKEN_ENTRY>(&mut self.buf) {
+        self.remaining_used_size = self.remaining_used_size.checked_add(token_size as usize).ok_or_else(|| Error::FileSystemError("Tokens Entry is bigger than remaining iterator size", ""))?;
+        let token = match take_header_from_collection_mut::<TOKEN_ENTRY>(&mut self.buf) {
             Some(item) => item,
             None => {
                 return Err(Error::FileSystemError("could not read Token Entry", ""));
             }
         };
-        entry.key.set(token_id);
-        entry.value.set(token_value);
-        Ok(TokensEntryItemMut {
+
+        token.key.set(token_id);
+        token.value.set(0); // always valid
+        let mut result = TokensEntryItemMut {
             entry_id: self.entry_id,
-            entry,
-        })
+            token,
+        };
+
+        // This has better error checking
+        result.set_value(token_value);
+        Ok(result)
     }
 
     /// Delete the token TOKEN_ID from the entry.
