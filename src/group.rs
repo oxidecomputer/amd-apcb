@@ -296,7 +296,8 @@ impl<'a> GroupMutItem<'a> {
                         return Err(Error::OutOfSpaceError);
                     }
                 }
-                self.buf.copy_within(offset.checked_add(old_entry_size as usize).unwrap()..old_used_size, offset.checked_add(new_entry_size as usize).unwrap());
+                let mut buf = &mut self.buf[offset..];
+                buf.copy_within(old_entry_size as usize..remaining_used_size, new_entry_size as usize);
                 self.used_size = new_used_size;
                 let entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFoundError)?;
                 return Ok(entry)
