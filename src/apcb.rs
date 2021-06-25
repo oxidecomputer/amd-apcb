@@ -63,6 +63,28 @@ impl<'a> ApcbIterMut<'a> {
             used_size: body_len,
         })
     }
+
+    pub(crate) fn move_point_to(&mut self, group_id: u16) -> Result<(usize, usize)> {
+        let mut remaining_used_size = self.remaining_used_size;
+        let mut offset = 0usize;
+        loop {
+            let mut buf = &mut self.beginning_of_groups[..remaining_used_size];
+            if buf.len() == 0 {
+                break;
+            }
+            let group = ApcbIterMut::next_item(&mut buf)?;
+            let group_size = group.header.group_size.get();
+            if group.header.group_id.get() == group_id {
+                return Ok((offset, group_size as usize));
+            } else {
+                let group = ApcbIterMut::next_item(&mut self.beginning_of_groups)?;
+                let group_size = group.header.group_size.get() as usize;
+                offset = offset.checked_add(group_size).unwrap();
+                remaining_used_size = remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "GROUP_HEADER::group_size"))?;
+            }
+        }
+        Err(Error::GroupNotFoundError)
+    }
 }
 
 impl<'a> Iterator for ApcbIterMut<'a> {
@@ -193,11 +215,12 @@ impl<'a> Apcb<'a> {
         }
 
         let self_beginning_of_groups_len = self.beginning_of_groups.len();
-        let group = self.group_mut(group_id).ok_or_else(|| Error::GroupNotFoundError)?;
-        let old_group_size = group.header.group_size.get();
+        let mut groups = self.groups_mut();
+        let (offset, old_group_size) = groups.move_point_to(group_id)?;
         if size_diff > 0 {
             // Grow
 
+            let old_group_size: u32 = old_group_size.try_into().unwrap();
             let size_diff: u32 = (size_diff as u64).try_into().unwrap();
             let new_group_size = old_group_size.checked_add(size_diff).ok_or_else(|| Error::FileSystemError("Group is too big for format", "GROUP_HEADER::group_size"))?;
             let new_used_size = old_used_size.checked_add(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
@@ -205,15 +228,20 @@ impl<'a> Apcb<'a> {
             } else {
                 return Err(Error::OutOfSpaceError);
             }
+            let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
             group.header.group_size.set(new_group_size);
-            self.beginning_of_groups.copy_within((old_group_size as usize)..old_used_size, new_group_size as usize);
+            let buf = &mut self.beginning_of_groups[offset..];
+            buf.copy_within((old_group_size as usize)..old_used_size, new_group_size as usize);
             self.used_size = new_used_size;
         } else if size_diff < 0 {
+            let old_group_size: u32 = old_group_size.try_into().unwrap();
             let size_diff: u32 = ((-size_diff) as u64).try_into().unwrap();
             let new_group_size = old_group_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystemError("Group is smaller than Entry in Group", "GROUP_HEADER::group_size"))?;
             let new_used_size = old_used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
+            let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
             group.header.group_size.set(new_group_size);
-            self.beginning_of_groups.copy_within((old_group_size as usize)..old_used_size, new_group_size as usize);
+            let buf = &mut self.beginning_of_groups[offset..];
+            buf.copy_within((old_group_size as usize)..old_used_size, new_group_size as usize);
             self.used_size = new_used_size;
         }
         self.group_mut(group_id).ok_or_else(|| Error::GroupNotFoundError)
@@ -246,28 +274,12 @@ impl<'a> Apcb<'a> {
 
     pub fn delete_group(&mut self, group_id: u16) -> Result<()> {
         let apcb_size = self.header.apcb_size.get();
-        let mut remaining_used_size = self.used_size;
-        loop {
-            let mut beginning_of_groups = &mut self.beginning_of_groups[..remaining_used_size];
-            if beginning_of_groups.len() == 0 {
-                break;
-            }
-            let group = ApcbIterMut::next_item(&mut beginning_of_groups)?;
-            if group.header.group_id.get() == group_id {
-                let group_size = group.header.group_size.get();
-                self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).ok_or_else(|| Error::FileSystemError("Group is bigger than Apcb", "HEADER_V2::apcb_size"))?);
-
-                self.beginning_of_groups.copy_within((group_size as usize)..(apcb_size as usize), 0);
-
-                self.used_size = self.used_size.checked_sub(group_size as usize).ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "GROUP_HEADER::group_size"))?;
-                break;
-            } else {
-                let group = ApcbIterMut::next_item(&mut self.beginning_of_groups)?;
-                let group_size = group.header.group_size.get() as usize;
-                assert!(self.used_size >= group_size);
-                remaining_used_size = remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "GROUP_HEADER::group_size"))?;
-            }
-        }
+        let mut groups = self.groups_mut();
+        let (offset, group_size) = groups.move_point_to(group_id)?;
+        self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).ok_or_else(|| Error::FileSystemError("Group is bigger than Apcb", "HEADER_V2::apcb_size"))?);
+        let buf = &mut self.beginning_of_groups[offset..];
+        buf.copy_within(group_size..(apcb_size as usize), 0);
+        self.used_size = self.used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "GROUP_HEADER::group_size"))?;
         Ok(())
     }
 
