@@ -202,7 +202,7 @@ impl<'a> Apcb<'a> {
         }
         Ok(())
     }
-    pub fn resize_group_by(&mut self, group_id: u16, size_diff: i64) -> Result<GroupMutItem<'_>> {
+    fn resize_group_by(&mut self, group_id: u16, size_diff: i64) -> Result<GroupMutItem<'_>> {
         let old_used_size = self.used_size;
         let apcb_size = self.header.apcb_size.get();
         if size_diff > 0 {
