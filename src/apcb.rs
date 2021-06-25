@@ -22,19 +22,19 @@ pub struct Apcb<'a> {
 pub struct ApcbIterMut<'a> {
     header: &'a mut V2_HEADER,
     v3_header_ext: Option<V3_HEADER_EXT>,
-    beginning_of_groups: Buffer<'a>,
+    buf: Buffer<'a>,
     remaining_used_size: usize,
 }
 
 pub struct ApcbIter<'a> {
     header: &'a V2_HEADER,
     v3_header_ext: Option<V3_HEADER_EXT>,
-    beginning_of_groups: ReadOnlyBuffer<'a>,
+    buf: ReadOnlyBuffer<'a>,
     remaining_used_size: usize,
 }
 
 impl<'a> ApcbIterMut<'a> {
-    /// It's useful to have some way of NOT mutating self.beginning_of_groups.  This is what this function does.
+    /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(buf: &mut Buffer<'b>) -> Result<GroupMutItem<'b>> {
         if buf.len() == 0 {
@@ -68,7 +68,7 @@ impl<'a> ApcbIterMut<'a> {
         let mut remaining_used_size = self.remaining_used_size;
         let mut offset = 0usize;
         loop {
-            let mut buf = &mut self.beginning_of_groups[..remaining_used_size];
+            let mut buf = &mut self.buf[..remaining_used_size];
             if buf.len() == 0 {
                 break;
             }
@@ -77,7 +77,7 @@ impl<'a> ApcbIterMut<'a> {
             if group.header.group_id.get() == group_id {
                 return Ok((offset, group_size as usize));
             } else {
-                let group = ApcbIterMut::next_item(&mut self.beginning_of_groups)?;
+                let group = ApcbIterMut::next_item(&mut self.buf)?;
                 let group_size = group.header.group_size.get() as usize;
                 offset = offset.checked_add(group_size).unwrap();
                 remaining_used_size = remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystemError("Group is bigger than remaining Iterator size", "GROUP_HEADER::group_size"))?;
@@ -94,7 +94,7 @@ impl<'a> Iterator for ApcbIterMut<'a> {
         if self.remaining_used_size == 0 {
             return None;
         }
-        match Self::next_item(&mut self.beginning_of_groups) {
+        match Self::next_item(&mut self.buf) {
             Ok(e) => {
                 let group_size = e.header.group_size.get() as usize;
                 assert!(self.remaining_used_size >= group_size);
@@ -109,7 +109,7 @@ impl<'a> Iterator for ApcbIterMut<'a> {
 }
 
 impl<'a> ApcbIter<'a> {
-    /// It's useful to have some way of NOT mutating self.beginning_of_groups.  This is what this function does.
+    /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(buf: &mut ReadOnlyBuffer<'b>) -> Result<GroupItem<'b>> {
         if buf.len() == 0 {
@@ -146,7 +146,7 @@ impl<'a> Iterator for ApcbIter<'a> {
         if self.remaining_used_size == 0 {
             return None;
         }
-        match Self::next_item(&mut self.beginning_of_groups) {
+        match Self::next_item(&mut self.buf) {
             Ok(e) => {
                 let group_size = e.header.group_size.get() as usize;
                 assert!(self.remaining_used_size >= group_size);
@@ -165,7 +165,7 @@ impl<'a> Apcb<'a> {
         ApcbIter {
             header: self.header,
             v3_header_ext: self.v3_header_ext,
-            beginning_of_groups: self.beginning_of_groups,
+            buf: self.beginning_of_groups,
             remaining_used_size: self.used_size,
         }
     }
@@ -181,7 +181,7 @@ impl<'a> Apcb<'a> {
         ApcbIterMut {
             header: self.header,
             v3_header_ext: self.v3_header_ext,
-            beginning_of_groups: self.beginning_of_groups,
+            buf: self.beginning_of_groups,
             remaining_used_size: self.used_size,
         }
     }
