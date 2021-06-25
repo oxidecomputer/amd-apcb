@@ -102,7 +102,13 @@ mod tests {
         let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
-        apcb.delete_group(0x4711)?;
+        match apcb.delete_group(0x4711) {
+            Err(Error::GroupNotFoundError) => {
+            },
+            _ => {
+                panic!("test failed")
+            }
+        }
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
         let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
@@ -175,7 +181,7 @@ mod tests {
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
 
-        let mut group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
+        let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
 
@@ -223,11 +229,11 @@ mod tests {
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
 
-        let mut group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
+        let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1001);
         assert!(group.signature() ==*b"TOKN");
 
-        let mut group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
+        let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
 
@@ -282,7 +288,7 @@ mod tests {
 
         let mut groups = apcb.groups();
 
-        let mut group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
+        let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x1701);
         assert!(group.signature() ==*b"PSPG");
 
@@ -310,9 +316,11 @@ mod tests {
         let group = groups.next().ok_or_else(|| Error::GroupNotFoundError)?;
         assert!(group.id() == 0x3000);
         assert!(group.signature() ==*b"TOKN");
-        for _entry in group.entries() {
-            assert!(false); // FIXME
-        }
+        let mut entries = group.entries();
+
+        let entry = entries.next().ok_or_else(|| Error::EntryNotFoundError)?;
+        // TODO: traverse tokens
+        assert!(matches!(entries.next(), None));
 
         assert!(matches!(groups.next(), None));
         Ok(())
