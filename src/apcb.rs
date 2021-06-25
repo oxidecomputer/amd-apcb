@@ -10,7 +10,6 @@ pub use crate::ondisk::{ContextFormat, ContextType, TokenType, take_header_from_
 use core::convert::TryInto;
 use core::mem::{size_of};
 use crate::group::{GroupItem, GroupMutItem};
-use crate::entry::EntryMutItem;
 
 pub struct Apcb<'a> {
     header: &'a mut V2_HEADER,
