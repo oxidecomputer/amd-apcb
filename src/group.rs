@@ -160,6 +160,7 @@ impl<'a> GroupMutIter<'a> {
             match Self::next_item(&mut buf) {
                 Ok(e) => {
                     if (e.header.group_id.get(), e.id(), e.instance_id(), e.board_instance_mask()) < (group_id, id, instance_id, board_instance_mask) {
+                        let entry_size = e.header.entry_size;
                         self.next().unwrap();
                     } else {
                         break;
@@ -172,6 +173,34 @@ impl<'a> GroupMutIter<'a> {
         }
         Ok(())
     }
+    /// Find the place BEFORE which the entry (GROUP_ID, ID, INSTANCE_ID, BOARD_INSTANCE_MASK) is.
+    /// Returns how much it moved the point, and the size of the entry.
+    pub(crate) fn move_point_to(&mut self, entry_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<(usize, usize)> {
+        let mut offset = 0usize;
+        loop {
+            let mut buf = &mut self.buf[..self.remaining_used_size];
+            if buf.len() == 0 {
+                return Err(Error::EntryNotFoundError);
+            }
+            match Self::next_item(&mut buf) {
+                Ok(e) => {
+                    let entry_size = e.header.entry_size.get();
+                    if (e.id(), e.instance_id(), e.board_instance_mask()) != (entry_id, instance_id, board_instance_mask) {
+                        self.next().unwrap();
+                        offset = offset.checked_add(entry_size.into()).unwrap();
+                        while offset % ENTRY_ALIGNMENT != 0 {
+                            offset = offset.checked_add(1).unwrap();
+                        }
+                    } else {
+                        return Ok((offset, entry_size.into()));
+                    }
+                },
+                Err(e) => {
+                    return Err(e);
+                },
+            }
+        }
+    }
     /// Inserts the given entry data at the right spot.
     /// Precondition: Caller already increased the group size by entry_allocation.
     pub(crate) fn insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<()> {
@@ -180,10 +209,11 @@ impl<'a> GroupMutIter<'a> {
         self.remaining_used_size = self.remaining_used_size.checked_sub(entry_allocation as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?;
         self.move_insertion_point_before(group_id, entry_id, instance_id, board_instance_mask)?;
 
+        let mut buf = &mut self.buf[..]; // already done: offset
         // Move the entries from after the insertion point to the right (in order to make room before for our new entry).
-        self.buf.copy_within(0..self.remaining_used_size, entry_allocation as usize);
+        buf.copy_within(0..self.remaining_used_size, entry_allocation as usize);
 
-        let mut buf = &mut self.buf[..(self.remaining_used_size + entry_allocation as usize)];
+        //let mut buf = &mut self.buf[..(self.remaining_used_size + entry_allocation as usize)];
         let header = take_header_from_collection_mut::<ENTRY_HEADER>(&mut buf).ok_or_else(|| Error::FileSystemError("could not read header of Entry", ""))?;
         *header = ENTRY_HEADER::default();
         header.group_id.set(group_id);
@@ -240,75 +270,44 @@ impl<'a> GroupMutItem<'a> {
         None
     }
     pub(crate) fn delete_entry(&mut self, entry_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<u32> {
-        let mut remaining_used_size = self.used_size;
-        let mut offset = 0usize;
-        let mut buf = &mut self.buf[..remaining_used_size];
-        loop {
-            if buf.len() == 0 {
-                break;
-            }
-            let entry = GroupMutIter::next_item(&mut buf)?;
-
-            let entry_size = entry.header.entry_size.get() as usize;
-            if entry.header.entry_id.get() == entry_id && entry.header.instance_id.get() == instance_id && entry.header.board_instance_mask.get() == board_instance_mask {
-                self.buf.copy_within(offset.checked_add(entry_size).unwrap()..remaining_used_size, offset);
-                return Ok(entry_size as u32);
-            } else {
-                offset = offset.checked_add(entry_size).unwrap();
-                remaining_used_size = remaining_used_size.checked_sub(entry_size).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
-            }
-        }
-        Ok(0u32)
+        let mut entries = self.entries_mut();
+        let (offset, entry_size) = entries.move_point_to(entry_id, instance_id, board_instance_mask)?;
+        let buf = &mut self.buf[offset..];
+        buf.copy_within(entry_size..self.used_size, offset);
+        return Ok(entry_size as u32);
     }
     /// Resizes the given entry by SIZE_DIFF.
     /// Precondition: If SIZE_DIFF > 0, caller needs to have expanded the group by SIZE_DIFF already.
+    /// Precondition: If SIZE_DIFF < 0, caller needs to call resize_entry_by BEFORE resizing the group.
     pub(crate) fn resize_entry_by(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, size_diff: i64) -> Result<EntryMutItem<'_>> {
-        let mut remaining_used_size = self.used_size;
-        let mut offset = 0usize;
-        let mut buf = &mut self.buf[..remaining_used_size];
-        loop {
-            if buf.len() == 0 {
-                break;
-            }
-            let entry = GroupMutIter::next_item(&mut buf)?;
+        let mut old_used_size = self.used_size;
 
-            let entry_size = entry.header.entry_size.get();
-            if entry.header.entry_id.get() == entry_id && entry.header.instance_id.get() == instance_id && entry.header.board_instance_mask.get() == board_instance_mask {
-                let old_used_size = self.used_size;
-                let old_entry_size = entry_size;
-                let new_entry_size: u16 = if size_diff > 0 {
-                    let size_diff = size_diff as u64;
-                    old_entry_size.checked_add(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?
-                } else {
-                    let size_diff = (-size_diff) as u64;
-                    old_entry_size.checked_sub(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?
-                };
-                let new_used_size = if size_diff > 0 {
-                    old_used_size.checked_add(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?
-                } else {
-                    old_used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?
-                };
-                entry.header.entry_size.set(new_entry_size);
-                if size_diff > 0 {
-                    // Increase used size
-                    if self.buf.len() >= new_used_size {
-                    } else {
-                        return Err(Error::OutOfSpaceError);
-                    }
-                }
-                let mut buf = &mut self.buf[offset..];
-                buf.copy_within(old_entry_size as usize..remaining_used_size, new_entry_size as usize);
-                self.used_size = new_used_size;
-                let entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFoundError)?;
-                return Ok(entry)
-            } else {
-                offset = offset.checked_add(entry_size as usize).unwrap();
-                remaining_used_size = remaining_used_size.checked_sub(entry_size as usize).ok_or_else(|| Error::FileSystemError("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
-            }
+        let mut entries = self.entries_mut();
+        let (offset, entry_size) = entries.move_point_to(entry_id, instance_id, board_instance_mask)?;
+        let entry_size: u16 = entry_size.try_into().unwrap();
+        let entry = entries.next().ok_or_else(|| Error::EntryNotFoundError)?;
+
+        if size_diff > 0 {
+            let size_diff: usize = size_diff.try_into().unwrap();
+            old_used_size = old_used_size.checked_sub(size_diff).unwrap();
         }
-        Err(Error::EntryNotFoundError)
+        let old_entry_size = entry_size;
+        let new_entry_size: u16 = if size_diff > 0 {
+            let size_diff = size_diff as u64;
+            old_entry_size.checked_add(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?
+        } else {
+            let size_diff = (-size_diff) as u64;
+            old_entry_size.checked_sub(size_diff.try_into().unwrap()).ok_or_else(|| Error::OutOfSpaceError)?
+        };
+
+        entry.header.entry_size.set(new_entry_size);
+        let buf = &mut self.buf[offset..];
+        buf.copy_within(old_entry_size as usize..old_used_size, new_entry_size as usize);
+        let entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFoundError)?;
+        Ok(entry)
     }
     /// Inserts the given token.
+    /// Precondition: Caller already resized the group.
     pub(crate) fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         let token_size = size_of::<TOKEN_ENTRY>();
         // Note: Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  This is bad when iterating over the group members until the end--it will iterate over garbage.
