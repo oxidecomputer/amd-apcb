@@ -274,7 +274,7 @@ mod tests {
         // makes it work let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         apcb.insert_entry(0x1701, 97, 0, 0xFFFF, ContextType::Struct, &[2u8; 1], 32)?;
 
-        let mut apcb = Apcb::load(&mut buffer[0..]).unwrap(); // FIXME: Remove
+        // let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
         // Insert empty "Token Entry"
         apcb.insert_entry(0x3000, 0, 0, 1, ContextType::Tokens, &[], 32)?; // breaks
