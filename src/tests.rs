@@ -467,6 +467,8 @@ mod tests {
         apcb.insert_token(0x3000, TokenType::Byte as u16, 0, 1, 0x014FBF20, 1)?;
         apcb.insert_token(0x3000, TokenType::Byte as u16, 0, 1, 0x42, 2)?;
 
+        apcb.delete_token(0x3000, TokenType::Byte as u16, 0, 1, 0x42)?;
+
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
         let mut groups = apcb.groups();
@@ -505,10 +507,6 @@ mod tests {
         match entry.body {
             EntryItemBody::<_>::Tokens(tokens) => {
                 let mut tokens = tokens.iter();
-
-                let token = tokens.next().ok_or_else(|| Error::TokenNotFound)?;
-                assert!(token.id() == 0x42);
-                assert!(token.value() == 2);
 
                 let token = tokens.next().ok_or_else(|| Error::TokenNotFound)?;
                 assert!(token.id() == 0x014FBF20);
