@@ -59,8 +59,8 @@ impl GroupIter<'_> {
                 return Err(Error::FileSystem("could not read header of Entry", ""));
             }
         };
-        ContextFormat::from_u8(header.context_format).unwrap();
-        let context_type = ContextType::from_u8(header.context_type).unwrap();
+        ContextFormat::from_u8(header.context_format).ok_or_else(|| Error::FileSystem("unknown enum value", "ENTRY_HEADER::context_format"))?;
+        let context_type = ContextType::from_u8(header.context_type).ok_or_else(|| Error::FileSystem("unknown enum value", "ENTRY_HEADER::context_type"))?;
         let entry_size = header.entry_size.get() as usize;
 
         let payload_size = entry_size.checked_sub(size_of::<ENTRY_HEADER>()).ok_or_else(|| Error::FileSystem("could not locate body of Entry", ""))?;
@@ -130,8 +130,8 @@ impl<'a> GroupMutIter<'a> {
                 return Err(Error::FileSystem("could not read header of Entry", ""));
             }
         };
-        ContextFormat::from_u8(header.context_format).unwrap();
-        let context_type = ContextType::from_u8(header.context_type).unwrap();
+        ContextFormat::from_u8(header.context_format).ok_or_else(|| Error::FileSystem("unknown enum value", "ENTRY_HEADER::context_format"))?;
+        let context_type = ContextType::from_u8(header.context_type).ok_or_else(|| Error::FileSystem("unknown enum value", "ENTRY_HEADER::context_type"))?;
         let entry_size = header.entry_size.get() as usize;
 
         let payload_size = entry_size.checked_sub(size_of::<ENTRY_HEADER>()).ok_or_else(|| Error::FileSystem("unexpected EOF while locating body of Entry", ""))?;
@@ -289,7 +289,7 @@ impl<'a> GroupMutItem<'a> {
 
         if size_diff > 0 {
             let size_diff: usize = size_diff.try_into().map_err(|_| Error::ArithmeticOverflow)?;
-            old_used_size = old_used_size.checked_sub(size_diff).unwrap();
+            old_used_size = old_used_size.checked_sub(size_diff).ok_or_else(|| Error::ArithmeticOverflow)?
         }
         let old_entry_size = entry_size;
         let new_entry_size: u16 = if size_diff > 0 {
