@@ -260,7 +260,7 @@ pub enum TokenType {
     Bool = 0,
     Byte = 1,
     Word = 2,
-    DWord = 3,
+    DWord = 4,
 }
 
 impl Default for GROUP_HEADER {
