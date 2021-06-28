@@ -310,7 +310,12 @@ impl<'a> Apcb<'a> {
         let mut group = self.group(group_id).ok_or_else(|| Error::GroupNotFound)?;
         group.entry(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
         let token_size = size_of::<TOKEN_ENTRY>() as u16;
-        assert!(token_size % (ENTRY_ALIGNMENT as u16) == 0);
+        if token_size % (ENTRY_ALIGNMENT as u16) == 0 {
+        } else {
+            // Tokens that destroy the alignment in the container have not been tested, are impossible right now anyway and have never been seen.  So disallow those.
+
+            return Err(Error::Internal);
+        }
         let mut group = self.resize_group_by(group_id, token_size.into())?;
         // Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  group.insert_token has special logic in order to survive that.
         group.insert_token(group_id, entry_id, instance_id, board_instance_mask, token_id, token_value)
