@@ -46,7 +46,7 @@ impl<'a> ApcbIterMut<'a> {
         let body = match take_body_from_collection_mut(&mut *buf, payload_size, 1) {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystem("could not read body of Groupxx", ""));
+                return Err(Error::FileSystem("could not read body of Group", ""));
             },
         };
         let body_len = body.len();
