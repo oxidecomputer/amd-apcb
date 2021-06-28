@@ -107,6 +107,7 @@ impl<'a> GroupIter<'a> {
                     item.validate()?;
                 },
                 Err(e) => {
+                    return Err(e);
                 },
             }
         }
