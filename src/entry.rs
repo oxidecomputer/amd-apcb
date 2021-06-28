@@ -81,6 +81,18 @@ impl<'a> EntryItemBody<ReadOnlyBuffer<'a>> {
             },
         })
     }
+    pub(crate) fn validate(&self) -> Result<()> {
+        match self {
+            EntryItemBody::Tokens(tokens) => {
+                tokens.iter().validate()?;
+            },
+            EntryItemBody::Struct(_) => {
+            },
+            EntryItemBody::Parameters(_) => {
+            },
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug)]
@@ -210,5 +222,11 @@ impl EntryItem<'_> {
     pub fn board_instance_mask(&self) -> u16 {
         self.header.board_instance_mask.get()
     }
-}
 
+    pub(crate) fn validate(&self) -> Result<()> {
+        ContextType::from_u8(self.header.context_type).ok_or_else(|| Error::FileSystem("unknown enum value", "ENTRY_HEADER::context_type"))?;
+        ContextFormat::from_u8(self.header.context_format).ok_or_else(|| Error::FileSystem("unknown enum value", "ENTRY_HEADER::context_format"))?;
+        self.body.validate()?;
+        Ok(())
+    }
+}

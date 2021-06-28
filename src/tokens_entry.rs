@@ -216,10 +216,10 @@ impl<'a> TokensEntryItem<'a> {
     }
 }
 
-impl TokensEntryIter<'_> {
+impl<'a> TokensEntryIter<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'a>(entry_id: TokenType, buf: &mut ReadOnlyBuffer<'a>) -> Result<TokensEntryItem<'a>> {
+    fn next_item<'b>(entry_id: TokenType, buf: &mut ReadOnlyBuffer<'b>) -> Result<TokensEntryItem<'b>> {
         if buf.len() == 0 {
             return Err(Error::FileSystem("unexpected EOF while reading header of Token Entry", ""));
         }
@@ -234,6 +234,37 @@ impl TokensEntryIter<'_> {
             entry: header,
         })
     }
+    pub(crate) fn next1(&mut self) -> Result<TokensEntryItem<'a>> {
+        if self.remaining_used_size == 0 {
+            return Err(Error::Internal);
+        }
+        match Self::next_item(self.entry_id, &mut self.buf) {
+            Ok(e) => {
+                if self.remaining_used_size >= 8 {
+                } else {
+                    return Err(Error::FileSystem("TokensEntryIter remaining Iterator is too small for a TokensEntryItem", "size_of::<TOKEN_ENTRY>"));
+                }
+                self.remaining_used_size -= 8;
+                Ok(e)
+            },
+            Err(e) => {
+                Err(e)
+            },
+        }
+    }
+    /// Validates the entries (recursively).  Also consumes iterator.
+    pub(crate) fn validate(mut self) -> Result<()> {
+        while self.remaining_used_size > 0 {
+            match self.next1() {
+                Ok(_) => {
+                },
+                Err(e) => {
+                    return Err(e);
+                },
+            }
+        }
+        Ok(())
+    }
 }
 
 impl<'a> Iterator for TokensEntryIter<'a> {
@@ -243,13 +274,11 @@ impl<'a> Iterator for TokensEntryIter<'a> {
         if self.remaining_used_size == 0 {
             return None;
         }
-        match Self::next_item(self.entry_id, &mut self.buf) {
+        match self.next1() {
             Ok(e) => {
-                assert!(self.remaining_used_size >= 8);
-                self.remaining_used_size -= 8;
                 Some(e)
             },
-            Err(e) => {
+            Err(_) => {
                 None
             },
         }

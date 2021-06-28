@@ -84,6 +84,26 @@ impl<'a> ApcbIterMut<'a> {
         }
         Err(Error::GroupNotFound)
     }
+
+    pub(crate) fn next1(&mut self) -> Result<GroupMutItem<'a>> {
+        if self.remaining_used_size == 0 {
+            return Err(Error::Internal);
+        }
+        match Self::next_item(&mut self.buf) {
+            Ok(e) => {
+                let group_size = e.header.group_size.get() as usize;
+                if self.remaining_used_size >= group_size {
+                } else {
+                    return Err(Error::FileSystem("", "GROUP_HEADER::group_size"));
+                }
+                self.remaining_used_size -= group_size;
+                Ok(e)
+            },
+            Err(e) => {
+                Err(e)
+            },
+        }
+    }
 }
 
 impl<'a> Iterator for ApcbIterMut<'a> {
@@ -93,14 +113,11 @@ impl<'a> Iterator for ApcbIterMut<'a> {
         if self.remaining_used_size == 0 {
             return None;
         }
-        match Self::next_item(&mut self.buf) {
-            Ok(e) => {
-                let group_size = e.header.group_size.get() as usize;
-                assert!(self.remaining_used_size >= group_size);
-                self.remaining_used_size -= group_size;
-                Some(e)
+        match self.next1() {
+            Ok(item) => {
+                Some(item)
             },
-            Err(e) => {
+            Err(_) => {
                 None
             },
         }
@@ -136,6 +153,39 @@ impl<'a> ApcbIter<'a> {
             used_size: body_len,
         })
     }
+    pub(crate) fn next1(&mut self) -> Result<GroupItem<'a>> {
+        if self.remaining_used_size == 0 {
+            return Err(Error::Internal);
+        }
+        match Self::next_item(&mut self.buf) {
+            Ok(e) => {
+                let group_size = e.header.group_size.get() as usize;
+                if self.remaining_used_size >= group_size {
+                } else {
+                    return Err(Error::FileSystem("", "GROUP_HEADER::group_size"));
+                }
+                self.remaining_used_size -= group_size;
+                Ok(e)
+            },
+            Err(e) => {
+                Err(e)
+            },
+        }
+    }
+    /// Validates the entries (recursively).  Also consumes iterator.
+    pub(crate) fn validate(mut self) -> Result<()> {
+        while self.remaining_used_size > 0 {
+            match self.next1() {
+                Ok(item) => {
+                    item.entries().validate()?;
+                },
+                Err(e) => {
+                    return Err(e);
+                },
+            }
+        }
+        Ok(())
+    }
 }
 
 impl<'a> Iterator for ApcbIter<'a> {
@@ -145,14 +195,11 @@ impl<'a> Iterator for ApcbIter<'a> {
         if self.remaining_used_size == 0 {
             return None;
         }
-        match Self::next_item(&mut self.buf) {
-            Ok(e) => {
-                let group_size = e.header.group_size.get() as usize;
-                assert!(self.remaining_used_size >= group_size);
-                self.remaining_used_size -= group_size;
-                Some(e)
+        match self.next1() {
+            Ok(item) => {
+                Some(item)
             },
-            Err(e) => {
+            Err(_) => {
                 None
             },
         }
@@ -371,12 +418,20 @@ impl<'a> Apcb<'a> {
             return Err(Error::FileSystem("Iterator size bigger than allocation", ""));
         }
 
-        Ok(Self {
+        let result = Self {
             header: header,
             v3_header_ext: v3_header_ext,
             beginning_of_groups: backing_store,
             used_size,
-        })
+        };
+        match result.groups().validate() {
+            Ok(_) => {
+            },
+            Err(e) => {
+                return Err(e);
+            }
+        }
+        Ok(result)
     }
     pub fn create(backing_store: Buffer<'a>) -> Result<Self> {
         for i in 0..backing_store.len() {

@@ -32,24 +32,20 @@ impl<'a> Iterator for GroupIter<'a> {
         if self.remaining_used_size == 0 {
             return None;
         }
-        match Self::next_item(&mut self.buf) {
+        match self.next1() {
             Ok(e) => {
-                assert!(e.header.group_id.get() == self.header.group_id.get());
-                let entry_size = e.header.entry_size.get() as usize;
-                assert!(self.remaining_used_size >= entry_size);
-                self.remaining_used_size -= entry_size;
                 Some(e)
             },
-            Err(e) => {
+            Err(_) => {
                 None
             },
         }
     }
 }
-impl GroupIter<'_> {
+impl<'a> GroupIter<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'a>(buf: &mut ReadOnlyBuffer<'a>) -> Result<EntryItem<'a>> {
+    fn next_item<'b>(buf: &mut ReadOnlyBuffer<'b>) -> Result<EntryItem<'b>> {
         if buf.len() == 0 {
             return Err(Error::FileSystem("unexpected EOF while reading header of Entry", ""));
         }
@@ -79,6 +75,43 @@ impl GroupIter<'_> {
         })
     }
 
+    pub(crate) fn next1(&mut self) -> Result<EntryItem<'a>> {
+        if self.remaining_used_size == 0 {
+            return Err(Error::Internal);
+        }
+        match Self::next_item(&mut self.buf) {
+            Ok(e) => {
+                if e.header.group_id.get() == self.header.group_id.get() {
+                } else {
+                    return Err(Error::FileSystem("Entry.group_id does not match group.group_id", "ENTRY_HEADER::group_id"));
+                }
+                let entry_size = e.header.entry_size.get() as usize;
+                if self.remaining_used_size >= entry_size {
+                } else {
+                    return Err(Error::FileSystem("Entry.entry_size is bigger than remaining iterator", "ENTRY_HEADER::entry_size"));
+                }
+                self.remaining_used_size -= entry_size;
+                Ok(e)
+            },
+            Err(e) => {
+                Err(e)
+            },
+        }
+    }
+
+    /// Validates the entries (recursively).  Also consumes iterator.
+    pub(crate) fn validate(mut self) -> Result<()> {
+        while self.remaining_used_size > 0 {
+            match self.next1() {
+                Ok(item) => {
+                    item.validate()?;
+                },
+                Err(e) => {
+                },
+            }
+        }
+        Ok(())
+    }
 }
 
 impl GroupItem<'_> {
@@ -130,7 +163,6 @@ impl<'a> GroupMutIter<'a> {
                 return Err(Error::FileSystem("could not read header of Entry", ""));
             }
         };
-        ContextFormat::from_u8(header.context_format).ok_or_else(|| Error::FileSystem("unknown enum value", "ENTRY_HEADER::context_format"))?;
         let context_type = ContextType::from_u8(header.context_type).ok_or_else(|| Error::FileSystem("unknown enum value", "ENTRY_HEADER::context_type"))?;
         let entry_size = header.entry_size.get() as usize;
 
