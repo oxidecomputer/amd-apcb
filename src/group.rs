@@ -193,7 +193,6 @@ impl<'a> GroupMutIter<'a> {
             match Self::next_item(&mut buf) {
                 Ok(e) => {
                     if (e.header.group_id.get(), e.id(), e.instance_id(), e.board_instance_mask()) < (group_id, id, instance_id, board_instance_mask) {
-                        let entry_size = e.header.entry_size;
                         self.next().ok_or_else(|| Error::Internal)?;
                     } else {
                         break;
@@ -265,7 +264,6 @@ impl<'a> GroupMutIter<'a> {
             header.key_pos = 0;
         }
         header.priority_mask = priority_mask;
-        let unit_size = header.unit_size;
 
         // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
         header.board_instance_mask.set(board_instance_mask);
@@ -312,7 +310,7 @@ impl<'a> GroupMutItem<'a> {
     /// Resizes the given entry by SIZE_DIFF.
     /// Precondition: If SIZE_DIFF > 0, caller needs to have expanded the group by SIZE_DIFF already.
     /// Precondition: If SIZE_DIFF < 0, caller needs to call resize_entry_by BEFORE resizing the group.
-    pub(crate) fn resize_entry_by(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, size_diff: i64) -> Result<EntryMutItem<'_>> {
+    pub(crate) fn resize_entry_by(&mut self, entry_id: u16, instance_id: u16, board_instance_mask: u16, size_diff: i64) -> Result<EntryMutItem<'_>> {
         let mut old_used_size = self.used_size;
 
         let mut entries = self.entries_mut();
@@ -341,18 +339,18 @@ impl<'a> GroupMutItem<'a> {
     }
     /// Inserts the given token.
     /// Precondition: Caller already resized the group.
-    pub(crate) fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
+    pub(crate) fn insert_token(&mut self, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         let token_size = size_of::<TOKEN_ENTRY>();
         // Note: Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  This is bad when iterating over the group members until the end--it will iterate over garbage.
         // Therefore, mask the new area out for the iterator--and reinstate it only after resize_entry_by (which has been adapted specially) is finished with Ok.
-        let mut entry = self.resize_entry_by(group_id, entry_id, instance_id, board_instance_mask, ContextType::Tokens, (token_size as i64).into())?;
+        let mut entry = self.resize_entry_by(entry_id, instance_id, board_instance_mask, (token_size as i64).into())?;
         entry.insert_token(token_id, token_value)
     }
 
     /// Deletes the given token.
     /// Returns the number of bytes that were deleted.
     /// Postcondition: Caller will resize the given group
-    pub(crate) fn delete_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32) -> Result<i64> {
+    pub(crate) fn delete_token(&mut self, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32) -> Result<i64> {
         let token_size = size_of::<TOKEN_ENTRY>();
         // FIXME ensure that token exists
         // Note: Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  This is bad when iterating over the group members until the end--it will iterate over garbage.
@@ -361,7 +359,7 @@ impl<'a> GroupMutItem<'a> {
         entry.delete_token(token_id)?;
         let mut token_size_diff: i64 = token_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
         token_size_diff = -token_size_diff;
-        self.resize_entry_by(group_id, entry_id, instance_id, board_instance_mask, ContextType::Tokens, token_size_diff)?;
+        self.resize_entry_by(entry_id, instance_id, board_instance_mask, token_size_diff)?;
         Ok(token_size_diff)
     }
 
@@ -397,7 +395,7 @@ impl<'a> Iterator for GroupMutIter<'a> {
                 self.remaining_used_size -= entry_size;
                 Some(e)
             },
-            Err(e) => {
+            Err(_) => {
                 None
             },
         }

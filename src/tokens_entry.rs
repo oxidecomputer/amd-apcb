@@ -189,7 +189,7 @@ impl<'a> Iterator for TokensEntryIterMut<'a> {
                 self.remaining_used_size -= 8;
                 Some(e)
             },
-            Err(e) => {
+            Err(_) => {
                 None
             },
         }

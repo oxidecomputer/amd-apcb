@@ -19,15 +19,11 @@ pub struct Apcb<'a> {
 }
 
 pub struct ApcbIterMut<'a> {
-    header: &'a mut V2_HEADER,
-    v3_header_ext: Option<V3_HEADER_EXT>,
     buf: Buffer<'a>,
     remaining_used_size: usize,
 }
 
 pub struct ApcbIter<'a> {
-    header: &'a V2_HEADER,
-    v3_header_ext: Option<V3_HEADER_EXT>,
     buf: ReadOnlyBuffer<'a>,
     remaining_used_size: usize,
 }
@@ -209,8 +205,6 @@ impl<'a> Iterator for ApcbIter<'a> {
 impl<'a> Apcb<'a> {
     pub fn groups(&self) -> ApcbIter<'_> {
         ApcbIter {
-            header: self.header,
-            v3_header_ext: self.v3_header_ext,
             buf: self.beginning_of_groups,
             remaining_used_size: self.used_size,
         }
@@ -225,8 +219,6 @@ impl<'a> Apcb<'a> {
     }
     pub fn groups_mut(&mut self) -> ApcbIterMut<'_> {
         ApcbIterMut {
-            header: self.header,
-            v3_header_ext: self.v3_header_ext,
             buf: self.beginning_of_groups,
             remaining_used_size: self.used_size,
         }
@@ -240,7 +232,6 @@ impl<'a> Apcb<'a> {
         None
     }
     pub fn delete_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
-        let apcb_size = self.header.apcb_size.get();
         let mut group = self.group_mut(group_id).ok_or_else(|| Error::GroupNotFound)?;
         let size_diff = group.delete_entry(entry_id, instance_id, board_instance_mask)?;
         if size_diff > 0 {
@@ -318,12 +309,12 @@ impl<'a> Apcb<'a> {
         }
         let mut group = self.resize_group_by(group_id, token_size.into())?;
         // Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  group.insert_token has special logic in order to survive that.
-        group.insert_token(group_id, entry_id, instance_id, board_instance_mask, token_id, token_value)
+        group.insert_token(entry_id, instance_id, board_instance_mask, token_id, token_value)
     }
     pub fn delete_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32) -> Result<()> {
         // Make sure that the entry exists before resizing the group
         let mut group = self.group_mut(group_id).ok_or_else(|| Error::GroupNotFound)?;
-        let token_diff = group.delete_token(group_id, entry_id, instance_id, board_instance_mask, token_id)?;
+        let token_diff = group.delete_token(entry_id, instance_id, board_instance_mask, token_id)?;
         self.resize_group_by(group_id, token_diff)?;
         Ok(())
     }
