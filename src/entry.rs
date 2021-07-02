@@ -18,7 +18,7 @@ use crate::tokens_entry::TokensEntryBodyItem;
 #[derive(Debug)]
 pub enum EntryItemBody<BufferType> {
     Struct(BufferType),
-    Tokens(TokensEntryBodyItem::<BufferType>),
+    Tokens(TokensEntryBodyItem<BufferType>),
     Parameters(BufferType), // not seen in the wild anymore
     /* Not seen in the wild anymore.
         /// If the value is a Parameter, returns its time point
