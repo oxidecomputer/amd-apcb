@@ -52,7 +52,7 @@ impl<'a> ApcbIterMut<'a> {
         let body_len = body.len();
 
         Ok(GroupMutItem {
-            header: header,
+            header,
             buf: body,
             used_size: body_len,
         })
@@ -144,7 +144,7 @@ impl<'a> ApcbIter<'a> {
         let body_len = body.len();
 
         Ok(GroupItem {
-            header: header,
+            header,
             buf: body,
             used_size: body_len,
         })
@@ -353,7 +353,7 @@ impl<'a> Apcb<'a> {
         let body_len = body.len();
 
         Ok(GroupMutItem {
-            header: header,
+            header,
             buf: body,
             used_size: body_len,
         })
@@ -415,8 +415,8 @@ impl<'a> Apcb<'a> {
         }
 
         let result = Self {
-            header: header,
-            v3_header_ext: v3_header_ext,
+            header,
+            v3_header_ext,
             beginning_of_groups: backing_store,
             used_size,
         };

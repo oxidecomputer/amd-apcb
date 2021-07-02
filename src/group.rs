@@ -70,7 +70,7 @@ impl<'a> GroupIter<'a> {
         let unit_size = header.unit_size;
         let entry_id = header.entry_id.get();
         Ok(EntryItem {
-            header: header,
+            header,
             body: EntryItemBody::<ReadOnlyBuffer<'_>>::from_slice(unit_size, entry_id, context_type, body)?,
         })
     }
@@ -178,7 +178,7 @@ impl<'a> GroupMutIter<'a> {
         let unit_size = header.unit_size;
         let entry_id = header.entry_id.get();
         Ok(EntryMutItem {
-            header: header,
+            header,
             body: EntryItemBody::<Buffer<'_>>::from_slice(unit_size, entry_id, context_type, body)?,
         })
     }

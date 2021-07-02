@@ -85,7 +85,7 @@ impl<'a> TokensEntryIterMut<'a> {
         };
         Ok(TokensEntryItemMut {
             entry_id,
-            token: token,
+            token,
         })
     }
 
