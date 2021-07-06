@@ -352,7 +352,6 @@ impl<'a> GroupMutItem<'a> {
     /// Postcondition: Caller will resize the given group
     pub(crate) fn delete_token(&mut self, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32) -> Result<i64> {
         let token_size = size_of::<TOKEN_ENTRY>();
-        // FIXME ensure that token exists
         // Note: Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  This is bad when iterating over the group members until the end--it will iterate over garbage.
         // Therefore, mask the new area out for the iterator--and reinstate it only after resize_entry_by (which has been adapted specially) is finished with Ok.
         let mut entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
