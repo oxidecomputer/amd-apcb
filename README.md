@@ -36,6 +36,14 @@ To delete an entry:
 
     apcb.delete_entry(0x1701, 0x0000, 0, 0xFFFF)?;
 
+To insert a new token:
+
+    apcb.insert_token(0x1701, 0x0000, 0, 0xFFFF, 0x42, 1)?;
+
+To delete a token:
+
+    apcb.delete_token(0x1701, 0x0000, 0, 0xFFFF, 0x42)?;
+
 # Testing
 
 Run
