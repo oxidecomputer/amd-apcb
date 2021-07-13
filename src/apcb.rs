@@ -429,6 +429,31 @@ impl<'a> Apcb<'a> {
         }
         Ok(result)
     }
+    pub fn update_checksum(backing_store: Buffer<'a>) -> Result<()> {
+        let apcb_size: u32;
+        {
+            let mut backing_store = &mut *backing_store;
+            let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
+                    .ok_or_else(|| Error::FileSystem("could not write Apcb header", ""))?;
+            header.checksum_byte = 0;
+            apcb_size = header.apcb_size.get();
+        }
+        let mut checksum_byte = 0u8;
+        {
+            let backing_store = &mut *backing_store;
+            for c in &backing_store[..apcb_size as usize] {
+                checksum_byte = checksum_byte.wrapping_add(*c);
+            }
+        }
+        {
+            let mut backing_store = &mut *backing_store;
+            let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
+                    .ok_or_else(|| Error::FileSystem("could not write Apcb header", ""))?;
+            let checksum_byte = (0x100u16 - u16::from(checksum_byte)) as u8; // Note: This can overflow
+            header.checksum_byte = checksum_byte;
+        }
+        Ok(())
+    }
     pub fn create(backing_store: Buffer<'a>) -> Result<Self> {
         for i in 0..backing_store.len() {
             backing_store[i] = 0xFF;
@@ -448,7 +473,7 @@ impl<'a> Apcb<'a> {
                 .set((size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>()) as u16);
             header.apcb_size = (header.header_size.get() as u32).into();
         }
-
+        // FIXME: Self::update_checksum(&mut backing_store[..]);
         Self::load(backing_store)
     }
 }
