@@ -48,7 +48,7 @@ impl<'a> TokensEntryItemMut<'a> {
     pub fn id(&self) -> u32 {
         self.token.key.get()
     }
-    pub fn value(&self) -> u32 { // TODO: Clamp.
+    pub fn value(&self) -> u32 {
         self.token.value.get() & match self.entry_id {
             TokenType::Bool => 0x1,
             TokenType::Byte => 0xFF,
@@ -206,7 +206,7 @@ impl<'a> TokensEntryItem<'a> {
     pub fn id(&self) -> u32 {
         self.entry.key.get()
     }
-    pub fn value(&self) -> u32 { // TODO: Clamp.
+    pub fn value(&self) -> u32 {
         self.entry.value.get() & match self.entry_id {
             TokenType::Bool => 0x1,
             TokenType::Byte => 0xFF,
