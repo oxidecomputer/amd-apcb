@@ -429,7 +429,7 @@ impl<'a> Apcb<'a> {
         }
         Ok(result)
     }
-    pub fn update_checksum(backing_store: Buffer<'a>) -> Result<()> {
+    pub fn update_checksum(backing_store: Buffer<'_>) -> Result<()> {
         let apcb_size: u32;
         {
             let mut backing_store = &mut *backing_store;
@@ -473,7 +473,7 @@ impl<'a> Apcb<'a> {
                 .set((size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>()) as u16);
             header.apcb_size = (header.header_size.get() as u32).into();
         }
-        // FIXME: Self::update_checksum(&mut backing_store[..]);
+        Self::update_checksum(backing_store);
         Self::load(backing_store)
     }
 }
