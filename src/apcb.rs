@@ -473,7 +473,7 @@ impl<'a> Apcb<'a> {
                 .set((size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>()) as u16);
             header.apcb_size = (header.header_size.get() as u32).into();
         }
-        Self::update_checksum(backing_store);
+        Self::update_checksum(backing_store)?;
         Self::load(backing_store)
     }
 }
