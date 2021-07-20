@@ -429,6 +429,8 @@ impl<'a> Apcb<'a> {
         }
         Ok(result)
     }
+    /// User is expected to call this once after modifying anything in the apcb (including insertions and deletions).
+    /// We update both the checksum and the unique_apcb_instance.
     pub fn update_checksum(backing_store: Buffer<'_>) -> Result<()> {
         let apcb_size: u32;
         {
@@ -450,11 +452,14 @@ impl<'a> Apcb<'a> {
             let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
                     .ok_or_else(|| Error::FileSystem("could not write Apcb header", ""))?;
             let checksum_byte = (0x100u16 - u16::from(checksum_byte)) as u8; // Note: This can overflow
-            header.checksum_byte = checksum_byte;
+
+            // Use the chance to also update unique_apcb_instance (assumption: user calls update_checksum only when there was an actual change).
+            header.unique_apcb_instance.set(header.unique_apcb_instance.get().wrapping_add(1));
+            header.checksum_byte = checksum_byte.wrapping_sub(1); // correct for changed unique_apcb_instance
         }
         Ok(())
     }
-    pub fn create(backing_store: Buffer<'a>) -> Result<Self> {
+    pub fn create(backing_store: Buffer<'a>, unique_apcb_instance: u32) -> Result<Self> {
         for i in 0..backing_store.len() {
             backing_store[i] = 0xFF;
         }
@@ -463,6 +468,7 @@ impl<'a> Apcb<'a> {
             let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
                     .ok_or_else(|| Error::FileSystem("could not write Apcb header", ""))?;
             *header = Default::default();
+            header.unique_apcb_instance.set(unique_apcb_instance);
 
             let v3_header_ext = take_header_from_collection_mut::<V3_HEADER_EXT>(&mut backing_store)
                     .ok_or_else(|| Error::FileSystem("could not write Apcb extended header", ""))?;

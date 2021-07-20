@@ -48,6 +48,8 @@ In order to update the checksum (you should do that once after any insertion/del
 
     Apcb::update_checksum(&mut buffer[0..])?;
 
+Note that this also changes unique_apcb_instance.
+
 # Testing
 
 Run

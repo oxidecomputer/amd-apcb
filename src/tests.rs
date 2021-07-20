@@ -16,7 +16,7 @@ mod tests {
     #[test]
     fn create_empty_image() {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let apcb = Apcb::create(&mut buffer[0..]).unwrap();
+        let apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         let groups = apcb.groups();
         for _item in groups {
             assert!(false);
@@ -27,7 +27,7 @@ mod tests {
     #[should_panic]
     fn create_empty_too_small_image() {
         let mut buffer: [u8; 1] = [0];
-        let apcb = Apcb::create(&mut buffer[0..]).unwrap();
+        let apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         let groups = apcb.groups();
         for _ in groups {
             assert!(false);
@@ -37,7 +37,7 @@ mod tests {
     #[test]
     fn create_image_with_one_group() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         let groups = apcb.groups();
         let mut count = 0;
@@ -51,7 +51,7 @@ mod tests {
     #[test]
     fn create_image_with_two_groups() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         let mut groups = apcb.groups();
@@ -68,7 +68,7 @@ mod tests {
     #[test]
     fn create_image_with_two_groups_delete_first_group() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.delete_group(0x1701)?;
@@ -84,7 +84,7 @@ mod tests {
     #[test]
     fn create_image_with_two_groups_delete_second_group() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.delete_group(0x1704)?;
@@ -100,7 +100,7 @@ mod tests {
     #[test]
     fn create_image_with_two_groups_delete_unknown_group() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         match apcb.delete_group(0x4711) {
@@ -125,7 +125,7 @@ mod tests {
     #[test]
     fn create_image_with_group_delete_group() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.delete_group(0x1701)?;
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
@@ -139,7 +139,7 @@ mod tests {
     #[test]
     fn delete_entries() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
@@ -172,7 +172,7 @@ mod tests {
     #[test]
     fn insert_entries() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
@@ -214,7 +214,7 @@ mod tests {
     #[test]
     fn insert_tokens() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(0x1001, *b"TOKN")?; // this group id should be 0x3000--but I want this test to test a complicated case even should we ever change insert_group to automatically sort.
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
@@ -266,7 +266,7 @@ mod tests {
     #[test]
     fn insert_tokens_easy() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.insert_group(0x3000, *b"TOKN")?;
@@ -341,7 +341,7 @@ mod tests {
     #[test]
     fn insert_tokens_group_not_found() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.insert_group(0x3000, *b"TOKN")?;
@@ -363,7 +363,7 @@ mod tests {
     #[test]
     fn insert_two_tokens() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.insert_group(0x3000, *b"TOKN")?;
@@ -446,7 +446,7 @@ mod tests {
     #[test]
     fn delete_tokens() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = Apcb::create(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(0x1701, *b"PSPG")?;
         apcb.insert_group(0x1704, *b"MEMG")?;
         apcb.insert_group(0x3000, *b"TOKN")?;
