@@ -44,7 +44,7 @@ To delete a token:
 
     apcb.delete_token(0x1701, 0x0000, 0, 0xFFFF, 0x42)?;
 
-In order to update the checksum (you should do that after any insertion/deletion/mutation):
+In order to update the checksum (you should do that once after any insertion/deletion/mutation):
 
     Apcb::update_checksum(&mut buffer[0..])?;
 
