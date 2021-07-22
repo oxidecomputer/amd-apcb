@@ -482,4 +482,8 @@ impl<'a> Apcb<'a> {
         Self::update_checksum(backing_store)?;
         Self::load(backing_store)
     }
+    /// Note: Each modification in the APCB causes the value of unique_apcb_instance to change.
+    pub fn unique_apcb_instance(&self) -> u32 {
+        self.header.unique_apcb_instance.get()
+    }
 }
