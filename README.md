@@ -13,7 +13,7 @@ to the `[dependencies]` block in your `Cargo.toml`.
 To iterate, you can do:
 
     let mut buffer: [u8; 8*1024] = ... load from file;
-    let apcb = APCB::load(&mut buffer[0..]).unwrap();
+    let apcb = Apcb::load(&mut buffer[0..]).unwrap();
     for group in apcb.groups() {
         for entry in group.entries() {
             ...
