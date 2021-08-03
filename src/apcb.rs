@@ -10,6 +10,7 @@ pub use crate::ondisk::{ContextFormat, ContextType, TokenType, take_header_from_
 use core::convert::TryInto;
 use core::mem::{size_of};
 use crate::group::{GroupItem, GroupMutItem};
+use static_assertions::const_assert;
 
 pub struct Apcb<'a> {
     header: &'a mut V2_HEADER,
@@ -300,14 +301,10 @@ impl<'a> Apcb<'a> {
         // Make sure that the entry exists before resizing the group
         let mut group = self.group(group_id).ok_or_else(|| Error::GroupNotFound)?;
         group.entry(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
-        let token_size = size_of::<TOKEN_ENTRY>() as u16;
-        if token_size % (ENTRY_ALIGNMENT as u16) == 0 {
-        } else {
-            // Tokens that destroy the alignment in the container have not been tested, are impossible right now anyway and have never been seen.  So disallow those.
-
-            return Err(Error::Internal);
-        }
-        let mut group = self.resize_group_by(group_id, token_size.into())?;
+        // Tokens that destroy the alignment in the container have not been tested, are impossible right now anyway and have never been seen.  So disallow those.
+        const TOKEN_SIZE: u16 = size_of::<TOKEN_ENTRY>() as u16;
+        const_assert!(TOKEN_SIZE % (ENTRY_ALIGNMENT as u16) == 0);
+        let mut group = self.resize_group_by(group_id, TOKEN_SIZE.into())?;
         // Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  group.insert_token has special logic in order to survive that.
         group.insert_token(entry_id, instance_id, board_instance_mask, token_id, token_value)
     }
