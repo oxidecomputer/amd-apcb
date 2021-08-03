@@ -4,6 +4,7 @@ use byteorder::LittleEndian;
 use core::mem::{replace, size_of};
 use num_derive::FromPrimitive;
 use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32};
+use static_assertions::const_assert;
 
 /// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
 /// If the item cannot be parsed, returns None and does not advance.
@@ -347,12 +348,12 @@ mod tests {
 
     #[test]
     fn test_struct_sizes() {
-        assert!(size_of::<V2_HEADER>() == 32);
-        assert!(size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>() == 128);
-        assert!(size_of::<V2_HEADER>() % ENTRY_ALIGNMENT == 0);
-        assert!(size_of::<GROUP_HEADER>() == 16);
-        assert!(size_of::<GROUP_HEADER>() % ENTRY_ALIGNMENT == 0);
-        assert!(size_of::<ENTRY_HEADER>() == 16);
-        assert!(size_of::<ENTRY_HEADER>() % ENTRY_ALIGNMENT == 0);
+        const_assert!(size_of::<V2_HEADER>() == 32);
+        const_assert!(size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>() == 128);
+        const_assert!(size_of::<V2_HEADER>() % ENTRY_ALIGNMENT == 0);
+        const_assert!(size_of::<GROUP_HEADER>() == 16);
+        const_assert!(size_of::<GROUP_HEADER>() % ENTRY_ALIGNMENT == 0);
+        const_assert!(size_of::<ENTRY_HEADER>() == 16);
+        const_assert!(size_of::<ENTRY_HEADER>() % ENTRY_ALIGNMENT == 0);
     }
 }
