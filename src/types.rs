@@ -1,9 +1,3 @@
-pub(crate) type
-    Buffer<'a> = &'a mut [u8];
-
-pub(crate) type
-    ReadOnlyBuffer<'a> = &'a [u8];
-
 #[derive(Debug)]
 pub enum Error {
     ArithmeticOverflow,

@@ -1,5 +1,5 @@
 
-use crate::types::{Buffer, ReadOnlyBuffer, Result, Error};
+use crate::types::{Result, Error};
 use crate::ondisk::{TOKEN_ENTRY, TokenType, take_header_from_collection, take_header_from_collection_mut};
 use num_traits::FromPrimitive;
 use core::mem::size_of;
@@ -14,13 +14,13 @@ pub struct TokensEntryBodyItem<BufferType> {
 
 pub struct TokensEntryIter<'a> {
     entry_id: TokenType,
-    buf: ReadOnlyBuffer<'a>,
+    buf: &'a [u8],
     remaining_used_size: usize,
 }
 
 pub struct TokensEntryIterMut<'a> {
     entry_id: TokenType,
-    buf: Buffer<'a>,
+    buf: &'a mut [u8],
     remaining_used_size: usize,
 }
 
@@ -73,7 +73,7 @@ impl<'a> TokensEntryItemMut<'a> {
 impl<'a> TokensEntryIterMut<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'b>(entry_id: TokenType, buf: &mut Buffer<'b>) -> Result<TokensEntryItemMut<'b>> {
+    fn next_item<'b>(entry_id: TokenType, buf: &mut &'b mut [u8]) -> Result<TokensEntryItemMut<'b>> {
         if buf.len() == 0 {
             return Err(Error::FileSystem("unexpected EOF while reading header of Token Entry", ""));
         }
@@ -219,7 +219,7 @@ impl<'a> TokensEntryItem<'a> {
 impl<'a> TokensEntryIter<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'b>(entry_id: TokenType, buf: &mut ReadOnlyBuffer<'b>) -> Result<TokensEntryItem<'b>> {
+    fn next_item<'b>(entry_id: TokenType, buf: &mut &'b [u8]) -> Result<TokensEntryItem<'b>> {
         if buf.len() == 0 {
             return Err(Error::FileSystem("unexpected EOF while reading header of Token Entry", ""));
         }
@@ -285,7 +285,7 @@ impl<'a> Iterator for TokensEntryIter<'a> {
     }
 }
 
-impl<'a> TokensEntryBodyItem<Buffer<'a>> {
+impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
     pub fn iter(&self) -> TokensEntryIter<'_> {
         TokensEntryIter {
             entry_id: self.entry_id,
@@ -314,7 +314,7 @@ impl<'a> TokensEntryBodyItem<Buffer<'a>> {
     }
 }
 
-impl<'a> TokensEntryBodyItem<ReadOnlyBuffer<'a>> {
+impl<'a> TokensEntryBodyItem<&'a [u8]> {
     pub fn iter(&self) -> TokensEntryIter<'_> {
         TokensEntryIter {
             entry_id: self.entry_id,

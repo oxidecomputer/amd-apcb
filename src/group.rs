@@ -1,4 +1,4 @@
-use crate::types::{Error, Result, Buffer, ReadOnlyBuffer};
+use crate::types::{Error, Result};
 
 use crate::ondisk::GROUP_HEADER;
 use crate::ondisk::ENTRY_ALIGNMENT;
@@ -14,14 +14,14 @@ use crate::entry::{EntryItem, EntryMutItem, EntryItemBody};
 #[derive(Debug)]
 pub struct GroupItem<'a> {
     pub header: &'a GROUP_HEADER,
-    pub(crate) buf: ReadOnlyBuffer<'a>,
+    pub(crate) buf: &'a [u8],
     pub(crate) used_size: usize,
 }
 
 #[derive(Debug)]
 pub struct GroupIter<'a> {
     pub header: &'a GROUP_HEADER,
-    buf: ReadOnlyBuffer<'a>,
+    buf: &'a [u8],
     remaining_used_size: usize,
 }
 
@@ -45,7 +45,7 @@ impl<'a> Iterator for GroupIter<'a> {
 impl<'a> GroupIter<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'b>(buf: &mut ReadOnlyBuffer<'b>) -> Result<EntryItem<'b>> {
+    fn next_item<'b>(buf: &mut &'b [u8]) -> Result<EntryItem<'b>> {
         if buf.len() == 0 {
             return Err(Error::FileSystem("unexpected EOF while reading header of Entry", ""));
         }
@@ -71,7 +71,7 @@ impl<'a> GroupIter<'a> {
         let entry_id = header.entry_id.get();
         Ok(EntryItem {
             header,
-            body: EntryItemBody::<ReadOnlyBuffer<'_>>::from_slice(unit_size, entry_id, context_type, body)?,
+            body: EntryItemBody::<&'_ [u8]>::from_slice(unit_size, entry_id, context_type, body)?,
         })
     }
 
@@ -147,14 +147,14 @@ impl GroupItem<'_> {
 #[derive(Debug)]
 pub struct GroupMutIter<'a> {
     pub header: &'a mut GROUP_HEADER,
-    buf: Buffer<'a>,
+    buf: &'a mut [u8],
     remaining_used_size: usize,
 }
 
 impl<'a> GroupMutIter<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'b>(buf: &mut Buffer<'b>) -> Result<EntryMutItem<'b>> {
+    fn next_item<'b>(buf: &mut &'b mut [u8]) -> Result<EntryMutItem<'b>> {
         if buf.len() == 0 {
             return Err(Error::FileSystem("unexpected EOF while reading header of Entry", ""));
         }
@@ -179,7 +179,7 @@ impl<'a> GroupMutIter<'a> {
         let entry_id = header.entry_id.get();
         Ok(EntryMutItem {
             header,
-            body: EntryItemBody::<Buffer<'_>>::from_slice(unit_size, entry_id, context_type, body)?,
+            body: EntryItemBody::<&'_ mut [u8]>::from_slice(unit_size, entry_id, context_type, body)?,
         })
     }
 
@@ -277,7 +277,7 @@ impl<'a> GroupMutIter<'a> {
 #[derive(Debug)]
 pub struct GroupMutItem<'a> {
     pub header: &'a mut GROUP_HEADER,
-    pub(crate) buf: Buffer<'a>,
+    pub(crate) buf: &'a mut [u8],
     pub(crate) used_size: usize,
 }
 

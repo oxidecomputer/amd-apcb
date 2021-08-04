@@ -1,4 +1,4 @@
-use crate::types::{Error, Result, Buffer, ReadOnlyBuffer};
+use crate::types::{Error, Result};
 
 use crate::ondisk::GROUP_HEADER;
 use crate::ondisk::ENTRY_HEADER;
@@ -15,24 +15,24 @@ use static_assertions::const_assert;
 pub struct Apcb<'a> {
     header: &'a mut V2_HEADER,
     v3_header_ext: Option<V3_HEADER_EXT>,
-    beginning_of_groups: Buffer<'a>,
+    beginning_of_groups: &'a mut [u8],
     used_size: usize,
 }
 
 pub struct ApcbIterMut<'a> {
-    buf: Buffer<'a>,
+    buf: &'a mut [u8],
     remaining_used_size: usize,
 }
 
 pub struct ApcbIter<'a> {
-    buf: ReadOnlyBuffer<'a>,
+    buf: &'a [u8],
     remaining_used_size: usize,
 }
 
 impl<'a> ApcbIterMut<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'b>(buf: &mut Buffer<'b>) -> Result<GroupMutItem<'b>> {
+    fn next_item<'b>(buf: &mut &'b mut [u8]) -> Result<GroupMutItem<'b>> {
         if buf.len() == 0 {
             return Err(Error::FileSystem("unexpected EOF while reading header of Group", ""));
         }
@@ -124,7 +124,7 @@ impl<'a> Iterator for ApcbIterMut<'a> {
 impl<'a> ApcbIter<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'b>(buf: &mut ReadOnlyBuffer<'b>) -> Result<GroupItem<'b>> {
+    fn next_item<'b>(buf: &mut &'b [u8]) -> Result<GroupItem<'b>> {
         if buf.len() == 0 {
             return Err(Error::FileSystem("unexpected EOF while reading Group", ""));
         }
@@ -356,7 +356,7 @@ impl<'a> Apcb<'a> {
         })
     }
 
-    pub fn load(backing_store: Buffer<'a>) -> Result<Self> {
+    pub fn load(backing_store: &'a mut [u8]) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
         let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
             .ok_or_else(|| Error::FileSystem("could not read Apcb header", ""))?;
@@ -428,7 +428,7 @@ impl<'a> Apcb<'a> {
     }
     /// User is expected to call this once after modifying anything in the apcb (including insertions and deletions).
     /// We update both the checksum and the unique_apcb_instance.
-    pub fn update_checksum(backing_store: Buffer<'_>) -> Result<()> {
+    pub fn update_checksum(backing_store: &'_ mut [u8]) -> Result<()> {
         let apcb_size: u32;
         {
             let mut backing_store = &mut *backing_store;
@@ -456,7 +456,7 @@ impl<'a> Apcb<'a> {
         }
         Ok(())
     }
-    pub fn create(backing_store: Buffer<'a>, unique_apcb_instance: u32) -> Result<Self> {
+    pub fn create(backing_store: &'a mut [u8], unique_apcb_instance: u32) -> Result<Self> {
         for i in 0..backing_store.len() {
             backing_store[i] = 0xFF;
         }

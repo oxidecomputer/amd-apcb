@@ -1,4 +1,4 @@
-use crate::types::{Buffer, ReadOnlyBuffer, Result, Error};
+use crate::types::{Result, Error};
 
 use crate::ondisk::ENTRY_HEADER;
 pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
@@ -43,8 +43,8 @@ pub enum EntryItemBody<BufferType> {
     */
 }
 
-impl<'a> EntryItemBody<Buffer<'a>> {
-    pub(crate) fn from_slice(unit_size: u8, entry_id: u16, context_type: ContextType, b: Buffer<'a>) -> Result<EntryItemBody<Buffer<'a>>> {
+impl<'a> EntryItemBody<&'a mut [u8]> {
+    pub(crate) fn from_slice(unit_size: u8, entry_id: u16, context_type: ContextType, b: &'a mut [u8]) -> Result<EntryItemBody<&'a mut [u8]>> {
         Ok(match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
@@ -54,7 +54,7 @@ impl<'a> EntryItemBody<Buffer<'a>> {
             },
             ContextType::Tokens => {
                 let used_size = b.len();
-                Self::Tokens(TokensEntryBodyItem::<Buffer<'_>>::new(unit_size, entry_id, b, used_size)?)
+                Self::Tokens(TokensEntryBodyItem::<&'_ mut [u8]>::new(unit_size, entry_id, b, used_size)?)
             },
             ContextType::Parameters => {
                 Self::Parameters(b)
@@ -63,8 +63,8 @@ impl<'a> EntryItemBody<Buffer<'a>> {
     }
 }
 
-impl<'a> EntryItemBody<ReadOnlyBuffer<'a>> {
-    pub(crate) fn from_slice(unit_size: u8, entry_id: u16, context_type: ContextType, b: ReadOnlyBuffer<'a>) -> Result<EntryItemBody<ReadOnlyBuffer<'a>>> {
+impl<'a> EntryItemBody<&'a [u8]> {
+    pub(crate) fn from_slice(unit_size: u8, entry_id: u16, context_type: ContextType, b: &'a [u8]) -> Result<EntryItemBody<&'a [u8]>> {
         Ok(match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
@@ -74,7 +74,7 @@ impl<'a> EntryItemBody<ReadOnlyBuffer<'a>> {
             },
             ContextType::Tokens => {
                 let used_size = b.len();
-                Self::Tokens(TokensEntryBodyItem::<ReadOnlyBuffer<'_>>::new(unit_size, entry_id, b, used_size)?)
+                Self::Tokens(TokensEntryBodyItem::<&'_ [u8]>::new(unit_size, entry_id, b, used_size)?)
             },
             ContextType::Parameters => {
                 Self::Parameters(b)
@@ -98,7 +98,7 @@ impl<'a> EntryItemBody<ReadOnlyBuffer<'a>> {
 #[derive(Debug)]
 pub struct EntryMutItem<'a> {
     pub header: &'a mut ENTRY_HEADER,
-    pub body: EntryItemBody<Buffer<'a>>,
+    pub body: EntryItemBody<&'a mut [u8]>,
 }
 
 impl EntryMutItem<'_> {
@@ -188,7 +188,7 @@ impl EntryMutItem<'_> {
 #[derive(Debug)]
 pub struct EntryItem<'a> {
     pub header: &'a ENTRY_HEADER,
-    pub body: EntryItemBody<ReadOnlyBuffer<'a>>,
+    pub body: EntryItemBody<&'a [u8]>,
 }
 
 impl EntryItem<'_> {
