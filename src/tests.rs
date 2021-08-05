@@ -292,7 +292,7 @@ mod tests {
         // let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
         // Insert empty "Token Entry"
-        apcb.insert_entry(EntryId::Token(TokenEntryId::Bool), 0, 1, ContextType::Tokens, &[], 32)?; // breaks
+        apcb.insert_entry(EntryId::Token(TokenEntryId::Bool), 0, 1, ContextType::Tokens, &[], 32)?;
 
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
