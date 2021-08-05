@@ -224,7 +224,7 @@ mod tests {
         // Insert empty "Token Entry"
         apcb.insert_entry(EntryId::Token(TokenEntryId::Bool), 0, 1, ContextType::Tokens, &[], 32)?;
 
-        // pub(crate) fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
+        // pub(crate) fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         apcb.insert_token(EntryId::Token(TokenEntryId::Bool), 0, 1, 0x014FBF20, 1)?;
 
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
@@ -265,8 +265,14 @@ mod tests {
         assert!(entry.id() == EntryId::Token(TokenEntryId::Bool));
 
         match entry.body {
-            EntryItemBody::Tokens(_tokens) => {
-                 // FIXME read tokens
+            EntryItemBody::Tokens(tokens) => {
+                 let mut tokens = tokens.iter();
+
+                 let token = tokens.next().ok_or_else(|| Error::TokenNotFound)?;
+                 assert!(token.id() == 0x014FBF20);
+                 assert!(token.value() == 1);
+
+                 assert!(matches!(tokens.next(), None));
             },
             _ => panic!("no tokens"),
         }
