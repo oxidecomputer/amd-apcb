@@ -149,7 +149,6 @@ impl Default for V3_HEADER_EXT {
     }
 }
 
-#[repr(u16)]
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum GroupId {
     Psp, // usual signature: "PSPG"
