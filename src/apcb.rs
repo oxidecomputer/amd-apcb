@@ -13,6 +13,7 @@ use core::mem::{size_of};
 use crate::group::{GroupItem, GroupMutItem};
 use static_assertions::const_assert;
 use num_traits::FromPrimitive;
+use num_traits::ToPrimitive;
 
 pub struct Apcb<'a> {
     header: &'a mut V2_HEADER,
@@ -63,7 +64,7 @@ impl<'a> ApcbIterMut<'a> {
 
     /// Moves the point to the group with the given GROUP_ID.  Returns (offset, group_size) of it.
     pub(crate) fn move_point_to(&mut self, group_id: GroupId) -> Result<(usize, usize)> {
-        let group_id = group_id.group_to_u16();
+        let group_id = group_id.to_u16().unwrap();
         let mut remaining_used_size = self.remaining_used_size;
         let mut offset = 0usize;
         loop {
@@ -229,7 +230,7 @@ impl<'a> Apcb<'a> {
         }
     }
     pub fn group_mut(&mut self, group_id: GroupId) -> Option<GroupMutItem<'_>> {
-        let group_id = group_id.group_to_u16();
+        let group_id = group_id.to_u16().unwrap();
         for group in self.groups_mut() {
             if group.id() == group_id {
                 return Some(group);
@@ -350,7 +351,7 @@ impl<'a> Apcb<'a> {
         let mut header = take_header_from_collection_mut::<GROUP_HEADER>(&mut beginning_of_group).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER"))?;
         *header = GROUP_HEADER::default();
         header.signature = signature;
-        header.group_id = group_id.group_to_u16().into();
+        header.group_id = group_id.to_u16().unwrap().into();
         let body = take_body_from_collection_mut(&mut beginning_of_group, 0, 1).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER"))?;
         let body_len = body.len();
 

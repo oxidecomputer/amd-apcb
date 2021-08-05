@@ -4,6 +4,7 @@ use byteorder::LittleEndian;
 use core::mem::{replace, size_of};
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
+use num_traits::ToPrimitive;
 use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32};
 use static_assertions::const_assert;
 use core::convert::TryInto;
@@ -163,9 +164,9 @@ pub enum GroupId {
     Raw(u16),
 }
 
-impl GroupId {
-    pub fn group_to_u16(&self) -> u16 {
-        match self {
+impl ToPrimitive for GroupId {
+    fn to_i64(&self) -> Option<i64> {
+        Some(match self {
             GroupId::Psp => 0x1701,
             GroupId::Ccx => 0x1702,
             GroupId::Df => 0x1703,
@@ -175,8 +176,11 @@ impl GroupId {
             GroupId::Cbs => 0x1707,
             GroupId::Oem => 0x1708,
             GroupId::Token => 0x3000,
-            GroupId::Raw(x) => *x,
-        }
+            GroupId::Raw(x) => (*x).into(),
+        })
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
     }
 }
 
