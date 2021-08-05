@@ -22,27 +22,27 @@ To iterate, you can do:
 
 To insert a new group:
 
-    apcb.insert_group(0x1701, *b"PSPG")?;
+    apcb.insert_group(GroupId::Psp, *b"PSPG")?;
 
 To delete a group:
 
-    apcb.delete_group(0x1701)?;
+    apcb.delete_group(GroupId::Psp)?;
 
 To insert a new entry:
 
-    apcb.insert_entry(0x1701, 0x0000, 0, 0xFFFF, 0)?;
+    apcb.insert_entry(EntryId::Psp(PspEntryId::...), 0, 0xFFFF, 0)?;
 
 To delete an entry:
 
-    apcb.delete_entry(0x1701, 0x0000, 0, 0xFFFF)?;
+    apcb.delete_entry(EntryId::Psp(PspEntryId::...), 0, 0xFFFF)?;
 
 To insert a new token:
 
-    apcb.insert_token(0x1701, 0x0000, 0, 0xFFFF, 0x42, 1)?;
+    apcb.insert_token(EntryId::Token(TokenEntryId::Byte), 0, 0xFFFF, 0x42, 1)?;
 
 To delete a token:
 
-    apcb.delete_token(0x1701, 0x0000, 0, 0xFFFF, 0x42)?;
+    apcb.delete_token(EntryId::Token(TokenEntryId::Byte), 0, 0xFFFF, 0x42)?;
 
 In order to update the checksum (you should do that once after any insertion/deletion/mutation):
 
