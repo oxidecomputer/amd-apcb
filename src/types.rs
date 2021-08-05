@@ -1,8 +1,15 @@
+
+#[derive(Debug)]
+pub enum FileSystemError {
+    InconsistentHeader,
+    PayloadTooBig,
+}
+
 #[derive(Debug)]
 pub enum Error {
     ArithmeticOverflow,
     Internal,
-    FileSystem(&'static str, &'static str), // message, field name
+    FileSystem(FileSystemError, &'static str), // message, field name
     OutOfSpace,
     GroupNotFound,
     EntryNotFound,

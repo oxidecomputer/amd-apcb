@@ -1,5 +1,5 @@
 
-use crate::types::{Result, Error};
+use crate::types::{Result, Error, FileSystemError};
 use crate::ondisk::{TOKEN_ENTRY, TokenType, take_header_from_collection, take_header_from_collection_mut};
 use num_traits::FromPrimitive;
 use core::mem::size_of;
@@ -27,11 +27,11 @@ pub struct TokensEntryIterMut<'a> {
 impl<BufferType> TokensEntryBodyItem<BufferType> {
     pub(crate) fn new(unit_size: u8, entry_id: u16, buf: BufferType, used_size: usize) -> Result<Self> {
         if unit_size != 8 {
-            return Err(Error::FileSystem("unit_size of token is unknown", "ENTRY_HEADER::unit_size"));
+            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::unit_size"));
         }
         Ok(Self {
             unit_size,
-            entry_id: TokenType::from_u16(entry_id).ok_or_else(|| Error::FileSystem("entry_id of token is unknown", "ENTRY_HEADER::entry_id"))?,
+            entry_id: TokenType::from_u16(entry_id).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::entry_id"))?,
             buf,
             used_size,
         })
@@ -75,12 +75,12 @@ impl<'a> TokensEntryIterMut<'a> {
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(entry_id: TokenType, buf: &mut &'b mut [u8]) -> Result<TokensEntryItemMut<'b>> {
         if buf.len() == 0 {
-            return Err(Error::FileSystem("unexpected EOF while reading header of Token Entry", ""));
+            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"));
         }
         let token = match take_header_from_collection_mut::<TOKEN_ENTRY>(&mut *buf) {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystem("could not read Token Entry", ""));
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"));
             }
         };
         Ok(TokensEntryItemMut {
@@ -139,16 +139,16 @@ impl<'a> TokensEntryIterMut<'a> {
         let token_size = size_of::<TOKEN_ENTRY>();
 
         // Make sure that move_insertion_point_before does not notice the new uninitialized token
-        self.remaining_used_size = self.remaining_used_size.checked_sub(token_size as usize).ok_or_else(|| Error::FileSystem("Tokens Entry is bigger than remaining iterator size", ""))?;
+        self.remaining_used_size = self.remaining_used_size.checked_sub(token_size as usize).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"))?;
         self.move_insertion_point_before(token_id)?;
         // Move the entries from after the insertion point to the right (in order to make room before for our new entry).
         self.buf.copy_within(0..self.remaining_used_size, token_size as usize);
 
-        self.remaining_used_size = self.remaining_used_size.checked_add(token_size as usize).ok_or_else(|| Error::FileSystem("Tokens Entry is bigger than remaining iterator size", ""))?;
+        self.remaining_used_size = self.remaining_used_size.checked_add(token_size as usize).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"))?;
         let token = match take_header_from_collection_mut::<TOKEN_ENTRY>(&mut self.buf) {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystem("could not read Token Entry", ""));
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"));
             }
         };
 
@@ -171,7 +171,7 @@ impl<'a> TokensEntryIterMut<'a> {
         let token_size = size_of::<TOKEN_ENTRY>();
         // Move the tokens behind this one to the left
         self.buf.copy_within(token_size..self.remaining_used_size, 0);
-        self.remaining_used_size = self.remaining_used_size.checked_sub(token_size as usize).ok_or_else(|| Error::FileSystem("Tokens Entry is bigger than remaining iterator size", ""))?;
+        self.remaining_used_size = self.remaining_used_size.checked_sub(token_size as usize).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"))?;
         Ok(())
     }
 }
@@ -221,12 +221,12 @@ impl<'a> TokensEntryIter<'a> {
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(entry_id: TokenType, buf: &mut &'b [u8]) -> Result<TokensEntryItem<'b>> {
         if buf.len() == 0 {
-            return Err(Error::FileSystem("unexpected EOF while reading header of Token Entry", ""));
+            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"));
         }
         let header = match take_header_from_collection::<TOKEN_ENTRY>(&mut *buf) {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystem("could not read header of Token Entry", ""));
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"));
             }
         };
         Ok(TokensEntryItem {
@@ -242,7 +242,7 @@ impl<'a> TokensEntryIter<'a> {
             Ok(e) => {
                 if self.remaining_used_size >= 8 {
                 } else {
-                    return Err(Error::FileSystem("TokensEntryIter remaining Iterator is too small for a TokensEntryItem", "size_of::<TOKEN_ENTRY>"));
+                    return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"));
                 }
                 self.remaining_used_size -= 8;
                 Ok(e)

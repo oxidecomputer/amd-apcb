@@ -1,4 +1,4 @@
-use crate::types::{Error, Result};
+use crate::types::{Error, FileSystemError, Result};
 
 use crate::ondisk::GROUP_HEADER;
 use crate::ondisk::ENTRY_HEADER;
@@ -34,20 +34,20 @@ impl<'a> ApcbIterMut<'a> {
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(buf: &mut &'b mut [u8]) -> Result<GroupMutItem<'b>> {
         if buf.len() == 0 {
-            return Err(Error::FileSystem("unexpected EOF while reading header of Group", ""));
+            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER"));
         }
         let header = match take_header_from_collection_mut::<GROUP_HEADER>(&mut *buf) {
              Some(item) => item,
              None => {
-                 return Err(Error::FileSystem("could not read header of Group", ""));
+                 return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER"));
              },
         };
         let group_size = header.group_size.get() as usize;
-        let payload_size = group_size.checked_sub(size_of::<GROUP_HEADER>()).ok_or_else(|| Error::FileSystem("could not locate body of Group", ""))?;
+        let payload_size = group_size.checked_sub(size_of::<GROUP_HEADER>()).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER::group_size"))?;
         let body = match take_body_from_collection_mut(&mut *buf, payload_size, 1) {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystem("could not read body of Group", ""));
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER"));
             },
         };
         let body_len = body.len();
@@ -76,7 +76,7 @@ impl<'a> ApcbIterMut<'a> {
                 let group = ApcbIterMut::next_item(&mut self.buf)?;
                 let group_size = group.header.group_size.get() as usize;
                 offset = offset.checked_add(group_size).ok_or_else(|| Error::ArithmeticOverflow)?;
-                remaining_used_size = remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystem("Group is bigger than remaining Iterator size", "GROUP_HEADER::group_size"))?;
+                remaining_used_size = remaining_used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER::group_size"))?;
             }
         }
         Err(Error::GroupNotFound)
@@ -91,7 +91,7 @@ impl<'a> ApcbIterMut<'a> {
                 let group_size = e.header.group_size.get() as usize;
                 if self.remaining_used_size >= group_size {
                 } else {
-                    return Err(Error::FileSystem("", "GROUP_HEADER::group_size"));
+                    return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER::group_size"));
                 }
                 self.remaining_used_size -= group_size;
                 Ok(e)
@@ -126,20 +126,20 @@ impl<'a> ApcbIter<'a> {
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(buf: &mut &'b [u8]) -> Result<GroupItem<'b>> {
         if buf.len() == 0 {
-            return Err(Error::FileSystem("unexpected EOF while reading Group", ""));
+            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER"));
         }
         let header = match take_header_from_collection::<GROUP_HEADER>(&mut *buf) {
              Some(item) => item,
              None => {
-                 return Err(Error::FileSystem("could not read header of Group", ""));
+                 return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER"));
              },
         };
         let group_size = header.group_size.get() as usize;
-        let payload_size = group_size.checked_sub(size_of::<GROUP_HEADER>()).ok_or_else(|| Error::FileSystem("could not locate body of Group", ""))?;
+        let payload_size = group_size.checked_sub(size_of::<GROUP_HEADER>()).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER"))?;
         let body = match take_body_from_collection(&mut *buf, payload_size, 1) {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystem("could not read body of Group2", ""));
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER"));
             },
         };
         let body_len = body.len();
@@ -159,7 +159,7 @@ impl<'a> ApcbIter<'a> {
                 let group_size = e.header.group_size.get() as usize;
                 if self.remaining_used_size >= group_size {
                 } else {
-                    return Err(Error::FileSystem("", "GROUP_HEADER::group_size"));
+                    return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER::group_size"));
                 }
                 self.remaining_used_size -= group_size;
                 Ok(e)
@@ -246,10 +246,10 @@ impl<'a> Apcb<'a> {
         let apcb_size = self.header.apcb_size.get();
         if size_diff > 0 {
             let size_diff: u32 = (size_diff as u64).try_into().map_err(|_| Error::ArithmeticOverflow)?;
-            self.header.apcb_size.set(apcb_size.checked_add(size_diff).ok_or_else(|| Error::FileSystem("Apcb is too big for format", "HEADER_V2::apcb_size"))?);
+            self.header.apcb_size.set(apcb_size.checked_add(size_diff).ok_or_else(|| Error::FileSystem(FileSystemError::PayloadTooBig, "HEADER_V2::apcb_size"))?);
         } else {
             let size_diff: u32 = ((-size_diff) as u64).try_into().map_err(|_| Error::ArithmeticOverflow)?;
-            self.header.apcb_size.set(apcb_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystem("Apcb is smaller than Entry in Group", "HEADER_V2::apcb_size"))?);
+            self.header.apcb_size.set(apcb_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "HEADER_V2::apcb_size"))?);
         }
 
         let self_beginning_of_groups_len = self.beginning_of_groups.len();
@@ -260,8 +260,8 @@ impl<'a> Apcb<'a> {
 
             let old_group_size: u32 = old_group_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
             let size_diff: u32 = (size_diff as u64).try_into().map_err(|_| Error::ArithmeticOverflow)?;
-            let new_group_size = old_group_size.checked_add(size_diff).ok_or_else(|| Error::FileSystem("Group is too big for format", "GROUP_HEADER::group_size"))?;
-            let new_used_size = old_used_size.checked_add(size_diff as usize).ok_or_else(|| Error::FileSystem("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
+            let new_group_size = old_group_size.checked_add(size_diff).ok_or_else(|| Error::FileSystem(FileSystemError::PayloadTooBig, "GROUP_HEADER::group_size"))?;
+            let new_used_size = old_used_size.checked_add(size_diff as usize).ok_or_else(|| Error::FileSystem(FileSystemError::PayloadTooBig, "ENTRY_HEADER::entry_size"))?;
             if new_used_size <= self_beginning_of_groups_len {
             } else {
                 return Err(Error::OutOfSpace);
@@ -274,8 +274,8 @@ impl<'a> Apcb<'a> {
         } else if size_diff < 0 {
             let old_group_size: u32 = old_group_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
             let size_diff: u32 = ((-size_diff) as u64).try_into().map_err(|_| Error::ArithmeticOverflow)?;
-            let new_group_size = old_group_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystem("Group is smaller than Entry in Group", "GROUP_HEADER::group_size"))?;
-            let new_used_size = old_used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystem("Entry is bigger than remaining Iterator size", "ENTRY_HEADER::entry_size"))?;
+            let new_group_size = old_group_size.checked_sub(size_diff).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER::group_size"))?;
+            let new_used_size = old_used_size.checked_sub(size_diff as usize).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::entry_size"))?;
             let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
             group.header.group_size.set(new_group_size);
             let buf = &mut self.beginning_of_groups[offset..];
@@ -320,10 +320,10 @@ impl<'a> Apcb<'a> {
         let apcb_size = self.header.apcb_size.get();
         let mut groups = self.groups_mut();
         let (offset, group_size) = groups.move_point_to(group_id)?;
-        self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).ok_or_else(|| Error::FileSystem("Group is bigger than Apcb", "HEADER_V2::apcb_size"))?);
+        self.header.apcb_size.set(apcb_size.checked_sub(group_size as u32).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "HEADER_V2::apcb_size"))?);
         let buf = &mut self.beginning_of_groups[offset..];
         buf.copy_within(group_size..(apcb_size as usize), 0);
-        self.used_size = self.used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystem("Group is bigger than remaining Iterator size", "GROUP_HEADER::group_size"))?;
+        self.used_size = self.used_size.checked_sub(group_size).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER::group_size"))?;
         Ok(())
     }
 
@@ -335,18 +335,18 @@ impl<'a> Apcb<'a> {
         let old_used_size = self.used_size;
         let new_used_size = old_used_size.checked_add(size).ok_or_else(|| Error::OutOfSpace)?;
         if self.beginning_of_groups.len() < new_used_size {
-            return Err(Error::FileSystem("Iterator allocation is smaller than Iterator size", ""));
+            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, ""));
         }
         self.header.apcb_size.set(new_apcb_size);
         self.used_size = new_used_size;
 
         let mut beginning_of_group = &mut self.beginning_of_groups[old_used_size..new_used_size];
 
-        let mut header = take_header_from_collection_mut::<GROUP_HEADER>(&mut beginning_of_group).ok_or_else(|| Error::FileSystem("could not read header of Group", ""))?;
+        let mut header = take_header_from_collection_mut::<GROUP_HEADER>(&mut beginning_of_group).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER"))?;
         *header = GROUP_HEADER::default();
         header.signature = signature;
         header.group_id = group_id.into();
-        let body = take_body_from_collection_mut(&mut beginning_of_group, 0, 1).ok_or_else(|| Error::FileSystem("could not read body of Groupz", ""))?;
+        let body = take_body_from_collection_mut(&mut beginning_of_group, 0, 1).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER"))?;
         let body_len = body.len();
 
         Ok(GroupMutItem {
@@ -359,45 +359,45 @@ impl<'a> Apcb<'a> {
     pub fn load(backing_store: &'a mut [u8]) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
         let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
-            .ok_or_else(|| Error::FileSystem("could not read Apcb header", ""))?;
+            .ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER"))?;
 
         if usize::from(header.header_size) >= size_of::<V2_HEADER>() {
         } else {
-            return Err(Error::FileSystem("Apcb header is too small", "V2_HEADER::header_size"));
+            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::header_size"));
         }
         if header.version.get() == 0x30 {
         } else {
-            return Err(Error::FileSystem("Apcb header version mismatch", "V2_HEADER::version"));
+            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::version"));
         }
 
         let v3_header_ext = if usize::from(header.header_size)
             == size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>()
         {
             let value = take_header_from_collection_mut::<V3_HEADER_EXT>(&mut backing_store)
-                .ok_or_else(|| Error::FileSystem("could not read extended header of Apcb", ""))?;
+                .ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V3_HEADER_EXT"))?;
             if value.signature == *b"ECB2" {
             } else {
-                return Err(Error::FileSystem("header validation failed", "V3_HEADER_EXT::signature"));
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V3_HEADER_EXT::signature"));
             }
             if value.struct_version.get() == 0x12 {
             } else {
-                return Err(Error::FileSystem("header validation failed", "V3_HEADER_EXT::struct_version"));
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V3_HEADER_EXT::struct_version"));
             }
             if value.data_version.get() == 0x100 {
             } else {
-                return Err(Error::FileSystem("header validation failed", "V3_HEADER_EXT::data_version"));
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V3_HEADER_EXT::data_version"));
             }
             if value.ext_header_size.get() == 96 {
             } else {
-                return Err(Error::FileSystem("header validation failed", "V3_HEADER_EXT::ext_header_size"));
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V3_HEADER_EXT::ext_header_size"));
             }
             if u32::from(value.data_offset.get()) == 88 {
             } else {
-                return Err(Error::FileSystem("header validation failed", "V3_HEADER_EXT::data_offset"));
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V3_HEADER_EXT::data_offset"));
             }
             if value.signature_ending == *b"BCBA" {
             } else {
-                return Err(Error::FileSystem("header validation failed", "V3_HEADER_EXT::signature_ending"));
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V3_HEADER_EXT::signature_ending"));
             }
             Some(*value)
         } else {
@@ -405,10 +405,10 @@ impl<'a> Apcb<'a> {
             None
         };
 
-        let used_size = header.apcb_size.get().checked_sub(u32::from(header.header_size.get())).ok_or_else(|| Error::FileSystem("Iterator size is smaller than header size", "V2_HEADER::header_size"))? as usize;
+        let used_size = header.apcb_size.get().checked_sub(u32::from(header.header_size.get())).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::header_size"))? as usize;
         if used_size <= backing_store.len() {
         } else {
-            return Err(Error::FileSystem("Iterator size bigger than allocation", ""));
+            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::header_size"));
         }
 
         let result = Self {
@@ -433,7 +433,7 @@ impl<'a> Apcb<'a> {
         {
             let mut backing_store = &mut *backing_store;
             let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
-                    .ok_or_else(|| Error::FileSystem("could not write Apcb header", ""))?;
+                    .ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER"))?;
             header.checksum_byte = 0;
             apcb_size = header.apcb_size.get();
         }
@@ -447,7 +447,7 @@ impl<'a> Apcb<'a> {
         {
             let mut backing_store = &mut *backing_store;
             let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
-                    .ok_or_else(|| Error::FileSystem("could not write Apcb header", ""))?;
+                    .ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER"))?;
             let checksum_byte = (0x100u16 - u16::from(checksum_byte)) as u8; // Note: This can overflow
 
             // Use the chance to also update unique_apcb_instance (assumption: user calls update_checksum only when there was an actual change).
@@ -463,12 +463,12 @@ impl<'a> Apcb<'a> {
         {
             let mut backing_store = &mut *backing_store;
             let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
-                    .ok_or_else(|| Error::FileSystem("could not write Apcb header", ""))?;
+                    .ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER"))?;
             *header = Default::default();
             header.unique_apcb_instance.set(unique_apcb_instance);
 
             let v3_header_ext = take_header_from_collection_mut::<V3_HEADER_EXT>(&mut backing_store)
-                    .ok_or_else(|| Error::FileSystem("could not write Apcb extended header", ""))?;
+                    .ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V3_HEADER_EXT"))?;
             *v3_header_ext = Default::default();
 
             header

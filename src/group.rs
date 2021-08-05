@@ -1,4 +1,4 @@
-use crate::types::{Error, Result};
+use crate::types::{Error, FileSystemError, Result};
 
 use crate::ondisk::GROUP_HEADER;
 use crate::ondisk::ENTRY_ALIGNMENT;
@@ -47,23 +47,23 @@ impl<'a> GroupIter<'a> {
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(buf: &mut &'b [u8]) -> Result<EntryItem<'b>> {
         if buf.len() == 0 {
-            return Err(Error::FileSystem("unexpected EOF while reading header of Entry", ""));
+            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"));
         }
         let header = match take_header_from_collection::<ENTRY_HEADER>(&mut *buf) {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystem("could not read header of Entry", ""));
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"));
             }
         };
-        ContextFormat::from_u8(header.context_format).ok_or_else(|| Error::FileSystem("unknown enum value", "ENTRY_HEADER::context_format"))?;
-        let context_type = ContextType::from_u8(header.context_type).ok_or_else(|| Error::FileSystem("unknown enum value", "ENTRY_HEADER::context_type"))?;
+        ContextFormat::from_u8(header.context_format).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_format"))?;
+        let context_type = ContextType::from_u8(header.context_type).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_type"))?;
         let entry_size = header.entry_size.get() as usize;
 
-        let payload_size = entry_size.checked_sub(size_of::<ENTRY_HEADER>()).ok_or_else(|| Error::FileSystem("could not locate body of Entry", ""))?;
+        let payload_size = entry_size.checked_sub(size_of::<ENTRY_HEADER>()).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
         let body = match take_body_from_collection(&mut *buf, payload_size, ENTRY_ALIGNMENT) {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystem("could not read body of Entry", ""));
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"));
             },
         };
 
@@ -83,12 +83,12 @@ impl<'a> GroupIter<'a> {
             Ok(e) => {
                 if e.header.group_id.get() == self.header.group_id.get() {
                 } else {
-                    return Err(Error::FileSystem("Entry.group_id does not match group.group_id", "ENTRY_HEADER::group_id"));
+                    return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::group_id"));
                 }
                 let entry_size = e.header.entry_size.get() as usize;
                 if self.remaining_used_size >= entry_size {
                 } else {
-                    return Err(Error::FileSystem("Entry.entry_size is bigger than remaining iterator", "ENTRY_HEADER::entry_size"));
+                    return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::entry_size"));
                 }
                 self.remaining_used_size -= entry_size;
                 Ok(e)
@@ -156,22 +156,22 @@ impl<'a> GroupMutIter<'a> {
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(buf: &mut &'b mut [u8]) -> Result<EntryMutItem<'b>> {
         if buf.len() == 0 {
-            return Err(Error::FileSystem("unexpected EOF while reading header of Entry", ""));
+            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"));
         }
         let header = match take_header_from_collection_mut::<ENTRY_HEADER>(&mut *buf) {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystem("could not read header of Entry", ""));
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"));
             }
         };
-        let context_type = ContextType::from_u8(header.context_type).ok_or_else(|| Error::FileSystem("unknown enum value", "ENTRY_HEADER::context_type"))?;
+        let context_type = ContextType::from_u8(header.context_type).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_type"))?;
         let entry_size = header.entry_size.get() as usize;
 
-        let payload_size = entry_size.checked_sub(size_of::<ENTRY_HEADER>()).ok_or_else(|| Error::FileSystem("unexpected EOF while locating body of Entry", ""))?;
+        let payload_size = entry_size.checked_sub(size_of::<ENTRY_HEADER>()).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
         let body = match take_body_from_collection_mut(&mut *buf, payload_size, ENTRY_ALIGNMENT) {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystem("could not read body of Entry", ""));
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"));
             },
         };
 
@@ -238,7 +238,7 @@ impl<'a> GroupMutIter<'a> {
     pub(crate) fn insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<()> {
         let payload_size = payload.len();
         // Make sure that move_insertion_point_before does not notice the new uninitialized entry
-        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_allocation as usize).ok_or_else(|| Error::FileSystem("Entry is bigger than remaining iterator size", "ENTRY_HEADER::entry_size"))?;
+        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_allocation as usize).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::entry_size"))?;
         self.move_insertion_point_before(group_id, entry_id, instance_id, board_instance_mask)?;
 
         let mut buf = &mut self.buf[..]; // already done: offset
@@ -246,7 +246,7 @@ impl<'a> GroupMutIter<'a> {
         buf.copy_within(0..self.remaining_used_size, entry_allocation as usize);
 
         //let mut buf = &mut self.buf[..(self.remaining_used_size + entry_allocation as usize)];
-        let header = take_header_from_collection_mut::<ENTRY_HEADER>(&mut buf).ok_or_else(|| Error::FileSystem("could not read header of Entry", ""))?;
+        let header = take_header_from_collection_mut::<ENTRY_HEADER>(&mut buf).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
         *header = ENTRY_HEADER::default();
         header.group_id.set(group_id);
         header.entry_id.set(entry_id);
@@ -267,7 +267,7 @@ impl<'a> GroupMutIter<'a> {
 
         // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
         header.board_instance_mask.set(board_instance_mask);
-        let body = take_body_from_collection_mut(&mut buf, payload_size.into(), ENTRY_ALIGNMENT).ok_or_else(|| Error::FileSystem("could not read body of Entry", ""))?;
+        let body = take_body_from_collection_mut(&mut buf, payload_size.into(), ENTRY_ALIGNMENT).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
         body.copy_from_slice(payload);
         self.remaining_used_size = self.remaining_used_size.checked_add(entry_allocation as usize).ok_or_else(|| Error::OutOfSpace)?;
         Ok(())

@@ -1,4 +1,4 @@
-use crate::types::{Result, Error};
+use crate::types::{Result, Error, FileSystemError};
 
 use crate::ondisk::ENTRY_HEADER;
 pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
@@ -48,7 +48,7 @@ impl<'a> EntryItemBody<&'a mut [u8]> {
         Ok(match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
-                     return Err(Error::FileSystem("unit_size != 0 is invalid for context_type = raw", "ENTRY_HEADER::unit_size"));
+                     return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::unit_size"));
                 }
                 Self::Struct(b)
             },
@@ -68,7 +68,7 @@ impl<'a> EntryItemBody<&'a [u8]> {
         Ok(match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
-                     return Err(Error::FileSystem("unit_size != 0 is invalid for context_type = raw", "ENTRY_HEADER::unit_size"));
+                     return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::unit_size"));
                 }
                 Self::Struct(b)
             },
@@ -224,8 +224,8 @@ impl EntryItem<'_> {
     }
 
     pub(crate) fn validate(&self) -> Result<()> {
-        ContextType::from_u8(self.header.context_type).ok_or_else(|| Error::FileSystem("unknown enum value", "ENTRY_HEADER::context_type"))?;
-        ContextFormat::from_u8(self.header.context_format).ok_or_else(|| Error::FileSystem("unknown enum value", "ENTRY_HEADER::context_format"))?;
+        ContextType::from_u8(self.header.context_type).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_type"))?;
+        ContextFormat::from_u8(self.header.context_format).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_format"))?;
         self.body.validate()?;
         Ok(())
     }
