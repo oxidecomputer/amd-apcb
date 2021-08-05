@@ -216,28 +216,28 @@ mod tests {
     fn insert_tokens() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
         let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
-        apcb.insert_group(GroupId::Raw(0x1001), *b"TOKN")?; // this group id should be 0x3000--but I want this test to test a complicated case even should we ever change insert_group to automatically sort.
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
+        apcb.insert_group(GroupId::Df, *b"DFG ")?;
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
-        apcb.insert_entry(GroupId::Psp, 96, 0, 0xFFFF, ContextType::Struct, &[1u8; 48], 33)?;
-        apcb.insert_entry(GroupId::Psp, 97, 0, 0xFFFF, ContextType::Struct, &[2u8; 1], 32)?;
+        apcb.insert_entry(GroupId::Df, 96, 0, 0xFFFF, ContextType::Struct, &[1u8; 48], 33)?;
+        apcb.insert_entry(GroupId::Df, 97, 0, 0xFFFF, ContextType::Struct, &[2u8; 1], 32)?;
 
         // Insert empty "Token Entry"
-        apcb.insert_entry(GroupId::Raw(0x1001), 0, 0, 1, ContextType::Tokens, &[], 32)?;
+        apcb.insert_entry(GroupId::Psp, 0, 0, 1, ContextType::Tokens, &[], 32)?;
 
         // pub(crate) fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
-        apcb.insert_token(GroupId::Raw(0x1001), TokenType::Bool as u16, 0, 1, 0x014FBF20, 1)?;
+        apcb.insert_token(GroupId::Psp, TokenType::Bool as u16, 0, 1, 0x014FBF20, 1)?;
 
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
 
         let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
-        assert!(group.id() == GroupId::Raw(0x1001));
-        assert!(group.signature() ==*b"TOKN");
-
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() ==*b"PSPG");
+
+        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        assert!(group.id() == GroupId::Df);
+        assert!(group.signature() ==*b"DFG ");
 
         let mut entries = group.entries();
 

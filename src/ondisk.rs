@@ -160,7 +160,7 @@ pub enum GroupId {
     Cbs,
     Oem,
     Token, // usual signature: "TOKN"
-    Raw(u16),
+    //Raw(u16),
 }
 
 impl ToPrimitive for GroupId {
@@ -175,7 +175,7 @@ impl ToPrimitive for GroupId {
             GroupId::Cbs => 0x1707,
             GroupId::Oem => 0x1708,
             GroupId::Token => 0x3000,
-            GroupId::Raw(x) => (*x).into(),
+            //GroupId::Raw(x) => (*x).into(),
         })
     }
     fn to_u64(&self) -> Option<u64> {
@@ -186,18 +186,19 @@ impl ToPrimitive for GroupId {
 impl FromPrimitive for GroupId {
     fn from_u64(value: u64) -> Option<Self> {
         if value < 0x1_0000 {
-            Some(match value {
-                0x1701 => GroupId::Psp,
-                0x1702 => GroupId::Ccx,
-                0x1703 => GroupId::Df,
-                0x1704 => GroupId::Memory,
-                0x1705 => GroupId::Gnb,
-                0x1706 => GroupId::Fch,
-                0x1707 => GroupId::Cbs,
-                0x1708 => GroupId::Oem,
-                0x3000 => GroupId::Token,
-                x => GroupId::Raw(x as u16),
-            })
+            match value {
+                0x1701 => Some(GroupId::Psp),
+                0x1702 => Some(GroupId::Ccx),
+                0x1703 => Some(GroupId::Df),
+                0x1704 => Some(GroupId::Memory),
+                0x1705 => Some(GroupId::Gnb),
+                0x1706 => Some(GroupId::Fch),
+                0x1707 => Some(GroupId::Cbs),
+                0x1708 => Some(GroupId::Oem),
+                0x3000 => Some(GroupId::Token),
+                //x => GroupId::Raw(x as u16),
+                _ => None,
+            }
         } else {
             None
         }
