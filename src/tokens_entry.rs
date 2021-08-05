@@ -1,25 +1,25 @@
 
 use crate::types::{Result, Error, FileSystemError};
-use crate::ondisk::{TOKEN_ENTRY, TokenType, take_header_from_collection, take_header_from_collection_mut};
+use crate::ondisk::{TOKEN_ENTRY, TokenEntryId, take_header_from_collection, take_header_from_collection_mut};
 use num_traits::FromPrimitive;
 use core::mem::size_of;
 
 #[derive(Debug)]
 pub struct TokensEntryBodyItem<BufferType> {
     unit_size: u8,
-    entry_id: TokenType,
+    entry_id: TokenEntryId,
     buf: BufferType,
     used_size: usize,
 }
 
 pub struct TokensEntryIter<'a> {
-    entry_id: TokenType,
+    entry_id: TokenEntryId,
     buf: &'a [u8],
     remaining_used_size: usize,
 }
 
 pub struct TokensEntryIterMut<'a> {
-    entry_id: TokenType,
+    entry_id: TokenEntryId,
     buf: &'a mut [u8],
     remaining_used_size: usize,
 }
@@ -31,7 +31,7 @@ impl<BufferType> TokensEntryBodyItem<BufferType> {
         }
         Ok(Self {
             unit_size,
-            entry_id: TokenType::from_u16(entry_id).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::entry_id"))?,
+            entry_id: TokenEntryId::from_u16(entry_id).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::entry_id"))?,
             buf,
             used_size,
         })
@@ -40,7 +40,7 @@ impl<BufferType> TokensEntryBodyItem<BufferType> {
 
 #[derive(Debug)]
 pub struct TokensEntryItemMut<'a> {
-    entry_id: TokenType,
+    entry_id: TokenEntryId,
     token: &'a mut TOKEN_ENTRY,
 }
 
@@ -50,10 +50,11 @@ impl<'a> TokensEntryItemMut<'a> {
     }
     pub fn value(&self) -> u32 {
         self.token.value.get() & match self.entry_id {
-            TokenType::Bool => 0x1,
-            TokenType::Byte => 0xFF,
-            TokenType::Word => 0xFFFF,
-            TokenType::DWord => 0xFFFF_FFFF,
+            TokenEntryId::Bool => 0x1,
+            TokenEntryId::Byte => 0xFF,
+            TokenEntryId::Word => 0xFFFF,
+            TokenEntryId::DWord => 0xFFFF_FFFF,
+            TokenEntryId::Raw(_) => 0xFFFF_FFFF,
         }
     }
 
@@ -61,10 +62,11 @@ impl<'a> TokensEntryItemMut<'a> {
 
     pub fn set_value(&mut self, value: u32) {
         assert!(value == (value & match self.entry_id {
-            TokenType::Bool => 0x1,
-            TokenType::Byte => 0xFF,
-            TokenType::Word => 0xFFFF,
-            TokenType::DWord => 0xFFFF_FFFF,
+            TokenEntryId::Bool => 0x1,
+            TokenEntryId::Byte => 0xFF,
+            TokenEntryId::Word => 0xFFFF,
+            TokenEntryId::DWord => 0xFFFF_FFFF,
+            TokenEntryId::Raw(_) => 0xFFFF_FFFF,
         }));
         self.token.value.set(value)
     }
@@ -73,7 +75,7 @@ impl<'a> TokensEntryItemMut<'a> {
 impl<'a> TokensEntryIterMut<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'b>(entry_id: TokenType, buf: &mut &'b mut [u8]) -> Result<TokensEntryItemMut<'b>> {
+    fn next_item<'b>(entry_id: TokenEntryId, buf: &mut &'b mut [u8]) -> Result<TokensEntryItemMut<'b>> {
         if buf.len() == 0 {
             return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"));
         }
@@ -198,7 +200,7 @@ impl<'a> Iterator for TokensEntryIterMut<'a> {
 
 #[derive(Debug)]
 pub struct TokensEntryItem<'a> {
-    entry_id: TokenType,
+    entry_id: TokenEntryId,
     entry: &'a TOKEN_ENTRY,
 }
 
@@ -208,10 +210,11 @@ impl<'a> TokensEntryItem<'a> {
     }
     pub fn value(&self) -> u32 {
         self.entry.value.get() & match self.entry_id {
-            TokenType::Bool => 0x1,
-            TokenType::Byte => 0xFF,
-            TokenType::Word => 0xFFFF,
-            TokenType::DWord => 0xFFFF_FFFF,
+            TokenEntryId::Bool => 0x1,
+            TokenEntryId::Byte => 0xFF,
+            TokenEntryId::Word => 0xFFFF,
+            TokenEntryId::DWord => 0xFFFF_FFFF,
+            TokenEntryId::Raw(_) => 0xFFFF_FFFF,
         }
     }
 }
@@ -219,7 +222,7 @@ impl<'a> TokensEntryItem<'a> {
 impl<'a> TokensEntryIter<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'b>(entry_id: TokenType, buf: &mut &'b [u8]) -> Result<TokensEntryItem<'b>> {
+    fn next_item<'b>(entry_id: TokenEntryId, buf: &mut &'b [u8]) -> Result<TokensEntryItem<'b>> {
         if buf.len() == 0 {
             return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"));
         }

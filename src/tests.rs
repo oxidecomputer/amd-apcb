@@ -3,7 +3,8 @@ mod tests {
     use crate::Apcb;
     use crate::Error;
     use crate::ondisk::ContextType;
-    use crate::ondisk::TokenType;
+    use crate::ondisk::TokenEntryId;
+    use num_traits::ToPrimitive;
     use crate::ondisk::GroupId;
     use crate::EntryItemBody;
 
@@ -226,7 +227,7 @@ mod tests {
         apcb.insert_entry(GroupId::Psp, 0, 0, 1, ContextType::Tokens, &[], 32)?;
 
         // pub(crate) fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
-        apcb.insert_token(GroupId::Psp, TokenType::Bool as u16, 0, 1, 0x014FBF20, 1)?;
+        apcb.insert_token(GroupId::Psp, TokenEntryId::Bool.to_u16().unwrap(), 0, 1, 0x014FBF20, 1)?;
 
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
@@ -279,12 +280,12 @@ mod tests {
         // let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
         // Insert empty "Token Entry"
-        apcb.insert_entry(GroupId::Token, TokenType::Bool as u16, 0, 1, ContextType::Tokens, &[], 32)?; // breaks
+        apcb.insert_entry(GroupId::Token, TokenEntryId::Bool.to_u16().unwrap(), 0, 1, ContextType::Tokens, &[], 32)?; // breaks
 
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
         // pub(crate) fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
-        apcb.insert_token(GroupId::Token, TokenType::Bool as u16, 0, 1, 0x014FBF20, 1)?;
+        apcb.insert_token(GroupId::Token, TokenEntryId::Bool.to_u16().unwrap(), 0, 1, 0x014FBF20, 1)?;
 
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
@@ -377,13 +378,13 @@ mod tests {
 
         // Insert empty "Token Entry"
         // insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8
-        apcb.insert_entry(GroupId::Token, TokenType::Byte as u16, 0, 1, ContextType::Tokens, &[], 32)?;
+        apcb.insert_entry(GroupId::Token, TokenEntryId::Byte.to_u16().unwrap(), 0, 1, ContextType::Tokens, &[], 32)?;
 
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
         // pub(crate) fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
-        apcb.insert_token(GroupId::Token, TokenType::Byte as u16, 0, 1, 0x014FBF20, 1)?;
-        apcb.insert_token(GroupId::Token, TokenType::Byte as u16, 0, 1, 0x42, 2)?;
+        apcb.insert_token(GroupId::Token, TokenEntryId::Byte.to_u16().unwrap(), 0, 1, 0x014FBF20, 1)?;
+        apcb.insert_token(GroupId::Token, TokenEntryId::Byte.to_u16().unwrap(), 0, 1, 0x42, 2)?;
 
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
@@ -460,15 +461,15 @@ mod tests {
 
         // Insert empty "Token Entry"
         // insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8
-        apcb.insert_entry(GroupId::Token, TokenType::Byte as u16, 0, 1, ContextType::Tokens, &[], 32)?;
+        apcb.insert_entry(GroupId::Token, TokenEntryId::Byte.to_u16().unwrap(), 0, 1, ContextType::Tokens, &[], 32)?;
 
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
         // pub(crate) fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
-        apcb.insert_token(GroupId::Token, TokenType::Byte as u16, 0, 1, 0x014FBF20, 1)?;
-        apcb.insert_token(GroupId::Token, TokenType::Byte as u16, 0, 1, 0x42, 2)?;
+        apcb.insert_token(GroupId::Token, TokenEntryId::Byte.to_u16().unwrap(), 0, 1, 0x014FBF20, 1)?;
+        apcb.insert_token(GroupId::Token, TokenEntryId::Byte.to_u16().unwrap(), 0, 1, 0x42, 2)?;
 
-        apcb.delete_token(GroupId::Token, TokenType::Byte as u16, 0, 1, 0x42)?;
+        apcb.delete_token(GroupId::Token, TokenEntryId::Byte.to_u16().unwrap(), 0, 1, 0x42)?;
 
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
 

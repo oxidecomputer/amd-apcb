@@ -484,6 +484,54 @@ impl FromPrimitive for MemoryEntryId {
     }
 }
 
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum TokenEntryId {
+    Bool,
+    Byte,
+    Word,
+    DWord,
+    Raw(u16),
+}
+
+impl ToPrimitive for TokenEntryId {
+    fn to_i64(&self) -> Option<i64> {
+        Some(match self {
+            Self::Bool => 0,
+            Self::Byte => 1,
+            Self::Word => 2,
+            Self::DWord => 4,
+            Self::Raw(x) => (*x) as i64,
+        })
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+
+impl FromPrimitive for TokenEntryId {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x1_0000 {
+            Some(match value {
+                0 => Self::Bool,
+                1 => Self::Byte,
+                2 => Self::Word,
+                4 => Self::DWord,
+                x => Self::Raw(x as u16),
+            })
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 && value < 0x1_0000 {
+            let value: u64 = value.try_into().unwrap();
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(FromBytes, AsBytes, Unaligned, Debug)]
 #[repr(C, packed)]
 pub struct GROUP_HEADER {
@@ -509,15 +557,6 @@ pub enum ContextType {
     Struct = 0,
     Parameters = 1,
     Tokens = 2, // then, entry_id means something else
-}
-
-#[repr(u16)]
-#[derive(Debug, PartialEq, FromPrimitive, Copy, Clone)]
-pub enum TokenType {
-    Bool = 0,
-    Byte = 1,
-    Word = 2,
-    DWord = 4,
 }
 
 impl Default for GROUP_HEADER {
