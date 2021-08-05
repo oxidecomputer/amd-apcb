@@ -9,6 +9,7 @@ pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection,
 use core::convert::TryInto;
 use core::mem::{size_of};
 use num_traits::FromPrimitive;
+use num_traits::ToPrimitive;
 
 use crate::entry::{EntryItem, EntryMutItem, EntryItemBody};
 
@@ -194,7 +195,7 @@ impl<'a> GroupMutIter<'a> {
             }
             match Self::next_item(&mut buf) {
                 Ok(e) => {
-                    if (e.header.group_id.get(), e.id(), e.instance_id(), e.board_instance_mask()) < (group_id.group_to_u16(), id, instance_id, board_instance_mask) {
+                    if (e.header.group_id.get(), e.id(), e.instance_id(), e.board_instance_mask()) < (group_id.to_u16().unwrap(), id, instance_id, board_instance_mask) {
                         self.next().ok_or_else(|| Error::Internal)?;
                     } else {
                         break;
@@ -250,7 +251,7 @@ impl<'a> GroupMutIter<'a> {
         //let mut buf = &mut self.buf[..(self.remaining_used_size + entry_allocation as usize)];
         let header = take_header_from_collection_mut::<ENTRY_HEADER>(&mut buf).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
         *header = ENTRY_HEADER::default();
-        header.group_id.set(group_id.group_to_u16());
+        header.group_id.set(group_id.to_u16().unwrap());
         header.entry_id.set(entry_id);
         header.entry_size.set(entry_allocation); // FIXME: Verify
         header.instance_id.set(instance_id);
