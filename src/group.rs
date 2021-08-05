@@ -187,7 +187,7 @@ impl<'a> GroupMutIter<'a> {
     }
 
     /// Find the place BEFORE which the entry (GROUP_ID, ENTRY_ID, INSTANCE_ID, BOARD_INSTANCE_MASK) is supposed to go.
-    pub(crate) fn move_insertion_point_before(&mut self, group_id: u16, entry_id_raw: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
+    pub(crate) fn move_insertion_point_before(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
         loop {
             let mut buf = &mut self.buf[..self.remaining_used_size];
             if buf.len() == 0 {
@@ -195,7 +195,7 @@ impl<'a> GroupMutIter<'a> {
             }
             match Self::next_item(&mut buf) {
                 Ok(e) => {
-                    if (e.group_id(), e.entry_id_raw(), e.instance_id(), e.board_instance_mask()) < (group_id, entry_id_raw, instance_id, board_instance_mask) {
+                    if (e.group_id(), e.type_id(), e.instance_id(), e.board_instance_mask()) < (group_id, type_id, instance_id, board_instance_mask) {
                         self.next().ok_or_else(|| Error::Internal)?;
                     } else {
                         break;
@@ -240,7 +240,7 @@ impl<'a> GroupMutIter<'a> {
     /// Precondition: Caller already increased the group size by entry_allocation.
     pub(crate) fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<()> {
         let group_id = entry_id.group_id();
-        let entry_id = entry_id.entry_id_raw();
+        let entry_id = entry_id.type_id();
 
         let payload_size = payload.len();
         // Make sure that move_insertion_point_before does not notice the new uninitialized entry

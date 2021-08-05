@@ -105,7 +105,7 @@ impl EntryMutItem<'_> {
     pub fn group_id(&self) -> u16 {
         self.header.group_id.get()
     }
-    pub fn entry_id_raw(&self) -> u16 {
+    pub fn type_id(&self) -> u16 {
         self.header.entry_id.get()
     }
     pub fn id(&self) -> EntryId {

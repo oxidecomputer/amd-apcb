@@ -740,7 +740,7 @@ impl EntryId {
             Self::Token(_) => GroupId::Token,
         }
     }
-    pub fn entry_id_raw(&self) -> u16 {
+    pub fn type_id(&self) -> u16 {
         match self {
             Self::Psp(x) => x.to_u16().unwrap(),
             Self::Ccx(x) => x.to_u16().unwrap(),
@@ -753,17 +753,17 @@ impl EntryId {
             Self::Token(x) => x.to_u16().unwrap(),
         }
     }
-    pub fn decode(group_id: u16, entry_id_raw: u16) -> Self {
+    pub fn decode(group_id: u16, type_id: u16) -> Self {
         match GroupId::from_u16(group_id).unwrap() {
-            GroupId::Psp => Self::Psp(PspEntryId::from_u16(entry_id_raw).unwrap()),
-            GroupId::Ccx => Self::Ccx(CcxEntryId::from_u16(entry_id_raw).unwrap()),
-            GroupId::Df => Self::Df(DfEntryId::from_u16(entry_id_raw).unwrap()),
-            GroupId::Memory => Self::Memory(MemoryEntryId::from_u16(entry_id_raw).unwrap()),
-            GroupId::Gnb => Self::Gnb(GnbEntryId::from_u16(entry_id_raw).unwrap()),
-            GroupId::Fch => Self::Fch(FchEntryId::from_u16(entry_id_raw).unwrap()),
-            GroupId::Cbs => Self::Cbs(CbsEntryId::from_u16(entry_id_raw).unwrap()),
-            GroupId::Oem => Self::Oem(OemEntryId::from_u16(entry_id_raw).unwrap()),
-            GroupId::Token => Self::Token(TokenEntryId::from_u16(entry_id_raw).unwrap()),
+            GroupId::Psp => Self::Psp(PspEntryId::from_u16(type_id).unwrap()),
+            GroupId::Ccx => Self::Ccx(CcxEntryId::from_u16(type_id).unwrap()),
+            GroupId::Df => Self::Df(DfEntryId::from_u16(type_id).unwrap()),
+            GroupId::Memory => Self::Memory(MemoryEntryId::from_u16(type_id).unwrap()),
+            GroupId::Gnb => Self::Gnb(GnbEntryId::from_u16(type_id).unwrap()),
+            GroupId::Fch => Self::Fch(FchEntryId::from_u16(type_id).unwrap()),
+            GroupId::Cbs => Self::Cbs(CbsEntryId::from_u16(type_id).unwrap()),
+            GroupId::Oem => Self::Oem(OemEntryId::from_u16(type_id).unwrap()),
+            GroupId::Token => Self::Token(TokenEntryId::from_u16(type_id).unwrap()),
         }
     }
 }
