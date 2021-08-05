@@ -886,6 +886,78 @@ pub struct DimmInfoSmbus {
     pub max_channel: u8,
 }
 
+//pub type PsoData = &[u8];
+
+#[derive(FromBytes, AsBytes, Unaligned)]
+#[repr(C, packed)]
+pub struct AblConsoleOutControl {
+    pub enable_console_logging: u8, // bool
+    pub enable_mem_flow_logging: u8, // bool
+    pub enable_mem_setreg_logging: u8, // bool
+    pub enable_mem_getreg_logging: u8, // bool
+    pub enable_mem_status_logging: u8, // bool
+    pub enable_mem_pmu_logging: u8, // bool
+    pub enable_mem_pmu_sram_read_logging: u8, // bool
+    pub enable_mem_pmu_sram_write_logging: u8, // bool
+    pub enable_mem_test_verbose_logging: u8, // bool
+    pub enable_mem_basic_output_logging: u8, // bool
+    _reserved: U16<LittleEndian>,
+    pub abl_console_port: U32<LittleEndian>,
+}
+
+impl Default for AblConsoleOutControl {
+    fn default() -> Self {
+        Self {
+            enable_console_logging: 1,
+            enable_mem_flow_logging: 1,
+            enable_mem_setreg_logging: 1,
+            enable_mem_getreg_logging: 0,
+            enable_mem_status_logging: 0,
+            enable_mem_pmu_logging: 0,
+            enable_mem_pmu_sram_read_logging: 0,
+            enable_mem_pmu_sram_write_logging: 0,
+            enable_mem_test_verbose_logging: 0,
+            enable_mem_basic_output_logging: 0,
+            _reserved: 0u16.into(),
+            abl_console_port: 0x80u32.into(),
+        }
+    }
+}
+
+#[derive(FromBytes, AsBytes, Unaligned)]
+#[repr(C, packed)]
+pub struct AblBreakpointControl {
+    enable_breakpoint: u8, // bool
+    break_on_all_dies: u8, // bool
+}
+
+impl Default for AblBreakpointControl {
+    fn default() -> Self {
+        Self {
+             enable_breakpoint: 1,
+             break_on_all_dies: 1,
+        }
+    }
+}
+
+#[derive(FromBytes, AsBytes, Unaligned)]
+#[repr(C, packed)]
+pub struct ConsoleOutControl {
+    abl_console_out_control: AblConsoleOutControl,
+    abl_breakpoint_control: AblBreakpointControl,
+    _reserved: U16<LittleEndian>,
+}
+
+impl Default for ConsoleOutControl {
+    fn default() -> Self {
+        Self {
+            abl_console_out_control: AblConsoleOutControl::default(),
+            abl_breakpoint_control: AblBreakpointControl::default(),
+            _reserved: 0.into(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -900,5 +972,7 @@ mod tests {
         const_assert!(size_of::<ENTRY_HEADER>() == 16);
         const_assert!(size_of::<ENTRY_HEADER>() % ENTRY_ALIGNMENT == 0);
         const_assert!(size_of::<DimmInfoSmbus>() == 8);
+        const_assert!(size_of::<AblConsoleOutControl>() == 16);
+        const_assert!(size_of::<ConsoleOutControl>() == 20);
     }
 }
