@@ -162,13 +162,13 @@ pub enum GroupId {
 
 #[repr(u16)]
 #[derive(Debug, PartialEq, FromPrimitive)]
-pub enum PspTypeId {
+pub enum PspEntryId {
     BoardIdGettingMethod = 0x60,
 }
 
 #[repr(u16)]
 #[derive(Debug, PartialEq, FromPrimitive)]
-pub enum DfTypeId {
+pub enum DfEntryId {
     SlinkConfig = 0xCC,
     XgmiTxEq = 0xD0,
     XgmiPhyOverride = 0xDD,
@@ -176,7 +176,7 @@ pub enum DfTypeId {
 
 #[repr(u16)]
 #[derive(Debug, PartialEq, FromPrimitive)]
-pub enum MemoryTypeId {
+pub enum MemoryEntryId {
     SpdInfo = 0x30,
     DimmInfoSmbus = 0x31,
     DimmConfigInfoId = 0x32,
