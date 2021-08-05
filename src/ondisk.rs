@@ -254,6 +254,42 @@ impl FromPrimitive for PspEntryId {
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
+pub enum CcxEntryId {
+    Raw(u16),
+}
+
+impl ToPrimitive for CcxEntryId {
+    fn to_i64(&self) -> Option<i64> {
+        Some(match self {
+            Self::Raw(x) => (*x).into(),
+        })
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+
+impl FromPrimitive for CcxEntryId {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x1_0000 {
+            match value {
+                x => Some(Self::Raw(x as u16)),
+            }
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 && value < 0x1_0000 {
+            let value: u64 = value.try_into().unwrap();
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum DfEntryId {
     SlinkConfig,
     XgmiTxEq,
@@ -485,6 +521,150 @@ impl FromPrimitive for MemoryEntryId {
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
+pub enum GnbEntryId {
+    Raw(u16),
+}
+
+impl ToPrimitive for GnbEntryId {
+    fn to_i64(&self) -> Option<i64> {
+        Some(match self {
+            Self::Raw(x) => (*x) as i64,
+        })
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+
+impl FromPrimitive for GnbEntryId {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x1_0000 {
+            Some(match value {
+                x => Self::Raw(x as u16),
+            })
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 && value < 0x1_0000 {
+            let value: u64 = value.try_into().unwrap();
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum FchEntryId {
+    Raw(u16),
+}
+
+impl ToPrimitive for FchEntryId {
+    fn to_i64(&self) -> Option<i64> {
+        Some(match self {
+            Self::Raw(x) => (*x) as i64,
+        })
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+
+impl FromPrimitive for FchEntryId {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x1_0000 {
+            Some(match value {
+                x => Self::Raw(x as u16),
+            })
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 && value < 0x1_0000 {
+            let value: u64 = value.try_into().unwrap();
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum CbsEntryId {
+    Raw(u16),
+}
+
+impl ToPrimitive for CbsEntryId {
+    fn to_i64(&self) -> Option<i64> {
+        Some(match self {
+            Self::Raw(x) => (*x) as i64,
+        })
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+
+impl FromPrimitive for CbsEntryId {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x1_0000 {
+            Some(match value {
+                x => Self::Raw(x as u16),
+            })
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 && value < 0x1_0000 {
+            let value: u64 = value.try_into().unwrap();
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum OemEntryId {
+    Raw(u16),
+}
+
+impl ToPrimitive for OemEntryId {
+    fn to_i64(&self) -> Option<i64> {
+        Some(match self {
+            Self::Raw(x) => (*x) as i64,
+        })
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+
+impl FromPrimitive for OemEntryId {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x1_0000 {
+            Some(match value {
+                x => Self::Raw(x as u16),
+            })
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 && value < 0x1_0000 {
+            let value: u64 = value.try_into().unwrap();
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum TokenEntryId {
     Bool,
     Byte,
@@ -528,6 +708,62 @@ impl FromPrimitive for TokenEntryId {
             Self::from_u64(value)
         } else {
             None
+        }
+    }
+}
+
+// Note: Keep front part synced with GroupId for easier understanding.
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum EntryId {
+    Psp(PspEntryId),
+    Ccx(CcxEntryId),
+    Df(DfEntryId),
+    Memory(MemoryEntryId),
+    Gnb(GnbEntryId),
+    Fch(FchEntryId),
+    Cbs(CbsEntryId),
+    Oem(OemEntryId),
+    Token(TokenEntryId),
+}
+
+impl EntryId {
+    pub fn group_id(&self) -> GroupId {
+        match self {
+            Self::Psp(_) => GroupId::Psp,
+            Self::Ccx(_) => GroupId::Ccx,
+            Self::Df(_) => GroupId::Df,
+            Self::Memory(_) => GroupId::Memory,
+            Self::Gnb(_) => GroupId::Gnb,
+            Self::Fch(_) => GroupId::Fch,
+            Self::Cbs(_) => GroupId::Cbs,
+            Self::Oem(_) => GroupId::Oem,
+            Self::Token(_) => GroupId::Token,
+        }
+    }
+    pub fn entry_id_raw(&self) -> u16 {
+        match self {
+            Self::Psp(x) => x.to_u16().unwrap(),
+            Self::Ccx(x) => x.to_u16().unwrap(),
+            Self::Df(x) => x.to_u16().unwrap(),
+            Self::Memory(x) => x.to_u16().unwrap(),
+            Self::Gnb(x) => x.to_u16().unwrap(),
+            Self::Fch(x) => x.to_u16().unwrap(),
+            Self::Cbs(x) => x.to_u16().unwrap(),
+            Self::Oem(x) => x.to_u16().unwrap(),
+            Self::Token(x) => x.to_u16().unwrap(),
+        }
+    }
+    pub fn decode(group_id: u16, entry_id_raw: u16) -> Self {
+        match GroupId::from_u16(group_id).unwrap() {
+            GroupId::Psp => Self::Psp(PspEntryId::from_u16(entry_id_raw).unwrap()),
+            GroupId::Ccx => Self::Ccx(CcxEntryId::from_u16(entry_id_raw).unwrap()),
+            GroupId::Df => Self::Df(DfEntryId::from_u16(entry_id_raw).unwrap()),
+            GroupId::Memory => Self::Memory(MemoryEntryId::from_u16(entry_id_raw).unwrap()),
+            GroupId::Gnb => Self::Gnb(GnbEntryId::from_u16(entry_id_raw).unwrap()),
+            GroupId::Fch => Self::Fch(FchEntryId::from_u16(entry_id_raw).unwrap()),
+            GroupId::Cbs => Self::Cbs(CbsEntryId::from_u16(entry_id_raw).unwrap()),
+            GroupId::Oem => Self::Oem(OemEntryId::from_u16(entry_id_raw).unwrap()),
+            GroupId::Token => Self::Token(TokenEntryId::from_u16(entry_id_raw).unwrap()),
         }
     }
 }

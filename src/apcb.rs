@@ -7,7 +7,7 @@ use crate::ondisk::TOKEN_ENTRY;
 use crate::ondisk::V2_HEADER;
 use crate::ondisk::V3_HEADER_EXT;
 use crate::ondisk::ENTRY_ALIGNMENT;
-pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
+pub use crate::ondisk::{ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
 use core::convert::TryInto;
 use core::mem::{size_of};
 use crate::group::{GroupItem, GroupMutItem};
@@ -238,7 +238,8 @@ impl<'a> Apcb<'a> {
         }
         None
     }
-    pub fn delete_entry(&mut self, group_id: GroupId, entry_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
+    pub fn delete_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16) -> Result<()> {
+        let group_id = entry_id.group_id();
         let mut group = self.group_mut(group_id).ok_or_else(|| Error::GroupNotFound)?;
         let size_diff = group.delete_entry(entry_id, instance_id, board_instance_mask)?;
         if size_diff > 0 {
@@ -290,7 +291,8 @@ impl<'a> Apcb<'a> {
         }
         self.group_mut(group_id).ok_or_else(|| Error::GroupNotFound)
     }
-    pub fn insert_entry(&mut self, group_id: GroupId, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<()> {
+    pub fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<()> {
+        let group_id = entry_id.group_id();
         let mut entry_allocation: u16 = (size_of::<ENTRY_HEADER>() as u16).checked_add(payload.len().try_into().map_err(|_| Error::ArithmeticOverflow)?).ok_or_else(|| Error::OutOfSpace)?;
         while entry_allocation % (ENTRY_ALIGNMENT as u16) != 0 {
             entry_allocation += 1;
@@ -298,12 +300,13 @@ impl<'a> Apcb<'a> {
         let mut group = self.resize_group_by(group_id, entry_allocation.into())?;
         let mut entries = group.entries_mut();
         // Note: On some errors, group.used_size will be reduced by insert_entry again!
-        match entries.insert_entry(group_id, entry_id, instance_id, board_instance_mask, entry_allocation, context_type, payload, priority_mask) {
+        match entries.insert_entry(entry_id, instance_id, board_instance_mask, entry_allocation, context_type, payload, priority_mask) {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }
     }
-    pub fn insert_token(&mut self, group_id: GroupId, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
+    pub fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
+        let group_id = entry_id.group_id();
         // Make sure that the entry exists before resizing the group
         let mut group = self.group(group_id).ok_or_else(|| Error::GroupNotFound)?;
         group.entry(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
@@ -314,7 +317,8 @@ impl<'a> Apcb<'a> {
         // Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  group.insert_token has special logic in order to survive that.
         group.insert_token(entry_id, instance_id, board_instance_mask, token_id, token_value)
     }
-    pub fn delete_token(&mut self, group_id: GroupId, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32) -> Result<()> {
+    pub fn delete_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32) -> Result<()> {
+        let group_id = entry_id.group_id();
         // Make sure that the entry exists before resizing the group
         let mut group = self.group_mut(group_id).ok_or_else(|| Error::GroupNotFound)?;
         let token_diff = group.delete_token(entry_id, instance_id, board_instance_mask, token_id)?;

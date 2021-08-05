@@ -1,7 +1,7 @@
 use crate::types::{Result, Error, FileSystemError};
 
 use crate::ondisk::ENTRY_HEADER;
-pub use crate::ondisk::{ContextFormat, ContextType, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
+pub use crate::ondisk::{ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
 use num_traits::FromPrimitive;
 use crate::tokens_entry::TokensEntryBodyItem;
 
@@ -102,9 +102,14 @@ pub struct EntryMutItem<'a> {
 }
 
 impl EntryMutItem<'_> {
-    // pub fn group_id(&self) -> u16  ; suppressed--replaced by an assert on read.
-    pub fn id(&self) -> u16 {
+    pub fn group_id(&self) -> u16 {
+        self.header.group_id.get()
+    }
+    pub fn entry_id_raw(&self) -> u16 {
         self.header.entry_id.get()
+    }
+    pub fn id(&self) -> EntryId {
+        EntryId::decode(self.header.group_id.get(), self.header.entry_id.get())
     }
     pub fn instance_id(&self) -> u16 {
         self.header.instance_id.get()
@@ -193,8 +198,8 @@ pub struct EntryItem<'a> {
 
 impl EntryItem<'_> {
     // pub fn group_id(&self) -> u16  ; suppressed--replaced by an assert on read.
-    pub fn id(&self) -> u16 {
-        self.header.entry_id.get()
+    pub fn id(&self) -> EntryId {
+        EntryId::decode(self.header.group_id.get(), self.header.entry_id.get())
     }
     pub fn instance_id(&self) -> u16 {
         self.header.instance_id.get()
