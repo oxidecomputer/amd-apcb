@@ -335,7 +335,7 @@ impl<'a> Apcb<'a> {
         let old_used_size = self.used_size;
         let new_used_size = old_used_size.checked_add(size).ok_or_else(|| Error::OutOfSpace)?;
         if self.beginning_of_groups.len() < new_used_size {
-            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, ""));
+            return Err(Error::OutOfSpace);
         }
         self.header.apcb_size.set(new_apcb_size);
         self.used_size = new_used_size;
