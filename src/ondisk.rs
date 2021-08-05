@@ -213,74 +213,275 @@ impl FromPrimitive for GroupId {
     }
 }
 
-#[repr(u16)]
-#[derive(Debug, PartialEq, FromPrimitive, Clone, Copy)]
-#[non_exhaustive]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum PspEntryId {
-    BoardIdGettingMethod = 0x60,
+    BoardIdGettingMethod,
+
+    Raw(u16),
 }
 
-#[repr(u16)]
-#[derive(Debug, PartialEq, FromPrimitive, Clone, Copy)]
-#[non_exhaustive]
+impl ToPrimitive for PspEntryId {
+    fn to_i64(&self) -> Option<i64> {
+        Some(match self {
+            Self::BoardIdGettingMethod => 0x60,
+            Self::Raw(x) => (*x).into(),
+        })
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+
+impl FromPrimitive for PspEntryId {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x1_0000 {
+            match value {
+                0x60 => Some(Self::BoardIdGettingMethod),
+                x => Some(Self::Raw(x as u16)),
+            }
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 && value < 0x1_0000 {
+            let value: u64 = value.try_into().unwrap();
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum DfEntryId {
-    SlinkConfig = 0xCC,
-    XgmiTxEq = 0xD0,
-    XgmiPhyOverride = 0xDD,
+    SlinkConfig,
+    XgmiTxEq,
+    XgmiPhyOverride,
+    Raw(u16)
 }
 
-#[repr(u16)]
-#[derive(Debug, PartialEq, FromPrimitive, Clone, Copy)]
+impl ToPrimitive for DfEntryId {
+    fn to_i64(&self) -> Option<i64> {
+        Some(match self {
+            Self::SlinkConfig => 0xCC,
+            Self::XgmiTxEq => 0xD0,
+            Self::XgmiPhyOverride => 0xDD,
+            Self::Raw(x) => (*x) as i64,
+        })
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+
+impl FromPrimitive for DfEntryId {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x1_0000 {
+            Some(match value {
+                0xCC => Self::SlinkConfig,
+                0xD0 => Self::XgmiTxEq,
+                0xDD => Self::XgmiPhyOverride,
+                x => Self::Raw(x as u16),
+            })
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 && value < 0x1_0000 {
+            let value: u64 = value.try_into().unwrap();
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum MemoryEntryId {
-    SpdInfo = 0x30,
-    DimmInfoSmbus = 0x31,
-    DimmConfigInfoId = 0x32,
-    MemOverclockConfig = 0x33,
+    SpdInfo,
+    DimmInfoSmbus,
+    DimmConfigInfoId,
+    MemOverclockConfig,
 
-    PsoData = 0x40,
+    PsoData,
 
-    PsUdimmDdr4OdtPat = 0x41,
-    PsUdimmDdr4CadBus = 0x42,
-    PsUdimmDdr4DataBus = 0x43,
-    PsUdimmDdr4MaxFreq = 0x44,
-    PsUdimmDdr4StretchFreq = 0x45,
+    PsUdimmDdr4OdtPat,
+    PsUdimmDdr4CadBus,
+    PsUdimmDdr4DataBus,
+    PsUdimmDdr4MaxFreq,
+    PsUdimmDdr4StretchFreq,
 
-    PsRdimmDdr4OdtPat = 0x46,
-    PsRdimmDdr4CadBus = 0x47,
-    PsRdimmDdr4DataBus = 0x48,
-    PsRdimmDdr4MaxFreq = 0x49,
-    PsRdimmDdr4StretchFreq = 0x4A,
+    PsRdimmDdr4OdtPat,
+    PsRdimmDdr4CadBus,
+    PsRdimmDdr4DataBus,
+    PsRdimmDdr4MaxFreq,
+    PsRdimmDdr4StretchFreq,
 
-    Ps3dsRdimmDdr4MaxFreq = 0x4B,
-    Ps3dsRdimmDdr4StretchFreq = 0x4C,
-    Ps3dsRdimmDdr4DataBus = 0x4D,
+    Ps3dsRdimmDdr4MaxFreq,
+    Ps3dsRdimmDdr4StretchFreq,
+    Ps3dsRdimmDdr4DataBus,
 
-    ConsoleOutControl = 0x50,
-    EventControl = 0x51,
-    ErrorOutEventControl = 0x52,
-    ExtVoltageControl = 0x53,
+    ConsoleOutControl,
+    EventControl,
+    ErrorOutEventControl,
+    ExtVoltageControl,
 
-    PsLrdimmDdr4OdtPat = 0x54,
-    PsLrdimmDdr4CadBus = 0x55,
-    PsLrdimmDdr4DataBus = 0x56,
-    PsLrdimmDdr4MaxFreq = 0x57,
-    PsLrdimmDdr4StretchFreq = 0x58,
+    PsLrdimmDdr4OdtPat,
+    PsLrdimmDdr4CadBus,
+    PsLrdimmDdr4DataBus,
+    PsLrdimmDdr4MaxFreq,
+    PsLrdimmDdr4StretchFreq,
 
-    PsSodimmDdr4OdtPat = 0x59,
-    PsSodimmDdr4CadBus = 0x5A,
-    PsSodimmDdr4DataBus = 0x5B,
-    PsSodimmDdr4MaxFreq = 0x5C,
-    PsSodimmDdr4StretchFreq = 0x5D,
+    PsSodimmDdr4OdtPat,
+    PsSodimmDdr4CadBus,
+    PsSodimmDdr4DataBus,
+    PsSodimmDdr4MaxFreq,
+    PsSodimmDdr4StretchFreq,
 
-    DdrPostPackageRepair = 0x5E,
+    DdrPostPackageRepair,
 
-    PsDramdownDdr4OdtPat = 0x70,
-    PsDramdownDdr4CadBus = 0x71,
-    PsDramdownDdr4DataBus = 0x72,
-    PsDramdownDdr4MaxFreq = 0x73,
-    PsDramdownDdr4StretchFreq = 0x74,
+    PsDramdownDdr4OdtPat,
+    PsDramdownDdr4CadBus,
+    PsDramdownDdr4DataBus,
+    PsDramdownDdr4MaxFreq,
+    PsDramdownDdr4StretchFreq,
 
-    PlatformTuning = 0x75,
+    PlatformTuning,
+
+    Raw(u16),
+}
+
+impl ToPrimitive for MemoryEntryId {
+    fn to_i64(&self) -> Option<i64> {
+        Some(match self {
+            Self::SpdInfo => 0x30,
+            Self::DimmInfoSmbus => 0x31,
+            Self::DimmConfigInfoId => 0x32,
+            Self::MemOverclockConfig => 0x33,
+
+            Self::PsoData => 0x40,
+
+            Self::PsUdimmDdr4OdtPat => 0x41,
+            Self::PsUdimmDdr4CadBus => 0x42,
+            Self::PsUdimmDdr4DataBus => 0x43,
+            Self::PsUdimmDdr4MaxFreq => 0x44,
+            Self::PsUdimmDdr4StretchFreq => 0x45,
+
+            Self::PsRdimmDdr4OdtPat => 0x46,
+            Self::PsRdimmDdr4CadBus => 0x47,
+            Self::PsRdimmDdr4DataBus => 0x48,
+            Self::PsRdimmDdr4MaxFreq => 0x49,
+            Self::PsRdimmDdr4StretchFreq => 0x4A,
+
+            Self::Ps3dsRdimmDdr4MaxFreq => 0x4B,
+            Self::Ps3dsRdimmDdr4StretchFreq => 0x4C,
+            Self::Ps3dsRdimmDdr4DataBus => 0x4D,
+
+            Self::ConsoleOutControl => 0x50,
+            Self::EventControl => 0x51,
+            Self::ErrorOutEventControl => 0x52,
+            Self::ExtVoltageControl => 0x53,
+
+            Self::PsLrdimmDdr4OdtPat => 0x54,
+            Self::PsLrdimmDdr4CadBus => 0x55,
+            Self::PsLrdimmDdr4DataBus => 0x56,
+            Self::PsLrdimmDdr4MaxFreq => 0x57,
+            Self::PsLrdimmDdr4StretchFreq => 0x58,
+
+            Self::PsSodimmDdr4OdtPat => 0x59,
+            Self::PsSodimmDdr4CadBus => 0x5A,
+            Self::PsSodimmDdr4DataBus => 0x5B,
+            Self::PsSodimmDdr4MaxFreq => 0x5C,
+            Self::PsSodimmDdr4StretchFreq => 0x5D,
+
+            Self::DdrPostPackageRepair => 0x5E,
+
+            Self::PsDramdownDdr4OdtPat => 0x70,
+            Self::PsDramdownDdr4CadBus => 0x71,
+            Self::PsDramdownDdr4DataBus => 0x72,
+            Self::PsDramdownDdr4MaxFreq => 0x73,
+            Self::PsDramdownDdr4StretchFreq => 0x74,
+
+            Self::PlatformTuning => 0x75,
+
+            Self::Raw(x) => (*x) as i64,
+        })
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+
+impl FromPrimitive for MemoryEntryId {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x1_0000 {
+            Some(match value {
+                0x30 => Self::SpdInfo,
+                0x31 => Self::DimmInfoSmbus,
+                0x32 => Self::DimmConfigInfoId,
+                0x33 => Self::MemOverclockConfig,
+
+                0x40 => Self::PsoData,
+
+                0x41 => Self::PsUdimmDdr4OdtPat,
+                0x42 => Self::PsUdimmDdr4CadBus,
+                0x43 => Self::PsUdimmDdr4DataBus,
+                0x44 => Self::PsUdimmDdr4MaxFreq,
+                0x45 => Self::PsUdimmDdr4StretchFreq,
+
+                0x46 => Self::PsRdimmDdr4OdtPat,
+                0x47 => Self::PsRdimmDdr4CadBus,
+                0x48 => Self::PsRdimmDdr4DataBus,
+                0x49 => Self::PsRdimmDdr4MaxFreq,
+                0x4A => Self::PsRdimmDdr4StretchFreq,
+
+                0x4B => Self::Ps3dsRdimmDdr4MaxFreq,
+                0x4C => Self::Ps3dsRdimmDdr4StretchFreq,
+                0x4D => Self::Ps3dsRdimmDdr4DataBus,
+
+                0x50 => Self::ConsoleOutControl,
+                0x51 => Self::EventControl,
+                0x52 => Self::ErrorOutEventControl,
+                0x53 => Self::ExtVoltageControl,
+
+                0x54 => Self::PsLrdimmDdr4OdtPat,
+                0x55 => Self::PsLrdimmDdr4CadBus,
+                0x56 => Self::PsLrdimmDdr4DataBus,
+                0x57 => Self::PsLrdimmDdr4MaxFreq,
+                0x58 => Self::PsLrdimmDdr4StretchFreq,
+
+                0x59 => Self::PsSodimmDdr4OdtPat,
+                0x5A => Self::PsSodimmDdr4CadBus,
+                0x5B => Self::PsSodimmDdr4DataBus,
+                0x5C => Self::PsSodimmDdr4MaxFreq,
+                0x5D => Self::PsSodimmDdr4StretchFreq,
+
+                0x5E => Self::DdrPostPackageRepair,
+
+                0x70 => Self::PsDramdownDdr4OdtPat,
+                0x71 => Self::PsDramdownDdr4CadBus,
+                0x72 => Self::PsDramdownDdr4DataBus,
+                0x73 => Self::PsDramdownDdr4MaxFreq,
+                0x74 => Self::PsDramdownDdr4StretchFreq,
+
+                0x75 => Self::PlatformTuning,
+
+                x => Self::Raw(x as u16),
+            })
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 && value < 0x1_0000 {
+            let value: u64 = value.try_into().unwrap();
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(FromBytes, AsBytes, Unaligned, Debug)]
