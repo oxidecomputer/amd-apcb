@@ -873,6 +873,19 @@ Token:
     value
 */
 
+#[derive(FromBytes, AsBytes, Unaligned)]
+#[repr(C, packed)]
+pub struct DimmInfoSmbus {
+    pub dimm_slot_present: u8,
+    pub socket_id: u8,
+    pub channel_id: u8,
+    pub dimm_id: u8,
+    pub dimm_smbus_address: u8,
+    pub i2c_mux_address: u8,
+    pub mux_control_address: u8,
+    pub max_channel: u8,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -886,5 +899,6 @@ mod tests {
         const_assert!(size_of::<GROUP_HEADER>() % ENTRY_ALIGNMENT == 0);
         const_assert!(size_of::<ENTRY_HEADER>() == 16);
         const_assert!(size_of::<ENTRY_HEADER>() % ENTRY_ALIGNMENT == 0);
+        const_assert!(size_of::<DimmInfoSmbus>() == 8);
     }
 }
