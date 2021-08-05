@@ -1,6 +1,7 @@
 use crate::types::{Error, FileSystemError, Result};
 
 use crate::ondisk::GROUP_HEADER;
+use crate::ondisk::GroupId;
 use crate::ondisk::ENTRY_HEADER;
 use crate::ondisk::TOKEN_ENTRY;
 use crate::ondisk::V2_HEADER;
@@ -11,6 +12,7 @@ use core::convert::TryInto;
 use core::mem::{size_of};
 use crate::group::{GroupItem, GroupMutItem};
 use static_assertions::const_assert;
+use num_traits::FromPrimitive;
 
 pub struct Apcb<'a> {
     header: &'a mut V2_HEADER,
@@ -60,7 +62,8 @@ impl<'a> ApcbIterMut<'a> {
     }
 
     /// Moves the point to the group with the given GROUP_ID.  Returns (offset, group_size) of it.
-    pub(crate) fn move_point_to(&mut self, group_id: u16) -> Result<(usize, usize)> {
+    pub(crate) fn move_point_to(&mut self, group_id: GroupId) -> Result<(usize, usize)> {
+        let group_id = group_id.group_to_u16();
         let mut remaining_used_size = self.remaining_used_size;
         let mut offset = 0usize;
         loop {
@@ -174,6 +177,7 @@ impl<'a> ApcbIter<'a> {
         while self.remaining_used_size > 0 {
             match self.next1() {
                 Ok(item) => {
+                    GroupId::from_u16(item.header.group_id.get()).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER::group_id"))?;
                     item.entries().validate()?;
                 },
                 Err(e) => {
@@ -210,7 +214,7 @@ impl<'a> Apcb<'a> {
             remaining_used_size: self.used_size,
         }
     }
-    pub fn group(&self, group_id: u16) -> Option<GroupItem<'_>> {
+    pub fn group(&self, group_id: GroupId) -> Option<GroupItem<'_>> {
         for group in self.groups() {
             if group.id() == group_id {
                 return Some(group);
@@ -224,7 +228,8 @@ impl<'a> Apcb<'a> {
             remaining_used_size: self.used_size,
         }
     }
-    pub fn group_mut(&mut self, group_id: u16) -> Option<GroupMutItem<'_>> {
+    pub fn group_mut(&mut self, group_id: GroupId) -> Option<GroupMutItem<'_>> {
+        let group_id = group_id.group_to_u16();
         for group in self.groups_mut() {
             if group.id() == group_id {
                 return Some(group);
@@ -232,7 +237,7 @@ impl<'a> Apcb<'a> {
         }
         None
     }
-    pub fn delete_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
+    pub fn delete_entry(&mut self, group_id: GroupId, entry_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
         let mut group = self.group_mut(group_id).ok_or_else(|| Error::GroupNotFound)?;
         let size_diff = group.delete_entry(entry_id, instance_id, board_instance_mask)?;
         if size_diff > 0 {
@@ -241,7 +246,7 @@ impl<'a> Apcb<'a> {
         }
         Ok(())
     }
-    fn resize_group_by(&mut self, group_id: u16, size_diff: i64) -> Result<GroupMutItem<'_>> {
+    fn resize_group_by(&mut self, group_id: GroupId, size_diff: i64) -> Result<GroupMutItem<'_>> {
         let old_used_size = self.used_size;
         let apcb_size = self.header.apcb_size.get();
         if size_diff > 0 {
@@ -284,7 +289,7 @@ impl<'a> Apcb<'a> {
         }
         self.group_mut(group_id).ok_or_else(|| Error::GroupNotFound)
     }
-    pub fn insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<()> {
+    pub fn insert_entry(&mut self, group_id: GroupId, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<()> {
         let mut entry_allocation: u16 = (size_of::<ENTRY_HEADER>() as u16).checked_add(payload.len().try_into().map_err(|_| Error::ArithmeticOverflow)?).ok_or_else(|| Error::OutOfSpace)?;
         while entry_allocation % (ENTRY_ALIGNMENT as u16) != 0 {
             entry_allocation += 1;
@@ -297,7 +302,7 @@ impl<'a> Apcb<'a> {
             Err(e) => Err(e),
         }
     }
-    pub fn insert_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
+    pub fn insert_token(&mut self, group_id: GroupId, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         // Make sure that the entry exists before resizing the group
         let mut group = self.group(group_id).ok_or_else(|| Error::GroupNotFound)?;
         group.entry(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
@@ -308,7 +313,7 @@ impl<'a> Apcb<'a> {
         // Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  group.insert_token has special logic in order to survive that.
         group.insert_token(entry_id, instance_id, board_instance_mask, token_id, token_value)
     }
-    pub fn delete_token(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32) -> Result<()> {
+    pub fn delete_token(&mut self, group_id: GroupId, entry_id: u16, instance_id: u16, board_instance_mask: u16, token_id: u32) -> Result<()> {
         // Make sure that the entry exists before resizing the group
         let mut group = self.group_mut(group_id).ok_or_else(|| Error::GroupNotFound)?;
         let token_diff = group.delete_token(entry_id, instance_id, board_instance_mask, token_id)?;
@@ -316,7 +321,7 @@ impl<'a> Apcb<'a> {
         Ok(())
     }
 
-    pub fn delete_group(&mut self, group_id: u16) -> Result<()> {
+    pub fn delete_group(&mut self, group_id: GroupId) -> Result<()> {
         let apcb_size = self.header.apcb_size.get();
         let mut groups = self.groups_mut();
         let (offset, group_size) = groups.move_point_to(group_id)?;
@@ -327,7 +332,7 @@ impl<'a> Apcb<'a> {
         Ok(())
     }
 
-    pub fn insert_group(&mut self, group_id: u16, signature: [u8; 4]) -> Result<GroupMutItem<'_>> {
+    pub fn insert_group(&mut self, group_id: GroupId, signature: [u8; 4]) -> Result<GroupMutItem<'_>> {
         // TODO: insert sorted.
         let size = size_of::<GROUP_HEADER>();
         let old_apcb_size = self.header.apcb_size.get();
@@ -345,7 +350,7 @@ impl<'a> Apcb<'a> {
         let mut header = take_header_from_collection_mut::<GROUP_HEADER>(&mut beginning_of_group).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER"))?;
         *header = GROUP_HEADER::default();
         header.signature = signature;
-        header.group_id = group_id.into();
+        header.group_id = group_id.group_to_u16().into();
         let body = take_body_from_collection_mut(&mut beginning_of_group, 0, 1).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER"))?;
         let body_len = body.len();
 

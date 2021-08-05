@@ -3,8 +3,10 @@
 use byteorder::LittleEndian;
 use core::mem::{replace, size_of};
 use num_derive::FromPrimitive;
+use num_traits::FromPrimitive;
 use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32};
 use static_assertions::const_assert;
+use core::convert::TryInto;
 
 /// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
 /// If the item cannot be parsed, returns None and does not advance.
@@ -147,27 +149,76 @@ impl Default for V3_HEADER_EXT {
 }
 
 #[repr(u16)]
-#[derive(Debug, PartialEq, FromPrimitive)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum GroupId {
-    Psp = 0x1701, // usual signature: "PSPG"
-    Ccx = 0x1702,
-    Df = 0x1703,     // usual signature: "DFG "
-    Memory = 0x1704, // usual signature: "MEMG"
-    Gnb = 0x1705,
-    Fch = 0x1706,
-    Cbs = 0x1707,
-    Oem = 0x1708,
-    Token = 0x3000, // usual signature: "TOKN"
+    Psp, // usual signature: "PSPG"
+    Ccx,
+    Df,     // usual signature: "DFG "
+    Memory, // usual signature: "MEMG"
+    Gnb,
+    Fch,
+    Cbs,
+    Oem,
+    Token, // usual signature: "TOKN"
+    Raw(u16),
+}
+
+impl GroupId {
+    pub fn group_to_u16(&self) -> u16 {
+        match self {
+            GroupId::Psp => 0x1701,
+            GroupId::Ccx => 0x1702,
+            GroupId::Df => 0x1703,
+            GroupId::Memory => 0x1704,
+            GroupId::Gnb => 0x1705,
+            GroupId::Fch => 0x1706,
+            GroupId::Cbs => 0x1707,
+            GroupId::Oem => 0x1708,
+            GroupId::Token => 0x3000,
+            GroupId::Raw(x) => *x,
+        }
+    }
+}
+
+impl FromPrimitive for GroupId {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x1_0000 {
+            Some(match value {
+                0x1701 => GroupId::Psp,
+                0x1702 => GroupId::Ccx,
+                0x1703 => GroupId::Df,
+                0x1704 => GroupId::Memory,
+                0x1705 => GroupId::Gnb,
+                0x1706 => GroupId::Fch,
+                0x1707 => GroupId::Cbs,
+                0x1708 => GroupId::Oem,
+                0x3000 => GroupId::Token,
+                x => GroupId::Raw(x as u16),
+            })
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 && value < 0x1_0000 {
+            let value: u64 = value.try_into().unwrap();
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
 }
 
 #[repr(u16)]
-#[derive(Debug, PartialEq, FromPrimitive)]
+#[derive(Debug, PartialEq, FromPrimitive, Clone, Copy)]
+#[non_exhaustive]
 pub enum PspEntryId {
     BoardIdGettingMethod = 0x60,
 }
 
 #[repr(u16)]
-#[derive(Debug, PartialEq, FromPrimitive)]
+#[derive(Debug, PartialEq, FromPrimitive, Clone, Copy)]
+#[non_exhaustive]
 pub enum DfEntryId {
     SlinkConfig = 0xCC,
     XgmiTxEq = 0xD0,
@@ -175,7 +226,7 @@ pub enum DfEntryId {
 }
 
 #[repr(u16)]
-#[derive(Debug, PartialEq, FromPrimitive)]
+#[derive(Debug, PartialEq, FromPrimitive, Clone, Copy)]
 pub enum MemoryEntryId {
     SpdInfo = 0x30,
     DimmInfoSmbus = 0x31,

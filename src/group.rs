@@ -1,6 +1,7 @@
 use crate::types::{Error, FileSystemError, Result};
 
 use crate::ondisk::GROUP_HEADER;
+use crate::ondisk::GroupId;
 use crate::ondisk::ENTRY_ALIGNMENT;
 use crate::ondisk::ENTRY_HEADER;
 use crate::ondisk::TOKEN_ENTRY;
@@ -55,6 +56,7 @@ impl<'a> GroupIter<'a> {
                 return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"));
             }
         };
+        GroupId::from_u16(header.group_id.get()).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::group_id"))?;
         ContextFormat::from_u8(header.context_format).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_format"))?;
         let context_type = ContextType::from_u8(header.context_type).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_type"))?;
         let entry_size = header.entry_size.get() as usize;
@@ -121,8 +123,8 @@ impl GroupItem<'_> {
         self.header.signature
     }
     /// Note: See ondisk::GroupId
-    pub fn id(&self) -> u16 {
-        self.header.group_id.get()
+    pub fn id(&self) -> GroupId {
+        GroupId::from_u16(self.header.group_id.get()).unwrap()
     }
 
     /// Side effect: Moves the iterator!
@@ -184,7 +186,7 @@ impl<'a> GroupMutIter<'a> {
     }
 
     /// Find the place BEFORE which the entry (GROUP_ID, ID, INSTANCE_ID, BOARD_INSTANCE_MASK) is supposed to go.
-    pub(crate) fn move_insertion_point_before(&mut self, group_id: u16, id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
+    pub(crate) fn move_insertion_point_before(&mut self, group_id: GroupId, id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
         loop {
             let mut buf = &mut self.buf[..self.remaining_used_size];
             if buf.len() == 0 {
@@ -192,7 +194,7 @@ impl<'a> GroupMutIter<'a> {
             }
             match Self::next_item(&mut buf) {
                 Ok(e) => {
-                    if (e.header.group_id.get(), e.id(), e.instance_id(), e.board_instance_mask()) < (group_id, id, instance_id, board_instance_mask) {
+                    if (e.header.group_id.get(), e.id(), e.instance_id(), e.board_instance_mask()) < (group_id.group_to_u16(), id, instance_id, board_instance_mask) {
                         self.next().ok_or_else(|| Error::Internal)?;
                     } else {
                         break;
@@ -235,7 +237,7 @@ impl<'a> GroupMutIter<'a> {
     }
     /// Inserts the given entry data at the right spot.
     /// Precondition: Caller already increased the group size by entry_allocation.
-    pub(crate) fn insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<()> {
+    pub(crate) fn insert_entry(&mut self, group_id: GroupId, entry_id: u16, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<()> {
         let payload_size = payload.len();
         // Make sure that move_insertion_point_before does not notice the new uninitialized entry
         self.remaining_used_size = self.remaining_used_size.checked_sub(entry_allocation as usize).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::entry_size"))?;
@@ -248,7 +250,7 @@ impl<'a> GroupMutIter<'a> {
         //let mut buf = &mut self.buf[..(self.remaining_used_size + entry_allocation as usize)];
         let header = take_header_from_collection_mut::<ENTRY_HEADER>(&mut buf).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
         *header = ENTRY_HEADER::default();
-        header.group_id.set(group_id);
+        header.group_id.set(group_id.group_to_u16());
         header.entry_id.set(entry_id);
         header.entry_size.set(entry_allocation); // FIXME: Verify
         header.instance_id.set(instance_id);
