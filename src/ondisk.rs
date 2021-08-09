@@ -958,6 +958,34 @@ impl Default for ConsoleOutControl {
     }
 }
 
+#[derive(FromBytes, AsBytes, Unaligned)]
+#[repr(C, packed)]
+pub struct ExtVoltageControl {
+    pub enable: U32<LittleEndian>, // bool
+    pub input_port: U32<LittleEndian>,
+    pub output_port: U32<LittleEndian>,
+    pub input_port_size: U32<LittleEndian>, // size in Byte; one of [1, 2, 4]
+    pub output_port_size: U32<LittleEndian>, // size in Byte; one of [1, 2, 4]
+    pub input_port_type: U32<LittleEndian>, // default: 6 (FCH)
+    pub output_port_type: U32<LittleEndian>, // default: 6 (FCH)
+    pub clear_ack: U32<LittleEndian>, // bool
+}
+
+impl Default for ExtVoltageControl {
+    fn default() -> Self {
+        Self {
+            enable: 0u32.into(),
+            input_port: 0x84u32.into(),
+            output_port: 0x80u32.into(),
+            input_port_size: 4u32.into(),
+            output_port_size: 4u32.into(),
+            input_port_type: 6u32.into(),
+            output_port_type: 6u32.into(),
+            clear_ack: 0u32.into(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -974,5 +1002,6 @@ mod tests {
         const_assert!(size_of::<DimmInfoSmbus>() == 8);
         const_assert!(size_of::<AblConsoleOutControl>() == 16);
         const_assert!(size_of::<ConsoleOutControl>() == 20);
+        const_assert!(size_of::<ExtVoltageControl>() == 32);
     }
 }
