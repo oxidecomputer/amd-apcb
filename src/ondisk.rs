@@ -986,6 +986,51 @@ impl Default for ExtVoltageControl {
     }
 }
 
+// Usually an array of those is used
+#[derive(FromBytes, AsBytes, Unaligned)]
+#[repr(C, packed)]
+pub struct CadBusElement {
+    pub dimm_slots_per_channel: U32<LittleEndian>, // 1 or 2
+    pub ddr_rate: U32<LittleEndian>, // 0xA00|0x2800|0x1_0000|0x4_0000|0xA_0000|0x28_0000|0x100_0000
+    pub vdd_io: U32<LittleEndian>, // always 1
+    pub dimm0_ranks: U32<LittleEndian>, // 1|2|4|6
+    pub dimm1_ranks: U32<LittleEndian>, // 1|2|4|6
+
+    pub gear_down_mode: U16<LittleEndian>,
+    _reserved: U16<LittleEndian>,
+    pub slow_mode: U16<LittleEndian>,
+    _reserved_2: U16<LittleEndian>,
+    pub address_command_control: U32<LittleEndian>, // 24 bit; often all used bytes are equal
+
+    pub cke_drive_strength: u8,
+    pub cs_odt_drive_strength: u8,
+    pub address_command_drive_strength: u8,
+    pub clk_drive_strength: u8,
+}
+
+impl Default for CadBusElement {
+    fn default() -> Self {
+        Self {
+            dimm_slots_per_channel: 1.into(),
+            ddr_rate: 0xa00.into(),
+            vdd_io: 1.into(), // always
+            dimm0_ranks: 6.into(), // maybe invalid
+            dimm1_ranks: 1.into(), // maybe invalid
+
+            gear_down_mode: 0.into(),
+            _reserved: 0.into(),
+            slow_mode: 0.into(),
+            _reserved_2: 0.into(),
+            address_command_control: 0x272727.into(), // maybe invalid
+
+            cke_drive_strength: 7,
+            cs_odt_drive_strength: 7,
+            address_command_drive_strength: 7,
+            clk_drive_strength: 7,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1003,5 +1048,6 @@ mod tests {
         const_assert!(size_of::<AblConsoleOutControl>() == 16);
         const_assert!(size_of::<ConsoleOutControl>() == 20);
         const_assert!(size_of::<ExtVoltageControl>() == 32);
+        const_assert!(size_of::<CadBusElement>() == 36);
     }
 }
