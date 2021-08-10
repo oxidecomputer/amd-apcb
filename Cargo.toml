@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 byteorder = "1.4.3"
 
+memoffset = "0.2"
 #
 # In order to use macros as discriminants in enums that make use of derive
 # macros (e.g., AsBytes, FromPrimitive), we need the syn crate to have "full"

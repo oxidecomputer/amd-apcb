@@ -1119,6 +1119,204 @@ impl Default for LrMaxFreqElement {
     }
 }
 
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, Copy, Clone)]
+pub enum PortType {
+    PcieHt0 = 0,
+    PcieHt1 = 2,
+    PcieMmio = 5,
+    FchHtIo = 6,
+    FchMmio = 7,
+}
+
+#[derive(FromBytes, AsBytes, Unaligned)]
+#[repr(C, packed)]
+pub struct ErrorOutEventControlGpio {
+    pub pin: u8, // in FCH
+    pub iomux_control: u8, // how to configure that pin
+    pub bank_control: u8, // how to configure bank control
+}
+
+#[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
+#[repr(C, packed)]
+pub struct ErrorOutEventControlBeepCodePeakAttr {
+    // 5 bits: PeakCnt (number of valid bits, 0 based)
+    // 3 bits: PulseWidths (in units of 0.1 s)
+    // 4 bits: repeat count
+    value: u32,
+}
+
+// This avoids depending on rust-packed_struct or rust-bitfield additionally.
+impl ErrorOutEventControlBeepCodePeakAttr {
+    /// PULSE_WIDTH: in units of 0.1 s
+    pub fn new(peak_count: u32, pulse_width: u32, repeat_count: u32) -> Option<Self> {
+        if peak_count < 32 {
+        } else {
+            return None;
+        }
+        if pulse_width < 8 {
+        } else {
+            return None;
+        }
+        if repeat_count < 16 {
+        } else {
+            return None;
+        }
+        Some(Self {
+            value: peak_count | (pulse_width << 5) | (repeat_count << 8),
+        })
+    }
+    pub fn peak_count(&self) -> u32 {
+        self.value & 31
+    }
+    pub fn pulse_width(&self) -> u32 {
+        (self.value >> 5) & 7
+    }
+    pub fn repeat_count(&self) -> u32 {
+        (self.value >> 8) & 15
+    }
+}
+
+#[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
+#[repr(C, packed)]
+pub struct ErrorOutEventControlBeepCode {
+    pub error_type: U16<LittleEndian>,
+    pub peak_map: U16<LittleEndian>,
+    pub peak_attr: ErrorOutEventControlBeepCodePeakAttr,
+}
+
+#[derive(FromBytes, AsBytes, Unaligned)]
+#[repr(C, packed)]
+pub struct ErrorOutEventControl116 { // Milan
+    pub enable_error_reporting: u8, // bool
+    pub enable_error_reporting_gpio: u8, // bool
+    pub enable_error_reporting_beep_codes: u8, // bool
+    pub enable_using_handshake: u8, // bool; otherwise see output_delay
+    pub input_port: U32<LittleEndian>, // for handshake
+    pub output_delay: U32<LittleEndian>, // if no handshake; in units of 10 ns.
+    pub output_port: U32<LittleEndian>,
+    pub stop_on_first_fatal_error: u8,
+    _reserved: [u8; 3],
+    pub input_port_size: U32<LittleEndian>, // in Byte; 1|2|4
+    pub output_port_size: U32<LittleEndian>, // in Byte; 1|2|4
+    input_port_type: U32<LittleEndian>, // PortType; default: 6
+    output_port_type: U32<LittleEndian>, // PortType; default: 6
+    pub clear_acknowledgement: u8, // bool
+    _reserved_2: [u8; 3],
+    pub gpio: ErrorOutEventControlGpio,
+    _reserved_3: u8,
+    pub beep_code_table: [ErrorOutEventControlBeepCode; 8],
+    pub enable_heart_beat: u8,
+    pub enable_power_good_gpio: u8,
+    pub power_good_gpio: ErrorOutEventControlGpio,
+    _reserved_4: [u8; 3], // pad
+}
+
+impl Default for ErrorOutEventControl116 {
+    fn default() -> Self {
+        Self {
+            enable_error_reporting: 0.into(),
+            enable_error_reporting_gpio: 0.into(),
+            enable_error_reporting_beep_codes: 0.into(),
+            enable_using_handshake: 0.into(),
+            input_port: 0x84.into(),
+            output_delay: 15000.into(),
+            output_port: 0x80.into(),
+            stop_on_first_fatal_error: 0.into(),
+            _reserved: [0; 3],
+            input_port_size: 4.into(),
+            output_port_size: 4.into(),
+            input_port_type: (PortType::FchHtIo as u32).into(),
+            output_port_type: (PortType::FchHtIo as u32).into(),
+            clear_acknowledgement: 0,
+            _reserved_2: [0; 3],
+            gpio: ErrorOutEventControlGpio {
+                pin: 0,
+                iomux_control: 0,
+                bank_control: 0,
+            },
+            _reserved_3: 0,
+            beep_code_table: [ErrorOutEventControlBeepCode {
+                error_type: 0.into(),
+                peak_map: 0.into(),
+                peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(0, 0, 0).unwrap() }; 8], // FIXME
+            enable_heart_beat: 0.into(), // FIXME
+            enable_power_good_gpio: 0.into(), // FIXME
+            power_good_gpio: ErrorOutEventControlGpio {
+                pin: 0,
+                iomux_control: 0,
+                bank_control: 0,
+            }, // FIXME
+            _reserved_4: [0; 3], // FIXME
+        }
+    }
+}
+
+#[derive(FromBytes, AsBytes, Unaligned)]
+#[repr(C, packed)]
+pub struct ErrorOutEventControl112 { // older than Milan
+    pub enable_error_reporting: u8, // bool
+    pub enable_error_reporting_gpio: u8, // bool
+    pub enable_error_reporting_beep_codes: u8, // bool
+    pub enable_using_handshake: u8, // bool; otherwise see output_delay
+    pub input_port: U32<LittleEndian>, // for handshake
+    pub output_delay: U32<LittleEndian>, // if no handshake; in units of 10 ns.
+    pub output_port: U32<LittleEndian>,
+    pub stop_on_first_fatal_error: u8,
+    _reserved: [u8; 3],
+    pub input_port_size: U32<LittleEndian>, // in Byte; 1|2|4
+    pub output_port_size: U32<LittleEndian>, // in Byte; 1|2|4
+    input_port_type: U32<LittleEndian>, // PortType; default: 6
+    output_port_type: U32<LittleEndian>, // PortType; default: 6
+    pub clear_acknowledgement: u8, // bool
+    pub gpio: ErrorOutEventControlGpio,
+    // @40
+    pub beep_code_table: [ErrorOutEventControlBeepCode; 8],
+    // 0x68=104
+    pub enable_heart_beat: u8,
+    pub enable_power_good_gpio: u8,
+    pub power_good_gpio: ErrorOutEventControlGpio,
+    _reserved_2: [u8; 3], // pad
+}
+
+impl Default for ErrorOutEventControl112 {
+    fn default() -> Self {
+        Self {
+            enable_error_reporting: 0.into(),
+            enable_error_reporting_gpio: 0.into(),
+            enable_error_reporting_beep_codes: 0.into(),
+            enable_using_handshake: 0.into(),
+            input_port: 0x84.into(),
+            output_delay: 15000.into(),
+            output_port: 0x80.into(),
+            stop_on_first_fatal_error: 0.into(),
+            _reserved: [0; 3],
+            input_port_size: 4.into(),
+            output_port_size: 4.into(),
+            input_port_type: (PortType::FchHtIo as u32).into(),
+            output_port_type: (PortType::FchHtIo as u32).into(),
+            clear_acknowledgement: 0,
+            gpio: ErrorOutEventControlGpio {
+                pin: 0,
+                iomux_control: 0,
+                bank_control: 0,
+            },
+            beep_code_table: [ErrorOutEventControlBeepCode {
+                error_type: 0.into(),
+                peak_map: 0.into(),
+                peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(0, 0, 0).unwrap() }; 8], // FIXME
+            enable_heart_beat: 0.into(), // FIXME
+            enable_power_good_gpio: 0.into(), // FIXME
+            power_good_gpio: ErrorOutEventControlGpio {
+                pin: 0,
+                iomux_control: 0,
+                bank_control: 0,
+            }, // FIXME
+            _reserved_2: [0; 3], // FIXME
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1140,5 +1338,16 @@ mod tests {
         const_assert!(size_of::<DataBusElement>() == 52);
         const_assert!(size_of::<MaxFreqElement>() == 16);
         const_assert!(size_of::<LrMaxFreqElement>() == 16);
+        const_assert!(size_of::<ErrorOutEventControlGpio>() == 3);
+        const_assert!(size_of::<ErrorOutEventControlBeepCode>() == 8);
+        const_assert!(size_of::<ErrorOutEventControlBeepCodePeakAttr>() == 4);
+        assert!(offset_of!(ErrorOutEventControl116, beep_code_table) == 44);
+        assert!(offset_of!(ErrorOutEventControl116, enable_heart_beat) == 108);
+        assert!(offset_of!(ErrorOutEventControl116, power_good_gpio) == 110);
+        const_assert!(size_of::<ErrorOutEventControl116>() == 116);
+        assert!(offset_of!(ErrorOutEventControl112, beep_code_table) == 40);
+        assert!(offset_of!(ErrorOutEventControl112, enable_heart_beat) == 104);
+        assert!(offset_of!(ErrorOutEventControl112, power_good_gpio) == 106);
+        const_assert!(size_of::<ErrorOutEventControl112>() == 112);
     }
 }
