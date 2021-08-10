@@ -1074,6 +1074,30 @@ impl Default for DataBusElement {
     }
 }
 
+// Usually an array of those is used
+// Note: This structure is not used for LR DRAM
+#[derive(FromBytes, AsBytes, Unaligned)]
+#[repr(C, packed)]
+pub struct MaxFreqElement {
+    pub dimm_slots_per_channel: u8,
+    _reserved: u8,
+    pub conditions: [U16<LittleEndian>; 4], // number of dimm on a channel, number of single-rank dimm, number of dual-rank dimm, number of quad-rank dimm
+    pub speeds: [U16<LittleEndian>; 3], // speed limit with voltage 1.5 V, 1.35 V, 1.25 V
+}
+
+impl Default for MaxFreqElement {
+    fn default() -> Self {
+        Self {
+            dimm_slots_per_channel: 1,
+            _reserved: 0,
+            conditions: [1.into(), 1.into(), 0.into(), 0.into()],
+            speeds: [1600.into(), 4401.into(), 4401.into()],
+        }
+    }
+}
+
+type StretchFreqElement = MaxFreqElement;
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1093,5 +1117,6 @@ mod tests {
         const_assert!(size_of::<ExtVoltageControl>() == 32);
         const_assert!(size_of::<CadBusElement>() == 36);
         const_assert!(size_of::<DataBusElement>() == 52);
+        const_assert!(size_of::<MaxFreqElement>() == 16);
     }
 }
