@@ -1098,6 +1098,27 @@ impl Default for MaxFreqElement {
 
 type StretchFreqElement = MaxFreqElement;
 
+// Usually an array of those is used
+#[derive(FromBytes, AsBytes, Unaligned)]
+#[repr(C, packed)]
+pub struct LrMaxFreqElement {
+    pub dimm_slots_per_channel: u8,
+    _reserved: u8,
+    pub conditions: [U16<LittleEndian>; 4], // maybe: number of dimm on a channel, 0, number of lr dimm, 0
+    pub speeds: [U16<LittleEndian>; 3], // maybe: speed limit with voltage 1.5 V, 1.35 V, 1.25 V
+}
+
+impl Default for LrMaxFreqElement {
+    fn default() -> Self {
+        Self {
+            dimm_slots_per_channel: 1,
+            _reserved: 0,
+            conditions: [1.into(), 0.into(), 1.into(), 0.into()],
+            speeds: [1600.into(), 4401.into(), 4401.into()],
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1118,5 +1139,6 @@ mod tests {
         const_assert!(size_of::<CadBusElement>() == 36);
         const_assert!(size_of::<DataBusElement>() == 52);
         const_assert!(size_of::<MaxFreqElement>() == 16);
+        const_assert!(size_of::<LrMaxFreqElement>() == 16);
     }
 }
