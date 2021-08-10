@@ -1031,6 +1031,49 @@ impl Default for CadBusElement {
     }
 }
 
+// See <https://www.micron.com/-/media/client/global/documents/products/data-sheet/dram/ddr4/8gb_auto_ddr4_dram.pdf>
+// Usually an array of those is used
+// Note: This structure is not used for soldered-down DRAM!
+#[derive(FromBytes, AsBytes, Unaligned)]
+#[repr(C, packed)]
+pub struct DataBusElement {
+    pub dimm_slots_per_channel: U32<LittleEndian>,
+    pub ddr_rate: U32<LittleEndian>,
+    pub vdd_io: U32<LittleEndian>,
+    pub dimm0_ranks: U32<LittleEndian>, // 1|2|4|6
+    pub dimm1_ranks: U32<LittleEndian>, // 1|2|4|6
+
+    pub rtt_nom: U32<LittleEndian>, // contains nominal on-die termination mode (not used on writes); 0|1|7
+    pub rtt_wr: U32<LittleEndian>, // contains dynamic on-die termination mode (used on writes); 0|1|4
+    pub rtt_park: U32<LittleEndian>, // contains ODT termination resistor to be used when ODT is low; 4|5|7
+    pub dq_drive_strength: U32<LittleEndian>, // for data
+    pub dqs_drive_strength: U32<LittleEndian>, // for data strobe (bit clock)
+    pub odt_drive_strength: U32<LittleEndian>, // for on-die termination
+    pub pmu_phy_vref: U32<LittleEndian>,
+    pub dq_vref: U32<LittleEndian>, // MR6 vref calibration value; 23|30|32
+}
+
+impl Default for DataBusElement {
+    fn default() -> Self {
+        Self {
+            dimm_slots_per_channel: 1.into(),
+            ddr_rate: 0x1373200.into(), // always
+            vdd_io: 1.into(), // always
+            dimm0_ranks: 2.into(),
+            dimm1_ranks: 1.into(),
+
+            rtt_nom: 0.into(),
+            rtt_wr: 0.into(),
+            rtt_park: 5.into(),
+            dq_drive_strength: 62.into(), // always
+            dqs_drive_strength: 62.into(), // always
+            odt_drive_strength: 24.into(), // always
+            pmu_phy_vref: 91.into(),
+            dq_vref: 23.into(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1049,5 +1092,6 @@ mod tests {
         const_assert!(size_of::<ConsoleOutControl>() == 20);
         const_assert!(size_of::<ExtVoltageControl>() == 32);
         const_assert!(size_of::<CadBusElement>() == 36);
+        const_assert!(size_of::<DataBusElement>() == 52);
     }
 }
