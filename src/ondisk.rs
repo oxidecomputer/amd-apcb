@@ -1204,6 +1204,15 @@ pub mod memory {
         }
     }
 
+    impl EntryCompatible for LrMaxFreqElement {
+        fn is_entry_compatible(entry_id: EntryId) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::PsLrdimmDdr4MaxFreq) => true,
+                _ => false,
+            }
+        }
+    }
+
     #[repr(u32)]
     #[derive(Debug, PartialEq, FromPrimitive, Copy, Clone)]
     pub enum PortType {
