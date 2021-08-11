@@ -1126,6 +1126,20 @@ pub mod memory {
         }
     }
 
+    impl EntryCompatible for DataBusElement {
+        fn is_entry_compatible(entry_id: EntryId) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::PsUdimmDdr4DataBus) => true,
+                EntryId::Memory(MemoryEntryId::PsRdimmDdr4DataBus) => true,
+                // TODO: Check EntryId::Memory(Ps3dsRdimmDdr4DataBus) => true
+                EntryId::Memory(MemoryEntryId::PsLrdimmDdr4DataBus) => true,
+                // TODO: Check EntryId::Memory(PsSodimmDdr4DataBus) => true
+                // Definitely not: EntryId::PsDramdownDdr4DataBus => true
+                _ => false,
+            }
+        }
+    }
+
     // Usually an array of those is used
     // Note: This structure is not used for LR DRAM
     #[derive(FromBytes, AsBytes, Unaligned)]
