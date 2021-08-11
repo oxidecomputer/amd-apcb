@@ -1366,7 +1366,6 @@ pub mod memory {
         pub gpio: ErrorOutEventControlGpio,
         // @40
         pub beep_code_table: [ErrorOutEventControlBeepCode; 8],
-        // 0x68=104
         pub enable_heart_beat: u8,
         pub enable_power_good_gpio: u8,
         pub power_good_gpio: ErrorOutEventControlGpio,
