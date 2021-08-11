@@ -1,9 +1,10 @@
+use core::mem::size_of;
 use crate::types::{Result, Error, FileSystemError};
-
 use crate::ondisk::ENTRY_HEADER;
-pub use crate::ondisk::{ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
+pub use crate::ondisk::{ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut, EntryCompatible, MemoryEntryId};
 use num_traits::FromPrimitive;
 use crate::tokens_entry::TokensEntryBodyItem;
+use zerocopy::FromBytes;
 
 /* Note: high-level interface is:
 
@@ -233,5 +234,27 @@ impl EntryItem<'_> {
         ContextFormat::from_u8(self.header.context_format).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_format"))?;
         self.body.validate()?;
         Ok(())
+    }
+
+    pub fn body_as_struct<T: EntryCompatible + Sized + FromBytes>(&self) -> Option<&T> {
+        match self.body {
+            EntryItemBody::Struct(buf) => {
+                let mut buf = buf.clone();
+                if T::is_entry_compatible(self.id()) {
+                    if buf.len() == size_of::<T>() {
+                        let result = take_header_from_collection::<T>(&mut buf)?;
+                        assert!(buf.is_empty());
+                        Some(result)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            },
+            _ => {
+                None
+            },
+        }
     }
 }
