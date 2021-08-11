@@ -873,446 +873,477 @@ Token:
     value
 */
 
-#[derive(FromBytes, AsBytes, Unaligned)]
-#[repr(C, packed)]
-pub struct DimmInfoSmbus {
-    pub dimm_slot_present: u8,
-    pub socket_id: u8,
-    pub channel_id: u8,
-    pub dimm_id: u8,
-    pub dimm_smbus_address: u8,
-    pub i2c_mux_address: u8,
-    pub mux_control_address: u8,
-    pub max_channel: u8,
-}
+pub mod memory {
+    use super::*;
+    #[derive(FromBytes, AsBytes, Unaligned)]
+    #[repr(C, packed)]
+    pub struct DimmInfoSmbus {
+        pub dimm_slot_present: u8,
+        pub socket_id: u8,
+        pub channel_id: u8,
+        pub dimm_id: u8,
+        pub dimm_smbus_address: u8,
+        pub i2c_mux_address: u8,
+        pub mux_control_address: u8,
+        pub max_channel: u8,
+    }
 
-//pub type PsoData = &[u8];
+    //pub type PsoData = &[u8];
 
-#[derive(FromBytes, AsBytes, Unaligned)]
-#[repr(C, packed)]
-pub struct AblConsoleOutControl {
-    pub enable_console_logging: u8, // bool
-    pub enable_mem_flow_logging: u8, // bool
-    pub enable_mem_setreg_logging: u8, // bool
-    pub enable_mem_getreg_logging: u8, // bool
-    pub enable_mem_status_logging: u8, // bool
-    pub enable_mem_pmu_logging: u8, // bool
-    pub enable_mem_pmu_sram_read_logging: u8, // bool
-    pub enable_mem_pmu_sram_write_logging: u8, // bool
-    pub enable_mem_test_verbose_logging: u8, // bool
-    pub enable_mem_basic_output_logging: u8, // bool
-    _reserved: U16<LittleEndian>,
-    pub abl_console_port: U32<LittleEndian>,
-}
+    #[derive(FromBytes, AsBytes, Unaligned)]
+    #[repr(C, packed)]
+    pub struct AblConsoleOutControl {
+        pub enable_console_logging: u8, // bool
+        pub enable_mem_flow_logging: u8, // bool
+        pub enable_mem_setreg_logging: u8, // bool
+        pub enable_mem_getreg_logging: u8, // bool
+        pub enable_mem_status_logging: u8, // bool
+        pub enable_mem_pmu_logging: u8, // bool
+        pub enable_mem_pmu_sram_read_logging: u8, // bool
+        pub enable_mem_pmu_sram_write_logging: u8, // bool
+        pub enable_mem_test_verbose_logging: u8, // bool
+        pub enable_mem_basic_output_logging: u8, // bool
+        _reserved: U16<LittleEndian>,
+        pub abl_console_port: U32<LittleEndian>,
+    }
 
-impl Default for AblConsoleOutControl {
-    fn default() -> Self {
-        Self {
-            enable_console_logging: 1,
-            enable_mem_flow_logging: 1,
-            enable_mem_setreg_logging: 1,
-            enable_mem_getreg_logging: 0,
-            enable_mem_status_logging: 0,
-            enable_mem_pmu_logging: 0,
-            enable_mem_pmu_sram_read_logging: 0,
-            enable_mem_pmu_sram_write_logging: 0,
-            enable_mem_test_verbose_logging: 0,
-            enable_mem_basic_output_logging: 0,
-            _reserved: 0u16.into(),
-            abl_console_port: 0x80u32.into(),
+    impl Default for AblConsoleOutControl {
+        fn default() -> Self {
+            Self {
+                enable_console_logging: 1,
+                enable_mem_flow_logging: 1,
+                enable_mem_setreg_logging: 1,
+                enable_mem_getreg_logging: 0,
+                enable_mem_status_logging: 0,
+                enable_mem_pmu_logging: 0,
+                enable_mem_pmu_sram_read_logging: 0,
+                enable_mem_pmu_sram_write_logging: 0,
+                enable_mem_test_verbose_logging: 0,
+                enable_mem_basic_output_logging: 0,
+                _reserved: 0u16.into(),
+                abl_console_port: 0x80u32.into(),
+            }
         }
     }
-}
 
-#[derive(FromBytes, AsBytes, Unaligned)]
-#[repr(C, packed)]
-pub struct AblBreakpointControl {
-    enable_breakpoint: u8, // bool
-    break_on_all_dies: u8, // bool
-}
+    #[derive(FromBytes, AsBytes, Unaligned)]
+    #[repr(C, packed)]
+    pub struct AblBreakpointControl {
+        enable_breakpoint: u8, // bool
+        break_on_all_dies: u8, // bool
+    }
 
-impl Default for AblBreakpointControl {
-    fn default() -> Self {
-        Self {
-             enable_breakpoint: 1,
-             break_on_all_dies: 1,
+    impl Default for AblBreakpointControl {
+        fn default() -> Self {
+            Self {
+                 enable_breakpoint: 1,
+                 break_on_all_dies: 1,
+            }
         }
     }
-}
 
-#[derive(FromBytes, AsBytes, Unaligned)]
-#[repr(C, packed)]
-pub struct ConsoleOutControl {
-    abl_console_out_control: AblConsoleOutControl,
-    abl_breakpoint_control: AblBreakpointControl,
-    _reserved: U16<LittleEndian>,
-}
+    #[derive(FromBytes, AsBytes, Unaligned)]
+    #[repr(C, packed)]
+    pub struct ConsoleOutControl {
+        abl_console_out_control: AblConsoleOutControl,
+        abl_breakpoint_control: AblBreakpointControl,
+        _reserved: U16<LittleEndian>,
+    }
 
-impl Default for ConsoleOutControl {
-    fn default() -> Self {
-        Self {
-            abl_console_out_control: AblConsoleOutControl::default(),
-            abl_breakpoint_control: AblBreakpointControl::default(),
-            _reserved: 0.into(),
+    impl Default for ConsoleOutControl {
+        fn default() -> Self {
+            Self {
+                abl_console_out_control: AblConsoleOutControl::default(),
+                abl_breakpoint_control: AblBreakpointControl::default(),
+                _reserved: 0.into(),
+            }
         }
     }
-}
 
-#[derive(FromBytes, AsBytes, Unaligned)]
-#[repr(C, packed)]
-pub struct ExtVoltageControl {
-    pub enable: U32<LittleEndian>, // bool
-    pub input_port: U32<LittleEndian>,
-    pub output_port: U32<LittleEndian>,
-    pub input_port_size: U32<LittleEndian>, // size in Byte; one of [1, 2, 4]
-    pub output_port_size: U32<LittleEndian>, // size in Byte; one of [1, 2, 4]
-    pub input_port_type: U32<LittleEndian>, // default: 6 (FCH)
-    pub output_port_type: U32<LittleEndian>, // default: 6 (FCH)
-    pub clear_ack: U32<LittleEndian>, // bool
-}
+    #[derive(FromBytes, AsBytes, Unaligned)]
+    #[repr(C, packed)]
+    pub struct ExtVoltageControl {
+        pub enable: U32<LittleEndian>, // bool
+        pub input_port: U32<LittleEndian>,
+        pub output_port: U32<LittleEndian>,
+        pub input_port_size: U32<LittleEndian>, // size in Byte; one of [1, 2, 4]
+        pub output_port_size: U32<LittleEndian>, // size in Byte; one of [1, 2, 4]
+        pub input_port_type: U32<LittleEndian>, // default: 6 (FCH)
+        pub output_port_type: U32<LittleEndian>, // default: 6 (FCH)
+        pub clear_ack: U32<LittleEndian>, // bool
+    }
 
-impl Default for ExtVoltageControl {
-    fn default() -> Self {
-        Self {
-            enable: 0u32.into(),
-            input_port: 0x84u32.into(),
-            output_port: 0x80u32.into(),
-            input_port_size: 4u32.into(),
-            output_port_size: 4u32.into(),
-            input_port_type: 6u32.into(),
-            output_port_type: 6u32.into(),
-            clear_ack: 0u32.into(),
+    impl Default for ExtVoltageControl {
+        fn default() -> Self {
+            Self {
+                enable: 0u32.into(),
+                input_port: 0x84u32.into(),
+                output_port: 0x80u32.into(),
+                input_port_size: 4u32.into(),
+                output_port_size: 4u32.into(),
+                input_port_type: 6u32.into(),
+                output_port_type: 6u32.into(),
+                clear_ack: 0u32.into(),
+            }
         }
     }
-}
 
-// Usually an array of those is used
-#[derive(FromBytes, AsBytes, Unaligned)]
-#[repr(C, packed)]
-pub struct CadBusElement {
-    pub dimm_slots_per_channel: U32<LittleEndian>, // 1 or 2
-    pub ddr_rate: U32<LittleEndian>, // 0xA00|0x2800|0x1_0000|0x4_0000|0xA_0000|0x28_0000|0x100_0000
-    pub vdd_io: U32<LittleEndian>, // always 1
-    pub dimm0_ranks: U32<LittleEndian>, // 1|2|4|6
-    pub dimm1_ranks: U32<LittleEndian>, // 1|2|4|6
+    // Usually an array of those is used
+    #[derive(FromBytes, AsBytes, Unaligned)]
+    #[repr(C, packed)]
+    pub struct CadBusElement {
+        pub dimm_slots_per_channel: U32<LittleEndian>, // 1 or 2
+        pub ddr_rate: U32<LittleEndian>, // 0xA00|0x2800|0x1_0000|0x4_0000|0xA_0000|0x28_0000|0x100_0000
+        pub vdd_io: U32<LittleEndian>, // always 1
+        pub dimm0_ranks: U32<LittleEndian>, // 1|2|4|6
+        pub dimm1_ranks: U32<LittleEndian>, // 1|2|4|6
 
-    pub gear_down_mode: U16<LittleEndian>,
-    _reserved: U16<LittleEndian>,
-    pub slow_mode: U16<LittleEndian>,
-    _reserved_2: U16<LittleEndian>,
-    pub address_command_control: U32<LittleEndian>, // 24 bit; often all used bytes are equal
+        pub gear_down_mode: U16<LittleEndian>,
+        _reserved: U16<LittleEndian>,
+        pub slow_mode: U16<LittleEndian>,
+        _reserved_2: U16<LittleEndian>,
+        pub address_command_control: U32<LittleEndian>, // 24 bit; often all used bytes are equal
 
-    pub cke_drive_strength: u8,
-    pub cs_odt_drive_strength: u8,
-    pub address_command_drive_strength: u8,
-    pub clk_drive_strength: u8,
-}
+        pub cke_drive_strength: u8,
+        pub cs_odt_drive_strength: u8,
+        pub address_command_drive_strength: u8,
+        pub clk_drive_strength: u8,
+    }
 
-impl Default for CadBusElement {
-    fn default() -> Self {
-        Self {
-            dimm_slots_per_channel: 1.into(),
-            ddr_rate: 0xa00.into(),
-            vdd_io: 1.into(), // always
-            dimm0_ranks: 6.into(), // maybe invalid
-            dimm1_ranks: 1.into(), // maybe invalid
+    impl Default for CadBusElement {
+        fn default() -> Self {
+            Self {
+                dimm_slots_per_channel: 1.into(),
+                ddr_rate: 0xa00.into(),
+                vdd_io: 1.into(), // always
+                dimm0_ranks: 6.into(), // maybe invalid
+                dimm1_ranks: 1.into(), // maybe invalid
 
-            gear_down_mode: 0.into(),
-            _reserved: 0.into(),
-            slow_mode: 0.into(),
-            _reserved_2: 0.into(),
-            address_command_control: 0x272727.into(), // maybe invalid
+                gear_down_mode: 0.into(),
+                _reserved: 0.into(),
+                slow_mode: 0.into(),
+                _reserved_2: 0.into(),
+                address_command_control: 0x272727.into(), // maybe invalid
 
-            cke_drive_strength: 7,
-            cs_odt_drive_strength: 7,
-            address_command_drive_strength: 7,
-            clk_drive_strength: 7,
+                cke_drive_strength: 7,
+                cs_odt_drive_strength: 7,
+                address_command_drive_strength: 7,
+                clk_drive_strength: 7,
+            }
         }
     }
-}
 
-// See <https://www.micron.com/-/media/client/global/documents/products/data-sheet/dram/ddr4/8gb_auto_ddr4_dram.pdf>
-// Usually an array of those is used
-// Note: This structure is not used for soldered-down DRAM!
-#[derive(FromBytes, AsBytes, Unaligned)]
-#[repr(C, packed)]
-pub struct DataBusElement {
-    pub dimm_slots_per_channel: U32<LittleEndian>,
-    pub ddr_rate: U32<LittleEndian>,
-    pub vdd_io: U32<LittleEndian>,
-    pub dimm0_ranks: U32<LittleEndian>, // 1|2|4|6
-    pub dimm1_ranks: U32<LittleEndian>, // 1|2|4|6
+    // See <https://www.micron.com/-/media/client/global/documents/products/data-sheet/dram/ddr4/8gb_auto_ddr4_dram.pdf>
+    // Usually an array of those is used
+    // Note: This structure is not used for soldered-down DRAM!
+    #[derive(FromBytes, AsBytes, Unaligned)]
+    #[repr(C, packed)]
+    pub struct DataBusElement {
+        pub dimm_slots_per_channel: U32<LittleEndian>,
+        pub ddr_rate: U32<LittleEndian>,
+        pub vdd_io: U32<LittleEndian>,
+        pub dimm0_ranks: U32<LittleEndian>, // 1|2|4|6
+        pub dimm1_ranks: U32<LittleEndian>, // 1|2|4|6
 
-    pub rtt_nom: U32<LittleEndian>, // contains nominal on-die termination mode (not used on writes); 0|1|7
-    pub rtt_wr: U32<LittleEndian>, // contains dynamic on-die termination mode (used on writes); 0|1|4
-    pub rtt_park: U32<LittleEndian>, // contains ODT termination resistor to be used when ODT is low; 4|5|7
-    pub dq_drive_strength: U32<LittleEndian>, // for data
-    pub dqs_drive_strength: U32<LittleEndian>, // for data strobe (bit clock)
-    pub odt_drive_strength: U32<LittleEndian>, // for on-die termination
-    pub pmu_phy_vref: U32<LittleEndian>,
-    pub dq_vref: U32<LittleEndian>, // MR6 vref calibration value; 23|30|32
-}
+        pub rtt_nom: U32<LittleEndian>, // contains nominal on-die termination mode (not used on writes); 0|1|7
+        pub rtt_wr: U32<LittleEndian>, // contains dynamic on-die termination mode (used on writes); 0|1|4
+        pub rtt_park: U32<LittleEndian>, // contains ODT termination resistor to be used when ODT is low; 4|5|7
+        pub dq_drive_strength: U32<LittleEndian>, // for data
+        pub dqs_drive_strength: U32<LittleEndian>, // for data strobe (bit clock)
+        pub odt_drive_strength: U32<LittleEndian>, // for on-die termination
+        pub pmu_phy_vref: U32<LittleEndian>,
+        pub dq_vref: U32<LittleEndian>, // MR6 vref calibration value; 23|30|32
+    }
 
-impl Default for DataBusElement {
-    fn default() -> Self {
-        Self {
-            dimm_slots_per_channel: 1.into(),
-            ddr_rate: 0x1373200.into(), // always
-            vdd_io: 1.into(), // always
-            dimm0_ranks: 2.into(),
-            dimm1_ranks: 1.into(),
+    impl Default for DataBusElement {
+        fn default() -> Self {
+            Self {
+                dimm_slots_per_channel: 1.into(),
+                ddr_rate: 0x1373200.into(), // always
+                vdd_io: 1.into(), // always
+                dimm0_ranks: 2.into(),
+                dimm1_ranks: 1.into(),
 
-            rtt_nom: 0.into(),
-            rtt_wr: 0.into(),
-            rtt_park: 5.into(),
-            dq_drive_strength: 62.into(), // always
-            dqs_drive_strength: 62.into(), // always
-            odt_drive_strength: 24.into(), // always
-            pmu_phy_vref: 91.into(),
-            dq_vref: 23.into(),
+                rtt_nom: 0.into(),
+                rtt_wr: 0.into(),
+                rtt_park: 5.into(),
+                dq_drive_strength: 62.into(), // always
+                dqs_drive_strength: 62.into(), // always
+                odt_drive_strength: 24.into(), // always
+                pmu_phy_vref: 91.into(),
+                dq_vref: 23.into(),
+            }
         }
     }
-}
 
-// Usually an array of those is used
-// Note: This structure is not used for LR DRAM
-#[derive(FromBytes, AsBytes, Unaligned)]
-#[repr(C, packed)]
-pub struct MaxFreqElement {
-    pub dimm_slots_per_channel: u8,
-    _reserved: u8,
-    pub conditions: [U16<LittleEndian>; 4], // number of dimm on a channel, number of single-rank dimm, number of dual-rank dimm, number of quad-rank dimm
-    pub speeds: [U16<LittleEndian>; 3], // speed limit with voltage 1.5 V, 1.35 V, 1.25 V
-}
+    // Usually an array of those is used
+    // Note: This structure is not used for LR DRAM
+    #[derive(FromBytes, AsBytes, Unaligned)]
+    #[repr(C, packed)]
+    pub struct MaxFreqElement {
+        pub dimm_slots_per_channel: u8,
+        _reserved: u8,
+        pub conditions: [U16<LittleEndian>; 4], // number of dimm on a channel, number of single-rank dimm, number of dual-rank dimm, number of quad-rank dimm
+        pub speeds: [U16<LittleEndian>; 3], // speed limit with voltage 1.5 V, 1.35 V, 1.25 V
+    }
 
-impl Default for MaxFreqElement {
-    fn default() -> Self {
-        Self {
-            dimm_slots_per_channel: 1,
-            _reserved: 0,
-            conditions: [1.into(), 1.into(), 0.into(), 0.into()],
-            speeds: [1600.into(), 4401.into(), 4401.into()],
+    impl Default for MaxFreqElement {
+        fn default() -> Self {
+            Self {
+                dimm_slots_per_channel: 1,
+                _reserved: 0,
+                conditions: [1.into(), 1.into(), 0.into(), 0.into()],
+                speeds: [1600.into(), 4401.into(), 4401.into()],
+            }
         }
     }
-}
 
-type StretchFreqElement = MaxFreqElement;
+    type StretchFreqElement = MaxFreqElement;
 
-// Usually an array of those is used
-#[derive(FromBytes, AsBytes, Unaligned)]
-#[repr(C, packed)]
-pub struct LrMaxFreqElement {
-    pub dimm_slots_per_channel: u8,
-    _reserved: u8,
-    pub conditions: [U16<LittleEndian>; 4], // maybe: number of dimm on a channel, 0, number of lr dimm, 0
-    pub speeds: [U16<LittleEndian>; 3], // maybe: speed limit with voltage 1.5 V, 1.35 V, 1.25 V
-}
+    // Usually an array of those is used
+    #[derive(FromBytes, AsBytes, Unaligned)]
+    #[repr(C, packed)]
+    pub struct LrMaxFreqElement {
+        pub dimm_slots_per_channel: u8,
+        _reserved: u8,
+        pub conditions: [U16<LittleEndian>; 4], // maybe: number of dimm on a channel, 0, number of lr dimm, 0
+        pub speeds: [U16<LittleEndian>; 3], // maybe: speed limit with voltage 1.5 V, 1.35 V, 1.25 V
+    }
 
-impl Default for LrMaxFreqElement {
-    fn default() -> Self {
-        Self {
-            dimm_slots_per_channel: 1,
-            _reserved: 0,
-            conditions: [1.into(), 0.into(), 1.into(), 0.into()],
-            speeds: [1600.into(), 4401.into(), 4401.into()],
+    impl Default for LrMaxFreqElement {
+        fn default() -> Self {
+            Self {
+                dimm_slots_per_channel: 1,
+                _reserved: 0,
+                conditions: [1.into(), 0.into(), 1.into(), 0.into()],
+                speeds: [1600.into(), 4401.into(), 4401.into()],
+            }
         }
     }
-}
 
-#[repr(u32)]
-#[derive(Debug, PartialEq, FromPrimitive, Copy, Clone)]
-pub enum PortType {
-    PcieHt0 = 0,
-    PcieHt1 = 2,
-    PcieMmio = 5,
-    FchHtIo = 6,
-    FchMmio = 7,
-}
+    #[repr(u32)]
+    #[derive(Debug, PartialEq, FromPrimitive, Copy, Clone)]
+    pub enum PortType {
+        PcieHt0 = 0,
+        PcieHt1 = 2,
+        PcieMmio = 5,
+        FchHtIo = 6,
+        FchMmio = 7,
+    }
 
-#[derive(FromBytes, AsBytes, Unaligned)]
-#[repr(C, packed)]
-pub struct ErrorOutEventControlGpio {
-    pub pin: u8, // in FCH
-    pub iomux_control: u8, // how to configure that pin
-    pub bank_control: u8, // how to configure bank control
-}
+    #[derive(FromBytes, AsBytes, Unaligned)]
+    #[repr(C, packed)]
+    pub struct ErrorOutEventControlGpio {
+        pub pin: u8, // in FCH
+        pub iomux_control: u8, // how to configure that pin
+        pub bank_control: u8, // how to configure bank control
+    }
 
-#[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
-#[repr(C, packed)]
-pub struct ErrorOutEventControlBeepCodePeakAttr {
-    // 5 bits: PeakCnt (number of valid bits, 0 based)
-    // 3 bits: PulseWidths (in units of 0.1 s)
-    // 4 bits: repeat count
-    value: u32,
-}
+    #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
+    #[repr(C, packed)]
+    pub struct ErrorOutEventControlBeepCodePeakAttr {
+        // 5 bits: PeakCnt (number of valid bits, 0 based)
+        // 3 bits: PulseWidths (in units of 0.1 s)
+        // 4 bits: repeat count
+        value: u32,
+    }
 
-// This avoids depending on rust-packed_struct or rust-bitfield additionally.
-impl ErrorOutEventControlBeepCodePeakAttr {
-    /// PULSE_WIDTH: in units of 0.1 s
-    pub fn new(peak_count: u32, pulse_width: u32, repeat_count: u32) -> Option<Self> {
-        if peak_count < 32 {
-        } else {
-            return None;
+    // This avoids depending on rust-packed_struct or rust-bitfield additionally.
+    impl ErrorOutEventControlBeepCodePeakAttr {
+        /// PULSE_WIDTH: in units of 0.1 s
+        pub fn new(peak_count: u32, pulse_width: u32, repeat_count: u32) -> Option<Self> {
+            if peak_count < 32 {
+            } else {
+                return None;
+            }
+            if pulse_width < 8 {
+            } else {
+                return None;
+            }
+            if repeat_count < 16 {
+            } else {
+                return None;
+            }
+            Some(Self {
+                value: peak_count | (pulse_width << 5) | (repeat_count << 8),
+            })
         }
-        if pulse_width < 8 {
-        } else {
-            return None;
+        pub fn peak_count(&self) -> u32 {
+            self.value & 31
         }
-        if repeat_count < 16 {
-        } else {
-            return None;
+        pub fn pulse_width(&self) -> u32 {
+            (self.value >> 5) & 7
         }
-        Some(Self {
-            value: peak_count | (pulse_width << 5) | (repeat_count << 8),
-        })
-    }
-    pub fn peak_count(&self) -> u32 {
-        self.value & 31
-    }
-    pub fn pulse_width(&self) -> u32 {
-        (self.value >> 5) & 7
-    }
-    pub fn repeat_count(&self) -> u32 {
-        (self.value >> 8) & 15
-    }
-}
-
-#[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
-#[repr(C, packed)]
-pub struct ErrorOutEventControlBeepCode {
-    pub error_type: U16<LittleEndian>,
-    pub peak_map: U16<LittleEndian>,
-    pub peak_attr: ErrorOutEventControlBeepCodePeakAttr,
-}
-
-#[derive(FromBytes, AsBytes, Unaligned)]
-#[repr(C, packed)]
-pub struct ErrorOutEventControl116 { // Milan
-    pub enable_error_reporting: u8, // bool
-    pub enable_error_reporting_gpio: u8, // bool
-    pub enable_error_reporting_beep_codes: u8, // bool
-    pub enable_using_handshake: u8, // bool; otherwise see output_delay
-    pub input_port: U32<LittleEndian>, // for handshake
-    pub output_delay: U32<LittleEndian>, // if no handshake; in units of 10 ns.
-    pub output_port: U32<LittleEndian>,
-    pub stop_on_first_fatal_error: u8,
-    _reserved: [u8; 3],
-    pub input_port_size: U32<LittleEndian>, // in Byte; 1|2|4
-    pub output_port_size: U32<LittleEndian>, // in Byte; 1|2|4
-    input_port_type: U32<LittleEndian>, // PortType; default: 6
-    output_port_type: U32<LittleEndian>, // PortType; default: 6
-    pub clear_acknowledgement: u8, // bool
-    _reserved_2: [u8; 3],
-    pub gpio: ErrorOutEventControlGpio,
-    _reserved_3: u8,
-    pub beep_code_table: [ErrorOutEventControlBeepCode; 8],
-    pub enable_heart_beat: u8,
-    pub enable_power_good_gpio: u8,
-    pub power_good_gpio: ErrorOutEventControlGpio,
-    _reserved_4: [u8; 3], // pad
-}
-
-impl Default for ErrorOutEventControl116 {
-    fn default() -> Self {
-        Self {
-            enable_error_reporting: 0.into(),
-            enable_error_reporting_gpio: 0.into(),
-            enable_error_reporting_beep_codes: 0.into(),
-            enable_using_handshake: 0.into(),
-            input_port: 0x84.into(),
-            output_delay: 15000.into(),
-            output_port: 0x80.into(),
-            stop_on_first_fatal_error: 0.into(),
-            _reserved: [0; 3],
-            input_port_size: 4.into(),
-            output_port_size: 4.into(),
-            input_port_type: (PortType::FchHtIo as u32).into(),
-            output_port_type: (PortType::FchHtIo as u32).into(),
-            clear_acknowledgement: 0,
-            _reserved_2: [0; 3],
-            gpio: ErrorOutEventControlGpio {
-                pin: 0,
-                iomux_control: 0,
-                bank_control: 0,
-            },
-            _reserved_3: 0,
-            beep_code_table: [ErrorOutEventControlBeepCode {
-                error_type: 0.into(),
-                peak_map: 0.into(),
-                peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(0, 0, 0).unwrap() }; 8], // FIXME
-            enable_heart_beat: 0.into(), // FIXME
-            enable_power_good_gpio: 0.into(), // FIXME
-            power_good_gpio: ErrorOutEventControlGpio {
-                pin: 0,
-                iomux_control: 0,
-                bank_control: 0,
-            }, // FIXME
-            _reserved_4: [0; 3], // FIXME
+        pub fn repeat_count(&self) -> u32 {
+            (self.value >> 8) & 15
         }
     }
-}
 
-#[derive(FromBytes, AsBytes, Unaligned)]
-#[repr(C, packed)]
-pub struct ErrorOutEventControl112 { // older than Milan
-    pub enable_error_reporting: u8, // bool
-    pub enable_error_reporting_gpio: u8, // bool
-    pub enable_error_reporting_beep_codes: u8, // bool
-    pub enable_using_handshake: u8, // bool; otherwise see output_delay
-    pub input_port: U32<LittleEndian>, // for handshake
-    pub output_delay: U32<LittleEndian>, // if no handshake; in units of 10 ns.
-    pub output_port: U32<LittleEndian>,
-    pub stop_on_first_fatal_error: u8,
-    _reserved: [u8; 3],
-    pub input_port_size: U32<LittleEndian>, // in Byte; 1|2|4
-    pub output_port_size: U32<LittleEndian>, // in Byte; 1|2|4
-    input_port_type: U32<LittleEndian>, // PortType; default: 6
-    output_port_type: U32<LittleEndian>, // PortType; default: 6
-    pub clear_acknowledgement: u8, // bool
-    pub gpio: ErrorOutEventControlGpio,
-    // @40
-    pub beep_code_table: [ErrorOutEventControlBeepCode; 8],
-    // 0x68=104
-    pub enable_heart_beat: u8,
-    pub enable_power_good_gpio: u8,
-    pub power_good_gpio: ErrorOutEventControlGpio,
-    _reserved_2: [u8; 3], // pad
-}
+    #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
+    #[repr(C, packed)]
+    pub struct ErrorOutEventControlBeepCode {
+        pub error_type: U16<LittleEndian>,
+        pub peak_map: U16<LittleEndian>,
+        pub peak_attr: ErrorOutEventControlBeepCodePeakAttr,
+    }
 
-impl Default for ErrorOutEventControl112 {
-    fn default() -> Self {
-        Self {
-            enable_error_reporting: 0.into(),
-            enable_error_reporting_gpio: 0.into(),
-            enable_error_reporting_beep_codes: 0.into(),
-            enable_using_handshake: 0.into(),
-            input_port: 0x84.into(),
-            output_delay: 15000.into(),
-            output_port: 0x80.into(),
-            stop_on_first_fatal_error: 0.into(),
-            _reserved: [0; 3],
-            input_port_size: 4.into(),
-            output_port_size: 4.into(),
-            input_port_type: (PortType::FchHtIo as u32).into(),
-            output_port_type: (PortType::FchHtIo as u32).into(),
-            clear_acknowledgement: 0,
-            gpio: ErrorOutEventControlGpio {
-                pin: 0,
-                iomux_control: 0,
-                bank_control: 0,
-            },
-            beep_code_table: [ErrorOutEventControlBeepCode {
-                error_type: 0.into(),
-                peak_map: 0.into(),
-                peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(0, 0, 0).unwrap() }; 8], // FIXME
-            enable_heart_beat: 0.into(), // FIXME
-            enable_power_good_gpio: 0.into(), // FIXME
-            power_good_gpio: ErrorOutEventControlGpio {
-                pin: 0,
-                iomux_control: 0,
-                bank_control: 0,
-            }, // FIXME
-            _reserved_2: [0; 3], // FIXME
+    #[derive(FromBytes, AsBytes, Unaligned)]
+    #[repr(C, packed)]
+    pub struct ErrorOutEventControl116 { // Milan
+        pub enable_error_reporting: u8, // bool
+        pub enable_error_reporting_gpio: u8, // bool
+        pub enable_error_reporting_beep_codes: u8, // bool
+        pub enable_using_handshake: u8, // bool; otherwise see output_delay
+        pub input_port: U32<LittleEndian>, // for handshake
+        pub output_delay: U32<LittleEndian>, // if no handshake; in units of 10 ns.
+        pub output_port: U32<LittleEndian>,
+        pub stop_on_first_fatal_error: u8,
+        _reserved: [u8; 3],
+        pub input_port_size: U32<LittleEndian>, // in Byte; 1|2|4
+        pub output_port_size: U32<LittleEndian>, // in Byte; 1|2|4
+        input_port_type: U32<LittleEndian>, // PortType; default: 6
+        output_port_type: U32<LittleEndian>, // PortType; default: 6
+        pub clear_acknowledgement: u8, // bool
+        _reserved_2: [u8; 3],
+        pub gpio: ErrorOutEventControlGpio,
+        _reserved_3: u8,
+        pub beep_code_table: [ErrorOutEventControlBeepCode; 8],
+        pub enable_heart_beat: u8,
+        pub enable_power_good_gpio: u8,
+        pub power_good_gpio: ErrorOutEventControlGpio,
+        _reserved_4: [u8; 3], // pad
+    }
+
+    impl Default for ErrorOutEventControl116 {
+        fn default() -> Self {
+            Self {
+                enable_error_reporting: 0.into(),
+                enable_error_reporting_gpio: 0.into(),
+                enable_error_reporting_beep_codes: 0.into(),
+                enable_using_handshake: 0.into(),
+                input_port: 0x84.into(),
+                output_delay: 15000.into(),
+                output_port: 0x80.into(),
+                stop_on_first_fatal_error: 0.into(),
+                _reserved: [0; 3],
+                input_port_size: 4.into(),
+                output_port_size: 4.into(),
+                input_port_type: (PortType::FchHtIo as u32).into(),
+                output_port_type: (PortType::FchHtIo as u32).into(),
+                clear_acknowledgement: 0,
+                _reserved_2: [0; 3],
+                gpio: ErrorOutEventControlGpio {
+                    pin: 0,
+                    iomux_control: 0,
+                    bank_control: 0,
+                },
+                _reserved_3: 0,
+                beep_code_table: [ErrorOutEventControlBeepCode {
+                    error_type: 0.into(),
+                    peak_map: 0.into(),
+                    peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(0, 0, 0).unwrap() }; 8], // FIXME
+                enable_heart_beat: 0.into(), // FIXME
+                enable_power_good_gpio: 0.into(), // FIXME
+                power_good_gpio: ErrorOutEventControlGpio {
+                    pin: 0,
+                    iomux_control: 0,
+                    bank_control: 0,
+                }, // FIXME
+                _reserved_4: [0; 3], // FIXME
+            }
+        }
+    }
+
+    #[derive(FromBytes, AsBytes, Unaligned)]
+    #[repr(C, packed)]
+    pub struct ErrorOutEventControl112 { // older than Milan
+        pub enable_error_reporting: u8, // bool
+        pub enable_error_reporting_gpio: u8, // bool
+        pub enable_error_reporting_beep_codes: u8, // bool
+        pub enable_using_handshake: u8, // bool; otherwise see output_delay
+        pub input_port: U32<LittleEndian>, // for handshake
+        pub output_delay: U32<LittleEndian>, // if no handshake; in units of 10 ns.
+        pub output_port: U32<LittleEndian>,
+        pub stop_on_first_fatal_error: u8,
+        _reserved: [u8; 3],
+        pub input_port_size: U32<LittleEndian>, // in Byte; 1|2|4
+        pub output_port_size: U32<LittleEndian>, // in Byte; 1|2|4
+        input_port_type: U32<LittleEndian>, // PortType; default: 6
+        output_port_type: U32<LittleEndian>, // PortType; default: 6
+        pub clear_acknowledgement: u8, // bool
+        pub gpio: ErrorOutEventControlGpio,
+        // @40
+        pub beep_code_table: [ErrorOutEventControlBeepCode; 8],
+        // 0x68=104
+        pub enable_heart_beat: u8,
+        pub enable_power_good_gpio: u8,
+        pub power_good_gpio: ErrorOutEventControlGpio,
+        _reserved_2: [u8; 3], // pad
+    }
+
+    impl Default for ErrorOutEventControl112 {
+        fn default() -> Self {
+            Self {
+                enable_error_reporting: 0.into(),
+                enable_error_reporting_gpio: 0.into(),
+                enable_error_reporting_beep_codes: 0.into(),
+                enable_using_handshake: 0.into(),
+                input_port: 0x84.into(),
+                output_delay: 15000.into(),
+                output_port: 0x80.into(),
+                stop_on_first_fatal_error: 0.into(),
+                _reserved: [0; 3],
+                input_port_size: 4.into(),
+                output_port_size: 4.into(),
+                input_port_type: (PortType::FchHtIo as u32).into(),
+                output_port_type: (PortType::FchHtIo as u32).into(),
+                clear_acknowledgement: 0,
+                gpio: ErrorOutEventControlGpio {
+                    pin: 0,
+                    iomux_control: 0,
+                    bank_control: 0,
+                },
+                beep_code_table: [ErrorOutEventControlBeepCode {
+                    error_type: 0.into(),
+                    peak_map: 0.into(),
+                    peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(0, 0, 0).unwrap() }; 8], // FIXME
+                enable_heart_beat: 0.into(), // FIXME
+                enable_power_good_gpio: 0.into(), // FIXME
+                power_good_gpio: ErrorOutEventControlGpio {
+                    pin: 0,
+                    iomux_control: 0,
+                    bank_control: 0,
+                }, // FIXME
+                _reserved_2: [0; 3], // FIXME
+            }
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn test_memory_structs() {
+            const_assert!(size_of::<DimmInfoSmbus>() == 8);
+            const_assert!(size_of::<AblConsoleOutControl>() == 16);
+            const_assert!(size_of::<ConsoleOutControl>() == 20);
+            const_assert!(size_of::<ExtVoltageControl>() == 32);
+            const_assert!(size_of::<CadBusElement>() == 36);
+            const_assert!(size_of::<DataBusElement>() == 52);
+            const_assert!(size_of::<MaxFreqElement>() == 16);
+            const_assert!(size_of::<LrMaxFreqElement>() == 16);
+            const_assert!(size_of::<ErrorOutEventControlGpio>() == 3);
+            const_assert!(size_of::<ErrorOutEventControlBeepCode>() == 8);
+            const_assert!(size_of::<ErrorOutEventControlBeepCodePeakAttr>() == 4);
+            assert!(offset_of!(ErrorOutEventControl116, beep_code_table) == 44);
+            assert!(offset_of!(ErrorOutEventControl116, enable_heart_beat) == 108);
+            assert!(offset_of!(ErrorOutEventControl116, power_good_gpio) == 110);
+            const_assert!(size_of::<ErrorOutEventControl116>() == 116);
+            assert!(offset_of!(ErrorOutEventControl112, beep_code_table) == 40);
+            assert!(offset_of!(ErrorOutEventControl112, enable_heart_beat) == 104);
+            assert!(offset_of!(ErrorOutEventControl112, power_good_gpio) == 106);
+            const_assert!(size_of::<ErrorOutEventControl112>() == 112);
         }
     }
 }
@@ -1330,24 +1361,5 @@ mod tests {
         const_assert!(size_of::<GROUP_HEADER>() % ENTRY_ALIGNMENT == 0);
         const_assert!(size_of::<ENTRY_HEADER>() == 16);
         const_assert!(size_of::<ENTRY_HEADER>() % ENTRY_ALIGNMENT == 0);
-        const_assert!(size_of::<DimmInfoSmbus>() == 8);
-        const_assert!(size_of::<AblConsoleOutControl>() == 16);
-        const_assert!(size_of::<ConsoleOutControl>() == 20);
-        const_assert!(size_of::<ExtVoltageControl>() == 32);
-        const_assert!(size_of::<CadBusElement>() == 36);
-        const_assert!(size_of::<DataBusElement>() == 52);
-        const_assert!(size_of::<MaxFreqElement>() == 16);
-        const_assert!(size_of::<LrMaxFreqElement>() == 16);
-        const_assert!(size_of::<ErrorOutEventControlGpio>() == 3);
-        const_assert!(size_of::<ErrorOutEventControlBeepCode>() == 8);
-        const_assert!(size_of::<ErrorOutEventControlBeepCodePeakAttr>() == 4);
-        assert!(offset_of!(ErrorOutEventControl116, beep_code_table) == 44);
-        assert!(offset_of!(ErrorOutEventControl116, enable_heart_beat) == 108);
-        assert!(offset_of!(ErrorOutEventControl116, power_good_gpio) == 110);
-        const_assert!(size_of::<ErrorOutEventControl116>() == 116);
-        assert!(offset_of!(ErrorOutEventControl112, beep_code_table) == 40);
-        assert!(offset_of!(ErrorOutEventControl112, enable_heart_beat) == 104);
-        assert!(offset_of!(ErrorOutEventControl112, power_good_gpio) == 106);
-        const_assert!(size_of::<ErrorOutEventControl112>() == 112);
     }
 }
