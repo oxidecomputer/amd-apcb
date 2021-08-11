@@ -1,11 +1,13 @@
 
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum FileSystemError {
     InconsistentHeader,
     PayloadTooBig,
 }
 
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum Error {
     ArithmeticOverflow,
     Internal,
