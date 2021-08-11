@@ -1070,6 +1070,19 @@ pub mod memory {
         }
     }
 
+    impl EntryCompatible for CadBusElement {
+        fn is_entry_compatible(entry_id: EntryId) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::PsUdimmDdr4CadBus) => true,
+                EntryId::Memory(MemoryEntryId::PsRdimmDdr4CadBus) => true,
+                EntryId::Memory(MemoryEntryId::PsLrdimmDdr4CadBus) => true,
+                // TODO: Check EntryId::Memory(MemoryEntryId::PsSodimmDdr4CadBus) => true
+                // Definitely not: PsDramdownDdr4CadBus.
+                _ => false,
+            }
+        }
+    }
+
     // See <https://www.micron.com/-/media/client/global/documents/products/data-sheet/dram/ddr4/8gb_auto_ddr4_dram.pdf>
     // Usually an array of those is used
     // Note: This structure is not used for soldered-down DRAM!
