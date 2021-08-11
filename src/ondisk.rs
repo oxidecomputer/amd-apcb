@@ -979,6 +979,15 @@ pub mod memory {
         }
     }
 
+    impl EntryCompatible for ConsoleOutControl {
+        fn is_entry_compatible(entry_id: EntryId) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::ConsoleOutControl) => true,
+                _ => false,
+            }
+        }
+    }
+
     #[derive(FromBytes, AsBytes, Unaligned)]
     #[repr(C, packed)]
     pub struct ExtVoltageControl {
