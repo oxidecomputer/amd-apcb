@@ -873,8 +873,18 @@ Token:
     value
 */
 
+
+pub trait EntryCompatible {
+    /// Returns whether the ENTRY_ID can in principle house the impl of the trait EntryCompatible.
+    /// Note: Usually, you still need to check whether the size is correct.  Since arrays are allowed and the ondisk structures then are array Element only, the payload size can be a natural multiple of the struct size.
+    fn is_entry_compatible(entry_id: EntryId) -> bool {
+        false
+    }
+}
+
 pub mod memory {
     use super::*;
+
     #[derive(FromBytes, AsBytes, Unaligned)]
     #[repr(C, packed)]
     pub struct DimmInfoSmbus {
@@ -886,6 +896,15 @@ pub mod memory {
         pub i2c_mux_address: u8,
         pub mux_control_address: u8,
         pub max_channel: u8,
+    }
+
+    impl EntryCompatible for DimmInfoSmbus {
+        fn is_entry_compatible(entry_id: EntryId) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::DimmInfoSmbus) => true,
+                _ => false,
+            }
+        }
     }
 
     //pub type PsoData = &[u8];
