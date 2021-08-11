@@ -2,6 +2,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(elided_lifetimes_in_paths)]
 
+#[cfg(test)]
+#[macro_use]
+extern crate memoffset;
+
 mod types;
 mod apcb;
 mod tokens_entry;
