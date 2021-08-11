@@ -1001,6 +1001,15 @@ pub mod memory {
         pub clear_ack: U32<LittleEndian>, // bool
     }
 
+    impl EntryCompatible for ExtVoltageControl {
+        fn is_entry_compatible(entry_id: EntryId) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::ExtVoltageControl) => true,
+                _ => false,
+            }
+        }
+    }
+
     impl Default for ExtVoltageControl {
         fn default() -> Self {
             Self {
