@@ -308,7 +308,7 @@ impl<'a> Apcb<'a> {
     pub fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         let group_id = entry_id.group_id();
         // Make sure that the entry exists before resizing the group
-        let mut group = self.group(group_id).ok_or_else(|| Error::GroupNotFound)?;
+        let group = self.group(group_id).ok_or_else(|| Error::GroupNotFound)?;
         group.entry(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
         // Tokens that destroy the alignment in the container have not been tested, are impossible right now anyway and have never been seen.  So disallow those.
         const TOKEN_SIZE: u16 = size_of::<TOKEN_ENTRY>() as u16;
