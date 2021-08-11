@@ -129,7 +129,7 @@ impl GroupItem<'_> {
     }
 
     /// Side effect: Moves the iterator!
-    pub fn entry(&mut self, id: EntryId, instance_id: u16, board_instance_mask: u16) -> Option<EntryItem<'_>> {
+    pub fn entry(&self, id: EntryId, instance_id: u16, board_instance_mask: u16) -> Option<EntryItem<'_>> {
         for entry in self.entries() {
             if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() == board_instance_mask {
                 return Some(entry);
