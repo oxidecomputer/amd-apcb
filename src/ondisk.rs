@@ -1162,7 +1162,26 @@ pub mod memory {
         }
     }
 
+    // AMD does this, and we are compatible to it
     type StretchFreqElement = MaxFreqElement;
+
+    impl EntryCompatible for MaxFreqElement {
+        fn is_entry_compatible(entry_id: EntryId) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::PsUdimmDdr4MaxFreq) => true,
+                EntryId::Memory(MemoryEntryId::PsRdimmDdr4MaxFreq) => true,
+                EntryId::Memory(MemoryEntryId::Ps3dsRdimmDdr4MaxFreq) => true,
+                // Definitely not: EntryId::Memory(MemoryEntryId::PsLrdimmDdr4) => true
+                // TODO: Check EntryId::Memory(PsSodimmDdr4MaxFreq) => true
+                // Definitely not: EntryId::PsDramdownDdr4MaxFreq => true
+
+                EntryId::Memory(MemoryEntryId::PsUdimmDdr4StretchFreq) => true,
+                EntryId::Memory(MemoryEntryId::PsRdimmDdr4StretchFreq) => true,
+                // TODO: Check EntryId::Memory(MemoryEntryId::Ps3dsRdimmDdr4StretchFreq) => true
+                _ => false,
+            }
+        }
+    }
 
     // Usually an array of those is used
     #[derive(FromBytes, AsBytes, Unaligned)]
