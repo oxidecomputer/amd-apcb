@@ -3,7 +3,7 @@ mod tests {
     use core::default::Default;
     use crate::Apcb;
     use crate::Error;
-    use crate::ondisk::{ContextType, CcxEntryId, DfEntryId, PspEntryId, MemoryEntryId, TokenEntryId, EntryId, GroupId, memory::ConsoleOutControl};
+    use crate::ondisk::{ContextType, CcxEntryId, DfEntryId, PspEntryId, MemoryEntryId, TokenEntryId, EntryId, GroupId, memory::ConsoleOutControl, memory::DimmInfoSmbusElement};
     use num_traits::ToPrimitive;
     use crate::EntryItemBody;
 
@@ -249,6 +249,81 @@ mod tests {
         assert!(entry.board_instance_mask() == 0xFFFF);
 
         assert!(*entry.body_as_struct::<ConsoleOutControl>().unwrap() == ConsoleOutControl::default());
+
+        assert!(matches!(entries.next(), None));
+
+        assert!(matches!(groups.next(), None));
+        Ok(())
+    }
+
+    #[test]
+    fn insert_struct_array_entries() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
+        apcb.insert_group(GroupId::Psp, *b"PSPG")?;
+        apcb.insert_group(GroupId::Memory, *b"MEMG")?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, &[1u8; 48], 33)?;
+        let items = [
+            DimmInfoSmbusElement {
+                dimm_slot_present: 1,
+                socket_id: 2,
+                channel_id: 3,
+                dimm_id: 4,
+                dimm_smbus_address: 5,
+                i2c_mux_address: 6,
+                mux_control_address: 7,
+                max_channel: 8,
+            },
+            DimmInfoSmbusElement {
+                dimm_slot_present: 9,
+                socket_id: 10,
+                channel_id: 11,
+                dimm_id: 12,
+                dimm_smbus_address: 13,
+                i2c_mux_address: 14,
+                mux_control_address: 15,
+                max_channel: 16,
+            },
+        ];
+        apcb.insert_struct_array_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, ContextType::Struct, &items, 32)?;
+
+        let apcb = Apcb::load(&mut buffer[0..]).unwrap();
+        let mut groups = apcb.groups();
+
+        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        assert!(group.id() == GroupId::Psp);
+        assert!(group.signature() ==*b"PSPG");
+
+        let mut entries = group.entries();
+
+        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        assert!(entry.id() == EntryId::Psp(PspEntryId::BoardIdGettingMethod));
+        assert!(entry.instance_id() == 0);
+        assert!(entry.board_instance_mask() == 0xFFFF);
+
+        assert!(matches!(entries.next(), None));
+
+        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        assert!(group.id() == GroupId::Memory);
+        assert!(group.signature() ==*b"MEMG");
+
+        let mut entries = group.entries();
+
+        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        assert!(entry.id() == EntryId::Memory(MemoryEntryId::ConsoleOutControl));
+        assert!(entry.instance_id() == 0);
+        assert!(entry.board_instance_mask() == 0xFFFF);
+
+        match entry.body {
+            EntryItemBody::<_>::Struct(buf) => {
+                assert!(*buf == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
+            },
+            _ => {
+                panic!("wrong thing");
+            }
+        }
+
+// FIXME        assert!(*entry.body_as_struct_array::<ConsoleOutControl>().unwrap() == [ConsoleOutControl::default(), ConsoleOutControl::default()]);
 
         assert!(matches!(entries.next(), None));
 
