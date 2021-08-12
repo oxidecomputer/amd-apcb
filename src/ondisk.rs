@@ -1163,7 +1163,7 @@ pub mod memory {
     }
 
     // AMD does this, and we are compatible to it
-    type StretchFreqElement = MaxFreqElement;
+    pub type StretchFreqElement = MaxFreqElement;
 
     impl EntryCompatible for MaxFreqElement {
         fn is_entry_compatible(entry_id: EntryId) -> bool {
