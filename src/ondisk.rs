@@ -885,7 +885,7 @@ pub trait EntryCompatible {
 pub mod memory {
     use super::*;
 
-    #[derive(FromBytes, AsBytes, Unaligned)]
+    #[derive(FromBytes, AsBytes, Unaligned, Debug)]
     #[repr(C, packed)]
     pub struct DimmInfoSmbus {
         pub dimm_slot_present: u8,
@@ -909,7 +909,7 @@ pub mod memory {
 
     //pub type PsoData = &[u8];
 
-    #[derive(FromBytes, AsBytes, Unaligned, PartialEq)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct AblConsoleOutControl {
         pub enable_console_logging: u8, // bool
@@ -945,7 +945,7 @@ pub mod memory {
         }
     }
 
-    #[derive(FromBytes, AsBytes, Unaligned, PartialEq)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct AblBreakpointControl {
         enable_breakpoint: u8, // bool
@@ -961,7 +961,7 @@ pub mod memory {
         }
     }
 
-    #[derive(FromBytes, AsBytes, Unaligned, PartialEq)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct ConsoleOutControl {
         abl_console_out_control: AblConsoleOutControl,
@@ -988,7 +988,7 @@ pub mod memory {
         }
     }
 
-    #[derive(FromBytes, AsBytes, Unaligned, PartialEq)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct ExtVoltageControl {
         pub enable: U32<LittleEndian>, // bool
@@ -1026,7 +1026,7 @@ pub mod memory {
     }
 
     // Usually an array of those is used
-    #[derive(FromBytes, AsBytes, Unaligned, PartialEq)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct CadBusElement {
         pub dimm_slots_per_channel: U32<LittleEndian>, // 1 or 2
@@ -1086,7 +1086,7 @@ pub mod memory {
     // See <https://www.micron.com/-/media/client/global/documents/products/data-sheet/dram/ddr4/8gb_auto_ddr4_dram.pdf>
     // Usually an array of those is used
     // Note: This structure is not used for soldered-down DRAM!
-    #[derive(FromBytes, AsBytes, Unaligned, PartialEq)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct DataBusElement {
         pub dimm_slots_per_channel: U32<LittleEndian>,
@@ -1142,7 +1142,7 @@ pub mod memory {
 
     // Usually an array of those is used
     // Note: This structure is not used for LR DRAM
-    #[derive(FromBytes, AsBytes, Unaligned, PartialEq)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct MaxFreqElement {
         pub dimm_slots_per_channel: u8,
@@ -1184,7 +1184,7 @@ pub mod memory {
     }
 
     // Usually an array of those is used
-    #[derive(FromBytes, AsBytes, Unaligned, PartialEq)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct LrMaxFreqElement {
         pub dimm_slots_per_channel: u8,
@@ -1223,7 +1223,7 @@ pub mod memory {
         FchMmio = 7,
     }
 
-    #[derive(FromBytes, AsBytes, Unaligned, PartialEq)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct ErrorOutEventControlGpio {
         pub pin: u8, // in FCH
@@ -1231,7 +1231,7 @@ pub mod memory {
         pub bank_control: u8, // how to configure bank control
     }
 
-    #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy, PartialEq)]
+    #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct ErrorOutEventControlBeepCodePeakAttr {
         // 5 bits: PeakCnt (number of valid bits, 0 based)
@@ -1271,7 +1271,7 @@ pub mod memory {
         }
     }
 
-    #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy, PartialEq)]
+    #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct ErrorOutEventControlBeepCode {
         pub error_type: U16<LittleEndian>,
@@ -1279,7 +1279,7 @@ pub mod memory {
         pub peak_attr: ErrorOutEventControlBeepCodePeakAttr,
     }
 
-    #[derive(FromBytes, AsBytes, Unaligned, PartialEq)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct ErrorOutEventControl116 { // Milan
         pub enable_error_reporting: u8, // bool
@@ -1393,7 +1393,7 @@ pub mod memory {
         }
     }
 
-    #[derive(FromBytes, AsBytes, Unaligned, PartialEq)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct ErrorOutEventControl112 { // older than Milan
         pub enable_error_reporting: u8, // bool
