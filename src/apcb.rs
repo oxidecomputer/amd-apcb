@@ -307,14 +307,8 @@ impl<'a> Apcb<'a> {
             Err(e) => Err(e),
         }
     }
-    pub fn insert_struct_entry<T: Sized + AsBytes + FromBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_struct: T, priority_mask: u8) -> Result<()> {
-        // TODO: Once Rust lets us do this in a nicer way (size_of::<T>() for example), do it that way instead.
-        let mut payload = [0u8; 400];
-        assert!(size_of::<T>() <= payload.len());
-        let mut buf = &mut payload[..size_of::<T>()];
-        let header = take_header_from_collection_mut::<T>(&mut buf).unwrap();
-        *header = payload_struct;
-        self.insert_entry(entry_id, instance_id, board_instance_mask, context_type, &payload[..size_of::<T>()], priority_mask)
+    pub fn insert_struct_entry<T: AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &T, priority_mask: u8) -> Result<()> {
+        self.insert_entry(entry_id, instance_id, board_instance_mask, context_type, payload.as_bytes(), priority_mask)
     }
     pub fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         let group_id = entry_id.group_id();

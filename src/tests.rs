@@ -219,7 +219,7 @@ mod tests {
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, &[1u8; 48], 33)?;
-        apcb.insert_struct_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, ContextType::Struct, ConsoleOutControl::default(), 32)?;
+        apcb.insert_struct_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, ContextType::Struct, &ConsoleOutControl::default(), 32)?;
 
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
