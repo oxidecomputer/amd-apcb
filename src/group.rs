@@ -128,10 +128,10 @@ impl GroupItem<'_> {
         GroupId::from_u16(self.header.group_id.get()).unwrap()
     }
 
-    /// Side effect: Moves the iterator!
+    /// This finds the entry with the given ID, INSTANCE_ID and compatible BOARD_INSTANCE_MASK, if any.
     pub fn entry(&self, id: EntryId, instance_id: u16, board_instance_mask: u16) -> Option<EntryItem<'_>> {
         for entry in self.entries() {
-            if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() == board_instance_mask {
+            if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() & board_instance_mask != 0 {
                 return Some(entry);
             }
         }
@@ -297,10 +297,10 @@ impl<'a> GroupMutItem<'a> {
         self.header.group_id.get()
     }
 
-    /// Finds the first EntryMutItem with the given id, if any, and returns it.
+    /// This finds the entry with the given ID, INSTANCE_ID and compatible BOARD_INSTANCE_MASK, if any.
     pub fn entry_mut(&mut self, id: EntryId, instance_id: u16, board_instance_mask: u16) -> Option<EntryMutItem<'_>> {
         for entry in self.entries_mut() {
-            if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() == board_instance_mask {
+            if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() & board_instance_mask != 0 {
                 return Some(entry);
             }
         }
