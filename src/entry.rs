@@ -259,10 +259,10 @@ impl EntryItem<'_> {
     }
 
     pub fn body_as_struct<T: EntryCompatible + Sized + FromBytes>(&self) -> Option<&T> {
-        match self.body {
-            EntryItemBody::Struct(buf) => {
-                let mut buf = buf.clone();
-                if T::is_entry_compatible(self.id()) {
+        if T::is_entry_compatible(self.id()) {
+            match self.body {
+                EntryItemBody::Struct(buf) => {
+                    let mut buf = buf.clone();
                     if buf.len() == size_of::<T>() {
                         let result = take_header_from_collection::<T>(&mut buf)?;
                         assert!(buf.is_empty());
@@ -270,13 +270,13 @@ impl EntryItem<'_> {
                     } else {
                         None
                     }
-                } else {
+                },
+                _ => {
                     None
-                }
-            },
-            _ => {
-                None
-            },
+                },
+            }
+        } else {
+            None
         }
     }
 }
