@@ -909,7 +909,7 @@ pub mod memory {
 
     //pub type PsoData = &[u8];
 
-    #[derive(FromBytes, AsBytes, Unaligned)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq)]
     #[repr(C, packed)]
     pub struct AblConsoleOutControl {
         pub enable_console_logging: u8, // bool
@@ -945,7 +945,7 @@ pub mod memory {
         }
     }
 
-    #[derive(FromBytes, AsBytes, Unaligned)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq)]
     #[repr(C, packed)]
     pub struct AblBreakpointControl {
         enable_breakpoint: u8, // bool
@@ -961,7 +961,7 @@ pub mod memory {
         }
     }
 
-    #[derive(FromBytes, AsBytes, Unaligned)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq)]
     #[repr(C, packed)]
     pub struct ConsoleOutControl {
         abl_console_out_control: AblConsoleOutControl,

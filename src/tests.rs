@@ -1,8 +1,9 @@
 #[cfg(test)]
 mod tests {
+    use core::default::Default;
     use crate::Apcb;
     use crate::Error;
-    use crate::ondisk::{ContextType, CcxEntryId, DfEntryId, PspEntryId, TokenEntryId, EntryId, GroupId};
+    use crate::ondisk::{ContextType, CcxEntryId, DfEntryId, PspEntryId, MemoryEntryId, TokenEntryId, EntryId, GroupId, memory::ConsoleOutControl};
     use num_traits::ToPrimitive;
     use crate::EntryItemBody;
 
@@ -206,6 +207,50 @@ mod tests {
         for _entry in group.entries() {
             assert!(false);
         }
+
+        assert!(matches!(groups.next(), None));
+        Ok(())
+    }
+
+    #[test]
+    fn insert_struct_entries() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
+        apcb.insert_group(GroupId::Psp, *b"PSPG")?;
+        apcb.insert_group(GroupId::Memory, *b"MEMG")?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, &[1u8; 48], 33)?;
+        apcb.insert_struct_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, ContextType::Struct, ConsoleOutControl::default(), 32)?;
+
+        let apcb = Apcb::load(&mut buffer[0..]).unwrap();
+        let mut groups = apcb.groups();
+
+        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        assert!(group.id() == GroupId::Psp);
+        assert!(group.signature() ==*b"PSPG");
+
+        let mut entries = group.entries();
+
+        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        assert!(entry.id() == EntryId::Psp(PspEntryId::BoardIdGettingMethod));
+        assert!(entry.instance_id() == 0);
+        assert!(entry.board_instance_mask() == 0xFFFF);
+
+        assert!(matches!(entries.next(), None));
+
+        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        assert!(group.id() == GroupId::Memory);
+        assert!(group.signature() ==*b"MEMG");
+
+        let mut entries = group.entries();
+
+        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        assert!(entry.id() == EntryId::Memory(MemoryEntryId::ConsoleOutControl));
+        assert!(entry.instance_id() == 0);
+        assert!(entry.board_instance_mask() == 0xFFFF);
+
+        assert!(*entry.body_as_struct::<ConsoleOutControl>().unwrap() == ConsoleOutControl::default());
+
+        assert!(matches!(entries.next(), None));
 
         assert!(matches!(groups.next(), None));
         Ok(())
