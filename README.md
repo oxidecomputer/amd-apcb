@@ -50,6 +50,13 @@ In order to update the checksum (you should do that once after any insertion/del
 
 Note that this also changes unique_apcb_instance.
 
+If the entry is a struct entry, you can use something like
+
+    let entry = entry.body_as_struct::<memory::DimmInfoSmbus>(0, 0xFFFF)?;
+    entry.dimm_slot_present
+
+in order to have the entry represented as a Rust struct.
+
 # Testing
 
 Run
