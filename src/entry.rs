@@ -4,7 +4,7 @@ use crate::ondisk::ENTRY_HEADER;
 pub use crate::ondisk::{ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut, EntryCompatible, MemoryEntryId};
 use num_traits::FromPrimitive;
 use crate::tokens_entry::TokensEntryBodyItem;
-use zerocopy::FromBytes;
+use zerocopy::{AsBytes, FromBytes};
 
 /* Note: high-level interface is:
 
@@ -102,7 +102,7 @@ pub struct EntryMutItem<'a> {
     pub body: EntryItemBody<&'a mut [u8]>,
 }
 
-impl EntryMutItem<'_> {
+impl<'a> EntryMutItem<'a> {
     pub fn group_id(&self) -> u16 {
         self.header.group_id.get()
     }
@@ -187,6 +187,28 @@ impl EntryMutItem<'_> {
             _ => {
                 Err(Error::EntryTypeMismatch)
             },
+        }
+    }
+
+    pub fn body_as_struct_mut<T: 'a + EntryCompatible + Sized + FromBytes + AsBytes>(&mut self) -> Option<&mut T> {
+        if T::is_entry_compatible(self.id()) {
+            match &mut self.body {
+                EntryItemBody::Struct(buf) => {
+                    let mut buf = buf; // FIXME .clone();
+                    if buf.len() == size_of::<T>() {
+                        let result = take_header_from_collection_mut::<T>(&mut buf)?;
+                        assert!(buf.is_empty());
+                        Some(result)
+                    } else {
+                        None
+                    }
+                },
+                _ => {
+                    None
+                },
+            }
+        } else {
+            None
         }
     }
 }
