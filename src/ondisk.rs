@@ -1243,7 +1243,7 @@ pub mod memory {
     // This avoids depending on rust-packed_struct or rust-bitfield additionally.
     impl ErrorOutEventControlBeepCodePeakAttr {
         /// PULSE_WIDTH: in units of 0.1 s
-        pub fn new(peak_count: u32, pulse_width: u32, repeat_count: u32) -> Option<Self> {
+        pub const fn new(peak_count: u32, pulse_width: u32, repeat_count: u32) -> Option<Self> {
             if peak_count < 32 {
             } else {
                 return None;
@@ -1330,10 +1330,48 @@ pub mod memory {
                     bank_control: 0,
                 },
                 _reserved_3: 0,
-                beep_code_table: [ErrorOutEventControlBeepCode {
-                    error_type: 0.into(),
-                    peak_map: 0.into(),
-                    peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(0, 0, 0).unwrap() }; 8], // FIXME
+                beep_code_table: [
+                    ErrorOutEventControlBeepCode {
+                        error_type: U16::<LittleEndian>::new(0x3fff),
+                        peak_map: 1.into(),
+                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(8, 0, 0).unwrap(),
+                    },
+                    ErrorOutEventControlBeepCode {
+                        error_type: 0x4fff.into(),
+                        peak_map: 2.into(),
+                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                    },
+                    ErrorOutEventControlBeepCode {
+                        error_type: 0x5fff.into(),
+                        peak_map: 3.into(),
+                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                    },
+                    ErrorOutEventControlBeepCode {
+                        error_type: 0x6fff.into(),
+                        peak_map: 4.into(),
+                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                    },
+                    ErrorOutEventControlBeepCode {
+                        error_type: 0x7fff.into(),
+                        peak_map: 5.into(),
+                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                    },
+                    ErrorOutEventControlBeepCode {
+                        error_type: 0x8fff.into(),
+                        peak_map: 6.into(),
+                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                    },
+                    ErrorOutEventControlBeepCode {
+                        error_type: 0x9fff.into(),
+                        peak_map: 7.into(),
+                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                    },
+                    ErrorOutEventControlBeepCode {
+                        error_type: 0xffff.into(),
+                        peak_map: 2.into(),
+                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(4, 0, 0).unwrap(),
+                    },
+                ],
                 enable_heart_beat: 0.into(),
                 enable_power_good_gpio: 0.into(),
                 power_good_gpio: ErrorOutEventControlGpio {
@@ -1394,10 +1432,48 @@ pub mod memory {
                     iomux_control: 0,
                     bank_control: 0,
                 },
-                beep_code_table: [ErrorOutEventControlBeepCode {
-                    error_type: 0.into(),
-                    peak_map: 0.into(),
-                    peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(0, 0, 0).unwrap() }; 8], // FIXME
+                beep_code_table: [
+                    ErrorOutEventControlBeepCode {
+                        error_type: U16::<LittleEndian>::new(0x3fff),
+                        peak_map: 1.into(),
+                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(8, 0, 0).unwrap(), // #: 5, 3, 4; 31; 7; 15
+                    },
+                    ErrorOutEventControlBeepCode {
+                        error_type: 0x4fff.into(),
+                        peak_map: 2.into(),
+                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                    },
+                    ErrorOutEventControlBeepCode {
+                        error_type: 0x5fff.into(),
+                        peak_map: 3.into(),
+                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                    },
+                    ErrorOutEventControlBeepCode {
+                        error_type: 0x6fff.into(),
+                        peak_map: 4.into(),
+                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                    },
+                    ErrorOutEventControlBeepCode {
+                        error_type: 0x7fff.into(),
+                        peak_map: 5.into(),
+                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                    },
+                    ErrorOutEventControlBeepCode {
+                        error_type: 0x8fff.into(),
+                        peak_map: 6.into(),
+                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                    },
+                    ErrorOutEventControlBeepCode {
+                        error_type: 0x9fff.into(),
+                        peak_map: 7.into(),
+                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                    },
+                    ErrorOutEventControlBeepCode {
+                        error_type: 0xffff.into(),
+                        peak_map: 2.into(),
+                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(4, 0, 0).unwrap(),
+                    },
+                ],
                 enable_heart_beat: 0.into(),
                 enable_power_good_gpio: 0.into(),
                 power_good_gpio: ErrorOutEventControlGpio {
