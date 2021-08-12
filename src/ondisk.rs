@@ -887,7 +887,7 @@ pub mod memory {
 
     #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
-    pub struct DimmInfoSmbus {
+    pub struct DimmInfoSmbusElement {
         pub dimm_slot_present: u8,
         pub socket_id: u8,
         pub channel_id: u8,
@@ -898,7 +898,7 @@ pub mod memory {
         pub max_channel: u8,
     }
 
-    impl EntryCompatible for DimmInfoSmbus {
+    impl EntryCompatible for DimmInfoSmbusElement {
         fn is_entry_compatible(entry_id: EntryId) -> bool {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::DimmInfoSmbus) => true,
@@ -1510,7 +1510,7 @@ pub mod memory {
 
         #[test]
         fn test_memory_structs() {
-            const_assert!(size_of::<DimmInfoSmbus>() == 8);
+            const_assert!(size_of::<DimmInfoSmbusElement>() == 8);
             const_assert!(size_of::<AblConsoleOutControl>() == 16);
             const_assert!(size_of::<ConsoleOutControl>() == 20);
             const_assert!(size_of::<ExtVoltageControl>() == 32);
