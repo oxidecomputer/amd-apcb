@@ -1334,14 +1334,14 @@ pub mod memory {
                     error_type: 0.into(),
                     peak_map: 0.into(),
                     peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(0, 0, 0).unwrap() }; 8], // FIXME
-                enable_heart_beat: 0.into(), // FIXME
-                enable_power_good_gpio: 0.into(), // FIXME
+                enable_heart_beat: 0.into(),
+                enable_power_good_gpio: 0.into(),
                 power_good_gpio: ErrorOutEventControlGpio {
                     pin: 0,
                     iomux_control: 0,
                     bank_control: 0,
-                }, // FIXME
-                _reserved_4: [0; 3], // FIXME
+                },
+                _reserved_4: [0; 3],
             }
         }
     }
@@ -1398,14 +1398,14 @@ pub mod memory {
                     error_type: 0.into(),
                     peak_map: 0.into(),
                     peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(0, 0, 0).unwrap() }; 8], // FIXME
-                enable_heart_beat: 0.into(), // FIXME
-                enable_power_good_gpio: 0.into(), // FIXME
+                enable_heart_beat: 0.into(),
+                enable_power_good_gpio: 0.into(),
                 power_good_gpio: ErrorOutEventControlGpio {
                     pin: 0,
                     iomux_control: 0,
                     bank_control: 0,
-                }, // FIXME
-                _reserved_2: [0; 3], // FIXME
+                },
+                _reserved_2: [0; 3],
             }
         }
     }
