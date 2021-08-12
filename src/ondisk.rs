@@ -1384,6 +1384,15 @@ pub mod memory {
         }
     }
 
+    impl EntryCompatible for ErrorOutEventControl116 {
+        fn is_entry_compatible(entry_id: EntryId) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::ErrorOutEventControl) => true,
+                _ => false,
+            }
+        }
+    }
+
     #[derive(FromBytes, AsBytes, Unaligned)]
     #[repr(C, packed)]
     pub struct ErrorOutEventControl112 { // older than Milan
@@ -1482,6 +1491,15 @@ pub mod memory {
                     bank_control: 0,
                 },
                 _reserved_2: [0; 3],
+            }
+        }
+    }
+
+    impl EntryCompatible for ErrorOutEventControl112 {
+        fn is_entry_compatible(entry_id: EntryId) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::ErrorOutEventControl) => true,
+                _ => false,
             }
         }
     }
