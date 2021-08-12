@@ -885,7 +885,7 @@ pub trait EntryCompatible {
 pub mod memory {
     use super::*;
 
-    #[derive(FromBytes, AsBytes, Unaligned, Debug)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct DimmInfoSmbus {
         pub dimm_slot_present: u8,
