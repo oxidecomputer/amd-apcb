@@ -1732,6 +1732,8 @@ pub mod psp {
         fn test_psp_structs() {
             const_assert!(size_of::<IdApcbMapping>() == 3);
             const_assert!(size_of::<BoardIdGettingMethodGpio>() == 14);
+            const_assert!(size_of::<IdRevApcbMapping>() == 4);
+            const_assert!(size_of::<BoardIdGettingMethodEeprom>() == 10);
         }
     }
 }
