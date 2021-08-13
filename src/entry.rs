@@ -103,6 +103,20 @@ pub struct EntryMutItem<'a> {
     pub body: EntryItemBody<&'a mut [u8]>,
 }
 
+pub struct StructArrayEntryMutItem<'a, T: Sized + FromBytes + AsBytes> {
+    buf: &'a mut [u8],
+    _item: PhantomData<&'a T>,
+}
+
+impl<'a, T: 'a + Sized + FromBytes + AsBytes> StructArrayEntryMutItem<'a, T> {
+    pub fn iter_mut(&mut self) -> StructArrayEntryMutIter<'_, T> {
+        StructArrayEntryMutIter {
+            buf: self.buf,
+            _item: PhantomData,
+        }
+    }
+}
+
 pub struct StructArrayEntryMutIter<'a, T: Sized + FromBytes + AsBytes> {
     buf: &'a mut [u8],
     _item: PhantomData<&'a T>,
@@ -229,13 +243,13 @@ impl<'a> EntryMutItem<'a> {
         }
     }
 
-    pub fn body_as_struct_array_mut<T: EntryCompatible + Sized + FromBytes + AsBytes>(&mut self) -> Option<StructArrayEntryMutIter<'_, T>> {
+    pub fn body_as_struct_array_mut<T: EntryCompatible + Sized + FromBytes + AsBytes>(&mut self) -> Option<StructArrayEntryMutItem<'_, T>> {
         if T::is_entry_compatible(self.id()) {
             match &mut self.body {
                 EntryItemBody::Struct(buf) => {
                     let element_count: usize = buf.len() / size_of::<T>();
                     if buf.len() == element_count * size_of::<T>() {
-                        Some(StructArrayEntryMutIter {
+                        Some(StructArrayEntryMutItem {
                             buf,
                             _item: PhantomData,
                         })
@@ -257,6 +271,20 @@ impl<'a> EntryMutItem<'a> {
 pub struct EntryItem<'a> {
     pub header: &'a ENTRY_HEADER,
     pub body: EntryItemBody<&'a [u8]>,
+}
+
+pub struct StructArrayEntryItem<'a, T: Sized + FromBytes> {
+    buf: &'a [u8],
+    _item: PhantomData<&'a T>,
+}
+
+impl<'a, T: 'a + Sized + FromBytes> StructArrayEntryItem<'a, T> {
+    pub fn iter(&self) -> StructArrayEntryIter<'_, T> {
+        StructArrayEntryIter {
+            buf: self.buf,
+            _item: PhantomData,
+        }
+    }
 }
 
 pub struct StructArrayEntryIter<'a, T: Sized + FromBytes> {
