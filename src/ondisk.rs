@@ -877,7 +877,7 @@ Token:
 pub trait EntryCompatible {
     /// Returns whether the ENTRY_ID can in principle house the impl of the trait EntryCompatible.
     /// Note: Usually, you still need to check whether the size is correct.  Since arrays are allowed and the ondisk structures then are array Element only, the payload size can be a natural multiple of the struct size.
-    fn is_entry_compatible(_entry_id: EntryId) -> bool {
+    fn is_entry_compatible(_entry_id: EntryId, _prefix: &[u8]) -> bool {
         false
     }
 }
@@ -917,7 +917,7 @@ pub mod df {
     }
 
     impl EntryCompatible for SlinkConfig {
-        fn is_entry_compatible(entry_id: EntryId) -> bool {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
                 EntryId::Df(DfEntryId::SlinkConfig) => true,
                 _ => false,
@@ -943,7 +943,7 @@ pub mod memory {
     }
 
     impl EntryCompatible for DimmInfoSmbusElement {
-        fn is_entry_compatible(entry_id: EntryId) -> bool {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::DimmInfoSmbus) => true,
                 _ => false,
@@ -1024,7 +1024,7 @@ pub mod memory {
     }
 
     impl EntryCompatible for ConsoleOutControl {
-        fn is_entry_compatible(entry_id: EntryId) -> bool {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::ConsoleOutControl) => true,
                 _ => false,
@@ -1046,7 +1046,7 @@ pub mod memory {
     }
 
     impl EntryCompatible for ExtVoltageControl {
-        fn is_entry_compatible(entry_id: EntryId) -> bool {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::ExtVoltageControl) => true,
                 _ => false,
@@ -1115,7 +1115,7 @@ pub mod memory {
     }
 
     impl EntryCompatible for CadBusElement {
-        fn is_entry_compatible(entry_id: EntryId) -> bool {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::PsUdimmDdr4CadBus) => true,
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr4CadBus) => true,
@@ -1171,7 +1171,7 @@ pub mod memory {
     }
 
     impl EntryCompatible for DataBusElement {
-        fn is_entry_compatible(entry_id: EntryId) -> bool {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::PsUdimmDdr4DataBus) => true,
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr4DataBus) => true,
@@ -1210,7 +1210,7 @@ pub mod memory {
     pub type StretchFreqElement = MaxFreqElement;
 
     impl EntryCompatible for MaxFreqElement {
-        fn is_entry_compatible(entry_id: EntryId) -> bool {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::PsUdimmDdr4MaxFreq) => true,
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr4MaxFreq) => true,
@@ -1249,7 +1249,7 @@ pub mod memory {
     }
 
     impl EntryCompatible for LrMaxFreqElement {
-        fn is_entry_compatible(entry_id: EntryId) -> bool {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::PsLrdimmDdr4MaxFreq) => true,
                 _ => false,
@@ -1429,7 +1429,7 @@ pub mod memory {
     }
 
     impl EntryCompatible for ErrorOutEventControl116 {
-        fn is_entry_compatible(entry_id: EntryId) -> bool {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::ErrorOutEventControl) => true,
                 _ => false,
@@ -1540,7 +1540,7 @@ pub mod memory {
     }
 
     impl EntryCompatible for ErrorOutEventControl112 {
-        fn is_entry_compatible(entry_id: EntryId) -> bool {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::ErrorOutEventControl) => true,
                 _ => false,
@@ -1580,7 +1580,7 @@ pub mod memory {
     }
 
     impl EntryCompatible for OdtPatElement {
-        fn is_entry_compatible(entry_id: EntryId) -> bool {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr4OdtPat) => true,
                 EntryId::Memory(MemoryEntryId::PsLrdimmDdr4OdtPat) => true,
@@ -1660,10 +1660,14 @@ pub mod psp {
     }
 
     impl EntryCompatible for BoardIdGettingMethodGpio {
-        fn is_entry_compatible(entry_id: EntryId) -> bool {
-            match entry_id {
-                EntryId::Psp(PspEntryId::BoardIdGettingMethod) => true,
-                _ => false,
+        fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+            if prefix[0] == 2  && prefix[1] == 0 {
+                match entry_id {
+                    EntryId::Psp(PspEntryId::BoardIdGettingMethod) => true,
+                    _ => false,
+                }
+            } else {
+                false
             }
         }
     }

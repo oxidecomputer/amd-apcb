@@ -223,9 +223,10 @@ impl<'a> EntryMutItem<'a> {
     }
 
     pub fn body_as_struct_mut<T: 'a + EntryCompatible + Sized + FromBytes + AsBytes>(&mut self) -> Option<&mut T> {
-        if T::is_entry_compatible(self.id()) {
-            match &mut self.body {
-                EntryItemBody::Struct(buf) => {
+        let id = self.id();
+        match &mut self.body {
+            EntryItemBody::Struct(buf) => {
+                if T::is_entry_compatible(id, buf) {
                     let mut buf = buf; // FIXME .clone();
                     if buf.len() == size_of::<T>() {
                         let result = take_header_from_collection_mut::<T>(&mut buf)?;
@@ -234,20 +235,21 @@ impl<'a> EntryMutItem<'a> {
                     } else {
                         None
                     }
-                },
-                _ => {
+                } else {
                     None
-                },
-            }
-        } else {
-            None
+                }
+            },
+            _ => {
+                None
+            },
         }
     }
 
     pub fn body_as_struct_array_mut<T: EntryCompatible + Sized + FromBytes + AsBytes>(&mut self) -> Option<StructArrayEntryMutItem<'_, T>> {
-        if T::is_entry_compatible(self.id()) {
-            match &mut self.body {
-                EntryItemBody::Struct(buf) => {
+        let id = self.id();
+        match &mut self.body {
+            EntryItemBody::Struct(buf) => {
+                if T::is_entry_compatible(id, buf) {
                     let element_count: usize = buf.len() / size_of::<T>();
                     if buf.len() == element_count * size_of::<T>() {
                         Some(StructArrayEntryMutItem {
@@ -257,13 +259,13 @@ impl<'a> EntryMutItem<'a> {
                     } else {
                         None
                     }
-                },
-                _ => {
+                } else {
                     None
-                },
-            }
-        } else {
-            None
+                }
+            },
+            _ => {
+                None
+            },
         }
     }
 }
@@ -345,9 +347,10 @@ impl<'a> EntryItem<'a> {
     }
 
     pub fn body_as_struct<T: EntryCompatible + Sized + FromBytes>(&self) -> Option<&T> {
-        if T::is_entry_compatible(self.id()) {
-            match self.body {
-                EntryItemBody::Struct(buf) => {
+        let id = self.id();
+        match self.body {
+            EntryItemBody::Struct(buf) => {
+                if T::is_entry_compatible(id, buf) {
                     let mut buf = buf.clone();
                     if buf.len() == size_of::<T>() {
                         let result = take_header_from_collection::<T>(&mut buf)?;
@@ -356,20 +359,20 @@ impl<'a> EntryItem<'a> {
                     } else {
                         None
                     }
-                },
-                _ => {
+                } else {
                     None
-                },
-            }
-        } else {
-            None
+                }
+            },
+            _ => {
+                None
+            },
         }
     }
 
     pub fn body_as_struct_array<T: EntryCompatible + Sized + FromBytes>(&self) -> Option<StructArrayEntryIter<'a, T>> {
-        if T::is_entry_compatible(self.id()) {
-            match &self.body {
-                EntryItemBody::Struct(buf) => {
+        match &self.body {
+            EntryItemBody::Struct(buf) => {
+                if T::is_entry_compatible(self.id(), buf) {
                     let element_count: usize = buf.len() / size_of::<T>();
                     if buf.len() == element_count * size_of::<T>() {
                         Some(StructArrayEntryIter {
@@ -379,35 +382,36 @@ impl<'a> EntryItem<'a> {
                     } else {
                         None
                     }
-                },
-                _ => {
+                } else {
                     None
-                },
-            }
-        } else {
-            None
+                }
+            },
+            _ => {
+                None
+            },
         }
     }
 
     /// This function exists solely to support BoardIdGettingMethod*.  Also, it has weird padding at the end that we are ignoring.
     /// FIXME: Check access_method
     pub fn body_as_headered_struct_array<H: EntryCompatible + Sized + FromBytes, T: Sized + FromBytes>(&self) -> Option<(&'a H, StructArrayEntryIter<'a, T>)> {
-        if H::is_entry_compatible(self.id()) {
-            match &self.body {
-                EntryItemBody::Struct(buf) => {
+        let id = self.id();
+        match &self.body {
+            EntryItemBody::Struct(buf) => {
+                if H::is_entry_compatible(id, buf) {
                     let mut buf = &buf[..];
                     let header = take_header_from_collection::<H>(&mut buf)?;
                     Some((header, StructArrayEntryIter {
                         buf,
                         _item: PhantomData,
                     }))
-                },
-                _ => {
+                } else {
                     None
-                },
-            }
-        } else {
-            None
+                }
+            },
+            _ => {
+                None
+            },
         }
     }
 }
