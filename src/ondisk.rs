@@ -1131,7 +1131,7 @@ pub mod memory {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::PsUdimmDdr4DataBus) => true,
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr4DataBus) => true,
-                // TODO: Check EntryId::Memory(Ps3dsRdimmDdr4DataBus) => true
+                EntryId::Memory(MemoryEntryId::Ps3dsRdimmDdr4DataBus) => true,
                 EntryId::Memory(MemoryEntryId::PsLrdimmDdr4DataBus) => true,
                 // TODO: Check EntryId::Memory(PsSodimmDdr4DataBus) => true
                 // Definitely not: EntryId::PsDramdownDdr4DataBus => true
@@ -1177,7 +1177,7 @@ pub mod memory {
 
                 EntryId::Memory(MemoryEntryId::PsUdimmDdr4StretchFreq) => true,
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr4StretchFreq) => true,
-                // TODO: Check EntryId::Memory(MemoryEntryId::Ps3dsRdimmDdr4StretchFreq) => true
+                EntryId::Memory(MemoryEntryId::Ps3dsRdimmDdr4StretchFreq) => true,
                 _ => false,
             }
         }
