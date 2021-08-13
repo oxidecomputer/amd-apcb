@@ -1225,7 +1225,7 @@ pub mod memory {
 
     #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
-    pub struct ErrorOutEventControlGpio {
+    pub struct Gpio {
         pub pin: u8, // in FCH
         pub iomux_control: u8, // how to configure that pin
         pub bank_control: u8, // how to configure bank control
@@ -1297,12 +1297,12 @@ pub mod memory {
         output_port_type: U32<LittleEndian>, // PortType; default: 6
         pub clear_acknowledgement: u8, // bool
         _reserved_2: [u8; 3],
-        pub gpio: ErrorOutEventControlGpio,
+        pub gpio: Gpio,
         _reserved_3: u8,
         pub beep_code_table: [ErrorOutEventControlBeepCode; 8],
         pub enable_heart_beat: u8,
         pub enable_power_good_gpio: u8,
-        pub power_good_gpio: ErrorOutEventControlGpio,
+        pub power_good_gpio: Gpio,
         _reserved_4: [u8; 3], // pad
     }
 
@@ -1324,7 +1324,7 @@ pub mod memory {
                 output_port_type: (PortType::FchHtIo as u32).into(),
                 clear_acknowledgement: 0,
                 _reserved_2: [0; 3],
-                gpio: ErrorOutEventControlGpio {
+                gpio: Gpio {
                     pin: 0,
                     iomux_control: 0,
                     bank_control: 0,
@@ -1374,7 +1374,7 @@ pub mod memory {
                 ],
                 enable_heart_beat: 0.into(),
                 enable_power_good_gpio: 0.into(),
-                power_good_gpio: ErrorOutEventControlGpio {
+                power_good_gpio: Gpio {
                     pin: 0,
                     iomux_control: 0,
                     bank_control: 0,
@@ -1410,12 +1410,12 @@ pub mod memory {
         input_port_type: U32<LittleEndian>, // PortType; default: 6
         output_port_type: U32<LittleEndian>, // PortType; default: 6
         pub clear_acknowledgement: u8, // bool
-        pub gpio: ErrorOutEventControlGpio,
+        pub gpio: Gpio,
         // @40
         pub beep_code_table: [ErrorOutEventControlBeepCode; 8],
         pub enable_heart_beat: u8,
         pub enable_power_good_gpio: u8,
-        pub power_good_gpio: ErrorOutEventControlGpio,
+        pub power_good_gpio: Gpio,
         _reserved_2: [u8; 3], // pad
     }
 
@@ -1436,7 +1436,7 @@ pub mod memory {
                 input_port_type: (PortType::FchHtIo as u32).into(),
                 output_port_type: (PortType::FchHtIo as u32).into(),
                 clear_acknowledgement: 0,
-                gpio: ErrorOutEventControlGpio {
+                gpio: Gpio {
                     pin: 0,
                     iomux_control: 0,
                     bank_control: 0,
@@ -1485,7 +1485,7 @@ pub mod memory {
                 ],
                 enable_heart_beat: 0.into(),
                 enable_power_good_gpio: 0.into(),
-                power_good_gpio: ErrorOutEventControlGpio {
+                power_good_gpio: Gpio {
                     pin: 0,
                     iomux_control: 0,
                     bank_control: 0,
@@ -1518,7 +1518,7 @@ pub mod memory {
             const_assert!(size_of::<DataBusElement>() == 52);
             const_assert!(size_of::<MaxFreqElement>() == 16);
             const_assert!(size_of::<LrMaxFreqElement>() == 16);
-            const_assert!(size_of::<ErrorOutEventControlGpio>() == 3);
+            const_assert!(size_of::<Gpio>() == 3);
             const_assert!(size_of::<ErrorOutEventControlBeepCode>() == 8);
             const_assert!(size_of::<ErrorOutEventControlBeepCodePeakAttr>() == 4);
             assert!(offset_of!(ErrorOutEventControl116, beep_code_table) == 44);
