@@ -1589,7 +1589,6 @@ pub mod memory {
         }
     }
 
-
     #[cfg(test)]
     mod tests {
         use super::*;
@@ -1615,6 +1614,76 @@ pub mod memory {
             assert!(offset_of!(ErrorOutEventControl112, enable_heart_beat) == 104);
             assert!(offset_of!(ErrorOutEventControl112, power_good_gpio) == 106);
             const_assert!(size_of::<ErrorOutEventControl112>() == 112);
+        }
+    }
+}
+
+pub mod psp {
+    use super::*;
+    use super::memory::Gpio;
+
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+    #[repr(C, packed)]
+    pub struct BoardIdGettingMethodGpio {
+        access_method: U16<LittleEndian>, // 2 for BoardIdGettingMethodGpio
+        pub bit_locations: [Gpio; 4], // for the board id
+    }
+
+    impl Default for BoardIdGettingMethodGpio {
+        fn default() -> Self {
+            Self {
+                access_method: 2.into(),
+                bit_locations: [
+                    Gpio {
+                        pin: 0, // probably invalid
+                        iomux_control: 0, // probably invalid
+                        bank_control: 0, // probably invalid
+                    },
+                    Gpio {
+                        pin: 0, // probably invalid
+                        iomux_control: 0, // probably invalid
+                        bank_control: 0, // probably invalid
+                    },
+                    Gpio {
+                        pin: 0, // probably invalid
+                        iomux_control: 0, // probably invalid
+                        bank_control: 0, // probably invalid
+                    },
+                    Gpio {
+                        pin: 0, // probably invalid
+                        iomux_control: 0, // probably invalid
+                        bank_control: 0, // probably invalid
+                    },
+                ],
+            }
+        }
+    }
+
+    impl EntryCompatible for BoardIdGettingMethodGpio {
+        fn is_entry_compatible(entry_id: EntryId) -> bool {
+            match entry_id {
+                EntryId::Psp(PspEntryId::BoardIdGettingMethod) => true,
+                _ => false,
+            }
+        }
+    }
+
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+    #[repr(C, packed)]
+    pub struct IdApcbMapping {
+        pub id_and_feature_mask: u8, // bit 7: normal or feature-controlled?  other bits: mask
+        pub id_and_feature_value: u8,
+        pub apcb_instance_index_for_board: u8,
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn test_psp_structs() {
+            const_assert!(size_of::<IdApcbMapping>() == 3);
+            const_assert!(size_of::<BoardIdGettingMethodGpio>() == 14);
         }
     }
 }

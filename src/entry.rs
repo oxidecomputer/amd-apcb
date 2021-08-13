@@ -128,7 +128,8 @@ impl<'a, T: 'a + Sized + FromBytes + AsBytes> Iterator for StructArrayEntryMutIt
         if self.buf.is_empty() {
             None
         } else {
-            Some(take_header_from_collection_mut::<T>(&mut self.buf).unwrap())
+            // The "?" instead of '.unwrap()" here is solely to support BoardIdGettingMethod (the latter introduces useless padding at the end)
+            Some(take_header_from_collection_mut::<T>(&mut self.buf)?)
         }
     }
 }
@@ -298,7 +299,8 @@ impl<'a, T: 'a + Sized + FromBytes> Iterator for StructArrayEntryIter<'a, T> {
         if self.buf.is_empty() {
             None
         } else {
-            Some(take_header_from_collection::<T>(&mut self.buf).unwrap())
+            // The "?" instead of '.unwrap()" here is solely to support BoardIdGettingMethod (the latter introduces useless padding at the end)
+            Some(take_header_from_collection::<T>(&mut self.buf)?)
         }
     }
 }
@@ -377,6 +379,28 @@ impl<'a> EntryItem<'a> {
                     } else {
                         None
                     }
+                },
+                _ => {
+                    None
+                },
+            }
+        } else {
+            None
+        }
+    }
+
+    /// This function exists solely to support BoardIdGettingMethod*.  Also, it has weird padding at the end that we are ignoring.
+    /// FIXME: Check access_method
+    pub fn body_as_headered_struct_array<H: EntryCompatible + Sized + FromBytes, T: Sized + FromBytes>(&self) -> Option<(&'a H, StructArrayEntryIter<'a, T>)> {
+        if H::is_entry_compatible(self.id()) {
+            match &self.body {
+                EntryItemBody::Struct(buf) => {
+                    let mut buf = &buf[..];
+                    let header = take_header_from_collection::<H>(&mut buf)?;
+                    Some((header, StructArrayEntryIter {
+                        buf,
+                        _item: PhantomData,
+                    }))
                 },
                 _ => {
                     None

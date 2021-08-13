@@ -19,3 +19,4 @@ pub use types::Error;
 pub use entry::EntryItemBody;
 pub use ondisk::df;
 pub use ondisk::memory;
+pub use ondisk::psp;
