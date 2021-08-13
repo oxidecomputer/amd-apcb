@@ -1717,6 +1717,45 @@ pub mod psp {
 
     #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
+    pub struct BoardIdGettingMethodSmbus {
+        access_method: U16<LittleEndian>, // 1 for BoardIdGettingMethodSmbus
+        pub i2c_controller_index: U16<LittleEndian>,
+        pub i2c_mux_address: u8,
+        pub mux_control_address: u8,
+        pub mux_channel: u8,
+        pub smbus_address: U16<LittleEndian>,
+        pub register_index: U16<LittleEndian>,
+    }
+
+    impl Default for BoardIdGettingMethodSmbus {
+        fn default() -> Self {
+            Self {
+                access_method: 1.into(),
+                i2c_controller_index: 0.into(), // maybe invalid
+                i2c_mux_address: 0, // maybe invalid
+                mux_control_address: 0, // maybe invalid
+                mux_channel: 0, // maybe invalid
+                smbus_address: 0.into(), // maybe invalid
+                register_index: 0.into(),
+            }
+        }
+    }
+
+    impl EntryCompatible for BoardIdGettingMethodSmbus {
+        fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+            if prefix[0] == 1  && prefix[1] == 0 {
+                match entry_id {
+                    EntryId::Psp(PspEntryId::BoardIdGettingMethod) => true,
+                    _ => false,
+                }
+            } else {
+                false
+            }
+        }
+    }
+
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+    #[repr(C, packed)]
     pub struct IdRevApcbMapping {
         pub id_rev_and_feature_mask: u8, // bit 7: normal or feature-controlled?  other bits: mask
         pub id_and_feature_value: u8,
