@@ -1,3 +1,4 @@
+use core::marker::PhantomData;
 use core::mem::size_of;
 use crate::types::{Result, Error, FileSystemError};
 use crate::ondisk::ENTRY_HEADER;
@@ -100,6 +101,22 @@ impl<'a> EntryItemBody<&'a [u8]> {
 pub struct EntryMutItem<'a> {
     pub header: &'a mut ENTRY_HEADER,
     pub body: EntryItemBody<&'a mut [u8]>,
+}
+
+pub struct StructArrayEntryMutIter<'a, T: Sized + FromBytes + AsBytes> {
+    buf: &'a mut [u8],
+    _item: PhantomData<&'a T>,
+}
+
+impl<'a, T: 'a + Sized + FromBytes + AsBytes> Iterator for StructArrayEntryMutIter<'a, T> {
+    type Item = &'a mut T;
+    fn next(&mut self) -> Option<&'a mut T> {
+        if self.buf.is_empty() {
+            None
+        } else {
+            Some(take_header_from_collection_mut::<T>(&mut self.buf).unwrap())
+        }
+    }
 }
 
 impl<'a> EntryMutItem<'a> {
@@ -211,6 +228,31 @@ impl<'a> EntryMutItem<'a> {
             None
         }
     }
+
+/*
+    pub fn body_as_struct_array_mut<T: EntryCompatible + Sized + FromBytes + AsBytes>(&mut self) -> Option<StructArrayEntryMutIter<'a, T>> {
+        if T::is_entry_compatible(self.id()) {
+            match &mut self.body {
+                EntryItemBody::Struct(buf) => {
+                    let element_count: usize = buf.len() / size_of::<T>();
+                    if buf.len() == element_count * size_of::<T>() {
+                        Some(StructArrayEntryMutIter {
+                            buf,
+                            _item: PhantomData,
+                        })
+                    } else {
+                        None
+                    }
+                },
+                _ => {
+                    None
+                },
+            }
+        } else {
+            None
+        }
+    }
+*/
 }
 
 #[derive(Debug)]
@@ -219,7 +261,23 @@ pub struct EntryItem<'a> {
     pub body: EntryItemBody<&'a [u8]>,
 }
 
-impl EntryItem<'_> {
+pub struct StructArrayEntryIter<'a, T: Sized + FromBytes> {
+    buf: &'a [u8],
+    _item: PhantomData<&'a T>,
+}
+
+impl<'a, T: 'a + Sized + FromBytes> Iterator for StructArrayEntryIter<'a, T> {
+    type Item = &'a T;
+    fn next(&mut self) -> Option<&'a T> {
+        if self.buf.is_empty() {
+            None
+        } else {
+            Some(take_header_from_collection::<T>(&mut self.buf).unwrap())
+        }
+    }
+}
+
+impl<'a> EntryItem<'a> {
     // pub fn group_id(&self) -> u16  ; suppressed--replaced by an assert on read.
     pub fn id(&self) -> EntryId {
         EntryId::decode(self.header.group_id.get(), self.header.entry_id.get())
@@ -267,6 +325,29 @@ impl EntryItem<'_> {
                         let result = take_header_from_collection::<T>(&mut buf)?;
                         assert!(buf.is_empty());
                         Some(result)
+                    } else {
+                        None
+                    }
+                },
+                _ => {
+                    None
+                },
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn body_as_struct_array<T: EntryCompatible + Sized + FromBytes>(&self) -> Option<StructArrayEntryIter<'a, T>> {
+        if T::is_entry_compatible(self.id()) {
+            match &self.body {
+                EntryItemBody::Struct(buf) => {
+                    let element_count: usize = buf.len() / size_of::<T>();
+                    if buf.len() == element_count * size_of::<T>() {
+                        Some(StructArrayEntryIter {
+                            buf,
+                            _item: PhantomData,
+                        })
                     } else {
                         None
                     }
