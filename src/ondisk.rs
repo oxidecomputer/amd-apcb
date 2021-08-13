@@ -903,7 +903,7 @@ pub mod df {
                 alignment: 0,
                 socket: 0,
                 phys_nbio_map: 0,
-                intlv_size: 0,
+                intlv_size: 0, // 256 Byte
                 _reserved: [0; 4],
             }
         }
