@@ -369,13 +369,13 @@ impl<'a> EntryItem<'a> {
         }
     }
 
-    pub fn body_as_struct_array<T: EntryCompatible + Sized + FromBytes>(&self) -> Option<StructArrayEntryIter<'a, T>> {
+    pub fn body_as_struct_array<T: EntryCompatible + Sized + FromBytes>(&self) -> Option<StructArrayEntryItem<'a, T>> {
         match &self.body {
             EntryItemBody::Struct(buf) => {
                 if T::is_entry_compatible(self.id(), buf) {
                     let element_count: usize = buf.len() / size_of::<T>();
                     if buf.len() == element_count * size_of::<T>() {
-                        Some(StructArrayEntryIter {
+                        Some(StructArrayEntryItem {
                             buf,
                             _item: PhantomData,
                         })
