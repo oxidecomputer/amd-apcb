@@ -5,7 +5,7 @@ use core::mem::{replace, size_of};
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
-use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32};
+use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32, U64};
 use static_assertions::const_assert;
 use core::convert::TryInto;
 
@@ -879,6 +879,50 @@ pub trait EntryCompatible {
     /// Note: Usually, you still need to check whether the size is correct.  Since arrays are allowed and the ondisk structures then are array Element only, the payload size can be a natural multiple of the struct size.
     fn is_entry_compatible(_entry_id: EntryId) -> bool {
         false
+    }
+}
+
+pub mod df {
+    use super::*;
+
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+    #[repr(C, packed)]
+    pub struct SlinkRegionDescription {
+        pub size: U64<LittleEndian>,
+        pub alignment: u8,
+        pub socket: u8, // 0|1
+        pub phys_nbio_map: u8, // bitmap
+        pub intlv_size: u8, // enum
+        _reserved: [u8; 4],
+    }
+
+    impl Default for SlinkRegionDescription {
+        fn default() -> Self {
+            Self {
+                size: 0.into(),
+                alignment: 0,
+                socket: 0,
+                phys_nbio_map: 0,
+                intlv_size: 0,
+                _reserved: [0; 4],
+            }
+        }
+    }
+
+    // Rome only; even there, it's almost all 0s
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+    #[repr(C, packed)]
+    pub struct SlinkConfig {
+        pub regions: [SlinkRegionDescription; 4],
+    }
+
+    impl EntryCompatible for SlinkConfig {
+        fn is_entry_compatible(entry_id: EntryId) -> bool {
+            match entry_id {
+                EntryId::Df(DfEntryId::SlinkConfig) => true,
+                _ => false,
+            }
+        }
     }
 }
 
