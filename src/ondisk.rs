@@ -1632,7 +1632,7 @@ pub mod psp {
     impl Default for BoardIdGettingMethodGpio {
         fn default() -> Self {
             Self {
-                access_method: 2.into(),
+                access_method: 3.into(),
                 bit_locations: [
                     Gpio {
                         pin: 0, // probably invalid
@@ -1661,7 +1661,7 @@ pub mod psp {
 
     impl EntryCompatible for BoardIdGettingMethodGpio {
         fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
-            if prefix[0] == 2  && prefix[1] == 0 {
+            if prefix[0] == 3  && prefix[1] == 0 {
                 match entry_id {
                     EntryId::Psp(PspEntryId::BoardIdGettingMethod) => true,
                     _ => false,
