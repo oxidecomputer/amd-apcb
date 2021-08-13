@@ -46,7 +46,7 @@ To delete a token:
 
 If the entry is a struct entry, you can use something like
 
-    let mut entry = entry.body_as_struct_mut::<memory::DimmInfoSmbus>(0, 0xFFFF)?;
+    let mut entry = entry.body_as_struct_mut::<memory::DimmInfoSmbus>()?;
     entry.dimm_slot_present
 
 to have the entry represented as a Rust struct.
