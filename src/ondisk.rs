@@ -1548,6 +1548,48 @@ pub mod memory {
         }
     }
 
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+    #[repr(C, packed)]
+    pub struct OdtPatElement {
+        pub dimm_rank_bitmap: U32<LittleEndian>, // 2-dimm version: 4 bits dimm0; 28 bits dimm1.  1-dimm version: 32 bits dimm0
+        pub cs0_odt_pattern: U32<LittleEndian>,
+        pub cs1_odt_pattern: U32<LittleEndian>,
+        pub cs2_odt_pattern: U32<LittleEndian>,
+        pub cs3_odt_pattern: U32<LittleEndian>,
+    }
+
+    impl OdtPatElement {
+        pub fn dimm0_rank(&self) -> u32 {
+            self.dimm_rank_bitmap.get() & 15
+        }
+        pub fn dimm1_rank(&self) -> u32 {
+            self.dimm_rank_bitmap.get() >> 4
+        }
+    }
+
+    impl Default for OdtPatElement {
+        fn default() -> Self {
+            Self {
+                dimm_rank_bitmap: 0.into(), // probably invalid
+                cs0_odt_pattern: 0.into(),
+                cs1_odt_pattern: 0.into(),
+                cs2_odt_pattern: 0.into(),
+                cs3_odt_pattern: 0.into(),
+            }
+        }
+    }
+
+    impl EntryCompatible for OdtPatElement {
+        fn is_entry_compatible(entry_id: EntryId) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::PsRdimmDdr4OdtPat) => true,
+                EntryId::Memory(MemoryEntryId::PsLrdimmDdr4OdtPat) => true,
+                _ => false,
+            }
+        }
+    }
+
+
     #[cfg(test)]
     mod tests {
         use super::*;
