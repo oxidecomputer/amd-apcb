@@ -51,6 +51,15 @@ If the entry is a struct entry, you can use something like
 
 to have the entry represented as a Rust struct.
 
+If the entry is a struct array entry, you can use something like
+
+    let mut entry = entry.body_as_struct_array_mut::<memory::DimmInfoSmbus>()?;
+    for element in entry {
+        ...
+    }
+
+to iterate over it.
+
 In order to update the checksum (you should do that once after any insertion/deletion/mutation):
 
     Apcb::update_checksum(&mut buffer[0..])?;
