@@ -1624,6 +1624,35 @@ pub mod psp {
 
     #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
+    pub struct BoardIdGettingMethodCustom {
+        access_method: U16<LittleEndian>, // 0xF for BoardIdGettingMethodEeprom
+        feature_mask: U16<LittleEndian>,
+    }
+
+    impl Default for BoardIdGettingMethodCustom {
+        fn default() -> Self {
+            Self {
+                access_method: 0xF.into(),
+                feature_mask: 0.into(),
+            }
+        }
+    }
+
+    impl EntryCompatible for BoardIdGettingMethodCustom {
+        fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+            if prefix[0] == 0xF && prefix[1] == 0 {
+                match entry_id {
+                    EntryId::Psp(PspEntryId::BoardIdGettingMethod) => true,
+                    _ => false,
+                }
+            } else {
+                false
+            }
+        }
+    }
+
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+    #[repr(C, packed)]
     pub struct BoardIdGettingMethodGpio {
         access_method: U16<LittleEndian>, // 3 for BoardIdGettingMethodGpio
         pub bit_locations: [Gpio; 4], // for the board id
