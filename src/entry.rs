@@ -393,7 +393,6 @@ impl<'a> EntryItem<'a> {
     }
 
     /// This function exists solely to support BoardIdGettingMethod*.  Also, it has weird padding at the end that we are ignoring.
-    /// FIXME: Check access_method
     pub fn body_as_headered_struct_array<H: EntryCompatible + Sized + FromBytes, T: Sized + FromBytes>(&self) -> Option<(&'a H, StructArrayEntryIter<'a, T>)> {
         let id = self.id();
         match &self.body {
