@@ -15,7 +15,7 @@ use crate::group::{GroupItem, GroupMutItem};
 use static_assertions::const_assert;
 use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
-use zerocopy::{AsBytes, FromBytes};
+use zerocopy::AsBytes;
 
 pub struct Apcb<'a> {
     header: &'a mut V2_HEADER,
