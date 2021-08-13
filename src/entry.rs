@@ -229,8 +229,7 @@ impl<'a> EntryMutItem<'a> {
         }
     }
 
-/*
-    pub fn body_as_struct_array_mut<T: EntryCompatible + Sized + FromBytes + AsBytes>(&mut self) -> Option<StructArrayEntryMutIter<'a, T>> {
+    pub fn body_as_struct_array_mut<T: EntryCompatible + Sized + FromBytes + AsBytes>(&mut self) -> Option<StructArrayEntryMutIter<'_, T>> {
         if T::is_entry_compatible(self.id()) {
             match &mut self.body {
                 EntryItemBody::Struct(buf) => {
@@ -252,7 +251,6 @@ impl<'a> EntryMutItem<'a> {
             None
         }
     }
-*/
 }
 
 #[derive(Debug)]
