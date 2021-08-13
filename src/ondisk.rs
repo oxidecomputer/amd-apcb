@@ -1625,7 +1625,7 @@ pub mod psp {
     #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct BoardIdGettingMethodGpio {
-        access_method: U16<LittleEndian>, // 2 for BoardIdGettingMethodGpio
+        access_method: U16<LittleEndian>, // 3 for BoardIdGettingMethodGpio
         pub bit_locations: [Gpio; 4], // for the board id
     }
 
@@ -1677,7 +1677,51 @@ pub mod psp {
     pub struct IdApcbMapping {
         pub id_and_feature_mask: u8, // bit 7: normal or feature-controlled?  other bits: mask
         pub id_and_feature_value: u8,
-        pub apcb_instance_index_for_board: u8,
+        pub apcb_instance_index: u8,
+    }
+
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+    #[repr(C, packed)]
+    pub struct BoardIdGettingMethodEeprom {
+        access_method: U16<LittleEndian>, // 2 for BoardIdGettingMethodEeprom
+        i2c_controller_index: U16<LittleEndian>,
+        device_address: U16<LittleEndian>,
+        board_id_offset: U16<LittleEndian>, // Byte offset
+        board_rev_offset: U16<LittleEndian>, // Byte offset
+    }
+
+    impl Default for BoardIdGettingMethodEeprom {
+        fn default() -> Self {
+            Self {
+                access_method: 2.into(),
+                i2c_controller_index: 0.into(), // maybe invalid
+                device_address: 0.into(),
+                board_id_offset: 0.into(),
+                board_rev_offset: 0.into(),
+            }
+        }
+    }
+
+    impl EntryCompatible for BoardIdGettingMethodEeprom {
+        fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+            if prefix[0] == 2  && prefix[1] == 0 {
+                match entry_id {
+                    EntryId::Psp(PspEntryId::BoardIdGettingMethod) => true,
+                    _ => false,
+                }
+            } else {
+                false
+            }
+        }
+    }
+
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+    #[repr(C, packed)]
+    pub struct IdRevApcbMapping {
+        pub id_rev_and_feature_mask: u8, // bit 7: normal or feature-controlled?  other bits: mask
+        pub id_and_feature_value: u8,
+        pub rev_and_feature_value: u8,
+        pub apcb_instance_index: u8,
     }
 
     #[cfg(test)]
