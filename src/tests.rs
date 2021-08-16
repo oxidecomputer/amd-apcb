@@ -332,6 +332,45 @@ mod tests {
     }
 
     #[test]
+    fn insert_wrong_struct_array_entries() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
+        apcb.insert_group(GroupId::Psp, *b"PSPG")?;
+        apcb.insert_group(GroupId::Memory, *b"MEMG")?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, &[1u8; 48], 33)?;
+        let items = [
+            DimmInfoSmbusElement {
+                dimm_slot_present: 1,
+                socket_id: 2,
+                channel_id: 3,
+                dimm_id: 4,
+                dimm_smbus_address: 5,
+                i2c_mux_address: 6,
+                mux_control_address: 7,
+                max_channel: 8,
+            },
+            DimmInfoSmbusElement {
+                dimm_slot_present: 9,
+                socket_id: 10,
+                channel_id: 11,
+                dimm_id: 12,
+                dimm_smbus_address: 13,
+                i2c_mux_address: 14,
+                mux_control_address: 15,
+                max_channel: 16,
+            },
+        ];
+        match apcb.insert_struct_array_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, ContextType::Struct, &items, 32) {
+            Err(Error::EntryTypeMismatch) => {
+                Ok(())
+            }
+            _ => {
+                panic!("should fail with EntryTypeMismatch");
+            }
+        }
+    }
+
+    #[test]
     fn insert_tokens() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
         let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
