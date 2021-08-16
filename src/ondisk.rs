@@ -1697,6 +1697,15 @@ pub mod psp {
         }
     }
 
+    impl BoardIdGettingMethodGpio {
+        pub fn new(bit_locations: [Gpio; 4]) -> Self {
+            Self {
+                access_method: 3.into(),
+                bit_locations,
+            }
+        }
+    }
+
     impl EntryCompatible for BoardIdGettingMethodGpio {
         fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
             if prefix.len() >= 2 && prefix[0] == 3 && prefix[1] == 0 {
