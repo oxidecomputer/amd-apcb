@@ -101,7 +101,7 @@ impl<'a> TokensEntryIterMut<'a> {
             match Self::next_item(self.entry_id, &mut buf) {
                 Ok(e) => {
                     if e.id() < token_id {
-                        self.next().ok_or_else(|| Error::Internal)?;
+                        self.next().unwrap();
                     } else {
                         break;
                     }
@@ -123,7 +123,7 @@ impl<'a> TokensEntryIterMut<'a> {
             match Self::next_item(self.entry_id, &mut buf) {
                 Ok(e) => {
                     if e.id() != token_id {
-                        self.next().ok_or_else(|| Error::Internal)?;
+                        self.next().unwrap();
                     } else {
                         return Ok(());
                     }
@@ -239,7 +239,7 @@ impl<'a> TokensEntryIter<'a> {
     }
     pub(crate) fn next1(&mut self) -> Result<TokensEntryItem<'a>> {
         if self.remaining_used_size == 0 {
-            return Err(Error::Internal);
+            panic!("Internal error");
         }
         match Self::next_item(self.entry_id, &mut self.buf) {
             Ok(e) => {

@@ -10,7 +10,6 @@ pub enum FileSystemError {
 #[non_exhaustive]
 pub enum Error {
     ArithmeticOverflow,
-    Internal,
     FileSystem(FileSystemError, &'static str), // message, field name
     OutOfSpace,
     GroupNotFound,

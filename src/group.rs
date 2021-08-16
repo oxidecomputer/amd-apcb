@@ -80,7 +80,7 @@ impl<'a> GroupIter<'a> {
 
     pub(crate) fn next1(&mut self) -> Result<EntryItem<'a>> {
         if self.remaining_used_size == 0 {
-            return Err(Error::Internal);
+            panic!("Internal error");
         }
         match Self::next_item(&mut self.buf) {
             Ok(e) => {
@@ -196,7 +196,7 @@ impl<'a> GroupMutIter<'a> {
             match Self::next_item(&mut buf) {
                 Ok(e) => {
                     if (e.group_id(), e.type_id(), e.instance_id(), e.board_instance_mask()) < (group_id, type_id, instance_id, board_instance_mask) {
-                        self.next().ok_or_else(|| Error::Internal)?;
+                        self.next().unwrap();
                     } else {
                         break;
                     }
@@ -221,7 +221,7 @@ impl<'a> GroupMutIter<'a> {
                 Ok(e) => {
                     let entry_size = e.header.entry_size.get();
                     if (e.id(), e.instance_id(), e.board_instance_mask()) != (entry_id, instance_id, board_instance_mask) {
-                        self.next().ok_or_else(|| Error::Internal)?;
+                        self.next().unwrap();
                         offset = offset.checked_add(entry_size.into()).ok_or_else(|| Error::ArithmeticOverflow)?;
                         while offset % ENTRY_ALIGNMENT != 0 {
                             offset = offset.checked_add(1).ok_or_else(|| Error::ArithmeticOverflow)?;

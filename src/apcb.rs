@@ -90,7 +90,7 @@ impl<'a> ApcbIterMut<'a> {
 
     pub(crate) fn next1(&mut self) -> Result<GroupMutItem<'a>> {
         if self.remaining_used_size == 0 {
-            return Err(Error::Internal);
+            panic!("Internal error");
         }
         match Self::next_item(&mut self.buf) {
             Ok(e) => {
@@ -158,7 +158,7 @@ impl<'a> ApcbIter<'a> {
     }
     pub(crate) fn next1(&mut self) -> Result<GroupItem<'a>> {
         if self.remaining_used_size == 0 {
-            return Err(Error::Internal);
+            panic!("Internal error");
         }
         match Self::next_item(&mut self.buf) {
             Ok(e) => {
