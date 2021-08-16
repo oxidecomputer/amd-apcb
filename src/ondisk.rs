@@ -1713,10 +1713,10 @@ pub mod psp {
     #[repr(C, packed)]
     pub struct BoardIdGettingMethodEeprom {
         access_method: U16<LittleEndian>, // 2 for BoardIdGettingMethodEeprom
-        i2c_controller_index: U16<LittleEndian>,
-        device_address: U16<LittleEndian>,
-        board_id_offset: U16<LittleEndian>, // Byte offset
-        board_rev_offset: U16<LittleEndian>, // Byte offset
+        pub i2c_controller_index: U16<LittleEndian>,
+        pub device_address: U16<LittleEndian>,
+        pub board_id_offset: U16<LittleEndian>, // Byte offset
+        pub board_rev_offset: U16<LittleEndian>, // Byte offset
     }
 
     impl Default for BoardIdGettingMethodEeprom {
