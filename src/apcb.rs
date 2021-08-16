@@ -342,6 +342,26 @@ impl<'a> Apcb<'a> {
             Err(Error::EntryTypeMismatch)
         }
     }
+    pub fn insert_headered_struct_array_entry<H: EntryCompatible + AsBytes, T: AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, header: &H, payload: &[T], priority_mask: u8) -> Result<()> {
+        let blob = header.as_bytes();
+        if H::is_entry_compatible(entry_id, blob) {
+            let payload_size = size_of::<H>().checked_add(size_of::<T>().checked_mul(payload.len()).ok_or_else(|| Error::ArithmeticOverflow)?).ok_or_else(|| Error::ArithmeticOverflow)?;
+            self.internal_insert_entry(entry_id, instance_id, board_instance_mask, context_type, payload_size, &mut |body: &mut [u8]| {
+                let mut body = body;
+                let (a, rest) = body.split_at_mut(blob.len());
+                a.copy_from_slice(blob);
+                body = rest;
+                for item in payload {
+                    let source = item.as_bytes();
+                    let (a, rest) = body.split_at_mut(source.len());
+                    a.copy_from_slice(source);
+                    body = rest;
+                }
+            }, priority_mask)
+        } else {
+            Err(Error::EntryTypeMismatch)
+        }
+    }
 
     pub fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         let group_id = entry_id.group_id();
