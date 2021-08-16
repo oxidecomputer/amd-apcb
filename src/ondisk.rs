@@ -1625,7 +1625,7 @@ pub mod psp {
     #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct BoardIdGettingMethodCustom {
-        access_method: U16<LittleEndian>, // 0xF for BoardIdGettingMethodEeprom
+        access_method: U16<LittleEndian>, // 0xF for BoardIdGettingMethodCustom
         pub feature_mask: U16<LittleEndian>,
     }
 
