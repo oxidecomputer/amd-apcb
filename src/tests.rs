@@ -285,7 +285,7 @@ mod tests {
                 max_channel: 16,
             },
         ];
-        apcb.insert_struct_array_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, ContextType::Struct, &items, 32)?;
+        apcb.insert_struct_array_entry(EntryId::Memory(MemoryEntryId::DimmInfoSmbus), 0, 0xFFFF, ContextType::Struct, &items, 32)?;
 
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
@@ -310,7 +310,7 @@ mod tests {
         let mut entries = group.entries();
 
         let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
-        assert!(entry.id() == EntryId::Memory(MemoryEntryId::ConsoleOutControl));
+        assert!(entry.id() == EntryId::Memory(MemoryEntryId::DimmInfoSmbus));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
