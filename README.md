@@ -49,16 +49,16 @@ If the entry is a struct entry, you can use something like
     let mut entry = entry.body_as_struct_mut::<memory::DimmInfoSmbus>()?;
     entry.dimm_slot_present
 
-to have the entry represented as a Rust struct.
+to have the entry represented as a Rust struct.  This is only useful for structs whose name doesn't contain "Element" (since those are the ones without a variable-length payload).
 
-If the entry is a struct array entry, you can use something like
+If the entry is a struct array entry (variable-length array), then you can use something like
 
-    let mut entry = entry.body_as_struct_array_mut::<memory::DimmInfoSmbus>()?;
+    let mut entry = entry.body_as_struct_array_mut::<memory::DimmInfoSmbusElement>()?;
     for element in entry {
         ...
     }
 
-to iterate over it.
+to iterate over it.  This is only useful for structs whose name contains "Element".
 
 In order to update the checksum (you should do that once after any insertion/deletion/mutation):
 
