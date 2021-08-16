@@ -876,7 +876,7 @@ Token:
 
 pub trait EntryCompatible {
     /// Returns whether the ENTRY_ID can in principle house the impl of the trait EntryCompatible.
-    /// Note: Usually, you still need to check whether the size is correct.  Since arrays are allowed and the ondisk structures then are array Element only, the payload size can be a natural multiple of the struct size.
+    /// Note: Usually, caller still needs to check whether the size is correct.  Since arrays are allowed and the ondisk structures then are array Element only, the payload size can be a natural multiple of the struct size.
     fn is_entry_compatible(_entry_id: EntryId, _prefix: &[u8]) -> bool {
         false
     }
