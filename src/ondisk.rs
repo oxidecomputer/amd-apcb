@@ -1626,7 +1626,7 @@ pub mod psp {
     #[repr(C, packed)]
     pub struct BoardIdGettingMethodCustom {
         access_method: U16<LittleEndian>, // 0xF for BoardIdGettingMethodEeprom
-        feature_mask: U16<LittleEndian>,
+        pub feature_mask: U16<LittleEndian>,
     }
 
     impl Default for BoardIdGettingMethodCustom {
