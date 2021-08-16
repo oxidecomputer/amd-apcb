@@ -313,6 +313,7 @@ impl<'a> Apcb<'a> {
             body.copy_from_slice(payload);
         }, priority_mask)
     }
+    /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.
     pub fn insert_struct_entry<T: EntryCompatible + AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &T, priority_mask: u8) -> Result<()> {
         let blob = payload.as_bytes();
         if T::is_entry_compatible(entry_id, blob) {
@@ -321,6 +322,7 @@ impl<'a> Apcb<'a> {
             Err(Error::EntryTypeMismatch)
         }
     }
+    /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.
     pub fn insert_struct_array_entry<T: EntryCompatible + AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[T], priority_mask: u8) -> Result<()> {
         let blob = if payload.len() > 0 {
             payload[0].as_bytes()
@@ -342,6 +344,7 @@ impl<'a> Apcb<'a> {
             Err(Error::EntryTypeMismatch)
         }
     }
+    /// Inserts a new entry (see insert_entry), puts HEADER and then PAYLOAD into it.
     pub fn insert_headered_struct_array_entry<H: EntryCompatible + AsBytes, T: AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, header: &H, payload: &[T], priority_mask: u8) -> Result<()> {
         let blob = header.as_bytes();
         if H::is_entry_compatible(entry_id, blob) {
