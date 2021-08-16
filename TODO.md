@@ -1,15 +1,20 @@
 # Features
 
-* "array of raw structs" is (unfortunately) possible, so we need to support it
-  * insert_struct_array with padding?!
-  * Implement body_as_headered_struct_array_mut
 * Apcb: Dirty-type, original-type; automate calling update_checksum
   * My own idea: Just implement Drop and have a flag you refer to.
+  * Give a reference to the flag to all the iterators that would need to change it
+    * If there are &mut to struct that doesn't work, now does it?
 
 # Cleanup
 
-* Maybe get rid of Error::Internal entirely ?
-* TokensEntryItemMut::set_value just asserts!!!  Maybe not so great.
+* How do we represent bool repr u8 in zerocopy?
+* Add enum accessor for ExtVoltageControl.*_port_type, ErrorOutEventControl116.*_port_type.
+  * is_entry_compatible also can validate.  Should it?  If so, the accessors can be sure to have a valid variant in the instance.
+    * Good starting example: AblConsoleOutControl ONLY has u8 bools
+
+# Compatibility
+
+* Allow/implement insert_headered_struct_array_entry with padding?!  Check what AMD says here
 
 # Security
 
@@ -18,9 +23,15 @@
 * insert_*: Check for duplicate key
 * Fuzzing!
   * https://rust-fuzz.github.io/book/cargo-fuzz.html
+  * Fuzz after:
+    * apcb header
+    * group header
+    * entry header
+    * token header
 
 # Unimportant/later
 
+* Add "new" functions to the structs.  That's nicer than Default.
 * apcb::insert_entry: Replace by shifts and masks (if not compile time)
 * insert_token: "&" instead of "%"
 * Check error handling crate "failure" or "anyhow". `#[source]`
@@ -28,3 +39,4 @@
   Also has https://docs.rs/zerovec/0.2.3/zerovec/ule/index.html
   https://docs.rs/zerovec/0.2.3/zerovec/ule/trait.ULE.html can handle arrays
 * Entry alignment relative to containing group instead??
+* Instead of having pub `U16` fields, provide accessors.  The goal would be to make the crate interface independent of zerocopy, and to be able to sanity-check the values on read instead of up-front.
