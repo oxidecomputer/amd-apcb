@@ -16,6 +16,7 @@ pub enum Error {
     EntryNotFound,
     EntryTypeMismatch,
     TokenNotFound,
+    TokenRange,
 }
 
 pub type Result<Q> = core::result::Result<Q, Error>;

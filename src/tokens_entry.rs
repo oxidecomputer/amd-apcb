@@ -60,15 +60,19 @@ impl<'a> TokensEntryItemMut<'a> {
 
     // Since the id is a sort key, it cannot be mutated.
 
-    pub fn set_value(&mut self, value: u32) {
-        assert!(value == (value & match self.entry_id {
+    pub fn set_value(&mut self, value: u32) -> Result<()> {
+        if value == (value & match self.entry_id {
             TokenEntryId::Bool => 0x1,
             TokenEntryId::Byte => 0xFF,
             TokenEntryId::Word => 0xFFFF,
             TokenEntryId::DWord => 0xFFFF_FFFF,
             TokenEntryId::Raw(_) => 0xFFFF_FFFF,
-        }));
-        self.token.value.set(value)
+        }) {
+            self.token.value.set(value);
+            Ok(())
+        } else {
+            Err(Error::TokenRange)
+        }
     }
 }
 
@@ -162,7 +166,7 @@ impl<'a> TokensEntryIterMut<'a> {
         };
 
         // This has better error checking
-        result.set_value(token_value);
+        result.set_value(token_value)?;
         Ok(result)
     }
 
