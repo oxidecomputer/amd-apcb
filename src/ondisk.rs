@@ -1638,6 +1638,15 @@ pub mod psp {
         }
     }
 
+    impl BoardIdGettingMethodCustom {
+        pub fn new(feature_mask: u16) -> Self {
+            Self {
+                access_method: 0xF.into(),
+                feature_mask: feature_mask.into(),
+            }
+        }
+    }
+
     impl EntryCompatible for BoardIdGettingMethodCustom {
         fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
             if prefix.len() >= 2 && prefix[0] == 0xF && prefix[1] == 0 {
