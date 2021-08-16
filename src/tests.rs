@@ -323,7 +323,30 @@ mod tests {
             }
         }
 
-// FIXME        assert!(*entry.body_as_struct_array::<ConsoleOutControl>().unwrap() == [ConsoleOutControl::default(), ConsoleOutControl::default()]);
+        let elements = entry.body_as_struct_array::<DimmInfoSmbusElement>().ok_or_else(|| Error::EntryTypeMismatch)?;
+        let mut elements = elements.iter();
+
+        assert!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)? == DimmInfoSmbusElement {
+                dimm_slot_present: 1,
+                socket_id: 2,
+                channel_id: 3,
+                dimm_id: 4,
+                dimm_smbus_address: 5,
+                i2c_mux_address: 6,
+                mux_control_address: 7,
+                max_channel: 8,
+        });
+        assert!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)? == DimmInfoSmbusElement {
+                dimm_slot_present: 9,
+                socket_id: 10,
+                channel_id: 11,
+                dimm_id: 12,
+                dimm_smbus_address: 13,
+                i2c_mux_address: 14,
+                mux_control_address: 15,
+                max_channel: 16,
+        });
+        assert!(matches!(elements.next(), None));
 
         assert!(matches!(entries.next(), None));
 
