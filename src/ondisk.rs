@@ -1730,6 +1730,18 @@ pub mod psp {
             }
         }
     }
+    impl BoardIdGettingMethodEeprom {
+        pub fn new(i2c_controller_index: u16, device_address: u16, board_id_offset: u16, board_rev_offset: u16) -> Self {
+            Self {
+                access_method: 2.into(),
+                i2c_controller_index: i2c_controller_index.into(),
+                device_address: device_address.into(),
+                board_id_offset: board_id_offset.into(),
+                board_rev_offset: board_rev_offset.into(),
+            }
+        }
+    }
+
 
     impl EntryCompatible for BoardIdGettingMethodEeprom {
         fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
