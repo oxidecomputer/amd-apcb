@@ -7,7 +7,7 @@ use crate::ondisk::TOKEN_ENTRY;
 use crate::ondisk::V2_HEADER;
 use crate::ondisk::V3_HEADER_EXT;
 use crate::ondisk::ENTRY_ALIGNMENT;
-pub use crate::ondisk::{ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
+pub use crate::ondisk::{ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut, EntryCompatible};
 use core::convert::TryInto;
 use core::default::Default;
 use core::mem::{size_of};
@@ -313,8 +313,13 @@ impl<'a> Apcb<'a> {
             body.copy_from_slice(payload);
         }, priority_mask)
     }
-    pub fn insert_struct_entry<T: AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &T, priority_mask: u8) -> Result<()> {
-        self.insert_entry(entry_id, instance_id, board_instance_mask, context_type, payload.as_bytes(), priority_mask)
+    pub fn insert_struct_entry<T: EntryCompatible + AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &T, priority_mask: u8) -> Result<()> {
+        let blob = payload.as_bytes();
+        if T::is_entry_compatible(entry_id, blob) {
+            self.insert_entry(entry_id, instance_id, board_instance_mask, context_type, blob, priority_mask)
+        } else {
+            Err(Error::EntryTypeMismatch)
+        }
     }
     pub fn insert_struct_array_entry<T: AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[T], priority_mask: u8) -> Result<()> {
         let payload_size = size_of::<T>().checked_mul(payload.len()).ok_or_else(|| Error::ArithmeticOverflow)?;
