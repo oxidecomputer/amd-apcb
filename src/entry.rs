@@ -268,6 +268,28 @@ impl<'a> EntryMutItem<'a> {
             },
         }
     }
+
+    pub fn body_as_headered_struct_array_mut<H: EntryCompatible + Sized + FromBytes + AsBytes, T: Sized + FromBytes + AsBytes>(&mut self) -> Option<(&'_ mut H, StructArrayEntryMutIter<'_, T>)> {
+        let id = self.id();
+        match &mut self.body {
+            EntryItemBody::Struct(buf) => {
+                if H::is_entry_compatible(id, buf) {
+                    let mut buf = &mut buf[..];
+                    let header = take_header_from_collection_mut::<H>(&mut buf)?;
+                    Some((header, StructArrayEntryMutIter {
+                        buf,
+                        _item: PhantomData,
+                    }))
+                } else {
+                    None
+                }
+            },
+            _ => {
+                None
+            },
+        }
+    }
+
 }
 
 #[derive(Debug)]
