@@ -1042,7 +1042,8 @@ pub mod memory {
         pub output_port_size: U32<LittleEndian>, // size in Byte; one of [1, 2, 4]
         pub input_port_type: U32<LittleEndian>, // default: 6 (FCH)
         pub output_port_type: U32<LittleEndian>, // default: 6 (FCH)
-        pub clear_ack: U32<LittleEndian>, // bool
+        pub clear_acknowledgement: u8,
+        _reserved: [u8; 3],
     }
 
     impl EntryCompatible for ExtVoltageControl {
@@ -1064,7 +1065,8 @@ pub mod memory {
                 output_port_size: 4u32.into(),
                 input_port_type: 6u32.into(),
                 output_port_type: 6u32.into(),
-                clear_ack: 0u32.into(),
+                clear_acknowledgement: 0,
+                _reserved: [0; 3],
             }
         }
     }
