@@ -269,14 +269,14 @@ impl<'a> EntryMutItem<'a> {
         }
     }
 
-    pub fn body_as_headered_struct_array_mut<H: EntryCompatible + Sized + FromBytes + AsBytes, T: Sized + FromBytes + AsBytes>(&mut self) -> Option<(&'_ mut H, StructArrayEntryMutIter<'_, T>)> {
+    pub fn body_as_headered_struct_array_mut<H: EntryCompatible + Sized + FromBytes + AsBytes, T: Sized + FromBytes + AsBytes>(&mut self) -> Option<(&'_ mut H, StructArrayEntryMutItem<'_, T>)> {
         let id = self.id();
         match &mut self.body {
             EntryItemBody::Struct(buf) => {
                 if H::is_entry_compatible(id, buf) {
                     let mut buf = &mut buf[..];
                     let header = take_header_from_collection_mut::<H>(&mut buf)?;
-                    Some((header, StructArrayEntryMutIter {
+                    Some((header, StructArrayEntryMutItem {
                         buf,
                         _item: PhantomData,
                     }))
@@ -415,14 +415,14 @@ impl<'a> EntryItem<'a> {
     }
 
     /// This function exists solely to support BoardIdGettingMethod*.  Also, it has weird padding at the end that we are ignoring.
-    pub fn body_as_headered_struct_array<H: EntryCompatible + Sized + FromBytes, T: Sized + FromBytes>(&self) -> Option<(&'a H, StructArrayEntryIter<'a, T>)> {
+    pub fn body_as_headered_struct_array<H: EntryCompatible + Sized + FromBytes, T: Sized + FromBytes>(&self) -> Option<(&'a H, StructArrayEntryItem<'a, T>)> {
         let id = self.id();
         match &self.body {
             EntryItemBody::Struct(buf) => {
                 if H::is_entry_compatible(id, buf) {
                     let mut buf = &buf[..];
                     let header = take_header_from_collection::<H>(&mut buf)?;
-                    Some((header, StructArrayEntryIter {
+                    Some((header, StructArrayEntryItem {
                         buf,
                         _item: PhantomData,
                     }))
