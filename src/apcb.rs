@@ -321,18 +321,28 @@ impl<'a> Apcb<'a> {
             Err(Error::EntryTypeMismatch)
         }
     }
-    pub fn insert_struct_array_entry<T: AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[T], priority_mask: u8) -> Result<()> {
-        let payload_size = size_of::<T>().checked_mul(payload.len()).ok_or_else(|| Error::ArithmeticOverflow)?;
-        self.internal_insert_entry(entry_id, instance_id, board_instance_mask, context_type, payload_size, &mut |body: &mut [u8]| {
-            let mut body = body;
-            for item in payload {
-                let source = item.as_bytes();
-                let (a, rest) = body.split_at_mut(source.len());
-                a.copy_from_slice(source);
-                body = rest;
-            }
-        }, priority_mask)
+    pub fn insert_struct_array_entry<T: EntryCompatible + AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[T], priority_mask: u8) -> Result<()> {
+        let blob = if payload.len() > 0 {
+            payload[0].as_bytes()
+        } else {
+            b""
+        };
+        if T::is_entry_compatible(entry_id, blob) {
+            let payload_size = size_of::<T>().checked_mul(payload.len()).ok_or_else(|| Error::ArithmeticOverflow)?;
+            self.internal_insert_entry(entry_id, instance_id, board_instance_mask, context_type, payload_size, &mut |body: &mut [u8]| {
+                let mut body = body;
+                for item in payload {
+                    let source = item.as_bytes();
+                    let (a, rest) = body.split_at_mut(source.len());
+                    a.copy_from_slice(source);
+                    body = rest;
+                }
+            }, priority_mask)
+        } else {
+            Err(Error::EntryTypeMismatch)
+        }
     }
+
     pub fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         let group_id = entry_id.group_id();
         // Make sure that the entry exists before resizing the group
