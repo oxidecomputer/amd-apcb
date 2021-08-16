@@ -1800,6 +1800,20 @@ pub mod psp {
         }
     }
 
+    impl BoardIdGettingMethodSmbus {
+        pub fn new(i2c_controller_index: u16, i2c_mux_address: u8, mux_control_address: u8, mux_channel: u8, smbus_address: u16, register_index: u16) -> Self {
+            Self {
+                access_method: 1.into(),
+                i2c_controller_index: i2c_controller_index.into(),
+                i2c_mux_address,
+                mux_control_address,
+                mux_channel,
+                smbus_address: smbus_address.into(),
+                register_index: register_index.into(),
+            }
+        }
+    }
+
     impl EntryCompatible for BoardIdGettingMethodSmbus {
         fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
             if prefix.len() >= 2 && prefix[0] == 1 && prefix[1] == 0 {
