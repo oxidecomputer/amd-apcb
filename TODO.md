@@ -5,14 +5,11 @@
   * Give a reference to the flag to all the iterators that would need to change it
     * If there are &mut to struct that doesn't work, now does it?
 
-# Cleanup
-
-* How do we represent bool repr u8 in zerocopy?
-
 # (Future) Compatibility
 
 * Allow/implement insert_headered_struct_array_entry with padding?!  Check what AMD says here
 * Also make_accessors! the ENTRY_HEADER, GROUP_HEADER, V2_HEADER and so on
+* Maybe remove PartialEq from structs
 
 # Security
 
