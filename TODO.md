@@ -1,5 +1,6 @@
 # Features
 
+* Check checksum on load?
 * Apcb: Dirty-type, original-type; automate calling update_checksum
   * My own idea: Just implement Drop and have a flag you refer to.
   * Give a reference to the flag to all the iterators that would need to change it
