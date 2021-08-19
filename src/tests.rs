@@ -220,8 +220,8 @@ mod tests {
         apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, &[1u8; 48], 33)?;
         apcb.insert_struct_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, ContextType::Struct, &ConsoleOutControl::default(), 32)?;
 
-        let apcb = Apcb::load(&mut buffer[0..]).unwrap();
-        let mut groups = apcb.groups();
+        let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
+        let mut groups = apcb.groups_mut();
 
         let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
@@ -236,18 +236,22 @@ mod tests {
 
         assert!(matches!(entries.next(), None));
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let mut group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() ==*b"MEMG");
 
-        let mut entries = group.entries();
+        let mut entries = group.entries_mut();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let mut entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Memory(MemoryEntryId::ConsoleOutControl));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
-        assert!(*entry.body_as_struct::<ConsoleOutControl>().unwrap() == ConsoleOutControl::default());
+        let console_out_control = entry.body_as_struct_mut::<ConsoleOutControl>().unwrap();
+        assert!(*console_out_control == ConsoleOutControl::default());
+        if console_out_control.abl_console_out_control.enable_console_logging().ok_or_else(|| Error::EntryTypeMismatch)? {
+            console_out_control.abl_console_out_control.set_enable_console_logging(false);
+        }
 
         assert!(matches!(entries.next(), None));
 
