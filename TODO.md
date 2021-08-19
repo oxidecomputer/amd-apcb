@@ -12,9 +12,10 @@
   * is_entry_compatible also can validate.  Should it?  If so, the accessors can be sure to have a valid variant in the instance.
     * Good starting example: AblConsoleOutControl ONLY has u8 bools
 
-# Compatibility
+# (Future) Compatibility
 
 * Allow/implement insert_headered_struct_array_entry with padding?!  Check what AMD says here
+* Also make_accessors! the ENTRY_HEADER, GROUP_HEADER, V2_HEADER and so on
 
 # Security
 
