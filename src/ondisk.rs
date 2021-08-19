@@ -1410,7 +1410,6 @@ pub mod memory {
         }
     }
 
-    // This avoids depending on rust-packed_struct or rust-bitfield additionally.
     impl ErrorOutEventControlBeepCodePeakAttr {
         /// PULSE_WIDTH: in units of 0.1 s
         pub fn new(peak_count: u16, pulse_width: u16, repeat_count: u16) -> Option<Self> {
