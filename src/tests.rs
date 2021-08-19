@@ -4,7 +4,6 @@ mod tests {
     use crate::Apcb;
     use crate::Error;
     use crate::ondisk::{ContextType, CcxEntryId, DfEntryId, PspEntryId, MemoryEntryId, TokenEntryId, EntryId, GroupId, memory::ConsoleOutControl, memory::DimmInfoSmbusElement, psp::BoardIdGettingMethodEeprom, psp::IdRevApcbMapping};
-    use num_traits::ToPrimitive;
     use crate::EntryItemBody;
 
     #[test]

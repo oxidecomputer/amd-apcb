@@ -9,7 +9,6 @@ use num_derive::ToPrimitive;
 use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32, U64};
-use static_assertions::const_assert;
 use core::convert::TryInto;
 use paste::paste;
 
@@ -1664,6 +1663,7 @@ pub mod memory {
     #[cfg(test)]
     mod tests {
         use super::*;
+        use static_assertions::const_assert;
 
         #[test]
         fn test_memory_structs() {
@@ -1928,6 +1928,7 @@ pub mod psp {
     #[cfg(test)]
     mod tests {
         use super::*;
+        use static_assertions::const_assert;
 
         #[test]
         fn test_psp_structs() {
@@ -1942,6 +1943,7 @@ pub mod psp {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use static_assertions::const_assert;
 
     #[test]
     fn test_struct_sizes() {
