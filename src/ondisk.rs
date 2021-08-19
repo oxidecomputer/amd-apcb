@@ -1358,43 +1358,79 @@ pub mod memory {
         }
     }
 
-    #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy, PartialEq, Debug)]
-    #[repr(C, packed)]
-    pub struct ErrorOutEventControlBeepCodePeakAttr {
-        // 5 bits: PeakCnt (number of valid bits, 0 based)
-        // 3 bits: PulseWidths (in units of 0.1 s)
-        // 4 bits: repeat count
-        value: u32,
+    bitfield! {
+        #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy, PartialEq)]
+        #[repr(C, packed)]
+        pub struct ErrorOutEventControlBeepCodePeakAttr(U32<LittleEndian>);
+        no default BitRange;
+        impl Debug;
+        u16;
+        pub repeat_count, set_repeat_count: 11, 8;
+        pub pulse_width, set_pulse_width: 7, 5; // in units of 0.1 s
+        pub peak_count, set_peak_count: 4, 0;
+    }
+
+    impl BitRange<u16> for ErrorOutEventControlBeepCodePeakAttr {
+        fn bit_range(&self, msb: usize, lsb: usize) -> u16 {
+            assert!(lsb <= msb);
+            let width = msb - lsb + 1;
+            assert!(width <= 15);
+            let mask = (1u32 << width) - 1;
+            ((self.0.get() >> lsb) & mask) as u16
+        }
+        fn set_bit_range(&mut self, msb: usize, lsb: usize, value: u16) {
+            assert!(lsb <= msb);
+            let width = msb - lsb + 1;
+            assert!(width <= 15);
+            let mask = (1u32 << width) - 1;
+            assert!(u32::from(value) <= mask);
+            let mut dest = self.0.get();
+            dest &=! (mask << lsb);
+            dest |= (value as u32) << lsb;
+            self.0.set(dest);
+        }
+    }
+
+    impl Bit for ErrorOutEventControlBeepCodePeakAttr {
+        fn bit(&self, index: usize) -> bool {
+            match self.0.get() & (1u32 << index) {
+                0 => false,
+                _ => true,
+            }
+        }
+        fn set_bit(&mut self, index: usize, value: bool) {
+            match value {
+                true => {
+                    self.0.set(self.0.get() | (1u32 << index));
+                },
+                false => {
+                    self.0.set(self.0.get() &! (1u32 << index));
+                },
+            }
+        }
     }
 
     // This avoids depending on rust-packed_struct or rust-bitfield additionally.
     impl ErrorOutEventControlBeepCodePeakAttr {
         /// PULSE_WIDTH: in units of 0.1 s
-        pub const fn new(peak_count: u32, pulse_width: u32, repeat_count: u32) -> Option<Self> {
+        pub fn new(peak_count: u16, pulse_width: u16, repeat_count: u16) -> Option<Self> {
+            let mut result = Self(0.into());
             if peak_count < 32 {
+                result.set_peak_count(peak_count);
             } else {
                 return None;
             }
             if pulse_width < 8 {
+                result.set_pulse_width(pulse_width);
             } else {
                 return None;
             }
             if repeat_count < 16 {
+                result.set_repeat_count(repeat_count);
             } else {
                 return None;
             }
-            Some(Self {
-                value: peak_count | (pulse_width << 5) | (repeat_count << 8),
-            })
-        }
-        pub fn peak_count(&self) -> u32 {
-            self.value & 31
-        }
-        pub fn pulse_width(&self) -> u32 {
-            (self.value >> 5) & 7
-        }
-        pub fn repeat_count(&self) -> u32 {
-            (self.value >> 8) & 15
+            Some(result)
         }
     }
 
