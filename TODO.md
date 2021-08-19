@@ -31,3 +31,8 @@
 * insert_token: "&" instead of "%"
 * Check error handling crate "failure" or "anyhow". `#[source]`
 * Entry alignment relative to containing group instead??
+
+# Alternate Bitfield implementations
+
+* Most important would be to partially evaluate at compile time!
+* https://crates.io/crates/modular-bitfield
