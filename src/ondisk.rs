@@ -1688,12 +1688,14 @@ pub mod memory {
         fn bit_range(&self, msb: usize, lsb: usize) -> u16 {
             assert!(lsb <= msb);
             let width = msb - lsb + 1;
+            assert!(width <= 15);
             let mask = (1 << width) - 1;
             ((self.0.get() >> lsb) & mask) as u16
         }
         fn set_bit_range(&mut self, msb: usize, lsb: usize, value: u16) {
             assert!(lsb <= msb);
             let width = msb - lsb + 1;
+            assert!(width <= 15);
             let mask = (1 << width) - 1;
             assert!(value <= mask);
             let mut dest = self.0.get();
