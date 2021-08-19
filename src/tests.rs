@@ -249,7 +249,7 @@ mod tests {
 
         let console_out_control = entry.body_as_struct_mut::<ConsoleOutControl>().unwrap();
         assert!(*console_out_control == ConsoleOutControl::default());
-        if console_out_control.abl_console_out_control.enable_console_logging().ok_or_else(|| Error::EntryTypeMismatch)? {
+        if console_out_control.abl_console_out_control.enable_console_logging()? {
             console_out_control.abl_console_out_control.set_enable_console_logging(false);
         }
 

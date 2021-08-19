@@ -891,6 +891,7 @@ pub trait EntryCompatible {
 pub mod df {
     use super::*;
     use crate::struct_accessors::{Getter, Setter, make_accessors};
+    use crate::types::Result;
 
     #[repr(u8)]
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
@@ -910,7 +911,7 @@ pub mod df {
             alignment: u8 : pub get u8 : pub set u8,
             socket: u8 : pub get u8 : pub set u8, // 0|1
             phys_nbio_map: u8 : pub get u8 : pub set u8, // bitmap
-            interleaving: u8 : pub get Option<SlinkRegionDescriptionInterleavingSize> : pub set SlinkRegionDescriptionInterleavingSize,
+            interleaving: u8 : pub get Result<SlinkRegionDescriptionInterleavingSize> : pub set SlinkRegionDescriptionInterleavingSize,
             _reserved: [u8; 4],
         }
     }
@@ -948,12 +949,13 @@ pub mod df {
 pub mod memory {
     use super::*;
     use crate::struct_accessors::{Getter, Setter, make_accessors, BU8};
+    use crate::types::Result;
 
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct DimmInfoSmbusElement {
-            dimm_slot_present: BU8 : pub get Option<bool> : pub set bool,
+            dimm_slot_present: BU8 : pub get Result<bool> : pub set bool,
             socket_id: u8 : pub get u8 : pub set u8,
             channel_id: u8 : pub get u8 : pub set u8,
             dimm_id: u8 : pub get u8 : pub set u8,
@@ -1006,16 +1008,16 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct AblConsoleOutControl {
-            enable_console_logging: BU8 : pub get Option<bool> : pub set bool,
-            enable_mem_flow_logging: BU8 : pub get Option<bool> : pub set bool,
-            enable_mem_setreg_logging: BU8 : pub get Option<bool> : pub set bool,
-            enable_mem_getreg_logging: BU8 : pub get Option<bool> : pub set bool,
-            enable_mem_status_logging: BU8 : pub get Option<bool> : pub set bool,
-            enable_mem_pmu_logging: BU8 : pub get Option<bool> : pub set bool,
-            enable_mem_pmu_sram_read_logging: BU8 : pub get Option<bool> : pub set bool,
-            enable_mem_pmu_sram_write_logging: BU8 : pub get Option<bool> : pub set bool,
-            enable_mem_test_verbose_logging: BU8 : pub get Option<bool> : pub set bool,
-            enable_mem_basic_output_logging: BU8 : pub get Option<bool> : pub set bool,
+            enable_console_logging: BU8 : pub get Result<bool> : pub set bool,
+            enable_mem_flow_logging: BU8 : pub get Result<bool> : pub set bool,
+            enable_mem_setreg_logging: BU8 : pub get Result<bool> : pub set bool,
+            enable_mem_getreg_logging: BU8 : pub get Result<bool> : pub set bool,
+            enable_mem_status_logging: BU8 : pub get Result<bool> : pub set bool,
+            enable_mem_pmu_logging: BU8 : pub get Result<bool> : pub set bool,
+            enable_mem_pmu_sram_read_logging: BU8 : pub get Result<bool> : pub set bool,
+            enable_mem_pmu_sram_write_logging: BU8 : pub get Result<bool> : pub set bool,
+            enable_mem_test_verbose_logging: BU8 : pub get Result<bool> : pub set bool,
+            enable_mem_basic_output_logging: BU8 : pub get Result<bool> : pub set bool,
             _reserved: U16<LittleEndian>,
             abl_console_port: U32<LittleEndian> : pub get u32 : pub set u32,
         }
@@ -1044,8 +1046,8 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct AblBreakpointControl {
-            enable_breakpoint: BU8 : pub get Option<bool> : pub set bool,
-            break_on_all_dies: BU8 : pub get Option<bool> : pub set bool,
+            enable_breakpoint: BU8 : pub get Result<bool> : pub set bool,
+            break_on_all_dies: BU8 : pub get Result<bool> : pub set bool,
         }
     }
 
@@ -1099,15 +1101,15 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct ExtVoltageControl {
-            enable: BU8 : pub get Option<bool> : pub set bool,
+            enable: BU8 : pub get Result<bool> : pub set bool,
             _reserved: [u8; 3],
             input_port: U32<LittleEndian> : pub get u32 : pub set u32,
             output_port: U32<LittleEndian> : pub get u32 : pub set u32,
             input_port_size: U32<LittleEndian> : pub get u32 : pub set u32, // size in Byte; one of [1, 2, 4]
             output_port_size: U32<LittleEndian> : pub get u32 : pub set u32, // size in Byte; one of [1, 2, 4]
-            input_port_type: U32<LittleEndian> : pub get Option<PortType> : pub set PortType, // default: 6 (FCH)
-            output_port_type: U32<LittleEndian> : pub get Option<PortType> : pub set PortType, // default: 6 (FCH)
-            clear_acknowledgement: BU8 : pub get Option<bool> : pub set bool,
+            input_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // default: 6 (FCH)
+            output_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // default: 6 (FCH)
+            clear_acknowledgement: BU8 : pub get Result<bool> : pub set bool,
             _reserved_2: [u8; 3],
         }
     }
@@ -1408,26 +1410,26 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct ErrorOutEventControl116 { // Milan
-            enable_error_reporting: BU8 : pub get Option<bool> : pub set bool,
-            enable_error_reporting_gpio: BU8 : pub get Option<bool> : pub set bool,
-            enable_error_reporting_beep_codes: BU8 : pub get Option<bool> : pub set bool,
-            enable_using_handshake: BU8 : pub get Option<bool> : pub set bool, // otherwise see output_delay
+            enable_error_reporting: BU8 : pub get Result<bool> : pub set bool,
+            enable_error_reporting_gpio: BU8 : pub get Result<bool> : pub set bool,
+            enable_error_reporting_beep_codes: BU8 : pub get Result<bool> : pub set bool,
+            enable_using_handshake: BU8 : pub get Result<bool> : pub set bool, // otherwise see output_delay
             input_port: U32<LittleEndian> : pub get u32 : pub set u32, // for handshake
             output_delay: U32<LittleEndian> : pub get u32 : pub set u32, // if no handshake; in units of 10 ns.
             output_port: U32<LittleEndian> : pub get u32 : pub set u32,
-            stop_on_first_fatal_error: BU8: pub get Option<bool> : pub set bool,
+            stop_on_first_fatal_error: BU8: pub get Result<bool> : pub set bool,
             _reserved: [u8; 3],
             input_port_size: U32<LittleEndian> : pub get u32 : pub set u32, // in Byte; 1|2|4
             output_port_size: U32<LittleEndian> : pub get u32 : pub set u32, // in Byte; 1|2|4
-            input_port_type: U32<LittleEndian> : pub get Option<PortType> : pub set PortType, // PortType; default: 6
-            output_port_type: U32<LittleEndian> : pub get Option<PortType> : pub set PortType, // PortType; default: 6
-            clear_acknowledgement: BU8 : pub get Option<bool> : pub set bool,
+            input_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // PortType; default: 6
+            output_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // PortType; default: 6
+            clear_acknowledgement: BU8 : pub get Result<bool> : pub set bool,
             _reserved_2: [u8; 3],
             pub gpio: Gpio, // FIXME: Make accessible
             _reserved_3: u8,
             pub beep_code_table: [ErrorOutEventControlBeepCode; 8], // FIXME: Make accessible
-            enable_heart_beat: BU8 : pub get Option<bool> : pub set bool,
-            enable_power_good_gpio: BU8 : pub get Option<bool> : pub set bool,
+            enable_heart_beat: BU8 : pub get Result<bool> : pub set bool,
+            enable_power_good_gpio: BU8 : pub get Result<bool> : pub set bool,
             pub power_good_gpio: Gpio, // FIXME: Make accessible
             _reserved_4: [u8; 3], // pad
         }
@@ -1516,25 +1518,25 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct ErrorOutEventControl112 { // older than Milan
-            enable_error_reporting: BU8 : pub get Option<bool> : pub set bool,
-            enable_error_reporting_gpio: BU8 : pub get Option<bool> : pub set bool,
-            enable_error_reporting_beep_codes: BU8 : pub get Option<bool> : pub set bool,
-            enable_using_handshake: BU8 : pub get Option<bool> : pub set bool, // otherwise see output_delay
+            enable_error_reporting: BU8 : pub get Result<bool> : pub set bool,
+            enable_error_reporting_gpio: BU8 : pub get Result<bool> : pub set bool,
+            enable_error_reporting_beep_codes: BU8 : pub get Result<bool> : pub set bool,
+            enable_using_handshake: BU8 : pub get Result<bool> : pub set bool, // otherwise see output_delay
             pub input_port: U32<LittleEndian>, // for handshake
             pub output_delay: U32<LittleEndian>, // if no handshake; in units of 10 ns.
             pub output_port: U32<LittleEndian>,
-            stop_on_first_fatal_error: BU8 : pub get Option<bool> : pub set bool,
+            stop_on_first_fatal_error: BU8 : pub get Result<bool> : pub set bool,
             _reserved: [u8; 3],
             input_port_size: U32<LittleEndian> : pub get u32 : pub set u32, // in Byte; 1|2|4
             output_port_size: U32<LittleEndian> : pub get u32 : pub set u32, // in Byte; 1|2|4
-            input_port_type: U32<LittleEndian> : pub get Option<PortType> : pub set PortType, // default: 6
-            output_port_type: U32<LittleEndian> : pub get Option<PortType> : pub set PortType, // default: 6
-            clear_acknowledgement: BU8 : pub get Option<bool> : pub set bool,
+            input_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // default: 6
+            output_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // default: 6
+            clear_acknowledgement: BU8 : pub get Result<bool> : pub set bool,
             pub gpio: Gpio, // FIXME: Make accessible.
             // @40
             pub beep_code_table: [ErrorOutEventControlBeepCode; 8], // FIXME: Make accessible.
-            enable_heart_beat: BU8 : pub get Option<bool> : pub set bool,
-            enable_power_good_gpio: BU8 : pub get Option<bool> : pub set bool,
+            enable_heart_beat: BU8 : pub get Result<bool> : pub set bool,
+            enable_power_good_gpio: BU8 : pub get Result<bool> : pub set bool,
             pub power_good_gpio: Gpio, // FIXME: Make accessible.
             _reserved_2: [u8; 3], // pad
         }

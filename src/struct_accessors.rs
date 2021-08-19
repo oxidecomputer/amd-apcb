@@ -3,54 +3,56 @@
 use byteorder::LittleEndian;
 use num_traits::{FromPrimitive, ToPrimitive};
 use zerocopy::{FromBytes, AsBytes, U16, U32, U64};
+use crate::types::Error;
+use crate::types::Result;
 
 pub(crate) trait Getter<T> {
-    fn get1(self, destination: &mut T);
+    fn get1(self) -> T;
 }
 impl Getter<u64> for U64<LittleEndian> {
-    fn get1(self, destination: &mut u64) {
-        *destination = self.get()
+    fn get1(self) -> u64 {
+        self.get()
     }
 }
 impl Getter<u32> for U32<LittleEndian> {
-    fn get1(self, destination: &mut u32) {
-        *destination = self.get()
+    fn get1(self) -> u32 {
+        self.get()
     }
 }
 impl Getter<u16> for U16<LittleEndian> {
-    fn get1(self, destination: &mut u16) {
-        *destination = self.get()
+    fn get1(self) -> u16 {
+        self.get()
     }
 }
 impl Getter<u8> for u8 {
-    fn get1(self, destination: &mut u8) {
-        *destination = self
+    fn get1(self) -> u8 {
+        self
     }
 }
 impl<'a> Getter<&'a [u8]> for &'a [u8] {
-    fn get1(self, destination: &mut &'a [u8]) {
-        *destination = self
+    fn get1(self) -> &'a [u8] {
+        self
     }
 }
-impl<T: FromPrimitive> Getter<Option<T>> for u8 {
-    fn get1(self, destination: &mut Option<T>) {
-        *destination = T::from_u8(self)
+impl<T: FromPrimitive> Getter<Result<T>> for u8 {
+    fn get1(self) -> Result<T> {
+        T::from_u8(self).ok_or_else(|| Error::EntryTypeMismatch)
     }
 }
-impl<T: FromPrimitive> Getter<Option<T>> for U32<LittleEndian> {
-    fn get1(self, destination: &mut Option<T>) {
-        *destination = T::from_u32(self.get())
+impl<T: FromPrimitive> Getter<Result<T>> for U32<LittleEndian> {
+    fn get1(self) -> Result<T> {
+        T::from_u32(self.get()).ok_or_else(|| Error::EntryTypeMismatch)
     }
 }
 #[derive(Debug, PartialEq, FromBytes, AsBytes, Clone, Copy)]
 #[repr(C, packed)]
 pub(crate) struct BU8(pub(crate) u8);
-impl Getter<Option<bool>> for BU8 {
-    fn get1(self, destination: &mut Option<bool>) {
-        *destination = match self.0 {
-            0 => Some(false),
-            1 => Some(true),
-            _ => None,
+impl Getter<Result<bool>> for BU8 {
+    fn get1(self) -> Result<bool> {
+        match self.0 {
+            0 => Ok(false),
+            1 => Ok(true),
+            _ => Err(Error::EntryTypeMismatch),
         }
     }
 }
@@ -115,9 +117,7 @@ macro_rules! make_accessors {(
             fn $field_name (self: &'_ Self)
                 -> $field_user_ty
             {
-                let mut result: $field_user_ty = <$field_user_ty>::default();
-                self.$field_name.get1(&mut result); //.into()
-                result
+                self.$field_name.get1()
             }
             $(
               paste! {
@@ -125,7 +125,7 @@ macro_rules! make_accessors {(
                   $setter_vis
                   fn [<set_ $field_name>] (self: &'_ mut Self, value: $field_setter_user_ty)
                   {
-                      self.$field_name.set1(value) // (value as u8).into())
+                      self.$field_name.set1(value)
                   }
               }
             )?
