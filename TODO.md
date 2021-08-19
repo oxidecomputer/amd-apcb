@@ -30,7 +30,4 @@
 * apcb::insert_entry: Replace by shifts and masks (if not compile time)
 * insert_token: "&" instead of "%"
 * Check error handling crate "failure" or "anyhow". `#[source]`
-* https://docs.rs/zerovec/0.2.3/zerovec/ ; also has serde serializers
-  Also has https://docs.rs/zerovec/0.2.3/zerovec/ule/index.html
-  https://docs.rs/zerovec/0.2.3/zerovec/ule/trait.ULE.html can handle arrays
 * Entry alignment relative to containing group instead??
