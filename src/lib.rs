@@ -13,6 +13,7 @@ mod entry;
 mod group;
 mod ondisk;
 mod tests;
+mod struct_accessors;
 pub use apcb::Apcb;
 pub use types::Result;
 pub use types::Error;

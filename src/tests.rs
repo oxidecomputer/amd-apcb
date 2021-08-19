@@ -264,18 +264,8 @@ mod tests {
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         let header = BoardIdGettingMethodEeprom::new(1, 2, 3, 4);
         let items = [
-            IdRevApcbMapping {
-                apcb_instance_index: 3,
-                id_and_feature_value: 4,
-                id_rev_and_feature_mask: 5,
-                rev_and_feature_value: 9,
-            },
-            IdRevApcbMapping {
-                apcb_instance_index: 6,
-                id_and_feature_value: 7,
-                id_rev_and_feature_mask: 8,
-                rev_and_feature_value: 10,
-            },
+            IdRevApcbMapping::new(5, 4, 9, 3),
+            IdRevApcbMapping::new(8, 7, 10, 6),
         ];
         apcb.insert_headered_struct_array_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, &header, &items, 32)?;
 
@@ -298,18 +288,8 @@ mod tests {
 
         let mut elements = elements.iter();
 
-        assert!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)? == IdRevApcbMapping {
-            apcb_instance_index: 3,
-            id_and_feature_value: 4,
-            id_rev_and_feature_mask: 5,
-            rev_and_feature_value: 9,
-        });
-        assert!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)? == IdRevApcbMapping {
-            apcb_instance_index: 6,
-            id_and_feature_value: 7,
-            id_rev_and_feature_mask: 8,
-            rev_and_feature_value: 10,
-        });
+        assert!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)? == IdRevApcbMapping::new(5, 4, 9, 3));
+        assert!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)? == IdRevApcbMapping::new(8, 7, 10, 6));
         assert!(matches!(elements.next(), None));
 
         assert!(matches!(entries.next(), None));
@@ -334,26 +314,8 @@ mod tests {
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, &[1u8; 48], 33)?;
         let items = [
-            DimmInfoSmbusElement {
-                dimm_slot_present: 1,
-                socket_id: 2,
-                channel_id: 3,
-                dimm_id: 4,
-                dimm_smbus_address: 5,
-                i2c_mux_address: 6,
-                mux_control_address: 7,
-                max_channel: 8,
-            },
-            DimmInfoSmbusElement {
-                dimm_slot_present: 9,
-                socket_id: 10,
-                channel_id: 11,
-                dimm_id: 12,
-                dimm_smbus_address: 13,
-                i2c_mux_address: 14,
-                mux_control_address: 15,
-                max_channel: 16,
-            },
+            DimmInfoSmbusElement::new(2, 3, 4, 5, 6, 7, 8),
+            DimmInfoSmbusElement::new(10, 11, 12, 13, 14, 15, 16),
         ];
         apcb.insert_struct_array_entry(EntryId::Memory(MemoryEntryId::DimmInfoSmbus), 0, 0xFFFF, ContextType::Struct, &items, 32)?;
 
@@ -386,7 +348,7 @@ mod tests {
 
         match entry.body {
             EntryItemBody::<_>::Struct(buf) => {
-                assert!(*buf == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
+                assert_eq!(*buf, [1, 2, 3, 4, 5, 6, 7, 8, 1, 10, 11, 12, 13, 14, 15, 16]);
             },
             _ => {
                 panic!("wrong thing");
@@ -396,26 +358,8 @@ mod tests {
         let elements = entry.body_as_struct_array::<DimmInfoSmbusElement>().ok_or_else(|| Error::EntryTypeMismatch)?;
         let mut elements = elements.iter();
 
-        assert!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)? == DimmInfoSmbusElement {
-                dimm_slot_present: 1,
-                socket_id: 2,
-                channel_id: 3,
-                dimm_id: 4,
-                dimm_smbus_address: 5,
-                i2c_mux_address: 6,
-                mux_control_address: 7,
-                max_channel: 8,
-        });
-        assert!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)? == DimmInfoSmbusElement {
-                dimm_slot_present: 9,
-                socket_id: 10,
-                channel_id: 11,
-                dimm_id: 12,
-                dimm_smbus_address: 13,
-                i2c_mux_address: 14,
-                mux_control_address: 15,
-                max_channel: 16,
-        });
+        assert_eq!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)?, DimmInfoSmbusElement::new(2, 3, 4, 5, 6, 7, 8));
+        assert_eq!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)?, DimmInfoSmbusElement::new(10, 11, 12, 13, 14, 15, 16));
         assert!(matches!(elements.next(), None));
 
         assert!(matches!(entries.next(), None));
@@ -432,26 +376,8 @@ mod tests {
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, &[1u8; 48], 33)?;
         let items = [
-            DimmInfoSmbusElement {
-                dimm_slot_present: 1,
-                socket_id: 2,
-                channel_id: 3,
-                dimm_id: 4,
-                dimm_smbus_address: 5,
-                i2c_mux_address: 6,
-                mux_control_address: 7,
-                max_channel: 8,
-            },
-            DimmInfoSmbusElement {
-                dimm_slot_present: 9,
-                socket_id: 10,
-                channel_id: 11,
-                dimm_id: 12,
-                dimm_smbus_address: 13,
-                i2c_mux_address: 14,
-                mux_control_address: 15,
-                max_channel: 16,
-            },
+            DimmInfoSmbusElement::new(2, 3, 4, 5, 6, 7, 8),
+            DimmInfoSmbusElement::new(10, 11, 12, 13, 14, 15, 16),
         ];
         match apcb.insert_struct_array_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, ContextType::Struct, &items, 32) {
             Err(Error::EntryTypeMismatch) => {
