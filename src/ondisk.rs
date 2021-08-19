@@ -1689,15 +1689,15 @@ pub mod memory {
             assert!(lsb <= msb);
             let width = msb - lsb + 1;
             assert!(width <= 15);
-            let mask = (1 << width) - 1;
+            let mask = (1u64 << width) - 1;
             ((self.0.get() >> lsb) & mask) as u16
         }
         fn set_bit_range(&mut self, msb: usize, lsb: usize, value: u16) {
             assert!(lsb <= msb);
             let width = msb - lsb + 1;
             assert!(width <= 15);
-            let mask = (1 << width) - 1;
-            assert!(value <= mask);
+            let mask = (1u64 << width) - 1;
+            assert!(u64::from(value) <= mask);
             let mut dest = self.0.get();
             dest &=! ((mask as u64) << lsb);
             dest |= (value as u64) << lsb;
@@ -1707,7 +1707,7 @@ pub mod memory {
 
     impl Bit for DdrPostPackageRepairElement {
         fn bit(&self, index: usize) -> bool {
-            match self.0.get() & (1 << index) {
+            match self.0.get() & (1u64 << index) {
                 0 => false,
                 _ => true,
             }
