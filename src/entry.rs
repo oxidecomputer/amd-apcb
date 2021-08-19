@@ -99,7 +99,7 @@ impl<'a> EntryItemBody<&'a [u8]> {
 
 #[derive(Debug)]
 pub struct EntryMutItem<'a> {
-    pub header: &'a mut ENTRY_HEADER,
+    pub(crate) header: &'a mut ENTRY_HEADER,
     pub body: EntryItemBody<&'a mut [u8]>,
 }
 
@@ -294,7 +294,7 @@ impl<'a> EntryMutItem<'a> {
 
 #[derive(Debug)]
 pub struct EntryItem<'a> {
-    pub header: &'a ENTRY_HEADER,
+    pub(crate) header: &'a ENTRY_HEADER,
     pub body: EntryItemBody<&'a [u8]>,
 }
 
