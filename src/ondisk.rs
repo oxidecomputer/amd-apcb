@@ -1035,7 +1035,8 @@ pub mod memory {
     #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct ExtVoltageControl {
-        pub enable: U32<LittleEndian>, // bool
+        pub enable: u8, // bool
+        _reserved: [u8; 3],
         pub input_port: U32<LittleEndian>,
         pub output_port: U32<LittleEndian>,
         pub input_port_size: U32<LittleEndian>, // size in Byte; one of [1, 2, 4]
@@ -1043,7 +1044,7 @@ pub mod memory {
         pub input_port_type: U32<LittleEndian>, // default: 6 (FCH)
         pub output_port_type: U32<LittleEndian>, // default: 6 (FCH)
         pub clear_acknowledgement: u8,
-        _reserved: [u8; 3],
+        _reserved_2: [u8; 3],
     }
 
     impl EntryCompatible for ExtVoltageControl {
@@ -1058,7 +1059,8 @@ pub mod memory {
     impl Default for ExtVoltageControl {
         fn default() -> Self {
             Self {
-                enable: 0u32.into(),
+                enable: 0,
+                _reserved: [0; 3],
                 input_port: 0x84u32.into(),
                 output_port: 0x80u32.into(),
                 input_port_size: 4u32.into(),
@@ -1066,7 +1068,7 @@ pub mod memory {
                 input_port_type: 6u32.into(),
                 output_port_type: 6u32.into(),
                 clear_acknowledgement: 0,
-                _reserved: [0; 3],
+                _reserved_2: [0; 3],
             }
         }
     }
