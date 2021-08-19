@@ -34,4 +34,3 @@
   Also has https://docs.rs/zerovec/0.2.3/zerovec/ule/index.html
   https://docs.rs/zerovec/0.2.3/zerovec/ule/trait.ULE.html can handle arrays
 * Entry alignment relative to containing group instead??
-* Instead of having pub `U16` fields, provide accessors.  The goal would be to make the crate interface independent of zerocopy, and to be able to sanity-check the values on read instead of up-front.
