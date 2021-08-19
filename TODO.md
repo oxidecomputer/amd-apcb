@@ -8,9 +8,6 @@
 # Cleanup
 
 * How do we represent bool repr u8 in zerocopy?
-* Add enum accessor for ExtVoltageControl.*_port_type, ErrorOutEventControl116.*_port_type.
-  * is_entry_compatible also can validate.  Should it?  If so, the accessors can be sure to have a valid variant in the instance.
-    * Good starting example: AblConsoleOutControl ONLY has u8 bools
 
 # (Future) Compatibility
 
