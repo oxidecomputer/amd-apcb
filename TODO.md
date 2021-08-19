@@ -4,6 +4,7 @@
   * My own idea: Just implement Drop and have a flag you refer to.
   * Give a reference to the flag to all the iterators that would need to change it
     * If there are &mut to struct that doesn't work, now does it?
+* OdtPatElement: Availability of dimm0_rank, dimm1_rank should be conditional.
 
 # (Future) Compatibility
 
