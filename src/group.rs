@@ -292,8 +292,8 @@ impl<'a> GroupMutItem<'a> {
         self.header.signature
     }
     /// Note: See ondisk::GroupId
-    pub fn id(&self) -> u16 {
-        self.header.group_id.get()
+    pub fn id(&self) -> GroupId {
+        GroupId::from_u16(self.header.group_id.get()).unwrap()
     }
 
     /// This finds the entry with the given ID, INSTANCE_ID and compatible BOARD_INSTANCE_MASK, if any.

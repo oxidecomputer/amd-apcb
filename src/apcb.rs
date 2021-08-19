@@ -232,7 +232,7 @@ impl<'a> Apcb<'a> {
         }
     }
     pub fn group_mut(&mut self, group_id: GroupId) -> Option<GroupMutItem<'_>> {
-        let group_id = group_id.to_u16().unwrap();
+        //let group_id = group_id.to_u16().unwrap();
         for group in self.groups_mut() {
             if group.id() == group_id {
                 return Some(group);
