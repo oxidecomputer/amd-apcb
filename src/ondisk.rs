@@ -1561,7 +1561,7 @@ pub mod memory {
             enable_using_handshake: BU8 : pub get Result<bool> : pub set bool, // otherwise see output_delay
             input_port: U32<LittleEndian> : pub get u32 : pub set u32, // for handshake
             output_delay: U32<LittleEndian> : pub get u32 : pub set u32, // if no handshake; in units of 10 ns.
-            pub output_port: U32<LittleEndian>,
+            output_port: U32<LittleEndian> : pub get u32 : pub set u32,
             stop_on_first_fatal_error: BU8 : pub get Result<bool> : pub set bool,
             _reserved: [u8; 3],
             input_port_size: U32<LittleEndian> : pub get u32 : pub set u32, // in Byte; 1|2|4
