@@ -1560,7 +1560,7 @@ pub mod memory {
             enable_error_reporting_beep_codes: BU8 : pub get Result<bool> : pub set bool,
             enable_using_handshake: BU8 : pub get Result<bool> : pub set bool, // otherwise see output_delay
             input_port: U32<LittleEndian> : pub get u32 : pub set u32, // for handshake
-            pub output_delay: U32<LittleEndian>, // if no handshake; in units of 10 ns.
+            output_delay: U32<LittleEndian> : pub get u32 : pub set u32, // if no handshake; in units of 10 ns.
             pub output_port: U32<LittleEndian>,
             stop_on_first_fatal_error: BU8 : pub get Result<bool> : pub set bool,
             _reserved: [u8; 3],
