@@ -950,6 +950,8 @@ pub mod memory {
     use super::*;
     use crate::struct_accessors::{Getter, Setter, make_accessors, BU8};
     use crate::types::Result;
+    use bitfield::Bit;
+    use bitfield::BitRange;
 
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
@@ -1657,6 +1659,73 @@ pub mod memory {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr4OdtPat) => true,
                 EntryId::Memory(MemoryEntryId::PsLrdimmDdr4OdtPat) => true,
+                _ => false,
+            }
+        }
+    }
+
+    bitfield! {
+        #[derive(FromBytes, AsBytes, Unaligned)]
+        #[repr(C, packed)]
+        pub struct DdrPostPackageRepairElement(U64<LittleEndian>);
+        no default BitRange;
+        impl Debug;
+        u16;
+        pub channel, set_channel: 55, 53;
+        pub socket, set_socket: 52, 50;
+        pub row, set_row: 49, 32;
+        pub target_device, set_target_device: 31, 27;
+        pub valid, set_valid: 26;
+        pub hard_repair, set_hard_repair: 25;
+        pub column, set_column: 24, 15;
+        pub chip_select, set_chip_select: 14, 13;
+        pub device_width, set_device_width: 12, 8; // device width of DIMMs to repair; or 0x1F for heeding target_device instead
+        pub rank_multiplier, set_rank_multiplier: 7, 5;
+        pub bank, set_bank: 4, 0;
+    }
+
+    impl BitRange<u16> for DdrPostPackageRepairElement {
+        fn bit_range(&self, msb: usize, lsb: usize) -> u16 {
+            assert!(lsb <= msb);
+            let width = msb - lsb + 1;
+            let mask = (1 << width) - 1;
+            ((self.0.get() >> lsb) & mask) as u16
+        }
+        fn set_bit_range(&mut self, msb: usize, lsb: usize, value: u16) {
+            assert!(lsb <= msb);
+            let width = msb - lsb + 1;
+            let mask = (1 << width) - 1;
+            assert!(value <= mask);
+            let mut dest = self.0.get();
+            dest &=! ((mask as u64) << lsb);
+            dest |= (value as u64) << lsb;
+            self.0.set(dest);
+        }
+    }
+
+    impl Bit for DdrPostPackageRepairElement {
+        fn bit(&self, index: usize) -> bool {
+            match self.0.get() & (1 << index) {
+                0 => false,
+                _ => true,
+            }
+        }
+        fn set_bit(&mut self, index: usize, value: bool) {
+            match value {
+                true => {
+                    self.0.set(self.0.get() | (1u64 << index));
+                },
+                false => {
+                    self.0.set(self.0.get() &! (1u64 << index));
+                },
+            }
+        }
+    }
+
+    impl EntryCompatible for DdrPostPackageRepairElement {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::DdrPostPackageRepair) => true,
                 _ => false,
             }
         }
