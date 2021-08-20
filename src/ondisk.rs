@@ -1144,8 +1144,6 @@ pub mod memory {
     }
 
     bitfield! {
-        #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy, PartialEq)]
-        #[repr(C, packed)]
         pub struct DimmRanks(u32);
         impl Debug;
         bool;
