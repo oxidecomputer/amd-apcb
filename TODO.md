@@ -14,6 +14,7 @@
   * rtt_park
   * dq_vref
   * port size
+* rustdoc
 
 # (Future) Compatibility
 
