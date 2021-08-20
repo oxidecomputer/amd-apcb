@@ -6,6 +6,14 @@
   * Give a reference to the flag to all the iterators that would need to change it
     * If there are &mut to struct that doesn't work, now does it?
 * OdtPatElement: Availability of dimm0_rank, dimm1_rank should be conditional.
+* Enums for stuff with a "|" or "one of" comment.
+  * ddr_rate
+  * dimm rank
+  * rtt_nom
+  * rtt_wr
+  * rtt_park
+  * dq_vref
+  * port size
 
 # (Future) Compatibility
 
