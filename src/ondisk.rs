@@ -1197,6 +1197,8 @@ pub mod memory {
         Strength20Ohm = 31,
     }
 
+    type CadBusAddressCommandDriveStrength = CadBusClkDriveStrength;
+
     /// Control/Address Bus Element
     // Usually an array of those is used
     make_accessors! {
@@ -1217,7 +1219,7 @@ pub mod memory {
 
             cke_drive_strength: u8 : pub get u8 : pub set u8, // FIXME ENUM
             cs_odt_drive_strength: u8 : pub get u8 : pub set u8, // FIXME ENUM
-            address_command_drive_strength: u8 : pub get u8 : pub set u8, // FIXME ENUM
+            address_command_drive_strength: u8 : pub get Result<CadBusAddressCommandDriveStrength> : pub set CadBusAddressCommandDriveStrength,
             clk_drive_strength: u8 : pub get Result<CadBusClkDriveStrength> : pub set CadBusClkDriveStrength,
         }
     }
