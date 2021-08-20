@@ -8,6 +8,7 @@
 * OdtPatElement: Availability of dimm0_rank, dimm1_rank should be conditional.
 * Enums for stuff with a "|" or "one of" comment.
   * ddr_rate
+  * dimm ranks
   * dimm rank
   * rtt_nom
   * rtt_wr
