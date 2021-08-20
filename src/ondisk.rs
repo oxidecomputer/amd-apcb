@@ -1142,8 +1142,52 @@ pub mod memory {
         }
     }
 
-    // Usually an array of those is used
+    bitfield! {
+        #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy, PartialEq)]
+        #[repr(C, packed)]
+        pub struct DimmRanks(u32);
+        impl Debug;
+        bool;
+        #[inline]
+        pub rank_1, set_rank_1: 0;
+        #[inline]
+        pub rank_2, set_rank_2: 1;
+        #[inline]
+        pub rank_4, set_rank_4: 2;
+    }
+
+    impl FromPrimitive for DimmRanks {
+        #[inline]
+        fn from_u64(raw_value: u64) -> Option<Self> {
+            if raw_value <= (1 << 0) | (1 << 1) | (1 << 2) { // valid
+                Some(Self(raw_value as u32))
+            } else {
+                None
+            }
+        }
+        #[inline]
+        fn from_i64(raw_value: i64) -> Option<Self> {
+            if raw_value >= 0 {
+                Self::from_u64(raw_value as u64)
+            } else {
+                None
+            }
+        }
+    }
+
+    impl ToPrimitive for DimmRanks {
+        #[inline]
+        fn to_i64(&self) -> Option<i64> {
+            Some(self.0.into())
+        }
+        #[inline]
+        fn to_u64(&self) -> Option<u64> {
+            Some(self.0.into())
+        }
+    }
+
     /// Control/Address Bus Element
+    // Usually an array of those is used
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
@@ -1151,8 +1195,8 @@ pub mod memory {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32, // 1 or 2
             ddr_rate: U32<LittleEndian> : pub get u32 : pub set u32, // 0xA00|0x2800|0x1_0000|0x4_0000|0xA_0000|0x28_0000|0x100_0000
             vdd_io: U32<LittleEndian> : pub get u32 : pub set u32, // always 1
-            dimm0_ranks: U32<LittleEndian> : pub get u32 : pub set u32, // 1|2|4|6
-            dimm1_ranks: U32<LittleEndian> : pub get u32 : pub set u32, // 1|2|4|6
+            dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
+            dimm1_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
 
             gear_down_mode: U16<LittleEndian> : pub get u16 : pub set u16,
             _reserved: U16<LittleEndian>,
@@ -1213,8 +1257,8 @@ pub mod memory {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
             ddr_rate: U32<LittleEndian> : pub get u32 : pub set u32,
             vdd_io: U32<LittleEndian> : pub get u32 : pub set u32,
-            dimm0_ranks: U32<LittleEndian> : pub get u32 : pub set u32, // 1|2|4|6
-            dimm1_ranks: U32<LittleEndian> : pub get u32 : pub set u32, // 1|2|4|6
+            dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
+            dimm1_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
 
             rtt_nom: U32<LittleEndian> : pub get u32 : pub set u32, // contains nominal on-die termination mode (not used on writes); 0|1|7
             rtt_wr: U32<LittleEndian> : pub get u32 : pub set u32, // contains dynamic on-die termination mode (used on writes); 0|1|4
