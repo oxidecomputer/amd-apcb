@@ -19,6 +19,7 @@
 
 # (Future) Compatibility
 
+* Fix dimm_rank_bitmap (make it private; provide accessors)
 * Allow/implement insert_headered_struct_array_entry with padding?!  Check what AMD says here
 * Also make_accessors! the ENTRY_HEADER, GROUP_HEADER, V2_HEADER and so on
 * Maybe remove PartialEq from structs
