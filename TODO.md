@@ -11,6 +11,7 @@
   * dimm rank
   * dq_vref
   * port size
+  * dimm_slots_per_channel (!)
 * rustdoc
 
 # (Future) Compatibility
