@@ -9,9 +9,6 @@
 * Enums for stuff with a "|" or "one of" comment.
   * ddr_rate
   * dimm rank
-  * rtt_nom
-  * rtt_wr
-  * rtt_park
   * dq_vref
   * port size
 * rustdoc
