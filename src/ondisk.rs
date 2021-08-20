@@ -1246,6 +1246,30 @@ pub mod memory {
         }
     }
 
+    // Those are all divisors of 240, except for the 34
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[repr(u32)]
+    pub enum RttNom {
+        RttOff = 0,
+        Rtt60Ohm = 1,
+        Rtt120Ohm = 2,
+        Rtt40Ohm = 3,
+        Rtt240Ohm = 4,
+        Rtt48Ohm = 5,
+        Rtt80Ohm = 6,
+        Rtt34Ohm = 7,
+    }
+    type RttPark = RttNom;
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[repr(u32)]
+    pub enum RttWr {
+        RttOff = 0,
+        Rtt120Ohm = 1,
+        Rtt240Ohm = 2,
+        RttFloating = 3,
+        Rtt80Ohm = 4,
+    }
+
     // See <https://www.micron.com/-/media/client/global/documents/products/data-sheet/dram/ddr4/8gb_auto_ddr4_dram.pdf>
     // Usually an array of those is used
     // Note: This structure is not used for soldered-down DRAM!
@@ -1259,9 +1283,9 @@ pub mod memory {
             dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
             dimm1_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
 
-            rtt_nom: U32<LittleEndian> : pub get u32 : pub set u32, // contains nominal on-die termination mode (not used on writes); 0|1|7
-            rtt_wr: U32<LittleEndian> : pub get u32 : pub set u32, // contains dynamic on-die termination mode (used on writes); 0|1|4
-            rtt_park: U32<LittleEndian> : pub get u32 : pub set u32, // contains ODT termination resistor to be used when ODT is low; 4|5|7
+            rtt_nom: U32<LittleEndian> : pub get Result<RttNom> : pub set RttNom, // contains nominal on-die termination mode (not used on writes); 0|1|7
+            rtt_wr: U32<LittleEndian> : pub get Result<RttWr> : pub set RttWr, // contains dynamic on-die termination mode (used on writes); 0|1|4
+            rtt_park: U32<LittleEndian> : pub get Result<RttPark> : pub set RttPark, // contains ODT termination resistor to be used when ODT is low; 4|5|7
             dq_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data
             dqs_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data strobe (bit clock)
             odt_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for on-die termination
