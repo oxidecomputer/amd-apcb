@@ -1512,8 +1512,8 @@ pub mod memory {
             _reserved_3: u8,
             pub beep_code_table: [ErrorOutEventControlBeepCode; 8], // FIXME: Make accessible
             enable_heart_beat: BU8 : pub get Result<bool> : pub set bool,
-            enable_power_good_gpio: BU8 : pub get Result<bool> : pub set bool,
-            pub power_good_gpio: Gpio, // FIXME: Make accessible
+            enable_power_good_gpio: BU8,
+            power_good_gpio: Gpio,
             _reserved_4: [u8; 3], // pad
         }
     }
@@ -1535,6 +1535,25 @@ pub mod memory {
                 None => {
                     self.enable_error_reporting_gpio = BU8(0);
                     self.error_reporting_gpio = Gpio::new(0, 0, 0);
+                },
+            }
+        }
+        pub fn power_good_gpio(&self) -> Result<Option<Gpio>> {
+            match self.enable_power_good_gpio {
+                BU8(1) => Ok(Some(self.power_good_gpio)),
+                BU8(0) => Ok(None),
+                _ => Err(Error::EntryTypeMismatch),
+            }
+        }
+        pub fn set_power_good_gpio(&mut self, value: Option<Gpio>) {
+            match value {
+                Some(value) => {
+                    self.enable_power_good_gpio = BU8(1);
+                    self.power_good_gpio = value;
+                },
+                None => {
+                    self.enable_power_good_gpio = BU8(0);
+                    self.power_good_gpio = Gpio::new(0, 0, 0);
                 },
             }
         }
@@ -1642,7 +1661,7 @@ pub mod memory {
             pub beep_code_table: [ErrorOutEventControlBeepCode; 8], // FIXME: Make accessible.
             enable_heart_beat: BU8 : pub get Result<bool> : pub set bool,
             enable_power_good_gpio: BU8 : pub get Result<bool> : pub set bool,
-            pub power_good_gpio: Gpio, // FIXME: Make accessible.
+            power_good_gpio: Gpio,
             _reserved_2: [u8; 3], // pad
         }
     }
@@ -1664,6 +1683,25 @@ pub mod memory {
                 None => {
                     self.enable_error_reporting_gpio = BU8(0);
                     self.error_reporting_gpio = Gpio::new(0, 0, 0);
+                },
+            }
+        }
+        pub fn power_good_gpio(&self) -> Result<Option<Gpio>> {
+            match self.enable_power_good_gpio {
+                BU8(1) => Ok(Some(self.power_good_gpio)),
+                BU8(0) => Ok(None),
+                _ => Err(Error::EntryTypeMismatch),
+            }
+        }
+        pub fn set_power_good_gpio(&mut self, value: Option<Gpio>) {
+            match value {
+                Some(value) => {
+                    self.enable_power_good_gpio = BU8(1);
+                    self.power_good_gpio = value;
+                },
+                None => {
+                    self.enable_power_good_gpio = BU8(0);
+                    self.power_good_gpio = Gpio::new(0, 0, 0);
                 },
             }
         }
