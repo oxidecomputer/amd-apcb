@@ -1143,6 +1143,7 @@ pub mod memory {
     }
 
     // Usually an array of those is used
+    /// Control/Address Bus Element
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
