@@ -11,6 +11,7 @@ use num_traits::ToPrimitive;
 use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32, U64};
 use core::convert::TryInto;
 use paste::paste;
+use crate::types::Error;
 
 /// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
 /// If the item cannot be parsed, returns None and does not advance.
@@ -1384,7 +1385,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Clone, Copy)]
         #[repr(C, packed)]
         pub struct Gpio {
             pin: u8 : pub get u8 : pub set u8, // in FCH
@@ -1493,7 +1494,7 @@ pub mod memory {
         #[repr(C, packed)]
         pub struct ErrorOutEventControl116 { // Milan
             enable_error_reporting: BU8 : pub get Result<bool> : pub set bool,
-            enable_error_reporting_gpio: BU8 : pub get Result<bool> : pub set bool,
+            enable_error_reporting_gpio: BU8,
             enable_error_reporting_beep_codes: BU8 : pub get Result<bool> : pub set bool,
             enable_using_handshake: BU8 : pub get Result<bool> : pub set bool, // otherwise see output_delay
             input_port: U32<LittleEndian> : pub get u32 : pub set u32, // for handshake
@@ -1507,13 +1508,35 @@ pub mod memory {
             output_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // PortType; default: 6
             clear_acknowledgement: BU8 : pub get Result<bool> : pub set bool,
             _reserved_2: [u8; 3],
-            pub gpio: Gpio, // FIXME: Make accessible
+            error_reporting_gpio: Gpio,
             _reserved_3: u8,
             pub beep_code_table: [ErrorOutEventControlBeepCode; 8], // FIXME: Make accessible
             enable_heart_beat: BU8 : pub get Result<bool> : pub set bool,
             enable_power_good_gpio: BU8 : pub get Result<bool> : pub set bool,
             pub power_good_gpio: Gpio, // FIXME: Make accessible
             _reserved_4: [u8; 3], // pad
+        }
+    }
+
+    impl ErrorOutEventControl116 {
+        pub fn error_reporting_gpio(&self) -> Result<Option<Gpio>> {
+            match self.enable_error_reporting_gpio {
+                BU8(1) => Ok(Some(self.error_reporting_gpio)),
+                BU8(0) => Ok(None),
+                _ => Err(Error::EntryTypeMismatch),
+            }
+        }
+        pub fn set_error_reporting_gpio(&mut self, value: Option<Gpio>) {
+            match value {
+                Some(value) => {
+                    self.enable_error_reporting_gpio = BU8(1);
+                    self.error_reporting_gpio = value;
+                },
+                None => {
+                    self.enable_error_reporting_gpio = BU8(0);
+                    self.error_reporting_gpio = Gpio::new(0, 0, 0);
+                },
+            }
         }
     }
 
@@ -1535,7 +1558,7 @@ pub mod memory {
                 output_port_type: (PortType::FchHtIo as u32).into(),
                 clear_acknowledgement: BU8(0),
                 _reserved_2: [0; 3],
-                gpio: Gpio::new(0, 0, 0), // probably invalid
+                error_reporting_gpio: Gpio::new(0, 0, 0), // probably invalid
                 _reserved_3: 0,
                 beep_code_table: [
                     ErrorOutEventControlBeepCode {
@@ -1601,7 +1624,7 @@ pub mod memory {
         #[repr(C, packed)]
         pub struct ErrorOutEventControl112 { // older than Milan
             enable_error_reporting: BU8 : pub get Result<bool> : pub set bool,
-            enable_error_reporting_gpio: BU8 : pub get Result<bool> : pub set bool,
+            enable_error_reporting_gpio: BU8,
             enable_error_reporting_beep_codes: BU8 : pub get Result<bool> : pub set bool,
             enable_using_handshake: BU8 : pub get Result<bool> : pub set bool, // otherwise see output_delay
             input_port: U32<LittleEndian> : pub get u32 : pub set u32, // for handshake
@@ -1614,13 +1637,35 @@ pub mod memory {
             input_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // default: 6
             output_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // default: 6
             clear_acknowledgement: BU8 : pub get Result<bool> : pub set bool,
-            pub gpio: Gpio, // FIXME: Make accessible.
+            error_reporting_gpio: Gpio,
             // @40
             pub beep_code_table: [ErrorOutEventControlBeepCode; 8], // FIXME: Make accessible.
             enable_heart_beat: BU8 : pub get Result<bool> : pub set bool,
             enable_power_good_gpio: BU8 : pub get Result<bool> : pub set bool,
             pub power_good_gpio: Gpio, // FIXME: Make accessible.
             _reserved_2: [u8; 3], // pad
+        }
+    }
+
+    impl ErrorOutEventControl112 {
+        pub fn error_reporting_gpio(&self) -> Result<Option<Gpio>> {
+            match self.enable_error_reporting_gpio {
+                BU8(1) => Ok(Some(self.error_reporting_gpio)),
+                BU8(0) => Ok(None),
+                _ => Err(Error::EntryTypeMismatch),
+            }
+        }
+        pub fn set_error_reporting_gpio(&mut self, value: Option<Gpio>) {
+            match value {
+                Some(value) => {
+                    self.enable_error_reporting_gpio = BU8(1);
+                    self.error_reporting_gpio = value;
+                },
+                None => {
+                    self.enable_error_reporting_gpio = BU8(0);
+                    self.error_reporting_gpio = Gpio::new(0, 0, 0);
+                },
+            }
         }
     }
 
@@ -1641,7 +1686,7 @@ pub mod memory {
                 input_port_type: (PortType::FchHtIo as u32).into(),
                 output_port_type: (PortType::FchHtIo as u32).into(),
                 clear_acknowledgement: BU8(0),
-                gpio: Gpio::new(0, 0, 0), // probably invalid
+                error_reporting_gpio: Gpio::new(0, 0, 0), // probably invalid
                 beep_code_table: [
                     ErrorOutEventControlBeepCode {
                         error_type: U16::<LittleEndian>::new(0x3fff),
