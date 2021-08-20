@@ -1198,6 +1198,7 @@ pub mod memory {
     }
 
     type CadBusAddressCommandDriveStrength = CadBusClkDriveStrength;
+    type CadBusCkeDriveStrength = CadBusClkDriveStrength;
 
     /// Control/Address Bus Element
     // Usually an array of those is used
@@ -1217,7 +1218,7 @@ pub mod memory {
             _reserved_2: U16<LittleEndian>,
             address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
 
-            cke_drive_strength: u8 : pub get u8 : pub set u8, // FIXME ENUM
+            cke_drive_strength: u8 : pub get Result<CadBusCkeDriveStrength> : pub set CadBusCkeDriveStrength,
             cs_odt_drive_strength: u8 : pub get u8 : pub set u8, // FIXME ENUM
             address_command_drive_strength: u8 : pub get Result<CadBusAddressCommandDriveStrength> : pub set CadBusAddressCommandDriveStrength,
             clk_drive_strength: u8 : pub get Result<CadBusClkDriveStrength> : pub set CadBusClkDriveStrength,
