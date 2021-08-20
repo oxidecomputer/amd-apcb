@@ -1185,6 +1185,18 @@ pub mod memory {
         }
     }
 
+    #[repr(u8)]
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    pub enum CadBusClkDriveStrength {
+        Auto = 0xFF,
+        Strength120Ohm = 0,
+        Strength60Ohm = 1,
+        Strength40Ohm = 3,
+        Strength30Ohm = 7,
+        Strength24Ohm = 15,
+        Strength20Ohm = 31,
+    }
+
     /// Control/Address Bus Element
     // Usually an array of those is used
     make_accessors! {
@@ -1203,10 +1215,10 @@ pub mod memory {
             _reserved_2: U16<LittleEndian>,
             address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
 
-            cke_drive_strength: u8 : pub get u8 : pub set u8,
-            cs_odt_drive_strength: u8 : pub get u8 : pub set u8,
-            address_command_drive_strength: u8 : pub get u8 : pub set u8,
-            clk_drive_strength: u8 : pub get u8 : pub set u8,
+            cke_drive_strength: u8 : pub get u8 : pub set u8, // FIXME ENUM
+            cs_odt_drive_strength: u8 : pub get u8 : pub set u8, // FIXME ENUM
+            address_command_drive_strength: u8 : pub get u8 : pub set u8, // FIXME ENUM
+            clk_drive_strength: u8 : pub get Result<CadBusClkDriveStrength> : pub set CadBusClkDriveStrength,
         }
     }
 
