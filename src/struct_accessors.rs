@@ -89,6 +89,10 @@ impl Setter<bool> for BU8 {
     }
 }
 
+/// This macro expects a struct as a parameter (attributes are fine) and then, first, defines the exact same struct.
+/// Afterwards, it automatically impl getters (and setters) for the fields where there was "get" (and "set") specified.  The getters and setters so generated are hardcoded as calling self.field.get1 and self.field.set1, respectively.  These are usually provided by a Getter and Getter trait impl (for example the ones in the same file this macro is in)
+/// Note: If you want to add a docstring, put it before the struct inside the macro parameter at the usage site, not before the macro call.
+/// Field syntax:   NAME: TYPE[: pub get TYPE [:pub set TYPE]]
 macro_rules! make_accessors {(
     $(#[$struct_meta:meta])*
     $struct_vis:vis
