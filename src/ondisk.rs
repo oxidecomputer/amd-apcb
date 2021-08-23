@@ -1201,9 +1201,9 @@ pub mod memory {
     type CadBusCkeDriveStrength = CadBusClkDriveStrength;
     type CadBusCsOdtDriveStrength = CadBusClkDriveStrength;
 
-    /// Control/Address Bus Element
     // Usually an array of those is used
     make_accessors! {
+        /// Control/Address Bus Element
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct CadBusElement {
