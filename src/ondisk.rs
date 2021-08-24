@@ -1104,6 +1104,15 @@ pub mod memory {
         }
     }
 
+    impl AblBreakpointControl {
+        pub fn new(enable_breakpoint: bool, break_on_all_dies: bool) -> Self {
+            let mut result = Self::default();
+            result.set_enable_breakpoint(enable_breakpoint);
+            result.set_break_on_all_dies(break_on_all_dies);
+            result
+        }
+    }
+
     #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct ConsoleOutControl {
@@ -1127,6 +1136,16 @@ pub mod memory {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::ConsoleOutControl) => true,
                 _ => false,
+            }
+        }
+    }
+
+    impl ConsoleOutControl {
+        pub fn new(abl_console_out_control: AblConsoleOutControl, abl_breakpoint_control: AblBreakpointControl) -> Self {
+            Self {
+                abl_console_out_control,
+                abl_breakpoint_control,
+                _reserved: 0.into(),
             }
         }
     }
@@ -2017,6 +2036,14 @@ pub mod memory {
             let mut dimm_info = DimmInfoSmbusElement::new(1, 2, 3, 4, 5, 6, 7);
             dimm_info.set_dimm_slot_present(false);
             assert!(!dimm_info.dimm_slot_present().unwrap());
+
+            let mut abl_console_out_control = AblConsoleOutControl::default();
+            abl_console_out_control.set_enable_mem_setreg_logging(true);
+            assert!(abl_console_out_control.enable_mem_setreg_logging().unwrap());
+            abl_console_out_control.set_enable_mem_setreg_logging(false);
+            assert!(!abl_console_out_control.enable_mem_setreg_logging().unwrap());
+            let console_out_control = ConsoleOutControl::new(abl_console_out_control, AblBreakpointControl::default());
+            assert!(console_out_control.abl_console_out_control.abl_console_port() == 0x80);
         }
     }
 }
