@@ -12,6 +12,9 @@ use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32, U64};
 use core::convert::TryInto;
 use paste::paste;
 use crate::types::Error;
+use crate::types::Result;
+use crate::struct_accessors::{Getter, Setter, make_accessors};
+use crate::types::PriorityLevel;
 
 /// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
 /// If the item cannot be parsed, returns None and does not advance.
@@ -813,20 +816,92 @@ impl Default for GROUP_HEADER {
     }
 }
 
-#[derive(FromBytes, AsBytes, Unaligned, Debug)]
-#[repr(C, packed)]
-pub struct ENTRY_HEADER {
-    pub group_id: U16<LittleEndian>, // should be equal to the group's group_id
-    pub entry_id: U16<LittleEndian>,  // meaning depends on context_type
-    pub entry_size: U16<LittleEndian>, // including header
-    pub instance_id: U16<LittleEndian>,
-    pub context_type: u8,   // see ContextType enum
-    pub context_format: u8, // see ContextFormat enum
-    pub unit_size: u8,      // in Byte.  Applicable when ContextType == 2.  value should be 8
-    pub priority_mask: u8,
-    pub key_size: u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
-    pub key_pos: u8,  // Sorting key position of the unit specified of UnitSize
-    pub board_instance_mask: U16<LittleEndian>, // Board-specific Apcb instance mask
+bitfield! {
+    pub struct PriorityLevels(u8);
+    impl Debug;
+    bool;
+    hard_force, set_hard_force: 0;
+    high, set_high: 1;
+    medium, set_medium: 2;
+    event_logging, set_event_logging: 3;
+    low, set_low: 4;
+    default, set_default: 5;
+}
+
+impl FromPrimitive for PriorityLevels {
+    #[inline]
+    fn from_u64(raw_value: u64) -> Option<Self> {
+        if raw_value < 64 { // valid
+            Some(Self(raw_value as u8))
+        } else {
+            None
+        }
+    }
+    #[inline]
+    fn from_i64(raw_value: i64) -> Option<Self> {
+        if raw_value >= 0 {
+            Self::from_u64(raw_value as u64)
+        } else {
+            None
+        }
+    }
+}
+
+impl ToPrimitive for PriorityLevels {
+    #[inline]
+    fn to_i64(&self) -> Option<i64> {
+        Some(self.0.into())
+    }
+    #[inline]
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.0.into())
+    }
+}
+
+impl PriorityLevels {
+    pub fn from_level(level: PriorityLevel) -> Self {
+        let mut result = Self(0);
+        match level {
+            PriorityLevel::HardForce => {
+                result.set_hard_force(true);
+            },
+            PriorityLevel::High => {
+                result.set_high(true);
+            },
+            PriorityLevel::Medium => {
+                result.set_medium(true);
+            },
+            PriorityLevel::EventLogging => {
+                result.set_event_logging(true);
+            },
+            PriorityLevel::Low => {
+                result.set_low(true);
+            },
+            PriorityLevel::Default => {
+                result.set_default(true);
+            },
+        }
+        result
+    }
+}
+
+make_accessors! {
+    #[derive(FromBytes, AsBytes, Unaligned, Debug)]
+    #[repr(C, packed)]
+    pub struct ENTRY_HEADER {
+        // FIXME: de-pub those
+        pub group_id: U16<LittleEndian>, // should be equal to the group's group_id
+        pub entry_id: U16<LittleEndian>,  // meaning depends on context_type
+        pub entry_size: U16<LittleEndian>, // including header
+        pub instance_id: U16<LittleEndian>,
+        pub context_type: u8,   // see ContextType enum
+        pub context_format: u8, // see ContextFormat enum
+        pub unit_size: u8,      // in Byte.  Applicable when ContextType == 2.  value should be 8
+        pub priority_mask: u8 : pub get Result<PriorityLevels> : pub set PriorityLevels,
+        pub key_size: u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
+        pub key_pos: u8,  // Sorting key position of the unit specified of UnitSize
+        pub board_instance_mask: U16<LittleEndian>, // Board-specific Apcb instance mask
+    }
 }
 
 impl Default for ENTRY_HEADER {

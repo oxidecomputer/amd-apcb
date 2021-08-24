@@ -7,7 +7,7 @@ use crate::ondisk::TOKEN_ENTRY;
 use crate::ondisk::V2_HEADER;
 use crate::ondisk::V3_HEADER_EXT;
 use crate::ondisk::ENTRY_ALIGNMENT;
-pub use crate::ondisk::{ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut, EntryCompatible};
+pub use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut, EntryCompatible};
 use core::convert::TryInto;
 use core::default::Default;
 use core::mem::{size_of};
@@ -293,7 +293,7 @@ impl<'a> Apcb<'a> {
         }
         self.group_mut(group_id).ok_or_else(|| Error::GroupNotFound)
     }
-    fn internal_insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: usize, priority_mask: u8, payload_initializer: &mut dyn FnMut(&mut [u8]) -> ()) -> Result<()> {
+    fn internal_insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: usize, priority_mask: PriorityLevels, payload_initializer: &mut dyn FnMut(&mut [u8]) -> ()) -> Result<()> {
         let group_id = entry_id.group_id();
         let mut entry_allocation: u16 = (size_of::<ENTRY_HEADER>() as u16).checked_add(payload_size.try_into().map_err(|_| Error::ArithmeticOverflow)?).ok_or_else(|| Error::OutOfSpace)?;
         while entry_allocation % (ENTRY_ALIGNMENT as u16) != 0 {
@@ -307,14 +307,14 @@ impl<'a> Apcb<'a> {
             Err(e) => Err(e),
         }
     }
-    pub fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, priority_mask: u8, payload: &[u8]) -> Result<()> {
+    pub fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, priority_mask: PriorityLevels, payload: &[u8]) -> Result<()> {
         let payload_size = payload.len();
         self.internal_insert_entry(entry_id, instance_id, board_instance_mask, context_type, payload_size, priority_mask, &mut |body: &mut [u8]| {
             body.copy_from_slice(payload);
         })
     }
     /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.
-    pub fn insert_struct_entry<T: EntryCompatible + AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: u8, payload: &T) -> Result<()> {
+    pub fn insert_struct_entry<T: EntryCompatible + AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &T) -> Result<()> {
         let blob = payload.as_bytes();
         if T::is_entry_compatible(entry_id, blob) {
             self.insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, priority_mask, blob)
@@ -323,7 +323,7 @@ impl<'a> Apcb<'a> {
         }
     }
     /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.
-    pub fn insert_struct_array_entry<T: EntryCompatible + AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: u8, payload: &[T]) -> Result<()> {
+    pub fn insert_struct_array_entry<T: EntryCompatible + AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &[T]) -> Result<()> {
         let blob = if payload.len() > 0 {
             payload[0].as_bytes()
         } else {
@@ -345,7 +345,7 @@ impl<'a> Apcb<'a> {
         }
     }
     /// Inserts a new entry (see insert_entry), puts HEADER and then PAYLOAD into it.
-    pub fn insert_headered_struct_array_entry<H: EntryCompatible + AsBytes, T: AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, header: &H, priority_mask:u8, payload: &[T]) -> Result<()> {
+    pub fn insert_headered_struct_array_entry<H: EntryCompatible + AsBytes, T: AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, header: &H, priority_mask: PriorityLevels, payload: &[T]) -> Result<()> {
         let blob = header.as_bytes();
         if H::is_entry_compatible(entry_id, blob) {
             let payload_size = size_of::<H>().checked_add(size_of::<T>().checked_mul(payload.len()).ok_or_else(|| Error::ArithmeticOverflow)?).ok_or_else(|| Error::ArithmeticOverflow)?;

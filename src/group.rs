@@ -5,12 +5,11 @@ use crate::ondisk::GroupId;
 use crate::ondisk::ENTRY_ALIGNMENT;
 use crate::ondisk::ENTRY_HEADER;
 use crate::ondisk::TOKEN_ENTRY;
-pub use crate::ondisk::{ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
+pub use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
 use core::convert::TryInto;
 use core::mem::{size_of};
 use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
-
 use crate::entry::{EntryItem, EntryMutItem, EntryItemBody};
 
 #[derive(Debug)]
@@ -238,7 +237,7 @@ impl<'a> GroupMutIter<'a> {
     }
     /// Inserts the given entry data at the right spot.
     /// Precondition: Caller already increased the group size by entry_allocation.
-    pub(crate) fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload_size: usize, payload_initializer: &mut dyn FnMut(&mut [u8]) -> (), priority_mask: u8) -> Result<()> {
+    pub(crate) fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload_size: usize, payload_initializer: &mut dyn FnMut(&mut [u8]) -> (), priority_mask: PriorityLevels) -> Result<()> {
         let group_id = entry_id.group_id();
         let entry_id = entry_id.type_id();
 
@@ -268,7 +267,7 @@ impl<'a> GroupMutIter<'a> {
             header.key_size = 4;
             header.key_pos = 0;
         }
-        header.priority_mask = priority_mask;
+        header.set_priority_mask(priority_mask);
 
         // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
         header.board_instance_mask.set(board_instance_mask);

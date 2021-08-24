@@ -3,8 +3,9 @@ mod tests {
     use core::default::Default;
     use crate::Apcb;
     use crate::Error;
-    use crate::ondisk::{ContextType, CcxEntryId, DfEntryId, PspEntryId, MemoryEntryId, TokenEntryId, EntryId, GroupId, memory::ConsoleOutControl, memory::DimmInfoSmbusElement, psp::BoardIdGettingMethodEeprom, psp::IdRevApcbMapping};
+    use crate::ondisk::{PriorityLevels, ContextType, CcxEntryId, DfEntryId, PspEntryId, MemoryEntryId, TokenEntryId, EntryId, GroupId, memory::ConsoleOutControl, memory::DimmInfoSmbusElement, psp::BoardIdGettingMethodEeprom, psp::IdRevApcbMapping};
     use crate::EntryItemBody;
+    use crate::types::PriorityLevel;
 
     #[test]
     #[should_panic]
@@ -143,8 +144,8 @@ mod tests {
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
-        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, 33, &[1u8; 48])?;
-        apcb.insert_entry(EntryId::Psp(PspEntryId::Raw(97)), 0, 0xFFFF, ContextType::Struct, 31, &[2u8; 48])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[1u8; 48])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::Raw(97)), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 48])?;
         //let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         apcb.delete_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF)?;
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
@@ -176,8 +177,8 @@ mod tests {
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
-        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, 33, &[1u8; 48])?;
-        apcb.insert_entry(EntryId::Psp(PspEntryId::Raw(97)), 0, 0xFFFF, ContextType::Struct, 32, &[2u8; 4])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::Raw(97)), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 4])?;
 
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
@@ -217,8 +218,8 @@ mod tests {
         let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
-        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, 33, &[1u8; 48])?;
-        apcb.insert_struct_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, 32, &ConsoleOutControl::default())?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
+        apcb.insert_struct_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &ConsoleOutControl::default())?;
 
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups_mut();
@@ -270,7 +271,7 @@ mod tests {
             IdRevApcbMapping::new(5, 4, 9, 3),
             IdRevApcbMapping::new(8, 7, 10, 6),
         ];
-        apcb.insert_headered_struct_array_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, &header, 32, &items)?;
+        apcb.insert_headered_struct_array_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, &header, PriorityLevels::from_level(PriorityLevel::Default), &items)?;
 
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
@@ -315,12 +316,12 @@ mod tests {
         let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
-        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, 33, &[1u8; 48])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
         let items = [
             DimmInfoSmbusElement::new(2, 3, 4, 5, 6, 7, 8),
             DimmInfoSmbusElement::new(10, 11, 12, 13, 14, 15, 16),
         ];
-        apcb.insert_struct_array_entry(EntryId::Memory(MemoryEntryId::DimmInfoSmbus), 0, 0xFFFF, 32, &items)?;
+        apcb.insert_struct_array_entry(EntryId::Memory(MemoryEntryId::DimmInfoSmbus), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &items)?;
 
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
@@ -377,12 +378,12 @@ mod tests {
         let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
-        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, 33, &[1u8; 48])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
         let items = [
             DimmInfoSmbusElement::new(2, 3, 4, 5, 6, 7, 8),
             DimmInfoSmbusElement::new(10, 11, 12, 13, 14, 15, 16),
         ];
-        match apcb.insert_struct_array_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, 32, &items) {
+        match apcb.insert_struct_array_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &items) {
             Err(Error::EntryTypeMismatch) => {
                 Ok(())
             }
@@ -399,11 +400,11 @@ mod tests {
         apcb.insert_group(GroupId::Df, *b"DFG ")?;
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         apcb.insert_group(GroupId::Token, *b"TOKN")?;
-        apcb.insert_entry(EntryId::Df(DfEntryId::SlinkConfig), 0, 0xFFFF, ContextType::Struct, 33, &[1u8; 48])?;
-        apcb.insert_entry(EntryId::Df(DfEntryId::XgmiPhyOverride), 0, 0xFFFF, ContextType::Struct, 32, &[2u8; 1])?;
+        apcb.insert_entry(EntryId::Df(DfEntryId::SlinkConfig), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
+        apcb.insert_entry(EntryId::Df(DfEntryId::XgmiPhyOverride), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 1])?;
 
         // Insert empty "Token Entry"
-        apcb.insert_entry(EntryId::Token(TokenEntryId::Bool), 0, 1, ContextType::Tokens, 32, &[])?;
+        apcb.insert_entry(EntryId::Token(TokenEntryId::Bool), 0, 1, ContextType::Tokens, PriorityLevels::from_level(PriorityLevel::Default), &[])?;
 
         // pub(crate) fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         apcb.insert_token(EntryId::Token(TokenEntryId::Bool), 0, 1, 0x014FBF20, 1)?;
@@ -472,14 +473,14 @@ mod tests {
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         apcb.insert_group(GroupId::Token, *b"TOKN")?;
         //let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
-        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, 33, &[1u8; 48])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
         // makes it work let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
-        apcb.insert_entry(EntryId::Psp(PspEntryId::Raw(97)), 0, 0xFFFF, ContextType::Struct, 32, &[2u8; 1])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::Raw(97)), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 1])?;
 
         // let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
         // Insert empty "Token Entry"
-        apcb.insert_entry(EntryId::Token(TokenEntryId::Bool), 0, 1, ContextType::Tokens, 32, &[])?;
+        apcb.insert_entry(EntryId::Token(TokenEntryId::Bool), 0, 1, ContextType::Tokens, PriorityLevels::from_level(PriorityLevel::Default), &[])?;
 
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
@@ -548,7 +549,7 @@ mod tests {
         apcb.insert_group(GroupId::Token, *b"TOKN")?;
 
         // Insert empty "Token Entry"
-        match apcb.insert_entry(EntryId::Ccx(CcxEntryId::Raw(0)), 0, 1, ContextType::Tokens, 32, &[]) {
+        match apcb.insert_entry(EntryId::Ccx(CcxEntryId::Raw(0)), 0, 1, ContextType::Tokens, PriorityLevels::from_level(PriorityLevel::Default), &[]) {
             Ok(_) => {
                panic!("insert_entry should not succeed");
             },
@@ -569,15 +570,15 @@ mod tests {
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         apcb.insert_group(GroupId::Token, *b"TOKN")?;
         //let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
-        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, 33, &[1u8; 48])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
         // makes it work let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
-        apcb.insert_entry(EntryId::Psp(PspEntryId::Raw(97)), 0, 0xFFFF, ContextType::Struct, 32, &[2u8; 1])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::Raw(97)), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 1])?;
 
         // let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
         // Insert empty "Token Entry"
         // insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8
-        apcb.insert_entry(EntryId::Token(TokenEntryId::Byte), 0, 1, ContextType::Tokens, 32, &[])?;
+        apcb.insert_entry(EntryId::Token(TokenEntryId::Byte), 0, 1, ContextType::Tokens, PriorityLevels::from_level(PriorityLevel::Default), &[])?;
 
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
@@ -652,15 +653,15 @@ mod tests {
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         apcb.insert_group(GroupId::Token, *b"TOKN")?;
         //let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
-        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, 33, &[1u8; 48])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
         // makes it work let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
-        apcb.insert_entry(EntryId::Psp(PspEntryId::Raw(97)), 0, 0xFFFF, ContextType::Struct, 32, &[2u8; 1])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::Raw(97)), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 1])?;
 
         // let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
         // Insert empty "Token Entry"
         // insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8
-        apcb.insert_entry(EntryId::Token(TokenEntryId::Byte), 0, 1, ContextType::Tokens, 32, &[])?;
+        apcb.insert_entry(EntryId::Token(TokenEntryId::Byte), 0, 1, ContextType::Tokens, PriorityLevels::from_level(PriorityLevel::Default), &[])?;
 
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 

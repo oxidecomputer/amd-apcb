@@ -1,4 +1,7 @@
 
+use num_traits::FromPrimitive;
+use num_traits::ToPrimitive;
+
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum FileSystemError {
@@ -20,3 +23,12 @@ pub enum Error {
 }
 
 pub type Result<Q> = core::result::Result<Q, Error>;
+
+pub enum PriorityLevel {
+    HardForce,
+    High,
+    Medium,
+    EventLogging,
+    Low,
+    Default,
+}

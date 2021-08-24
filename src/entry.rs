@@ -2,7 +2,7 @@ use core::marker::PhantomData;
 use core::mem::size_of;
 use crate::types::{Result, Error, FileSystemError};
 use crate::ondisk::ENTRY_HEADER;
-pub use crate::ondisk::{ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut, EntryCompatible, MemoryEntryId};
+pub use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut, EntryCompatible, MemoryEntryId};
 use num_traits::FromPrimitive;
 use crate::tokens_entry::TokensEntryBodyItem;
 use zerocopy::{AsBytes, FromBytes};
@@ -157,8 +157,8 @@ impl<'a> EntryMutItem<'a> {
     pub fn unit_size(&self) -> u8 {
         self.header.unit_size
     }
-    pub fn priority_mask(&self) -> u8 {
-        self.header.priority_mask
+    pub fn priority_mask(&self) -> Result<PriorityLevels> {
+        self.header.priority_mask()
     }
     /// Note: Applicable iff context_format() != ContextFormat::Raw. Result <= unit_size.
     pub fn key_size(&self) -> u8 {
@@ -193,9 +193,8 @@ impl<'a> EntryMutItem<'a> {
         }
     */
 
-    pub fn set_priority_mask(&mut self, value: u8) -> &mut Self {
-        self.header.priority_mask = value;
-        self
+    pub fn set_priority_mask(&mut self, value: PriorityLevels) {
+        self.header.set_priority_mask(value);
     }
 
     // Note: Because entry_id, instance_id, group_id and board_instance_mask are sort keys, these cannot be mutated.
