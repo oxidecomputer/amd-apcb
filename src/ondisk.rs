@@ -930,6 +930,15 @@ pub mod df {
         }
     }
 
+    impl SlinkRegionDescription {
+        // Not sure why AMD still uses those--but it does use them, so whatever.
+        pub fn dummy(socket: u8) -> SlinkRegionDescription {
+            let mut result = Self::default();
+            result.socket = socket;
+            result
+        }
+    }
+
     // Rome only; even there, it's almost all 0s
     #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
@@ -943,6 +952,39 @@ pub mod df {
                 EntryId::Df(DfEntryId::SlinkConfig) => true,
                 _ => false,
             }
+        }
+    }
+
+    impl SlinkConfig {
+        pub fn new(regions: [SlinkRegionDescription; 4]) -> Self {
+            Self {
+                regions,
+            }
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use static_assertions::const_assert;
+
+        #[test]
+        fn test_df_structs() {
+            const_assert!(size_of::<SlinkConfig>() == 16 * 4);
+            const_assert!(size_of::<SlinkRegionDescription>() == 16);
+            assert!(offset_of!(SlinkRegionDescription, alignment) == 8);
+            assert!(offset_of!(SlinkRegionDescription, socket) == 9);
+            assert!(offset_of!(SlinkRegionDescription, phys_nbio_map) == 10);
+            assert!(offset_of!(SlinkRegionDescription, interleaving) == 11);
+        }
+
+        #[test]
+        fn test_df_struct_accessors() {
+            let slink_config = SlinkConfig::new([SlinkRegionDescription::dummy(0), SlinkRegionDescription::dummy(0), SlinkRegionDescription::dummy(1), SlinkRegionDescription::dummy(1)]);
+            assert!(slink_config.regions[0].socket == 0);
+            assert!(slink_config.regions[1].socket == 0);
+            assert!(slink_config.regions[2].socket == 1);
+            assert!(slink_config.regions[3].socket == 1);
         }
     }
 }
