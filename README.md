@@ -68,6 +68,8 @@ In order to update the checksum (you should do that once after any insertion/del
 
 Note that this also changes unique_apcb_instance.
 
+AMD currently specifies a size limit of 0x2000 Byte (8 KiB) for the entire APCB.
+
 # Testing
 
 Run
