@@ -128,7 +128,7 @@ impl GroupItem<'_> {
         GroupId::from_u16(self.header.group_id.get()).unwrap()
     }
 
-    /// This finds the entry with the given ID, INSTANCE_ID and compatible BOARD_INSTANCE_MASK, if any.
+    /// This finds the entry with the given ID, INSTANCE_ID and compatible BOARD_INSTANCE_MASK, if any.  If you have a board_id, BOARD_INSTANCE_MASK = 1 << board_id
     pub fn entry(&self, id: EntryId, instance_id: u16, board_instance_mask: u16) -> Option<EntryItem<'_>> {
         for entry in self.entries() {
             if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() & board_instance_mask != 0 {
@@ -296,7 +296,7 @@ impl<'a> GroupMutItem<'a> {
         GroupId::from_u16(self.header.group_id.get()).unwrap()
     }
 
-    /// This finds the entry with the given ID, INSTANCE_ID and compatible BOARD_INSTANCE_MASK, if any.
+    /// This finds the entry with the given ID, INSTANCE_ID and compatible BOARD_INSTANCE_MASK, if any.  If you have a board_id, BOARD_INSTANCE_MASK = 1 << board_id
     pub fn entry_mut(&mut self, id: EntryId, instance_id: u16, board_instance_mask: u16) -> Option<EntryMutItem<'_>> {
         for entry in self.entries_mut() {
             if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() & board_instance_mask != 0 {
