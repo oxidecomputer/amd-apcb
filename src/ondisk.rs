@@ -3175,15 +3175,22 @@ pub mod psp {
         pub struct IdApcbMapping {
             id_and_feature_mask: u8 : pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
             id_and_feature_value: u8 : pub get u8 : pub set u8,
-            apcb_instance_index: u8 : pub get u8 : pub set u8,
+            board_instance_index: u8 : pub get u8 : pub set u8,
         }
     }
     impl IdApcbMapping {
-        pub fn new(id_and_feature_mask: u8, id_and_feature_value: u8, apcb_instance_index: u8) -> Self {
+        pub fn new(id_and_feature_mask: u8, id_and_feature_value: u8, board_instance_index: u8) -> Self {
             Self {
                 id_and_feature_mask,
                 id_and_feature_value,
-                apcb_instance_index,
+                board_instance_index,
+            }
+        }
+        pub fn board_instance_mask(&self) -> Result<u16> {
+            if self.board_instance_index <= 15 {
+                Ok(1u16 << self.board_instance_index)
+            } else {
+                Err(Error::EntryTypeMismatch)
             }
         }
     }
@@ -3299,17 +3306,24 @@ pub mod psp {
             id_and_rev_and_feature_mask: u8 : pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
             id_and_feature_value: u8 : pub get u8 : pub set u8,
             rev_and_feature_value: u8 : pub get u8 : pub set u8,
-            apcb_instance_index: u8 : pub get u8 : pub set u8,
+            board_instance_index: u8 : pub get u8 : pub set u8,
         }
     }
 
     impl IdRevApcbMapping {
-        pub fn new(id_and_rev_and_feature_mask: u8, id_and_feature_value: u8, rev_and_feature_value: u8, apcb_instance_index: u8) -> Self {
+        pub fn new(id_and_rev_and_feature_mask: u8, id_and_feature_value: u8, rev_and_feature_value: u8, board_instance_index: u8) -> Self {
             Self {
                 id_and_rev_and_feature_mask,
                 id_and_feature_value,
                 rev_and_feature_value,
-                apcb_instance_index,
+                board_instance_index,
+            }
+        }
+        pub fn board_instance_mask(&self) -> Result<u16> {
+            if self.board_instance_index <= 15 {
+                Ok(1u16 << self.board_instance_index)
+            } else {
+                Err(Error::EntryTypeMismatch)
             }
         }
     }
