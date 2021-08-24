@@ -995,7 +995,6 @@ pub mod memory {
         }
     }
 
-
     impl EntryCompatible for DimmInfoSmbusElement {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
@@ -1960,6 +1959,22 @@ pub mod memory {
             assert!(offset_of!(ErrorOutEventControl112, enable_heart_beat) == 104);
             assert!(offset_of!(ErrorOutEventControl112, power_good_gpio) == 106);
             const_assert!(size_of::<ErrorOutEventControl112>() == 112);
+        }
+
+        #[test]
+        fn test_memory_struct_accessors() {
+            let dimm_info = DimmInfoSmbusElement::new(1, 2, 3, 4, 5, 6, 7);
+            assert!(dimm_info.dimm_slot_present().unwrap());
+            assert!(dimm_info.socket_id() == 1);
+            assert!(dimm_info.channel_id() == 2);
+            assert!(dimm_info.dimm_id() == 3);
+            assert!(dimm_info.dimm_smbus_address() == 4);
+            assert!(dimm_info.i2c_mux_address() == 5);
+            assert!(dimm_info.mux_control_address() == 6);
+            assert!(dimm_info.mux_channel() == 7);
+            let mut dimm_info = DimmInfoSmbusElement::new(1, 2, 3, 4, 5, 6, 7);
+            dimm_info.set_dimm_slot_present(false);
+            assert!(!dimm_info.dimm_slot_present().unwrap());
         }
     }
 }
