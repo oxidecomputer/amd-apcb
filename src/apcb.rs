@@ -293,7 +293,7 @@ impl<'a> Apcb<'a> {
         }
         self.group_mut(group_id).ok_or_else(|| Error::GroupNotFound)
     }
-    fn internal_insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: usize, payload_initializer: &mut dyn FnMut(&mut [u8]) -> (), priority_mask: u8) -> Result<()> {
+    fn internal_insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: usize, priority_mask: u8, payload_initializer: &mut dyn FnMut(&mut [u8]) -> ()) -> Result<()> {
         let group_id = entry_id.group_id();
         let mut entry_allocation: u16 = (size_of::<ENTRY_HEADER>() as u16).checked_add(payload_size.try_into().map_err(|_| Error::ArithmeticOverflow)?).ok_or_else(|| Error::OutOfSpace)?;
         while entry_allocation % (ENTRY_ALIGNMENT as u16) != 0 {
@@ -307,23 +307,23 @@ impl<'a> Apcb<'a> {
             Err(e) => Err(e),
         }
     }
-    pub fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[u8], priority_mask: u8) -> Result<()> {
+    pub fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, priority_mask: u8, payload: &[u8]) -> Result<()> {
         let payload_size = payload.len();
-        self.internal_insert_entry(entry_id, instance_id, board_instance_mask, context_type, payload_size, &mut |body: &mut [u8]| {
+        self.internal_insert_entry(entry_id, instance_id, board_instance_mask, context_type, payload_size, priority_mask, &mut |body: &mut [u8]| {
             body.copy_from_slice(payload);
-        }, priority_mask)
+        })
     }
     /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.
-    pub fn insert_struct_entry<T: EntryCompatible + AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &T, priority_mask: u8) -> Result<()> {
+    pub fn insert_struct_entry<T: EntryCompatible + AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: u8, payload: &T) -> Result<()> {
         let blob = payload.as_bytes();
         if T::is_entry_compatible(entry_id, blob) {
-            self.insert_entry(entry_id, instance_id, board_instance_mask, context_type, blob, priority_mask)
+            self.insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, priority_mask, blob)
         } else {
             Err(Error::EntryTypeMismatch)
         }
     }
     /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.
-    pub fn insert_struct_array_entry<T: EntryCompatible + AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload: &[T], priority_mask: u8) -> Result<()> {
+    pub fn insert_struct_array_entry<T: EntryCompatible + AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: u8, payload: &[T]) -> Result<()> {
         let blob = if payload.len() > 0 {
             payload[0].as_bytes()
         } else {
@@ -331,7 +331,7 @@ impl<'a> Apcb<'a> {
         };
         if T::is_entry_compatible(entry_id, blob) {
             let payload_size = size_of::<T>().checked_mul(payload.len()).ok_or_else(|| Error::ArithmeticOverflow)?;
-            self.internal_insert_entry(entry_id, instance_id, board_instance_mask, context_type, payload_size, &mut |body: &mut [u8]| {
+            self.internal_insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, payload_size, priority_mask, &mut |body: &mut [u8]| {
                 let mut body = body;
                 for item in payload {
                     let source = item.as_bytes();
@@ -339,17 +339,17 @@ impl<'a> Apcb<'a> {
                     a.copy_from_slice(source);
                     body = rest;
                 }
-            }, priority_mask)
+            })
         } else {
             Err(Error::EntryTypeMismatch)
         }
     }
     /// Inserts a new entry (see insert_entry), puts HEADER and then PAYLOAD into it.
-    pub fn insert_headered_struct_array_entry<H: EntryCompatible + AsBytes, T: AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, header: &H, payload: &[T], priority_mask: u8) -> Result<()> {
+    pub fn insert_headered_struct_array_entry<H: EntryCompatible + AsBytes, T: AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, header: &H, priority_mask:u8, payload: &[T]) -> Result<()> {
         let blob = header.as_bytes();
         if H::is_entry_compatible(entry_id, blob) {
             let payload_size = size_of::<H>().checked_add(size_of::<T>().checked_mul(payload.len()).ok_or_else(|| Error::ArithmeticOverflow)?).ok_or_else(|| Error::ArithmeticOverflow)?;
-            self.internal_insert_entry(entry_id, instance_id, board_instance_mask, context_type, payload_size, &mut |body: &mut [u8]| {
+            self.internal_insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, payload_size, priority_mask, &mut |body: &mut [u8]| {
                 let mut body = body;
                 let (a, rest) = body.split_at_mut(blob.len());
                 a.copy_from_slice(blob);
@@ -360,7 +360,7 @@ impl<'a> Apcb<'a> {
                     a.copy_from_slice(source);
                     body = rest;
                 }
-            }, priority_mask)
+            })
         } else {
             Err(Error::EntryTypeMismatch)
         }
