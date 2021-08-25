@@ -1439,7 +1439,8 @@ pub mod memory {
             dqs_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data strobe (bit clock)
             odt_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for on-die termination
             pmu_phy_vref: U32<LittleEndian> : pub get u32 : pub set u32,
-            dq_vref: U32<LittleEndian> : pub get u32 : pub set u32, // MR6 vref calibration value; 23|30|32
+            // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
+            vref_dq: U32<LittleEndian> : pub get u32 : pub set u32, // MR6 vref calibration value; 23|30|32
         }
     }
 
@@ -1459,7 +1460,7 @@ pub mod memory {
                 dqs_drive_strength: 62.into(), // always
                 odt_drive_strength: 24.into(), // always
                 pmu_phy_vref: 91.into(),
-                dq_vref: 23.into(),
+                vref_dq: 23.into(),
             }
         }
     }
