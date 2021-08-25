@@ -145,7 +145,7 @@ mod tests {
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[1u8; 48])?;
-        apcb.insert_entry(EntryId::Psp(PspEntryId::Raw(97)), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 48])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::Unknown(97)), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 48])?;
         //let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         apcb.delete_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF)?;
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
@@ -157,7 +157,7 @@ mod tests {
         let mut entries = group.entries();
 
         let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
-        assert!(entry.id() == EntryId::Psp(PspEntryId::Raw(97)));
+        assert!(entry.id() == EntryId::Psp(PspEntryId::Unknown(97)));
 
         assert!(matches!(entries.next(), None));
 
@@ -178,7 +178,7 @@ mod tests {
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
-        apcb.insert_entry(EntryId::Psp(PspEntryId::Raw(97)), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 4])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::Unknown(97)), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 4])?;
 
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
@@ -195,7 +195,7 @@ mod tests {
         assert!(entry.board_instance_mask() == 0xFFFF);
 
         let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
-        assert!(entry.id() == EntryId::Psp(PspEntryId::Raw(97)));
+        assert!(entry.id() == EntryId::Psp(PspEntryId::Unknown(97)));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
@@ -475,7 +475,7 @@ mod tests {
         //let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
         // makes it work let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
-        apcb.insert_entry(EntryId::Psp(PspEntryId::Raw(97)), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 1])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::Unknown(97)), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 1])?;
 
         // let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
@@ -503,7 +503,7 @@ mod tests {
         assert!(entry.board_instance_mask() == 0xFFFF);
 
         let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
-        assert!(entry.id() == EntryId::Psp(PspEntryId::Raw(97)));
+        assert!(entry.id() == EntryId::Psp(PspEntryId::Unknown(97)));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
@@ -549,7 +549,7 @@ mod tests {
         apcb.insert_group(GroupId::Token, *b"TOKN")?;
 
         // Insert empty "Token Entry"
-        match apcb.insert_entry(EntryId::Ccx(CcxEntryId::Raw(0)), 0, 1, ContextType::Tokens, PriorityLevels::from_level(PriorityLevel::Default), &[]) {
+        match apcb.insert_entry(EntryId::Ccx(CcxEntryId::Unknown(0)), 0, 1, ContextType::Tokens, PriorityLevels::from_level(PriorityLevel::Default), &[]) {
             Ok(_) => {
                panic!("insert_entry should not succeed");
             },
@@ -572,7 +572,7 @@ mod tests {
         //let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
         // makes it work let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
-        apcb.insert_entry(EntryId::Psp(PspEntryId::Raw(97)), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 1])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::Unknown(97)), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 1])?;
 
         // let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
@@ -602,7 +602,7 @@ mod tests {
         assert!(entry.board_instance_mask() == 0xFFFF);
 
         let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
-        assert!(entry.id() == EntryId::Psp(PspEntryId::Raw(97)));
+        assert!(entry.id() == EntryId::Psp(PspEntryId::Unknown(97)));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
@@ -655,7 +655,7 @@ mod tests {
         //let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
         // makes it work let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
-        apcb.insert_entry(EntryId::Psp(PspEntryId::Raw(97)), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 1])?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::Unknown(97)), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 1])?;
 
         // let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
 
@@ -687,7 +687,7 @@ mod tests {
         assert!(entry.board_instance_mask() == 0xFFFF);
 
         let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
-        assert!(entry.id() == EntryId::Psp(PspEntryId::Raw(97)));
+        assert!(entry.id() == EntryId::Psp(PspEntryId::Unknown(97)));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 

@@ -167,7 +167,7 @@ pub enum GroupId {
     Cbs,
     Oem,
     Token, // usual signature: "TOKN"
-    //Raw(u16),
+    Unknown(u16),
 }
 
 impl ToPrimitive for GroupId {
@@ -182,7 +182,7 @@ impl ToPrimitive for GroupId {
             GroupId::Cbs => 0x1707,
             GroupId::Oem => 0x1708,
             GroupId::Token => 0x3000,
-            //GroupId::Raw(x) => (*x).into(),
+            GroupId::Unknown(x) => (*x).into(),
         })
     }
     fn to_u64(&self) -> Option<u64> {
@@ -203,8 +203,8 @@ impl FromPrimitive for GroupId {
                 0x1707 => Some(GroupId::Cbs),
                 0x1708 => Some(GroupId::Oem),
                 0x3000 => Some(GroupId::Token),
-                //x => GroupId::Raw(x as u16),
-                _ => None,
+                x => Some(GroupId::Unknown(x as u16)),
+                //_ => None,
             }
         } else {
             None
@@ -224,14 +224,14 @@ impl FromPrimitive for GroupId {
 pub enum PspEntryId {
     BoardIdGettingMethod,
 
-    Raw(u16),
+    Unknown(u16),
 }
 
 impl ToPrimitive for PspEntryId {
     fn to_i64(&self) -> Option<i64> {
         Some(match self {
             Self::BoardIdGettingMethod => 0x60,
-            Self::Raw(x) => (*x).into(),
+            Self::Unknown(x) => (*x).into(),
         })
     }
     fn to_u64(&self) -> Option<u64> {
@@ -244,7 +244,7 @@ impl FromPrimitive for PspEntryId {
         if value < 0x1_0000 {
             match value {
                 0x60 => Some(Self::BoardIdGettingMethod),
-                x => Some(Self::Raw(x as u16)),
+                x => Some(Self::Unknown(x as u16)),
             }
         } else {
             None
@@ -263,13 +263,13 @@ impl FromPrimitive for PspEntryId {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum CcxEntryId {
-    Raw(u16),
+    Unknown(u16),
 }
 
 impl ToPrimitive for CcxEntryId {
     fn to_i64(&self) -> Option<i64> {
         Some(match self {
-            Self::Raw(x) => (*x).into(),
+            Self::Unknown(x) => (*x).into(),
         })
     }
     fn to_u64(&self) -> Option<u64> {
@@ -281,7 +281,7 @@ impl FromPrimitive for CcxEntryId {
     fn from_u64(value: u64) -> Option<Self> {
         if value < 0x1_0000 {
             match value {
-                x => Some(Self::Raw(x as u16)),
+                x => Some(Self::Unknown(x as u16)),
             }
         } else {
             None
@@ -302,7 +302,7 @@ pub enum DfEntryId {
     SlinkConfig,
     XgmiTxEq,
     XgmiPhyOverride,
-    Raw(u16)
+    Unknown(u16)
 }
 
 impl ToPrimitive for DfEntryId {
@@ -311,7 +311,7 @@ impl ToPrimitive for DfEntryId {
             Self::SlinkConfig => 0xCC,
             Self::XgmiTxEq => 0xD0,
             Self::XgmiPhyOverride => 0xDD,
-            Self::Raw(x) => (*x) as i64,
+            Self::Unknown(x) => (*x) as i64,
         })
     }
     fn to_u64(&self) -> Option<u64> {
@@ -326,7 +326,7 @@ impl FromPrimitive for DfEntryId {
                 0xCC => Self::SlinkConfig,
                 0xD0 => Self::XgmiTxEq,
                 0xDD => Self::XgmiPhyOverride,
-                x => Self::Raw(x as u16),
+                x => Self::Unknown(x as u16),
             })
         } else {
             None
@@ -394,7 +394,7 @@ pub enum MemoryEntryId {
 
     PlatformTuning,
 
-    Raw(u16),
+    Unknown(u16),
 }
 
 impl ToPrimitive for MemoryEntryId {
@@ -450,7 +450,7 @@ impl ToPrimitive for MemoryEntryId {
 
             Self::PlatformTuning => 0x75,
 
-            Self::Raw(x) => (*x) as i64,
+            Self::Unknown(x) => (*x) as i64,
         })
     }
     fn to_u64(&self) -> Option<u64> {
@@ -512,7 +512,7 @@ impl FromPrimitive for MemoryEntryId {
 
                 0x75 => Self::PlatformTuning,
 
-                x => Self::Raw(x as u16),
+                x => Self::Unknown(x as u16),
             })
         } else {
             None
@@ -530,13 +530,13 @@ impl FromPrimitive for MemoryEntryId {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum GnbEntryId {
-    Raw(u16),
+    Unknown(u16),
 }
 
 impl ToPrimitive for GnbEntryId {
     fn to_i64(&self) -> Option<i64> {
         Some(match self {
-            Self::Raw(x) => (*x) as i64,
+            Self::Unknown(x) => (*x) as i64,
         })
     }
     fn to_u64(&self) -> Option<u64> {
@@ -548,7 +548,7 @@ impl FromPrimitive for GnbEntryId {
     fn from_u64(value: u64) -> Option<Self> {
         if value < 0x1_0000 {
             Some(match value {
-                x => Self::Raw(x as u16),
+                x => Self::Unknown(x as u16),
             })
         } else {
             None
@@ -566,13 +566,13 @@ impl FromPrimitive for GnbEntryId {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum FchEntryId {
-    Raw(u16),
+    Unknown(u16),
 }
 
 impl ToPrimitive for FchEntryId {
     fn to_i64(&self) -> Option<i64> {
         Some(match self {
-            Self::Raw(x) => (*x) as i64,
+            Self::Unknown(x) => (*x) as i64,
         })
     }
     fn to_u64(&self) -> Option<u64> {
@@ -584,7 +584,7 @@ impl FromPrimitive for FchEntryId {
     fn from_u64(value: u64) -> Option<Self> {
         if value < 0x1_0000 {
             Some(match value {
-                x => Self::Raw(x as u16),
+                x => Self::Unknown(x as u16),
             })
         } else {
             None
@@ -602,13 +602,13 @@ impl FromPrimitive for FchEntryId {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum CbsEntryId {
-    Raw(u16),
+    Unknown(u16),
 }
 
 impl ToPrimitive for CbsEntryId {
     fn to_i64(&self) -> Option<i64> {
         Some(match self {
-            Self::Raw(x) => (*x) as i64,
+            Self::Unknown(x) => (*x) as i64,
         })
     }
     fn to_u64(&self) -> Option<u64> {
@@ -620,7 +620,7 @@ impl FromPrimitive for CbsEntryId {
     fn from_u64(value: u64) -> Option<Self> {
         if value < 0x1_0000 {
             Some(match value {
-                x => Self::Raw(x as u16),
+                x => Self::Unknown(x as u16),
             })
         } else {
             None
@@ -638,13 +638,13 @@ impl FromPrimitive for CbsEntryId {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum OemEntryId {
-    Raw(u16),
+    Unknown(u16),
 }
 
 impl ToPrimitive for OemEntryId {
     fn to_i64(&self) -> Option<i64> {
         Some(match self {
-            Self::Raw(x) => (*x) as i64,
+            Self::Unknown(x) => (*x) as i64,
         })
     }
     fn to_u64(&self) -> Option<u64> {
@@ -656,7 +656,44 @@ impl FromPrimitive for OemEntryId {
     fn from_u64(value: u64) -> Option<Self> {
         if value < 0x1_0000 {
             Some(match value {
-                x => Self::Raw(x as u16),
+                x => Self::Unknown(x as u16),
+            })
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 && value < 0x1_0000 {
+            let value: u64 = value.try_into().unwrap();
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
+}
+
+// This one is for unknown values.
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum RawEntryId {
+    Unknown(u16),
+}
+
+impl ToPrimitive for RawEntryId {
+    fn to_i64(&self) -> Option<i64> {
+        Some(match self {
+            Self::Unknown(x) => (*x) as i64,
+        })
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+
+impl FromPrimitive for RawEntryId {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x1_0000 {
+            Some(match value {
+                x => Self::Unknown(x as u16),
             })
         } else {
             None
@@ -678,7 +715,7 @@ pub enum TokenEntryId {
     Byte,
     Word,
     DWord,
-    Raw(u16),
+    Unknown(u16),
 }
 
 impl ToPrimitive for TokenEntryId {
@@ -688,7 +725,7 @@ impl ToPrimitive for TokenEntryId {
             Self::Byte => 1,
             Self::Word => 2,
             Self::DWord => 4,
-            Self::Raw(x) => (*x) as i64,
+            Self::Unknown(x) => (*x) as i64,
         })
     }
     fn to_u64(&self) -> Option<u64> {
@@ -704,7 +741,7 @@ impl FromPrimitive for TokenEntryId {
                 1 => Self::Byte,
                 2 => Self::Word,
                 4 => Self::DWord,
-                x => Self::Raw(x as u16),
+                x => Self::Unknown(x as u16),
             })
         } else {
             None
@@ -732,6 +769,7 @@ pub enum EntryId {
     Cbs(CbsEntryId),
     Oem(OemEntryId),
     Token(TokenEntryId),
+    Unknown(u16, RawEntryId),
 }
 
 impl EntryId {
@@ -746,6 +784,7 @@ impl EntryId {
             Self::Cbs(_) => GroupId::Cbs,
             Self::Oem(_) => GroupId::Oem,
             Self::Token(_) => GroupId::Token,
+            Self::Unknown(x, _) => GroupId::Unknown(*x),
         }
     }
     pub fn type_id(&self) -> u16 {
@@ -759,6 +798,7 @@ impl EntryId {
             Self::Cbs(x) => x.to_u16().unwrap(),
             Self::Oem(x) => x.to_u16().unwrap(),
             Self::Token(x) => x.to_u16().unwrap(),
+            Self::Unknown(_, x) => x.to_u16().unwrap(),
         }
     }
     pub fn decode(group_id: u16, type_id: u16) -> Self {
@@ -772,6 +812,7 @@ impl EntryId {
             GroupId::Cbs => Self::Cbs(CbsEntryId::from_u16(type_id).unwrap()),
             GroupId::Oem => Self::Oem(OemEntryId::from_u16(type_id).unwrap()),
             GroupId::Token => Self::Token(TokenEntryId::from_u16(type_id).unwrap()),
+            GroupId::Unknown(x) => Self::Unknown(x, RawEntryId::from_u16(type_id).unwrap()),
         }
     }
 }

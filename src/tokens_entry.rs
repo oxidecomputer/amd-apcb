@@ -54,7 +54,7 @@ impl<'a> TokensEntryItemMut<'a> {
             TokenEntryId::Byte => 0xFF,
             TokenEntryId::Word => 0xFFFF,
             TokenEntryId::DWord => 0xFFFF_FFFF,
-            TokenEntryId::Raw(_) => 0xFFFF_FFFF,
+            TokenEntryId::Unknown(_) => 0xFFFF_FFFF,
         }
     }
 
@@ -66,7 +66,7 @@ impl<'a> TokensEntryItemMut<'a> {
             TokenEntryId::Byte => 0xFF,
             TokenEntryId::Word => 0xFFFF,
             TokenEntryId::DWord => 0xFFFF_FFFF,
-            TokenEntryId::Raw(_) => 0xFFFF_FFFF,
+            TokenEntryId::Unknown(_) => 0xFFFF_FFFF,
         }) {
             self.token.value.set(value);
             Ok(())
@@ -218,7 +218,7 @@ impl<'a> TokensEntryItem<'a> {
             TokenEntryId::Byte => 0xFF,
             TokenEntryId::Word => 0xFFFF,
             TokenEntryId::DWord => 0xFFFF_FFFF,
-            TokenEntryId::Raw(_) => 0xFFFF_FFFF,
+            TokenEntryId::Unknown(_) => 0xFFFF_FFFF,
         }
     }
 }
