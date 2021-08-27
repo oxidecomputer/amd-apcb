@@ -1475,6 +1475,83 @@ pub mod memory {
         }
     }
 
+    bitfield! {
+        pub struct DimmsPerChannel(U32<LittleEndian>);
+        no default BitRange;
+        impl Debug;
+        bool;
+        pub one_dimm, set_one_dimm: 0;
+        pub two_dimms, set_two_dimms: 1;
+        pub three_dimms, set_three_dimms: 2;
+        pub four_dimms, set_four_dimms: 3;
+    }
+    impl DimmsPerChannel {
+        const VALID_BITS: u32 = 0b111;
+        pub const fn all_reserved_bits_are_unset(value: u32) -> bool {
+            value & !Self::VALID_BITS == 0
+        }
+        pub fn new() -> Self {
+            Self(0.into())
+        }
+    }
+    impl Bit for DimmsPerChannel {
+        fn bit(&self, index: usize) -> bool {
+            match self.0.get() & (1u32 << index) {
+                0 => false,
+                _ => true,
+            }
+        }
+        fn set_bit(&mut self, index: usize, value: bool) {
+            match value {
+                true => {
+                    self.0.set(self.0.get() | (1u32 << index));
+                },
+                false => {
+                    self.0.set(self.0.get() &! (1u32 << index));
+                },
+            }
+        }
+    }
+    impl FromPrimitive for DimmsPerChannel {
+        #[inline]
+        fn from_u64(raw_value: u64) -> Option<Self> {
+            if raw_value > 0xffff_ffff {
+                None
+            } else {
+                let raw_value = raw_value as u32;
+                if raw_value == 0xFF || Self::all_reserved_bits_are_unset(raw_value) {
+                    Some(Self(raw_value.into()))
+                } else {
+                    None
+                }
+            }
+        }
+        #[inline]
+        fn from_i64(raw_value: i64) -> Option<Self> {
+            if raw_value >= 0 {
+                Self::from_u64(raw_value as u64)
+            } else {
+                None
+            }
+        }
+    }
+
+    impl ToPrimitive for DimmsPerChannel {
+        #[inline]
+        fn to_i64(&self) -> Option<i64> {
+            let value = self.0.get();
+            if value == 0xFF || Self::all_reserved_bits_are_unset(value) {
+                Some(value.into())
+            } else {
+                None
+            }
+        }
+        #[inline]
+        fn to_u64(&self) -> Option<u64> {
+            Some(self.to_i64()? as u64)
+        }
+    }
+
 
     // Usually an array of those is used
     make_accessors! {
@@ -1482,7 +1559,7 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct CadBusElement {
-            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32, // 1 or 2
+            dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
             vdd_io: U32<LittleEndian> : pub get u32 : pub set u32, // always 1
             dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
@@ -1568,7 +1645,7 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct DataBusElement {
-            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
+            dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
             vdd_io: U32<LittleEndian> : pub get u32 : pub set u32,
             dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
