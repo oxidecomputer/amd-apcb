@@ -271,7 +271,7 @@ mod tests {
             IdRevApcbMapping::new(5, 4, 9, 3),
             IdRevApcbMapping::new(8, 7, 10, 6),
         ];
-        apcb.insert_headered_struct_array_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, &header, PriorityLevels::from_level(PriorityLevel::Default), &items)?;
+        apcb.insert_headered_struct_array_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &header, &items)?;
 
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();

@@ -345,7 +345,7 @@ impl<'a> Apcb<'a> {
         }
     }
     /// Inserts a new entry (see insert_entry), puts HEADER and then PAYLOAD into it.
-    pub fn insert_headered_struct_array_entry<H: EntryCompatible + AsBytes, T: AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, header: &H, priority_mask: PriorityLevels, payload: &[T]) -> Result<()> {
+    pub fn insert_headered_struct_array_entry<H: EntryCompatible + AsBytes, T: AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, header: &H, payload: &[T]) -> Result<()> {
         let blob = header.as_bytes();
         if H::is_entry_compatible(entry_id, blob) {
             let payload_size = size_of::<H>().checked_add(size_of::<T>().checked_mul(payload.len()).ok_or_else(|| Error::ArithmeticOverflow)?).ok_or_else(|| Error::ArithmeticOverflow)?;
