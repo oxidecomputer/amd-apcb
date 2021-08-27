@@ -2659,12 +2659,12 @@ macro_rules! impl_bitfield_primitive_conversion {
     }
 
     bitfield! {
-        #[derive(FromBytes, AsBytes, Unaligned)]
+        #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
         #[repr(C, packed)]
-        pub struct DdrPostPackageRepairElement(U64<LittleEndian>);
+        pub struct DdrPostPackageRepairBody(U64<LittleEndian>);
         no default BitRange;
         impl Debug;
-        u32;
+        u64;
         pub channel, set_channel: 55, 53;
         pub socket, set_socket: 52, 50;
         pub row, set_row: 49, 32;
@@ -2678,18 +2678,18 @@ macro_rules! impl_bitfield_primitive_conversion {
         pub bank, set_bank: 4, 0;
     }
 
-    impl BitRange<u32> for DdrPostPackageRepairElement {
-        fn bit_range(&self, msb: usize, lsb: usize) -> u32 {
+    impl BitRange<u64> for DdrPostPackageRepairBody {
+        fn bit_range(&self, msb: usize, lsb: usize) -> u64 {
             assert!(lsb <= msb);
             let width = msb - lsb + 1;
-            assert!(width <= 31);
+            assert!(width <= 63);
             let mask = (1u64 << width) - 1;
-            ((self.0.get() >> lsb) & mask) as u32
+            (self.0.get() >> lsb) & mask
         }
-        fn set_bit_range(&mut self, msb: usize, lsb: usize, value: u32) {
+        fn set_bit_range(&mut self, msb: usize, lsb: usize, value: u64) {
             assert!(lsb <= msb);
             let width = msb - lsb + 1;
-            assert!(width <= 31);
+            assert!(width <= 63);
             let mask = (1u64 << width) - 1;
             assert!(u64::from(value) <= mask);
             let mut dest = self.0.get();
@@ -2699,7 +2699,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    impl Bit for DdrPostPackageRepairElement {
+    impl Bit for DdrPostPackageRepairBody {
         fn bit(&self, index: usize) -> bool {
             match self.0.get() & (1u64 << index) {
                 0 => false,
@@ -2713,6 +2713,40 @@ macro_rules! impl_bitfield_primitive_conversion {
                 },
                 false => {
                     self.0.set(self.0.get() &! (1u64 << index));
+                },
+            }
+        }
+    }
+
+    #[derive(FromBytes, AsBytes, Unaligned, Debug)]
+    #[repr(C, packed)]
+    pub struct DdrPostPackageRepairElement {
+        body: DdrPostPackageRepairBody,
+    }
+
+    impl DdrPostPackageRepairElement {
+        #[inline]
+        pub fn body(&self) -> Option<&DdrPostPackageRepairBody> {
+            if self.body.valid() {
+                Some(&self.body)
+            } else {
+                None
+            }
+        }
+        #[inline]
+        pub fn invalid() -> DdrPostPackageRepairElement {
+            Self {
+                body: DdrPostPackageRepairBody(0xff00_0000_0000_0000.into()),
+            }
+        }
+        #[inline]
+        pub fn set_body(&mut self, value: Option<&DdrPostPackageRepairBody>) {
+            match value {
+                Some(body) => {
+                    self.body = *body;
+                },
+                None => {
+                    self.body = Self::invalid().body;
                 },
             }
         }
