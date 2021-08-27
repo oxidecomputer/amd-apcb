@@ -16,6 +16,10 @@ use crate::types::Result;
 use crate::struct_accessors::{Getter, Setter, make_accessors};
 use crate::types::PriorityLevel;
 
+pub trait UnionAsBytes {
+    fn as_bytes(&self) -> &[u8];
+}
+
 /// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
 /// If the item cannot be parsed, returns None and does not advance.
 pub fn take_header_from_collection_mut<'a, T: Sized + FromBytes + AsBytes>(buf: &mut &'a mut [u8]) -> Option<&'a mut T> {
@@ -2650,6 +2654,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         use static_assertions::const_assert;
         use zerocopy::{AsBytes, FromBytes, Unaligned, U16, U32};
         use super::super::*;
+        use super::UnionAsBytes;
         use crate::struct_accessors::{Getter, Setter, make_accessors};
         use crate::types::Result;
 
@@ -3578,9 +3583,9 @@ macro_rules! impl_bitfield_primitive_conversion {
             CpuFamilyFilter(&'a CpuFamilyFilter),
             SolderedDownDimmsPerChannel(&'a SolderedDownDimmsPerChannel),
         }
-        impl PlatformSpecificOverrideElementRef<'_> {
+        impl UnionAsBytes for PlatformSpecificOverrideElementRef<'_> {
             #[inline]
-            pub fn as_bytes(&self) -> &[u8] {
+            fn as_bytes(&self) -> &[u8] {
                 match self {
                     Self::CkeTristateMap(item) => {
                         item.as_bytes()
@@ -3675,6 +3680,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         use static_assertions::const_assert;
         use zerocopy::{AsBytes, FromBytes, Unaligned, U16};
         use super::super::*;
+        use super::UnionAsBytes;
         use crate::struct_accessors::{Getter, Setter, make_accessors};
         use crate::types::Result;
 
@@ -3711,9 +3717,9 @@ macro_rules! impl_bitfield_primitive_conversion {
         pub enum PlatformTuningElementRef<'a> {
             Terminator(&'a Terminator),
         }
-        impl PlatformTuningElementRef<'_> {
+        impl UnionAsBytes for PlatformTuningElementRef<'_> {
             #[inline]
-            pub fn as_bytes(&self) -> &[u8] {
+            fn as_bytes(&self) -> &[u8] {
                 match self {
                     Self::Terminator(item) => {
                         item.as_bytes()
