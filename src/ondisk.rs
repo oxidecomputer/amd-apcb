@@ -3504,7 +3504,7 @@ pub mod psp {
         pub struct IdRevApcbMapping {
             id_and_rev_and_feature_mask: u8 : pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
             id_and_feature_value: u8 : pub get u8 : pub set u8,
-            rev_and_feature_value: u8 : pub get u8 : pub set u8,
+            rev_and_feature_value: u8 : pub get u8 : pub set u8, // FIXME: or 0xff=NA
             board_instance_index: u8 : pub get u8 : pub set u8,
         }
     }
