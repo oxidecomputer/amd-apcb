@@ -2609,6 +2609,11 @@ pub mod memory {
             Gddr5 = 2,
             Ddr4 = 3,
             Lpddr3 = 4,
+            Lpddr4 = 5,
+            Hbm = 6,
+            Gddr6 = 7,
+            Ddr5 = 8,
+            Lpddr5 = 9,
         }
 
         make_accessors! {
