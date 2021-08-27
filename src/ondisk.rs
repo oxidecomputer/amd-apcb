@@ -1732,6 +1732,61 @@ macro_rules! impl_bitfield_primitive_conversion {
                 EntryId::Memory(MemoryEntryId::Ps3dsRdimmDdr4DataBus) => true,
                 // TODO: Check EntryId::Memory(PsSodimmDdr4DataBus) => true
                 // Definitely not: EntryId::PsDramdownDdr4DataBus => true
+                // Definitely not: MemoryEntryId::PsLrdimmDdr4DataBus
+                _ => false,
+            }
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[repr(C, packed)]
+        pub struct LrdimmDdr4DataBusElement {
+            dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
+            ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
+            vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
+            dimm0_ranks: U32<LittleEndian> : pub get Result<LrdimmDdr4DimmRanks> : pub set LrdimmDdr4DimmRanks,
+            dimm1_ranks: U32<LittleEndian> : pub get Result<LrdimmDdr4DimmRanks> : pub set LrdimmDdr4DimmRanks,
+
+            rtt_nom: U32<LittleEndian> : pub get Result<RttNom> : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
+            rtt_wr: U32<LittleEndian> : pub get Result<RttWr> : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
+            rtt_park: U32<LittleEndian> : pub get Result<RttPark> : pub set RttPark, // contains ODT termination resistor to be used when ODT is low
+            dq_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data
+            dqs_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data strobe (bit clock)
+            odt_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for on-die termination
+            pmu_phy_vref: U32<LittleEndian> : pub get u32 : pub set u32,
+            // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
+            vref_dq: U32<LittleEndian> : pub get u32 : pub set u32, // MR6 vref calibration value; 23|30|32
+        }
+    }
+
+    impl Default for LrdimmDdr4DataBusElement {
+        fn default() -> Self {
+            Self {
+                dimm_slots_per_channel: 1.into(),
+                ddr_rates: 0x1373200.into(),
+                vdd_io: 1.into(),
+                dimm0_ranks: 2.into(),
+                dimm1_ranks: 1.into(),
+
+                rtt_nom: 0.into(),
+                rtt_wr: 0.into(),
+                rtt_park: 5.into(),
+                dq_drive_strength: 62.into(), // always
+                dqs_drive_strength: 62.into(), // always
+                odt_drive_strength: 24.into(), // always
+                pmu_phy_vref: 91.into(),
+                vref_dq: 23.into(),
+            }
+        }
+    }
+
+    impl EntryCompatible for LrdimmDdr4DataBusElement {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::PsLrdimmDdr4DataBus) => true,
+                // TODO: Check EntryId::Memory(PsSodimmDdr4DataBus) => true
+                // Definitely not: EntryId::PsDramdownDdr4DataBus => true
                 _ => false,
             }
         }
