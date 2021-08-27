@@ -1539,25 +1539,23 @@ macro_rules! impl_bitfield_primitive_conversion {
     }
 
     bitfield! {
-        pub struct DimmVoltagesDdr4(u32);
+        pub struct RdimmDdr4Voltages(u32);
         impl Debug;
         bool;
         pub v_1_2, set_v_1_2: 0;
-        pub v_1_35, set_v_1_35: 1;
-        pub v_1_25, set_v_1_25: 2;
         // all = 7
     }
-    impl_bitfield_primitive_conversion!(DimmVoltagesDdr4, 0b111);
+    impl_bitfield_primitive_conversion!(RdimmDdr4Voltages, 0b111);
 
     // Usually an array of those is used
     make_accessors! {
         /// Control/Address Bus Element
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
-        pub struct Ddr4CadBusElement {
+        pub struct RdimmDdr4CadBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
+            vdd_io: U32<LittleEndian> : pub get Result<RdimmDdr4Voltages> : pub set RdimmDdr4Voltages,
             dimm0_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
             dimm1_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
 
@@ -1574,7 +1572,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    impl Default for Ddr4CadBusElement {
+    impl Default for RdimmDdr4CadBusElement {
         fn default() -> Self {
             Self {
                 dimm_slots_per_channel: 1.into(),
@@ -1597,10 +1595,10 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    impl EntryCompatible for Ddr4CadBusElement {
+    impl EntryCompatible for RdimmDdr4CadBusElement {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
-                EntryId::Memory(MemoryEntryId::PsUdimmDdr4CadBus) => true,
+                // definitely not: EntryId::Memory(MemoryEntryId::PsUdimmDdr4CadBus) => true,
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr4CadBus) => true,
                 // TODO: Check EntryId::Memory(MemoryEntryId::PsSodimmDdr4CadBus) => true
                 // Definitely not: PsDramdownDdr4CadBus.
@@ -1608,6 +1606,86 @@ macro_rules! impl_bitfield_primitive_conversion {
             }
         }
     }
+
+    bitfield! {
+        pub struct UdimmDdr4Voltages(u32);
+        impl Debug;
+        bool;
+        pub v_1_5, set_v_1_5: 0;
+        pub v_1_35, set_v_1_35: 1;
+        pub v_1_25, set_v_1_25: 2;
+        // all = 7
+    }
+    impl_bitfield_primitive_conversion!(UdimmDdr4Voltages, 0b111);
+
+    // Usually an array of those is used
+    make_accessors! {
+        /// Control/Address Bus Element
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[repr(C, packed)]
+        pub struct UdimmDdr4CadBusElement {
+            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
+            ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
+            vdd_io: U32<LittleEndian> : pub get Result<UdimmDdr4Voltages> : pub set UdimmDdr4Voltages,
+            dimm0_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
+            dimm1_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
+
+            gear_down_mode: U16<LittleEndian> : pub get u16 : pub set u16,
+            _reserved: U16<LittleEndian>,
+            slow_mode: U16<LittleEndian> : pub get u16 : pub set u16,
+            _reserved_2: U16<LittleEndian>,
+            address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
+
+            cke_drive_strength: u8 : pub get Result<CadBusCkeDriveStrength> : pub set CadBusCkeDriveStrength,
+            cs_odt_drive_strength: u8 : pub get Result<CadBusCsOdtDriveStrength> : pub set CadBusCsOdtDriveStrength,
+            address_command_drive_strength: u8 : pub get Result<CadBusAddressCommandDriveStrength> : pub set CadBusAddressCommandDriveStrength,
+            clk_drive_strength: u8 : pub get Result<CadBusClkDriveStrength> : pub set CadBusClkDriveStrength,
+        }
+    }
+
+    impl Default for UdimmDdr4CadBusElement {
+        fn default() -> Self {
+            Self {
+                dimm_slots_per_channel: 1.into(),
+                ddr_rates: 0xa00.into(),
+                vdd_io: 1.into(),
+                dimm0_ranks: 6.into(), // maybe invalid
+                dimm1_ranks: 1.into(), // maybe invalid
+
+                gear_down_mode: 0.into(),
+                _reserved: 0.into(),
+                slow_mode: 0.into(),
+                _reserved_2: 0.into(),
+                address_command_control: 0x272727.into(), // maybe invalid
+
+                cke_drive_strength: 7,
+                cs_odt_drive_strength: 7,
+                address_command_drive_strength: 7,
+                clk_drive_strength: 7,
+            }
+        }
+    }
+
+    impl EntryCompatible for UdimmDdr4CadBusElement {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::PsUdimmDdr4CadBus) => true,
+                // definitely not: EntryId::Memory(MemoryEntryId::PsRdimmDdr4CadBus) => true,
+                // TODO: Check EntryId::Memory(MemoryEntryId::PsSodimmDdr4CadBus) => true
+                // Definitely not: PsDramdownDdr4CadBus.
+                _ => false,
+            }
+        }
+    }
+
+    bitfield! {
+        pub struct LrdimmDdr4Voltages(u32);
+        impl Debug;
+        bool;
+        pub v_1_2, set_v_1_2: 0;
+        // all = 7
+    }
+    impl_bitfield_primitive_conversion!(LrdimmDdr4Voltages, 0b111);
 
     // Usually an array of those is used
     make_accessors! {
@@ -1617,7 +1695,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         pub struct LrdimmDdr4CadBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
+            vdd_io: U32<LittleEndian> : pub get Result<LrdimmDdr4Voltages> : pub set LrdimmDdr4Voltages,
             dimm0_ranks: U32<LittleEndian> : pub get Result<LrdimmDdr4DimmRanks> : pub set LrdimmDdr4DimmRanks,
             dimm1_ranks: U32<LittleEndian> : pub get Result<LrdimmDdr4DimmRanks> : pub set LrdimmDdr4DimmRanks,
 
@@ -1699,7 +1777,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         pub struct Ddr4DataBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
+            vdd_io: U32<LittleEndian> : pub get Result<RdimmDdr4Voltages> : pub set RdimmDdr4Voltages,
             dimm0_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
             dimm1_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
 
@@ -1714,6 +1792,8 @@ macro_rules! impl_bitfield_primitive_conversion {
             vref_dq: U32<LittleEndian> : pub get u32 : pub set u32, // MR6 vref calibration value; 23|30|32
         }
     }
+    pub type RdimmDdr4DataBusElement = Ddr4DataBusElement; // AMD does this implicitly.
+    pub type UdimmDdr4DataBusElement = Ddr4DataBusElement; // AMD does this implicitly.
 
     impl Default for Ddr4DataBusElement {
         fn default() -> Self {
@@ -1756,7 +1836,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         pub struct LrdimmDdr4DataBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
+            vdd_io: U32<LittleEndian> : pub get Result<LrdimmDdr4Voltages> : pub set LrdimmDdr4Voltages,
             dimm0_ranks: U32<LittleEndian> : pub get Result<LrdimmDdr4DimmRanks> : pub set LrdimmDdr4DimmRanks,
             dimm1_ranks: U32<LittleEndian> : pub get Result<LrdimmDdr4DimmRanks> : pub set LrdimmDdr4DimmRanks,
 
@@ -3600,7 +3680,8 @@ macro_rules! impl_bitfield_primitive_conversion {
             const_assert!(size_of::<AblConsoleOutControl>() == 16);
             const_assert!(size_of::<ConsoleOutControl>() == 20);
             const_assert!(size_of::<ExtVoltageControl>() == 32);
-            const_assert!(size_of::<Ddr4CadBusElement>() == 36);
+            const_assert!(size_of::<RdimmDdr4CadBusElement>() == 36);
+            const_assert!(size_of::<UdimmDdr4CadBusElement>() == 36);
             const_assert!(size_of::<LrdimmDdr4CadBusElement>() == 36);
             const_assert!(size_of::<Ddr4DataBusElement>() == 52);
             const_assert!(size_of::<MaxFreqElement>() == 16);
