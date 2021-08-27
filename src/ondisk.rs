@@ -1618,7 +1618,7 @@ macro_rules! impl_bitfield_primitive_conversion {
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
-        pub struct DataBusElement {
+        pub struct DataBusElementDdr4 {
             dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
             vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
@@ -1637,7 +1637,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    impl Default for DataBusElement {
+    impl Default for DataBusElementDdr4 {
         fn default() -> Self {
             Self {
                 dimm_slots_per_channel: 1.into(),
@@ -1658,13 +1658,13 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    impl EntryCompatible for DataBusElement {
+    impl EntryCompatible for DataBusElementDdr4 {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::PsUdimmDdr4DataBus) => true,
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr4DataBus) => true,
                 EntryId::Memory(MemoryEntryId::Ps3dsRdimmDdr4DataBus) => true,
-                EntryId::Memory(MemoryEntryId::PsLrdimmDdr4DataBus) => true,
+                // TODO: Maybe split off (because of different enum variants); EntryId::Memory(MemoryEntryId::PsLrdimmDdr4DataBus) => true,
                 // TODO: Check EntryId::Memory(PsSodimmDdr4DataBus) => true
                 // Definitely not: EntryId::PsDramdownDdr4DataBus => true
                 _ => false,
@@ -3236,7 +3236,7 @@ macro_rules! impl_bitfield_primitive_conversion {
             const_assert!(size_of::<ConsoleOutControl>() == 20);
             const_assert!(size_of::<ExtVoltageControl>() == 32);
             const_assert!(size_of::<CadBusElementDdr4>() == 36);
-            const_assert!(size_of::<DataBusElement>() == 52);
+            const_assert!(size_of::<DataBusElementDdr4>() == 52);
             const_assert!(size_of::<MaxFreqElement>() == 16);
             const_assert!(size_of::<LrMaxFreqElement>() == 16);
             const_assert!(size_of::<Gpio>() == 3);
