@@ -3707,6 +3707,25 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
         impl_EntryCompatible!(Terminator, 0xfeef, 2);
 
+        // Maintainer: Add struct references in here as you add new structs above.  Also adapt the is_entry_compatible impl.
+        pub enum PlatformTuningElementRef<'a> {
+            Terminator(&'a Terminator),
+        }
+        impl PlatformTuningElementRef<'_> {
+            #[inline]
+            pub fn as_bytes(&self) -> &[u8] {
+                match self {
+                    Self::Terminator(item) => {
+                        item.as_bytes()
+                    },
+                }
+            }
+        }
+        impl EntryCompatible for PlatformTuningElementRef<'_> {
+            fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+                Terminator::is_entry_compatible(entry_id, prefix)
+            }
+        }
     }
 
     #[cfg(test)]

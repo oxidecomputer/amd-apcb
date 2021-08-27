@@ -17,6 +17,7 @@ use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use zerocopy::AsBytes;
 use crate::memory::platform_specific_override::PlatformSpecificOverrideElementRef;
+use crate::memory::platform_tuning::PlatformTuningElementRef;
 
 pub struct Apcb<'a> {
     header: &'a mut V2_HEADER,
@@ -353,6 +354,32 @@ impl<'a> Apcb<'a> {
             b""
         };
         if PlatformSpecificOverrideElementRef::is_entry_compatible(entry_id, blob) {
+            let mut payload_size: usize = 0;
+            for item in payload {
+                let blob = item.as_bytes();
+                payload_size = payload_size.checked_add(blob.len()).ok_or_else(|| Error::ArithmeticOverflow)?;
+            }
+            self.internal_insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, payload_size, priority_mask, &mut |body: &mut [u8]| {
+                let mut body = body;
+                for item in payload {
+                    let source = item.as_bytes();
+                    let (a, rest) = body.split_at_mut(source.len());
+                    a.copy_from_slice(source);
+                    body = rest;
+                }
+            })
+        } else {
+            Err(Error::EntryTypeMismatch)
+        }
+    }
+
+    pub fn insert_platform_tuning(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &[PlatformTuningElementRef<'_>]) -> Result<()> {
+        let blob = if payload.len() > 0 {
+            payload[0].as_bytes()
+        } else {
+            b""
+        };
+        if PlatformTuningElementRef::is_entry_compatible(entry_id, blob) {
             let mut payload_size: usize = 0;
             for item in payload {
                 let blob = item.as_bytes();
