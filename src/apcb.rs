@@ -323,31 +323,25 @@ impl<'a> Apcb<'a> {
             Err(Error::EntryTypeMismatch)
         }
     }
-    /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.  The entry can be a enum of struct refs (PlatformSpecificElementRef, PlatformTuningElementRef) or just one struct.
+    /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.  T can be a enum of struct refs (PlatformSpecificElementRef, PlatformTuningElementRef) or just one struct.
     pub fn insert_sequence_as_entry<T: EntryCompatible + UnionAsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &[T]) -> Result<()> {
-        let blob = if payload.len() > 0 {
-            payload[0].as_bytes()
-        } else {
-            b""
-        };
-        if T::is_entry_compatible(entry_id, blob) {
-            let mut payload_size: usize = 0;
-            for item in payload {
-                let blob = item.as_bytes();
-                payload_size = payload_size.checked_add(blob.len()).ok_or_else(|| Error::ArithmeticOverflow)?;
+        let mut payload_size: usize = 0;
+        for item in payload {
+            let blob = item.as_bytes();
+            if !T::is_entry_compatible(entry_id, blob) {
+                return Err(Error::EntryTypeMismatch);
             }
-            self.internal_insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, payload_size, priority_mask, &mut |body: &mut [u8]| {
-                let mut body = body;
-                for item in payload {
-                    let source = item.as_bytes();
-                    let (a, rest) = body.split_at_mut(source.len());
-                    a.copy_from_slice(source);
-                    body = rest;
-                }
-            })
-        } else {
-            Err(Error::EntryTypeMismatch)
+            payload_size = payload_size.checked_add(blob.len()).ok_or_else(|| Error::ArithmeticOverflow)?;
         }
+        self.internal_insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, payload_size, priority_mask, &mut |body: &mut [u8]| {
+            let mut body = body;
+            for item in payload {
+                let source = item.as_bytes();
+                let (a, rest) = body.split_at_mut(source.len());
+                a.copy_from_slice(source);
+                body = rest;
+            }
+        })
     }
 
     /// Inserts a new entry (see insert_entry), puts HEADER and then PAYLOAD into it.

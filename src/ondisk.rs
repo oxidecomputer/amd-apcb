@@ -1131,6 +1131,13 @@ pub mod memory {
             mux_channel: u8 : pub get u8 : pub set u8,
         }
     }
+    // An union of one variant.
+    impl UnionAsBytes for DimmInfoSmbusElement {
+        #[inline]
+        fn as_bytes(&self) -> &[u8] {
+            AsBytes::as_bytes(self)
+        }
+    }
     impl DimmInfoSmbusElement {
         pub fn not_present() -> Self {
             Self {
@@ -1577,6 +1584,14 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
+    // An union of one variant.
+    impl UnionAsBytes for RdimmDdr4CadBusElement {
+        #[inline]
+        fn as_bytes(&self) -> &[u8] {
+            AsBytes::as_bytes(self)
+        }
+    }
+
     impl Default for RdimmDdr4CadBusElement {
         fn default() -> Self {
             Self {
@@ -1648,6 +1663,14 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
+    // An union of one variant.
+    impl UnionAsBytes for UdimmDdr4CadBusElement {
+        #[inline]
+        fn as_bytes(&self) -> &[u8] {
+            AsBytes::as_bytes(self)
+        }
+    }
+
     impl Default for UdimmDdr4CadBusElement {
         fn default() -> Self {
             Self {
@@ -1714,6 +1737,14 @@ macro_rules! impl_bitfield_primitive_conversion {
             cs_odt_drive_strength: u8 : pub get Result<CadBusCsOdtDriveStrength> : pub set CadBusCsOdtDriveStrength,
             address_command_drive_strength: u8 : pub get Result<CadBusAddressCommandDriveStrength> : pub set CadBusAddressCommandDriveStrength,
             clk_drive_strength: u8 : pub get Result<CadBusClkDriveStrength> : pub set CadBusClkDriveStrength,
+        }
+    }
+
+    // An union of one variant.
+    impl UnionAsBytes for LrdimmDdr4CadBusElement {
+        #[inline]
+        fn as_bytes(&self) -> &[u8] {
+            AsBytes::as_bytes(self)
         }
     }
 
@@ -1797,6 +1828,15 @@ macro_rules! impl_bitfield_primitive_conversion {
             vref_dq: U32<LittleEndian> : pub get u32 : pub set u32, // MR6 vref calibration value; 23|30|32
         }
     }
+
+    // An union of one variant.
+    impl UnionAsBytes for Ddr4DataBusElement {
+        #[inline]
+        fn as_bytes(&self) -> &[u8] {
+            AsBytes::as_bytes(self)
+        }
+    }
+
     pub type RdimmDdr4DataBusElement = Ddr4DataBusElement; // AMD does this implicitly.
     pub type UdimmDdr4DataBusElement = Ddr4DataBusElement; // AMD does this implicitly.
 
@@ -1854,6 +1894,14 @@ macro_rules! impl_bitfield_primitive_conversion {
             pmu_phy_vref: U32<LittleEndian> : pub get u32 : pub set u32,
             // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
             vref_dq: U32<LittleEndian> : pub get u32 : pub set u32, // MR6 vref calibration value; 23|30|32
+        }
+    }
+
+    // An union of one variant.
+    impl UnionAsBytes for LrdimmDdr4DataBusElement {
+        #[inline]
+        fn as_bytes(&self) -> &[u8] {
+            AsBytes::as_bytes(self)
         }
     }
 
@@ -2014,6 +2062,14 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
+    // An union of one variant.
+    impl UnionAsBytes for MaxFreqElement {
+        #[inline]
+        fn as_bytes(&self) -> &[u8] {
+            AsBytes::as_bytes(self)
+        }
+    }
+
     // Usually an array of those is used
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
@@ -2043,6 +2099,14 @@ macro_rules! impl_bitfield_primitive_conversion {
                 EntryId::Memory(MemoryEntryId::PsLrdimmDdr4MaxFreq) => true,
                 _ => false,
             }
+        }
+    }
+
+    // An union of one variant.
+    impl UnionAsBytes for LrMaxFreqElement {
+        #[inline]
+        fn as_bytes(&self) -> &[u8] {
+            AsBytes::as_bytes(self)
         }
     }
 
@@ -2525,6 +2589,14 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
+    // An union of one variant.
+    impl UnionAsBytes for Ddr4OdtPatElement {
+        #[inline]
+        fn as_bytes(&self) -> &[u8] {
+            AsBytes::as_bytes(self)
+        }
+    }
+
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
@@ -2575,6 +2647,14 @@ macro_rules! impl_bitfield_primitive_conversion {
                 // definitely not EntryId::Memory(MemoryEntryId::PsRdimmDdr4OdtPat) => true,
                 _ => false,
             }
+        }
+    }
+
+    // An union of one variant.
+    impl UnionAsBytes for LrdimmDdr4OdtPatElement {
+        #[inline]
+        fn as_bytes(&self) -> &[u8] {
+            AsBytes::as_bytes(self)
         }
     }
 
@@ -2644,6 +2724,14 @@ macro_rules! impl_bitfield_primitive_conversion {
                 EntryId::Memory(MemoryEntryId::DdrPostPackageRepair) => true,
                 _ => false,
             }
+        }
+    }
+
+    // An union of one variant.
+    impl UnionAsBytes for DdrPostPackageRepairElement {
+        #[inline]
+        fn as_bytes(&self) -> &[u8] {
+            AsBytes::as_bytes(self)
         }
     }
 
