@@ -1844,13 +1844,39 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
+    #[repr(u8)]
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    pub enum ErrorOutEventControlBeepCodeErrorType {
+        General = 3,
+        Memory = 4,
+        Df = 5,
+        Ccx = 6,
+        Gnb = 7,
+        Psp = 8,
+        Smu = 9,
+    }
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct ErrorOutEventControlBeepCode {
-            error_type: U16<LittleEndian> : pub get u16 : pub set u16,
+            error_type: U16<LittleEndian>,
             peak_map: U16<LittleEndian> : pub get u16 : pub set u16,
-            pub peak_attr: ErrorOutEventControlBeepCodePeakAttr, // FIXME Make accessible
+            pub peak_attr: ErrorOutEventControlBeepCodePeakAttr,
+        }
+    }
+    impl ErrorOutEventControlBeepCode {
+        pub fn error_type(&self) -> Result<ErrorOutEventControlBeepCodeErrorType> {
+            Ok(ErrorOutEventControlBeepCodeErrorType::from_u16((self.error_type.get() & 0xF000) >> 12).ok_or_else(|| Error::EntryTypeMismatch)?)
+        }
+        pub fn set_error_type(&mut self, value: ErrorOutEventControlBeepCodeErrorType) {
+            self.error_type.set((self.error_type.get() & 0x0FFF) | (value.to_u16().unwrap() << 12));
+        }
+        pub fn new(error_type: ErrorOutEventControlBeepCodeErrorType, peak_map: u16, peak_attr: ErrorOutEventControlBeepCodePeakAttr) -> Self {
+            Self {
+                error_type: ((error_type.to_u16().unwrap() << 12) | 0xFFF).into(),
+                peak_map: peak_map.into(),
+                peak_attr
+            }
         }
     }
 
