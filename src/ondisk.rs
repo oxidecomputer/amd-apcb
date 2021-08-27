@@ -1389,7 +1389,7 @@ macro_rules! impl_bitfield_primitive_conversion {
     }
 
     bitfield! {
-        pub struct DimmRanksLrddr4(u32);
+        pub struct LrdimmDdr4DimmRanks(u32);
         impl Debug;
         bool;
         #[inline]
@@ -1397,7 +1397,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         #[inline]
         pub lr, set_lr: 1;
     }
-    impl_bitfield_primitive_conversion!(DimmRanksLrddr4, 0b11);
+    impl_bitfield_primitive_conversion!(LrdimmDdr4DimmRanks, 0b11);
 
     #[repr(u8)]
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
@@ -1606,8 +1606,8 @@ macro_rules! impl_bitfield_primitive_conversion {
             dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
             vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
-            dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanksLrddr4> : pub set DimmRanksLrddr4,
-            dimm1_ranks: U32<LittleEndian> : pub get Result<DimmRanksLrddr4> : pub set DimmRanksLrddr4,
+            dimm0_ranks: U32<LittleEndian> : pub get Result<LrdimmDdr4DimmRanks> : pub set LrdimmDdr4DimmRanks,
+            dimm1_ranks: U32<LittleEndian> : pub get Result<LrdimmDdr4DimmRanks> : pub set LrdimmDdr4DimmRanks,
 
             gear_down_mode: U16<LittleEndian> : pub get u16 : pub set u16,
             _reserved: U16<LittleEndian>,
