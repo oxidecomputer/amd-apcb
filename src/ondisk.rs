@@ -1684,7 +1684,7 @@ macro_rules! impl_bitfield_primitive_conversion {
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
-        pub struct DataBusDdr4Element {
+        pub struct Ddr4DataBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
             vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
@@ -1703,7 +1703,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    impl Default for DataBusDdr4Element {
+    impl Default for Ddr4DataBusElement {
         fn default() -> Self {
             Self {
                 dimm_slots_per_channel: 1.into(),
@@ -1724,7 +1724,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    impl EntryCompatible for DataBusDdr4Element {
+    impl EntryCompatible for Ddr4DataBusElement {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::PsUdimmDdr4DataBus) => true,
@@ -3328,7 +3328,7 @@ macro_rules! impl_bitfield_primitive_conversion {
             const_assert!(size_of::<ExtVoltageControl>() == 32);
             const_assert!(size_of::<CadBusDdr4Element>() == 36);
             const_assert!(size_of::<CadBusLrddr4Element>() == 36);
-            const_assert!(size_of::<DataBusDdr4Element>() == 52);
+            const_assert!(size_of::<Ddr4DataBusElement>() == 52);
             const_assert!(size_of::<MaxFreqElement>() == 16);
             const_assert!(size_of::<LrMaxFreqElement>() == 16);
             const_assert!(size_of::<Gpio>() == 3);
