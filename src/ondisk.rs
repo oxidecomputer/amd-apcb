@@ -1318,24 +1318,47 @@ pub mod memory {
     }
 
     bitfield! {
-        pub struct DimmRanks(u32);
+        pub struct DimmRanksDdr4(u32);
         impl Debug;
         bool;
         #[inline]
-        pub rank_1, set_rank_1: 0;
+        pub unpopulated, set_unpopulated: 0;
         #[inline]
-        pub rank_2, set_rank_2: 1;
+        pub single_rank, set_single_rank: 1;
         #[inline]
-        pub rank_4, set_rank_4: 2;
+        pub dual_rank, set_dual_rank: 2;
+        #[inline]
+        pub quad_rank, set_quad_rank: 3;
+        // TODO: lr=bit 1
     }
 
-    impl FromPrimitive for DimmRanks {
+macro_rules! impl_bitfield_primitive_conversion {
+    ($bitfield:ty, $valid_bits:expr) => (
+    impl $bitfield {
+        const VALID_BITS: u32 = $valid_bits;
+        pub const fn all_reserved_bits_are_unused(value: u32) -> bool {
+            value & !Self::VALID_BITS == 0
+        }
+    }
+    impl FromPrimitive for $bitfield {
         #[inline]
         fn from_u64(raw_value: u64) -> Option<Self> {
-            if raw_value <= (1 << 0) | (1 << 1) | (1 << 2) { // valid
-                Some(Self(raw_value as u32))
-            } else {
+            if raw_value > 0xffff_ffff {
                 None
+            } else {
+                let raw_value: u32 = match raw_value.try_into() {
+                                         Ok(v) => {
+                                             v
+                                         },
+                                         Err(_) => {
+                                             return None;
+                                         }
+                                     };
+                if Self::all_reserved_bits_are_unused(raw_value) { // valid
+                    Some(Self(raw_value as u32))
+                } else {
+                    None
+                }
             }
         }
         #[inline]
@@ -1348,7 +1371,7 @@ pub mod memory {
         }
     }
 
-    impl ToPrimitive for DimmRanks {
+    impl ToPrimitive for $bitfield {
         #[inline]
         fn to_i64(&self) -> Option<i64> {
             Some(self.0.into())
@@ -1356,6 +1379,13 @@ pub mod memory {
         #[inline]
         fn to_u64(&self) -> Option<u64> {
             Some(self.0.into())
+        }
+    }
+)}
+    impl_bitfield_primitive_conversion!(DimmRanksDdr4, 0b111);
+    impl DimmRanksDdr4 {
+        pub fn new() -> Self {
+            Self(0)
         }
     }
 
@@ -1376,26 +1406,38 @@ pub mod memory {
     type CadBusCsOdtDriveStrength = CadBusClkDriveStrength;
 
     bitfield! {
-        pub struct DdrRates(U32<LittleEndian>);
-        no default BitRange;
+        pub struct DdrRates(u32);
         impl Debug;
         bool;
         // Note: Bit index is (x/2)//66 of ddrx
+        #[inline]
         pub ddr400, set_ddr400: 3;
+        #[inline]
         pub ddr533, set_ddr533: 4;
+        #[inline]
         pub ddr667, set_ddr667: 5;
+        #[inline]
         pub ddr800, set_ddr800: 6;
+        #[inline]
         pub ddr1066, set_ddr1066: 8;
+        #[inline]
         pub ddr1333, set_ddr1333: 10;
+        #[inline]
         pub ddr1600, set_ddr1600: 12;
+        #[inline]
         pub ddr1866, set_ddr1866: 14;
         // AMD-missing pub ddr2100, set_ddr2100: 15,
+        #[inline]
         pub ddr2133, set_ddr2133: 16;
+        #[inline]
         pub ddr2400, set_ddr2400: 18;
+        #[inline]
         pub ddr2667, set_ddr2667: 20;
         // AMD-missing pub ddr2800, set_ddr2800: 21,
+        #[inline]
         pub ddr2933, set_ddr2933: 22;
         // AMD-missing pub ddr3066, set_ddr3066: 23,
+        #[inline]
         pub ddr3200, set_ddr3200: 24;
         // AMD-missing pub ddr3334, set_ddr3334: 25,
         // AMD-missing pub ddr3466, set_ddr3466: 26,
@@ -1408,76 +1450,15 @@ pub mod memory {
         // AMD-missing pub ddr4334, set_ddr4334: 32,
         // AMD-missing pub ddr4400, set_ddr4400: 33,
     }
+    impl_bitfield_primitive_conversion!(DdrRates, 0b0000_0001_0101_0101_0101_0101_0111_1000);
     impl DdrRates {
-        const VALID_BITS: u32 = 0b0000_0001_0101_0101_0101_0101_0111_1000;
         pub fn new() -> Self {
-            Self(0.into())
-        }
-        pub const fn all_reserved_bits_are_unset(value: u32) -> bool {
-            value & !Self::VALID_BITS == 0
-        }
-    }
-    impl Bit for DdrRates {
-        fn bit(&self, index: usize) -> bool {
-            match self.0.get() & (1u32 << index) {
-                0 => false,
-                _ => true,
-            }
-        }
-        fn set_bit(&mut self, index: usize, value: bool) {
-            match value {
-                true => {
-                    self.0.set(self.0.get() | (1u32 << index));
-                },
-                false => {
-                    self.0.set(self.0.get() &! (1u32 << index));
-                },
-            }
-        }
-    }
-    impl FromPrimitive for DdrRates {
-        #[inline]
-        fn from_u64(raw_value: u64) -> Option<Self> {
-            if raw_value > 0xffff_ffff {
-                None
-            } else {
-                let raw_value = raw_value as u32;
-                if Self::all_reserved_bits_are_unset(raw_value) {
-                    Some(Self(raw_value.into()))
-                } else {
-                    None
-                }
-            }
-        }
-        #[inline]
-        fn from_i64(raw_value: i64) -> Option<Self> {
-            if raw_value >= 0 {
-                Self::from_u64(raw_value as u64)
-            } else {
-                None
-            }
-        }
-    }
-
-    impl ToPrimitive for DdrRates {
-        #[inline]
-        fn to_i64(&self) -> Option<i64> {
-            let value = self.0.get();
-            if Self::all_reserved_bits_are_unset(value) {
-                Some(value.into())
-            } else {
-                None
-            }
-        }
-        #[inline]
-        fn to_u64(&self) -> Option<u64> {
-            Some(self.to_i64()? as u64)
+            Self(0)
         }
     }
 
     bitfield! {
-        pub struct DimmsPerChannel(U32<LittleEndian>);
-        no default BitRange;
+        pub struct DimmsPerChannel(u32);
         impl Debug;
         bool;
         pub one_dimm, set_one_dimm: 0;
@@ -1485,31 +1466,14 @@ pub mod memory {
         pub three_dimms, set_three_dimms: 2;
         pub four_dimms, set_four_dimms: 3;
     }
+    //impl_bitfield_primitive_conversion!(DimmsPerChannel, 0b111);
     impl DimmsPerChannel {
         const VALID_BITS: u32 = 0b111;
-        pub const fn all_reserved_bits_are_unset(value: u32) -> bool {
+        pub const fn all_reserved_bits_are_unused(value: u32) -> bool {
             value & !Self::VALID_BITS == 0
         }
         pub fn new() -> Self {
-            Self(0.into())
-        }
-    }
-    impl Bit for DimmsPerChannel {
-        fn bit(&self, index: usize) -> bool {
-            match self.0.get() & (1u32 << index) {
-                0 => false,
-                _ => true,
-            }
-        }
-        fn set_bit(&mut self, index: usize, value: bool) {
-            match value {
-                true => {
-                    self.0.set(self.0.get() | (1u32 << index));
-                },
-                false => {
-                    self.0.set(self.0.get() &! (1u32 << index));
-                },
-            }
+            Self(0)
         }
     }
     impl FromPrimitive for DimmsPerChannel {
@@ -1519,7 +1483,7 @@ pub mod memory {
                 None
             } else {
                 let raw_value = raw_value as u32;
-                if raw_value == 0xFF || Self::all_reserved_bits_are_unset(raw_value) {
+                if raw_value == 0xFF || Self::all_reserved_bits_are_unused(raw_value) {
                     Some(Self(raw_value.into()))
                 } else {
                     None
@@ -1539,8 +1503,8 @@ pub mod memory {
     impl ToPrimitive for DimmsPerChannel {
         #[inline]
         fn to_i64(&self) -> Option<i64> {
-            let value = self.0.get();
-            if value == 0xFF || Self::all_reserved_bits_are_unset(value) {
+            let value = self.0;
+            if value == 0xFF || Self::all_reserved_bits_are_unused(value) {
                 Some(value.into())
             } else {
                 None
@@ -1552,30 +1516,28 @@ pub mod memory {
         }
     }
 
-    #[repr(u8)]
-    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
-    pub enum DimmVoltage {
-        Initial = 0,
-        Dimm1V5 = 1,
-        Dimm1V35 = 2,
-        Dimm1V25 = 3,
-
-        // DDR4
-
-        Dimm1V2 = 4,
+    bitfield! {
+        pub struct DimmVoltagesDdr4(u32);
+        impl Debug;
+        bool;
+        pub v_1_2, set_v_1_2: 0;
+        pub v_1_35, set_v_1_35: 1;
+        pub v_1_25, set_v_1_25: 2;
+        // all = 7
     }
+    impl_bitfield_primitive_conversion!(DimmVoltagesDdr4, 0b111);
 
     // Usually an array of those is used
     make_accessors! {
         /// Control/Address Bus Element
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
-        pub struct CadBusElement {
+        pub struct CadBusElementDdr4 {
             dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get Result<DimmVoltage> : pub set DimmVoltage,
-            dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
-            dimm1_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
+            vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
+            dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanksDdr4> : pub set DimmRanksDdr4,
+            dimm1_ranks: U32<LittleEndian> : pub get Result<DimmRanksDdr4> : pub set DimmRanksDdr4,
 
             gear_down_mode: U16<LittleEndian> : pub get u16 : pub set u16,
             _reserved: U16<LittleEndian>,
@@ -1590,7 +1552,7 @@ pub mod memory {
         }
     }
 
-    impl Default for CadBusElement {
+    impl Default for CadBusElementDdr4 {
         fn default() -> Self {
             Self {
                 dimm_slots_per_channel: 1.into(),
@@ -1613,7 +1575,7 @@ pub mod memory {
         }
     }
 
-    impl EntryCompatible for CadBusElement {
+    impl EntryCompatible for CadBusElementDdr4 {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::PsUdimmDdr4CadBus) => true,
@@ -1659,9 +1621,9 @@ pub mod memory {
         pub struct DataBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get Result<DimmVoltage> : pub set DimmVoltage,
-            dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
-            dimm1_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
+            vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
+            dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanksDdr4> : pub set DimmRanksDdr4,
+            dimm1_ranks: U32<LittleEndian> : pub get Result<DimmRanksDdr4> : pub set DimmRanksDdr4,
 
             rtt_nom: U32<LittleEndian> : pub get Result<RttNom> : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
             rtt_wr: U32<LittleEndian> : pub get Result<RttWr> : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
@@ -3273,7 +3235,7 @@ pub mod memory {
             const_assert!(size_of::<AblConsoleOutControl>() == 16);
             const_assert!(size_of::<ConsoleOutControl>() == 20);
             const_assert!(size_of::<ExtVoltageControl>() == 32);
-            const_assert!(size_of::<CadBusElement>() == 36);
+            const_assert!(size_of::<CadBusElementDdr4>() == 36);
             const_assert!(size_of::<DataBusElement>() == 52);
             const_assert!(size_of::<MaxFreqElement>() == 16);
             const_assert!(size_of::<LrMaxFreqElement>() == 16);
