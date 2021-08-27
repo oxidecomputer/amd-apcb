@@ -2378,28 +2378,38 @@ macro_rules! impl_bitfield_primitive_conversion {
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
-        pub struct OdtPatElement {
-            dimm_rank_bitmap: U32<LittleEndian> : pub get u32 : pub set u32, // 2-dimm version: 4 bits dimm0; 28 bits dimm1.  1-dimm version: 32 bits dimm0
-            cs0_odt_pattern: U32<LittleEndian> : pub get u32 : pub set u32,
-            cs1_odt_pattern: U32<LittleEndian> : pub get u32 : pub set u32,
-            cs2_odt_pattern: U32<LittleEndian> : pub get u32 : pub set u32,
-            cs3_odt_pattern: U32<LittleEndian> : pub get u32 : pub set u32,
+        pub struct Ddr4OdtPatElement {
+            dimm_rank_bitmap: U32<LittleEndian>,
+            cs0_odt_pattern: U32<LittleEndian> : pub get u32 : pub set u32, // TODO: parts: CS0, write?
+            cs1_odt_pattern: U32<LittleEndian> : pub get u32 : pub set u32, // TODO: parts: CS1, write?
+            cs2_odt_pattern: U32<LittleEndian> : pub get u32 : pub set u32, // TODO: parts: CS2, write?
+            cs3_odt_pattern: U32<LittleEndian> : pub get u32 : pub set u32, // TODO: parts: CS3, write?
         }
     }
 
-    impl OdtPatElement {
-        pub fn dimm0_rank(&self) -> u32 {
-            self.dimm_rank_bitmap.get() & 15
+    impl Ddr4OdtPatElement {
+        pub fn dimm0_rank(&self) -> Result<Ddr4DimmRanks> {
+            Ddr4DimmRanks::from_u32(self.dimm_rank_bitmap.get() & 15).ok_or_else(|| Error::EntryTypeMismatch)
         }
-        pub fn dimm1_rank(&self) -> u32 {
-            self.dimm_rank_bitmap.get() >> 4
+        pub fn set_dimm0_rank(&mut self, value: Ddr4DimmRanks) {
+            let value = value.to_u32().unwrap();
+            let x = self.dimm_rank_bitmap.get();
+            self.dimm_rank_bitmap.set((x &! 0xF) | value);
+        }
+        pub fn dimm1_rank(&self) -> Result<Ddr4DimmRanks> {
+            Ddr4DimmRanks::from_u32((self.dimm_rank_bitmap.get() >> 4) & 15).ok_or_else(|| Error::EntryTypeMismatch)
+        }
+        pub fn set_dimm1_rank(&mut self, value: Ddr4DimmRanks) {
+            let value = value.to_u32().unwrap();
+            let x = self.dimm_rank_bitmap.get();
+            self.dimm_rank_bitmap.set((x &! 0xF0) | (value << 4));
         }
     }
 
-    impl Default for OdtPatElement {
+    impl Default for Ddr4OdtPatElement {
         fn default() -> Self {
             Self {
-                dimm_rank_bitmap: 0.into(), // probably invalid
+                dimm_rank_bitmap: (1 | (2 << 4)).into(),
                 cs0_odt_pattern: 0.into(),
                 cs1_odt_pattern: 0.into(),
                 cs2_odt_pattern: 0.into(),
@@ -2408,11 +2418,64 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    impl EntryCompatible for OdtPatElement {
+    impl EntryCompatible for Ddr4OdtPatElement {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
+                // definitely not EntryId::Memory(MemoryEntryId::PsLrdimmDdr4OdtPat) => true,
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr4OdtPat) => true,
+                _ => false,
+            }
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[repr(C, packed)]
+        pub struct LrdimmDdr4OdtPatElement {
+            dimm_rank_bitmap: U32<LittleEndian>,
+            cs0_odt_pattern: U32<LittleEndian> : pub get u32 : pub set u32,
+            cs1_odt_pattern: U32<LittleEndian> : pub get u32 : pub set u32,
+            cs2_odt_pattern: U32<LittleEndian> : pub get u32 : pub set u32,
+            cs3_odt_pattern: U32<LittleEndian> : pub get u32 : pub set u32,
+        }
+    }
+
+    impl LrdimmDdr4OdtPatElement {
+        pub fn dimm0_rank(&self) -> Result<LrdimmDdr4DimmRanks> {
+            LrdimmDdr4DimmRanks::from_u32(self.dimm_rank_bitmap.get() & 15).ok_or_else(|| Error::EntryTypeMismatch)
+        }
+        pub fn set_dimm0_rank(&mut self, value: LrdimmDdr4DimmRanks) {
+            let value = value.to_u32().unwrap();
+            let x = self.dimm_rank_bitmap.get();
+            self.dimm_rank_bitmap.set((x &! 0xF) | value);
+        }
+        pub fn dimm1_rank(&self) -> Result<LrdimmDdr4DimmRanks> {
+            LrdimmDdr4DimmRanks::from_u32((self.dimm_rank_bitmap.get() >> 4) & 15).ok_or_else(|| Error::EntryTypeMismatch)
+        }
+        pub fn set_dimm1_rank(&mut self, value: LrdimmDdr4DimmRanks) {
+            let value = value.to_u32().unwrap();
+            let x = self.dimm_rank_bitmap.get();
+            self.dimm_rank_bitmap.set((x &! 0xF0) | (value << 4));
+        }
+    }
+
+    impl Default for LrdimmDdr4OdtPatElement {
+        fn default() -> Self {
+            Self {
+                dimm_rank_bitmap: (1 | (2 << 4)).into(),
+                cs0_odt_pattern: 0.into(),
+                cs1_odt_pattern: 0.into(),
+                cs2_odt_pattern: 0.into(),
+                cs3_odt_pattern: 0.into(),
+            }
+        }
+    }
+
+    impl EntryCompatible for LrdimmDdr4OdtPatElement {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            match entry_id {
                 EntryId::Memory(MemoryEntryId::PsLrdimmDdr4OdtPat) => true,
+                // definitely not EntryId::Memory(MemoryEntryId::PsRdimmDdr4OdtPat) => true,
                 _ => false,
             }
         }
