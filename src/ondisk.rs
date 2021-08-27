@@ -1329,7 +1329,6 @@ pub mod memory {
         pub dual_rank, set_dual_rank: 2;
         #[inline]
         pub quad_rank, set_quad_rank: 3;
-        // TODO: lr=bit 1
     }
 
 macro_rules! impl_bitfield_primitive_conversion {
@@ -1388,6 +1387,17 @@ macro_rules! impl_bitfield_primitive_conversion {
             Self(0)
         }
     }
+
+    bitfield! {
+        pub struct DimmRanksLrddr4(u32);
+        impl Debug;
+        bool;
+        #[inline]
+        pub unpopulated, set_unpopulated: 0;
+        #[inline]
+        pub lr, set_lr: 1;
+    }
+    impl_bitfield_primitive_conversion!(DimmRanksLrddr4, 0b11);
 
     #[repr(u8)]
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
@@ -1557,7 +1567,7 @@ macro_rules! impl_bitfield_primitive_conversion {
             Self {
                 dimm_slots_per_channel: 1.into(),
                 ddr_rates: 0xa00.into(),
-                vdd_io: 1.into(), // always
+                vdd_io: 1.into(),
                 dimm0_ranks: 6.into(), // maybe invalid
                 dimm1_ranks: 1.into(), // maybe invalid
 
@@ -1580,9 +1590,65 @@ macro_rules! impl_bitfield_primitive_conversion {
             match entry_id {
                 EntryId::Memory(MemoryEntryId::PsUdimmDdr4CadBus) => true,
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr4CadBus) => true,
-                EntryId::Memory(MemoryEntryId::PsLrdimmDdr4CadBus) => true,
                 // TODO: Check EntryId::Memory(MemoryEntryId::PsSodimmDdr4CadBus) => true
                 // Definitely not: PsDramdownDdr4CadBus.
+                _ => false,
+            }
+        }
+    }
+
+    // Usually an array of those is used
+    make_accessors! {
+        /// Control/Address Bus Element
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[repr(C, packed)]
+        pub struct CadBusLrddr4Element {
+            dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
+            ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
+            vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
+            dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanksLrddr4> : pub set DimmRanksLrddr4,
+            dimm1_ranks: U32<LittleEndian> : pub get Result<DimmRanksLrddr4> : pub set DimmRanksLrddr4,
+
+            gear_down_mode: U16<LittleEndian> : pub get u16 : pub set u16,
+            _reserved: U16<LittleEndian>,
+            slow_mode: U16<LittleEndian> : pub get u16 : pub set u16,
+            _reserved_2: U16<LittleEndian>,
+            address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
+
+            cke_drive_strength: u8 : pub get Result<CadBusCkeDriveStrength> : pub set CadBusCkeDriveStrength,
+            cs_odt_drive_strength: u8 : pub get Result<CadBusCsOdtDriveStrength> : pub set CadBusCsOdtDriveStrength,
+            address_command_drive_strength: u8 : pub get Result<CadBusAddressCommandDriveStrength> : pub set CadBusAddressCommandDriveStrength,
+            clk_drive_strength: u8 : pub get Result<CadBusClkDriveStrength> : pub set CadBusClkDriveStrength,
+        }
+    }
+
+    impl Default for CadBusLrddr4Element {
+        fn default() -> Self {
+            Self {
+                dimm_slots_per_channel: 1.into(),
+                ddr_rates: 0xa00.into(),
+                vdd_io: 1.into(),
+                dimm0_ranks: 2.into(), // maybe invalid
+                dimm1_ranks: 1.into(), // maybe invalid
+
+                gear_down_mode: 0.into(),
+                _reserved: 0.into(),
+                slow_mode: 0.into(),
+                _reserved_2: 0.into(),
+                address_command_control: 0x373737.into(), // maybe invalid
+
+                cke_drive_strength: 7,
+                cs_odt_drive_strength: 7,
+                address_command_drive_strength: 7,
+                clk_drive_strength: 7,
+            }
+        }
+    }
+
+    impl EntryCompatible for CadBusLrddr4Element {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::PsLrdimmDdr4CadBus) => true,
                 _ => false,
             }
         }
@@ -3262,6 +3328,7 @@ macro_rules! impl_bitfield_primitive_conversion {
             const_assert!(size_of::<ConsoleOutControl>() == 20);
             const_assert!(size_of::<ExtVoltageControl>() == 32);
             const_assert!(size_of::<CadBusDdr4Element>() == 36);
+            const_assert!(size_of::<CadBusLrddr4Element>() == 36);
             const_assert!(size_of::<DataBusDdr4Element>() == 52);
             const_assert!(size_of::<MaxFreqElement>() == 16);
             const_assert!(size_of::<LrMaxFreqElement>() == 16);
