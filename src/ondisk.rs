@@ -1792,16 +1792,96 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
+    // ACTUAL 1/T, where T is one period.  For DDR, that means DDR400 has frequency 200.
+    #[repr(u16)]
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    pub enum DdrSpeed {
+        Ddr400 = 200,
+        Ddr533 = 266,
+        Ddr667 = 333,
+        Ddr800 = 400,
+        Ddr1066 = 533,
+        Ddr1333 = 667,
+        Ddr1600 = 800,
+        Ddr1866 = 933,
+        Ddr2100 = 1050,
+        Ddr2133 = 1067,
+        Ddr2400 = 1200,
+        Ddr2667 = 1333,
+        Ddr2733 = 1367,
+        Ddr2800 = 1400,
+        Ddr2867 = 1433,
+        Ddr2933 = 1467,
+        Ddr3000 = 1500,
+        Ddr3067 = 1533,
+        Ddr3133 = 1567,
+        Ddr3200 = 1600,
+        Ddr3267 = 1633,
+        Ddr3333 = 1667,
+        Ddr3400 = 1700,
+        Ddr3467 = 1733,
+        Ddr3533 = 1767,
+        Ddr3600 = 1800,
+        Ddr3667 = 1833,
+        Ddr3733 = 1867,
+        Ddr3800 = 1900,
+        Ddr3867 = 1933,
+        Ddr3933 = 1967,
+        Ddr4000 = 2000,
+        UnsupportedRome = 2201,
+        UnsupportedMilan = 4401,
+    }
+
     // Usually an array of those is used
     // Note: This structure is not used for LR DRAM
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct MaxFreqElement {
-            dimm_slots_per_channel: u8 : pub get u8 : pub set u8,
+            dimm_slots_per_channel: u8 : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
             _reserved: u8,
-            pub conditions: [U16<LittleEndian>; 4], // number of dimm on a channel, number of single-rank dimm, number of dual-rank dimm, number of quad-rank dimm // FIXME make accessible
-            pub speeds: [U16<LittleEndian>; 3], // speed limit with voltage 1.5 V, 1.35 V, 1.25 V // FIXME make accessible
+            conditions: [U16<LittleEndian>; 4], // number of dimm on a channel, number of single-rank dimm, number of dual-rank dimm, number of quad-rank dimm // FIXME make accessible
+            speeds: [U16<LittleEndian>; 3], // speed limit with voltage 1.5 V, 1.35 V, 1.25 V // FIXME make accessible
+       }
+    }
+    impl MaxFreqElement {
+       pub fn dimm_count(&self) -> Result<u16> {
+           Ok(self.conditions[0].get())
+       }
+       pub fn set_dimm_count(&mut self, value: u16) {
+           self.conditions[0].set(value);
+       }
+       pub fn single_rank_count(&self) -> Result<u16> {
+           Ok(self.conditions[1].get())
+       }
+       pub fn set_single_rank_count(&mut self, value: u16) {
+           self.conditions[1].set(value);
+       }
+       pub fn dual_rank_count(&self) -> Result<u16> {
+           Ok(self.conditions[2].get())
+       }
+       pub fn set_dual_rank_count(&mut self, value: u16) {
+           self.conditions[2].set(value);
+       }
+       pub fn quad_rank_count(&self) -> Result<u16> {
+           Ok(self.conditions[3].get())
+       }
+       pub fn set_quad_rank_count(&mut self, value: u16) {
+           self.conditions[3].set(value);
+       }
+       pub fn speed(&self) -> Result<DdrSpeed> {
+           DdrSpeed::from_u16(self.speeds[0].get()).ok_or_else(|| Error::EntryTypeMismatch)
+       }
+       pub fn set_speed(&mut self, value: DdrSpeed) {
+           self.speeds[0].set(value.to_u16().unwrap())
+       }
+       pub fn new(dimm_slots_per_channel: DimmsPerChannel, dimm_count: u16, single_rank_count: u16, dual_rank_count: u16, quad_rank_count: u16, speed_0: DdrSpeed) -> Self {
+           Self {
+               dimm_slots_per_channel: dimm_slots_per_channel.to_u8().unwrap(),
+               conditions: [dimm_count.into(), single_rank_count.into(), dual_rank_count.into(), quad_rank_count.into()],
+               speeds: [speed_0.to_u16().unwrap().into(), DdrSpeed::UnsupportedMilan.to_u16().unwrap().into(), DdrSpeed::UnsupportedMilan.to_u16().unwrap().into()],
+               .. Self::default()
+           }
        }
     }
 
