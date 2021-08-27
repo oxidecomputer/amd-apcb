@@ -16,7 +16,7 @@ use static_assertions::const_assert;
 use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use zerocopy::AsBytes;
-use crate::memory::platform_specific_override::PlatformSpecificOverrideElement;
+use crate::memory::platform_specific_override::PlatformSpecificOverrideElementRef;
 
 pub struct Apcb<'a> {
     header: &'a mut V2_HEADER,
@@ -352,7 +352,7 @@ impl<'a> Apcb<'a> {
         } else {
             b""
         };
-        if PlatformSpecificOverrideElement::is_entry_compatible(entry_id, blob) {
+        if PlatformSpecificOverrideElementRef::is_entry_compatible(entry_id, blob) {
             let mut payload_size: usize = 0;
             for item in payload {
                 let blob = item.as_bytes();
