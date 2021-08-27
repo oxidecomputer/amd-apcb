@@ -1485,6 +1485,18 @@ macro_rules! impl_bitfield_primitive_conversion {
         pub fn new() -> Self {
             Self(0)
         }
+        pub fn dont_care() -> Self {
+            Self(0xFF)
+        }
+        pub fn no_slot() -> Self {
+            Self(0xF0)
+        }
+        pub fn is_no_slot(&self) -> bool {
+            self.0 == 0xF0
+        }
+        pub fn is_dont_care(&self) -> bool {
+            self.0 == 0xFF
+        }
     }
     impl FromPrimitive for DimmsPerChannel {
         #[inline]
@@ -1493,7 +1505,7 @@ macro_rules! impl_bitfield_primitive_conversion {
                 None
             } else {
                 let raw_value = raw_value as u32;
-                if raw_value == 0xFF || Self::all_reserved_bits_are_unused(raw_value) {
+                if raw_value == 0xFF || raw_value == 0xF0 || Self::all_reserved_bits_are_unused(raw_value) {
                     Some(Self(raw_value.into()))
                 } else {
                     None
