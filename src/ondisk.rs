@@ -1483,7 +1483,7 @@ pub mod memory {
         #[repr(C, packed)]
         pub struct CadBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32, // 1 or 2
-            ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates, // 0xA00|0x2800|0x1_0000|0x4_0000|0xA_0000|0x28_0000|0x100_0000
+            ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
             vdd_io: U32<LittleEndian> : pub get u32 : pub set u32, // always 1
             dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
             dimm1_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
