@@ -3465,28 +3465,28 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
 
         // Maintainer: Add struct references in here as you add new structs above.  Also adapt the is_entry_compatible impl.
-        pub enum PlatformSpecificOverrideElement {
-            CkeTristateMap(CkeTristateMap),
-            OdtTristateMap(OdtTristateMap),
-            CsTristateMap(CsTristateMap),
-            MaxDimmsPerChannel(MaxDimmsPerChannel),
-            MemclkMap(MemclkMap),
-            MaxChannelsPerSocket(MaxChannelsPerSocket),
-            MemBusSpeed(MemBusSpeed),
-            MaxCsPerChannel(MaxCsPerChannel),
-            MemTechnology(MemTechnology),
-            WriteLevellingSeedDelay(WriteLevellingSeedDelay),
-            RxEnSeed(RxEnSeed),
-            LrDimmNoCs6Cs7Routing(LrDimmNoCs6Cs7Routing),
-            SolderedDownSodimm(SolderedDownSodimm),
-            LvDimmForce1V5(LvDimmForce1V5),
-            MemPowerPolicy(MemPowerPolicy),
-            MinimumRwDataEyeWidth(MinimumRwDataEyeWidth),
-            MotherboardLayers(MotherboardLayers),
-            CpuFamilyFilter(CpuFamilyFilter),
-            SolderedDownDimmsPerChannel(SolderedDownDimmsPerChannel),
+        pub enum PlatformSpecificOverrideElement<'a> {
+            CkeTristateMap(&'a CkeTristateMap),
+            OdtTristateMap(&'a OdtTristateMap),
+            CsTristateMap(&'a CsTristateMap),
+            MaxDimmsPerChannel(&'a MaxDimmsPerChannel),
+            MemclkMap(&'a MemclkMap),
+            MaxChannelsPerSocket(&'a MaxChannelsPerSocket),
+            MemBusSpeed(&'a MemBusSpeed),
+            MaxCsPerChannel(&'a MaxCsPerChannel),
+            MemTechnology(&'a MemTechnology),
+            WriteLevellingSeedDelay(&'a WriteLevellingSeedDelay),
+            RxEnSeed(&'a RxEnSeed),
+            LrDimmNoCs6Cs7Routing(&'a LrDimmNoCs6Cs7Routing),
+            SolderedDownSodimm(&'a SolderedDownSodimm),
+            LvDimmForce1V5(&'a LvDimmForce1V5),
+            MemPowerPolicy(&'a MemPowerPolicy),
+            MinimumRwDataEyeWidth(&'a MinimumRwDataEyeWidth),
+            MotherboardLayers(&'a MotherboardLayers),
+            CpuFamilyFilter(&'a CpuFamilyFilter),
+            SolderedDownDimmsPerChannel(&'a SolderedDownDimmsPerChannel),
         }
-        impl EntryCompatible for PlatformSpecificOverrideElement {
+        impl EntryCompatible for PlatformSpecificOverrideElement<'_> {
             fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
                 CkeTristateMap::is_entry_compatible(entry_id, prefix)
                 || OdtTristateMap::is_entry_compatible(entry_id, prefix)
