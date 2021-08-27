@@ -16,6 +16,7 @@ use crate::types::Result;
 use crate::struct_accessors::{Getter, Setter, make_accessors};
 use crate::types::PriorityLevel;
 
+/// AsBytes that we CAN implement ourselves.  Used for platform_specific_override and platform_tuning, which both are a sequence of variable-length records.
 pub trait UnionAsBytes {
     fn as_bytes(&self) -> &[u8];
 }
