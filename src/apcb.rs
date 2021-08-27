@@ -346,7 +346,7 @@ impl<'a> Apcb<'a> {
         }
     }
 
-    pub fn insert_union_sequence<T: EntryCompatible + UnionAsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &[T]) -> Result<()> {
+    pub fn insert_union_sequence_entry<T: EntryCompatible + UnionAsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &[T]) -> Result<()> {
         let blob = if payload.len() > 0 {
             payload[0].as_bytes()
         } else {
