@@ -324,7 +324,7 @@ impl<'a> Apcb<'a> {
         }
     }
     /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.  T can be a enum of struct refs (PlatformSpecificElementRef, PlatformTuningElementRef) or just one struct.
-    pub fn insert_sequence_as_entry<T: EntryCompatible + UnionAsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &[T]) -> Result<()> {
+    pub fn insert_struct_sequence_as_entry<T: EntryCompatible + UnionAsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &[T]) -> Result<()> {
         let mut payload_size: usize = 0;
         for item in payload {
             let blob = item.as_bytes();
