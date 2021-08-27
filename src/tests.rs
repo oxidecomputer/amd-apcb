@@ -321,7 +321,7 @@ mod tests {
             DimmInfoSmbusElement::new(2, 3, 4, 5, 6, 7, 8),
             DimmInfoSmbusElement::new(10, 11, 12, 13, 14, 15, 16),
         ];
-        apcb.insert_struct_array_entry(EntryId::Memory(MemoryEntryId::DimmInfoSmbus), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &items)?;
+        apcb.insert_sequence_as_entry(EntryId::Memory(MemoryEntryId::DimmInfoSmbus), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &items)?;
 
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
@@ -383,7 +383,7 @@ mod tests {
             DimmInfoSmbusElement::new(2, 3, 4, 5, 6, 7, 8),
             DimmInfoSmbusElement::new(10, 11, 12, 13, 14, 15, 16),
         ];
-        match apcb.insert_struct_array_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &items) {
+        match apcb.insert_sequence_as_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &items) {
             Err(Error::EntryTypeMismatch) => {
                 Ok(())
             }
