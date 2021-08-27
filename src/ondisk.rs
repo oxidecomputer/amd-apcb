@@ -3669,6 +3669,46 @@ macro_rules! impl_bitfield_primitive_conversion {
         // TODO: conditional overrides, actions.
     }
 
+    pub mod platform_tuning {
+        use byteorder::LittleEndian;
+        use core::mem::size_of;
+        use static_assertions::const_assert;
+        use zerocopy::{AsBytes, FromBytes, Unaligned, U16};
+        use super::super::*;
+        use crate::struct_accessors::{Getter, Setter, make_accessors};
+        use crate::types::Result;
+
+        macro_rules! impl_EntryCompatible {($struct_:ty, $type_:expr, $total_size:expr) => (
+            const_assert!($total_size as usize == size_of::<$struct_>());
+            impl EntryCompatible for $struct_ {
+                fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+                    match entry_id {
+                        EntryId::Memory(MemoryEntryId::PlatformTuning) => {
+                            const TYPE_: u16 = $type_;
+                            const TYPE_LO: u8 = (TYPE_ & 0xff) as u8;
+                            const TYPE_HI: u8 = (TYPE_ >> 8) as u8;
+                            if prefix.len() >= 2 && prefix[0] == TYPE_LO && prefix[1] == TYPE_HI {
+                                const SHOULD_HAVE_LEN_FIELD: bool = TYPE_ != 0xfeef;
+                                !SHOULD_HAVE_LEN_FIELD || (prefix.len() >= 3 && prefix[2] == $total_size)
+                            } else {
+                                false
+                            }
+                        },
+                        _ => false,
+                    }
+                }
+            }
+        )}
+
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[repr(C, packed)]
+        pub struct Terminator {
+            type_: U16<LittleEndian>,
+        }
+        impl_EntryCompatible!(Terminator, 0xfeef, 2);
+
+    }
+
     #[cfg(test)]
     mod tests {
         use super::*;
