@@ -1375,6 +1375,107 @@ pub mod memory {
     type CadBusCkeDriveStrength = CadBusClkDriveStrength;
     type CadBusCsOdtDriveStrength = CadBusClkDriveStrength;
 
+    bitfield! {
+        pub struct DdrRates(U32<LittleEndian>);
+        no default BitRange;
+        impl Debug;
+        bool;
+        // Note: Bit index is (x/2)//66 of ddrx
+        pub ddr400, set_ddr400: 3;
+        pub ddr533, set_ddr533: 4;
+        pub ddr667, set_ddr667: 5;
+        pub ddr800, set_ddr800: 6;
+        pub ddr1066, set_ddr1066: 8;
+        pub ddr1333, set_ddr1333: 10;
+        pub ddr1600, set_ddr1600: 12;
+        pub ddr1866, set_ddr1866: 14;
+        // AMD-missing pub ddr2100, set_ddr2100: 15,
+        pub ddr2133, set_ddr2133: 16;
+        pub ddr2400, set_ddr2400: 18;
+        pub ddr2667, set_ddr2667: 20;
+        // AMD-missing pub ddr2800, set_ddr2800: 21,
+        pub ddr2933, set_ddr2933: 22;
+        // AMD-missing pub ddr3066, set_ddr3066: 23,
+        pub ddr3200, set_ddr3200: 24;
+        // AMD-missing pub ddr3334, set_ddr3334: 25,
+        // AMD-missing pub ddr3466, set_ddr3466: 26,
+        // AMD-missing pub ddr3600, set_ddr3600: 27,
+        // AMD-missing pub ddr3734, set_ddr3734: 28,
+        // AMD-missing pub ddr3866, set_ddr3866: 29,
+        // AMD-missing pub ddr4000, set_ddr4000: 30,
+        // AMD-missing pub ddr4200, set_ddr4200: 31,
+        // AMD-missing pub ddr4266, set_ddr4266: 32,
+        // AMD-missing pub ddr4334, set_ddr4334: 32,
+        // AMD-missing pub ddr4400, set_ddr4400: 33,
+    }
+    impl DdrRates {
+        const VALID_BITS: u32 = 0b0000_0001_0101_0101_0101_0101_0111_1000;
+        pub fn new() -> Self {
+            Self(0.into())
+        }
+        pub const fn all_reserved_bits_are_unset(value: u32) -> bool {
+            value & !Self::VALID_BITS == 0
+        }
+    }
+    impl Bit for DdrRates {
+        fn bit(&self, index: usize) -> bool {
+            match self.0.get() & (1u32 << index) {
+                0 => false,
+                _ => true,
+            }
+        }
+        fn set_bit(&mut self, index: usize, value: bool) {
+            match value {
+                true => {
+                    self.0.set(self.0.get() | (1u32 << index));
+                },
+                false => {
+                    self.0.set(self.0.get() &! (1u32 << index));
+                },
+            }
+        }
+    }
+    impl FromPrimitive for DdrRates {
+        #[inline]
+        fn from_u64(raw_value: u64) -> Option<Self> {
+            if raw_value > 0xffff_ffff {
+                None
+            } else {
+                let raw_value = raw_value as u32;
+                if Self::all_reserved_bits_are_unset(raw_value) {
+                    Some(Self(raw_value.into()))
+                } else {
+                    None
+                }
+            }
+        }
+        #[inline]
+        fn from_i64(raw_value: i64) -> Option<Self> {
+            if raw_value >= 0 {
+                Self::from_u64(raw_value as u64)
+            } else {
+                None
+            }
+        }
+    }
+
+    impl ToPrimitive for DdrRates {
+        #[inline]
+        fn to_i64(&self) -> Option<i64> {
+            let value = self.0.get();
+            if Self::all_reserved_bits_are_unset(value) {
+                Some(value.into())
+            } else {
+                None
+            }
+        }
+        #[inline]
+        fn to_u64(&self) -> Option<u64> {
+            Some(self.to_i64()? as u64)
+        }
+    }
+
+
     // Usually an array of those is used
     make_accessors! {
         /// Control/Address Bus Element
@@ -1382,7 +1483,7 @@ pub mod memory {
         #[repr(C, packed)]
         pub struct CadBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32, // 1 or 2
-            ddr_rate: U32<LittleEndian> : pub get u32 : pub set u32, // 0xA00|0x2800|0x1_0000|0x4_0000|0xA_0000|0x28_0000|0x100_0000
+            ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates, // 0xA00|0x2800|0x1_0000|0x4_0000|0xA_0000|0x28_0000|0x100_0000
             vdd_io: U32<LittleEndian> : pub get u32 : pub set u32, // always 1
             dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
             dimm1_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
@@ -1404,7 +1505,7 @@ pub mod memory {
         fn default() -> Self {
             Self {
                 dimm_slots_per_channel: 1.into(),
-                ddr_rate: 0xa00.into(),
+                ddr_rates: 0xa00.into(),
                 vdd_io: 1.into(), // always
                 dimm0_ranks: 6.into(), // maybe invalid
                 dimm1_ranks: 1.into(), // maybe invalid
@@ -1468,7 +1569,7 @@ pub mod memory {
         #[repr(C, packed)]
         pub struct DataBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
-            ddr_rate: U32<LittleEndian> : pub get u32 : pub set u32,
+            ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
             vdd_io: U32<LittleEndian> : pub get u32 : pub set u32,
             dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
             dimm1_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
@@ -1489,7 +1590,7 @@ pub mod memory {
         fn default() -> Self {
             Self {
                 dimm_slots_per_channel: 1.into(),
-                ddr_rate: 0x1373200.into(), // always
+                ddr_rates: 0x1373200.into(),
                 vdd_io: 1.into(), // always
                 dimm0_ranks: 2.into(),
                 dimm1_ranks: 1.into(),
