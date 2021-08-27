@@ -2664,7 +2664,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         pub struct DdrPostPackageRepairElement(U64<LittleEndian>);
         no default BitRange;
         impl Debug;
-        u16;
+        u32;
         pub channel, set_channel: 55, 53;
         pub socket, set_socket: 52, 50;
         pub row, set_row: 49, 32;
@@ -2678,18 +2678,18 @@ macro_rules! impl_bitfield_primitive_conversion {
         pub bank, set_bank: 4, 0;
     }
 
-    impl BitRange<u16> for DdrPostPackageRepairElement {
-        fn bit_range(&self, msb: usize, lsb: usize) -> u16 {
+    impl BitRange<u32> for DdrPostPackageRepairElement {
+        fn bit_range(&self, msb: usize, lsb: usize) -> u32 {
             assert!(lsb <= msb);
             let width = msb - lsb + 1;
-            assert!(width <= 15);
+            assert!(width <= 31);
             let mask = (1u64 << width) - 1;
-            ((self.0.get() >> lsb) & mask) as u16
+            ((self.0.get() >> lsb) & mask) as u32
         }
-        fn set_bit_range(&mut self, msb: usize, lsb: usize, value: u16) {
+        fn set_bit_range(&mut self, msb: usize, lsb: usize, value: u32) {
             assert!(lsb <= msb);
             let width = msb - lsb + 1;
-            assert!(width <= 15);
+            assert!(width <= 31);
             let mask = (1u64 << width) - 1;
             assert!(u64::from(value) <= mask);
             let mut dest = self.0.get();
