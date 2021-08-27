@@ -1730,7 +1730,6 @@ macro_rules! impl_bitfield_primitive_conversion {
                 EntryId::Memory(MemoryEntryId::PsUdimmDdr4DataBus) => true,
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr4DataBus) => true,
                 EntryId::Memory(MemoryEntryId::Ps3dsRdimmDdr4DataBus) => true,
-                // TODO: Maybe split off (because of different enum variants); EntryId::Memory(MemoryEntryId::PsLrdimmDdr4DataBus) => true,
                 // TODO: Check EntryId::Memory(PsSodimmDdr4DataBus) => true
                 // Definitely not: EntryId::PsDramdownDdr4DataBus => true
                 _ => false,
