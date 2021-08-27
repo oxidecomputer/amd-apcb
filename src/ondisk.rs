@@ -1552,6 +1552,18 @@ pub mod memory {
         }
     }
 
+    #[repr(u8)]
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    pub enum DimmVoltage {
+        Initial = 0,
+        Dimm1V5 = 1,
+        Dimm1V35 = 2,
+        Dimm1V25 = 3,
+
+        // DDR4
+
+        Dimm1V2 = 4,
+    }
 
     // Usually an array of those is used
     make_accessors! {
@@ -1561,7 +1573,7 @@ pub mod memory {
         pub struct CadBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get u32 : pub set u32, // always 1
+            vdd_io: U32<LittleEndian> : pub get Result<DimmVoltage> : pub set DimmVoltage,
             dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
             dimm1_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
 
@@ -1647,7 +1659,7 @@ pub mod memory {
         pub struct DataBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get u32 : pub set u32,
+            vdd_io: U32<LittleEndian> : pub get Result<DimmVoltage> : pub set DimmVoltage,
             dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
             dimm1_ranks: U32<LittleEndian> : pub get Result<DimmRanks> : pub set DimmRanks,
 
