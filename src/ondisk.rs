@@ -1318,7 +1318,7 @@ pub mod memory {
     }
 
     bitfield! {
-        pub struct DimmRanksDdr4(u32);
+        pub struct Ddr4DimmRanks(u32);
         impl Debug;
         bool;
         #[inline]
@@ -1381,8 +1381,8 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 )}
-    impl_bitfield_primitive_conversion!(DimmRanksDdr4, 0b111);
-    impl DimmRanksDdr4 {
+    impl_bitfield_primitive_conversion!(Ddr4DimmRanks, 0b111);
+    impl Ddr4DimmRanks {
         pub fn new() -> Self {
             Self(0)
         }
@@ -1546,8 +1546,8 @@ macro_rules! impl_bitfield_primitive_conversion {
             dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
             vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
-            dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanksDdr4> : pub set DimmRanksDdr4,
-            dimm1_ranks: U32<LittleEndian> : pub get Result<DimmRanksDdr4> : pub set DimmRanksDdr4,
+            dimm0_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
+            dimm1_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
 
             gear_down_mode: U16<LittleEndian> : pub get u16 : pub set u16,
             _reserved: U16<LittleEndian>,
@@ -1688,8 +1688,8 @@ macro_rules! impl_bitfield_primitive_conversion {
             dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
             vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
-            dimm0_ranks: U32<LittleEndian> : pub get Result<DimmRanksDdr4> : pub set DimmRanksDdr4,
-            dimm1_ranks: U32<LittleEndian> : pub get Result<DimmRanksDdr4> : pub set DimmRanksDdr4,
+            dimm0_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
+            dimm1_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
 
             rtt_nom: U32<LittleEndian> : pub get Result<RttNom> : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
             rtt_wr: U32<LittleEndian> : pub get Result<RttWr> : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
