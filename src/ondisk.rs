@@ -3465,7 +3465,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
 
         // Maintainer: Add struct references in here as you add new structs above.  Also adapt the is_entry_compatible impl.
-        pub enum PlatformSpecificOverrideElement<'a> {
+        pub enum PlatformSpecificOverrideElementRef<'a> {
             CkeTristateMap(&'a CkeTristateMap),
             OdtTristateMap(&'a OdtTristateMap),
             CsTristateMap(&'a CsTristateMap),
@@ -3486,7 +3486,71 @@ macro_rules! impl_bitfield_primitive_conversion {
             CpuFamilyFilter(&'a CpuFamilyFilter),
             SolderedDownDimmsPerChannel(&'a SolderedDownDimmsPerChannel),
         }
-        impl EntryCompatible for PlatformSpecificOverrideElement<'_> {
+        impl PlatformSpecificOverrideElementRef<'_> {
+            #[inline]
+            pub fn as_bytes(&self) -> &[u8] {
+                match self {
+                    Self::CkeTristateMap(item) => {
+                        item.as_bytes()
+                    },
+                    Self::OdtTristateMap(item) => {
+                        item.as_bytes()
+                    },
+                    Self::CsTristateMap(item) => {
+                        item.as_bytes()
+                    },
+                    Self::MaxDimmsPerChannel(item) => {
+                        item.as_bytes()
+                    },
+                    Self::MemclkMap(item) => {
+                        item.as_bytes()
+                    },
+                    Self::MaxChannelsPerSocket(item) => {
+                        item.as_bytes()
+                    },
+                    Self::MemBusSpeed(item) => {
+                        item.as_bytes()
+                    },
+                    Self::MaxCsPerChannel(item) => {
+                        item.as_bytes()
+                    },
+                    Self::MemTechnology(item) => {
+                        item.as_bytes()
+                    },
+                    Self::WriteLevellingSeedDelay(item) => {
+                        item.as_bytes()
+                    },
+                    Self::RxEnSeed(item) => {
+                        item.as_bytes()
+                    },
+                    Self::LrDimmNoCs6Cs7Routing(item) => {
+                        item.as_bytes()
+                    },
+                    Self::SolderedDownSodimm(item) => {
+                        item.as_bytes()
+                    },
+                    Self::LvDimmForce1V5(item) => {
+                        item.as_bytes()
+                    },
+                    Self::MemPowerPolicy(item) => {
+                        item.as_bytes()
+                    },
+                    Self::MinimumRwDataEyeWidth(item) => {
+                        item.as_bytes()
+                    },
+                    Self::MotherboardLayers(item) => {
+                        item.as_bytes()
+                    },
+                    Self::CpuFamilyFilter(item) => {
+                        item.as_bytes()
+                    },
+                    Self::SolderedDownDimmsPerChannel(item) => {
+                        item.as_bytes()
+                    },
+                }
+            }
+        }
+        impl EntryCompatible for PlatformSpecificOverrideElementRef<'_> {
             fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
                 CkeTristateMap::is_entry_compatible(entry_id, prefix)
                 || OdtTristateMap::is_entry_compatible(entry_id, prefix)
