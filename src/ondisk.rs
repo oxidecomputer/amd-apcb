@@ -1543,7 +1543,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct Ddr4CadBusElement {
-            dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
+            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
             vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
             dimm0_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
@@ -1603,7 +1603,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4CadBusElement {
-            dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
+            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
             vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
             dimm0_ranks: U32<LittleEndian> : pub get Result<LrdimmDdr4DimmRanks> : pub set LrdimmDdr4DimmRanks,
@@ -1685,7 +1685,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct Ddr4DataBusElement {
-            dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
+            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
             vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
             dimm0_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
@@ -1742,7 +1742,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4DataBusElement {
-            dimm_slots_per_channel: U32<LittleEndian> : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
+            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
             ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
             vdd_io: U32<LittleEndian> : pub get Result<DimmVoltagesDdr4> : pub set DimmVoltagesDdr4,
             dimm0_ranks: U32<LittleEndian> : pub get Result<LrdimmDdr4DimmRanks> : pub set LrdimmDdr4DimmRanks,
