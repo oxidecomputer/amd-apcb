@@ -8,7 +8,7 @@ use crate::ondisk::V2_HEADER;
 use crate::ondisk::V3_HEADER_EXT;
 use crate::ondisk::ENTRY_ALIGNMENT;
 pub use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, EntryCompatible, UnionAsBytes};
-use crate::ondisk::{take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut, HeaderOfSequence};
+use crate::ondisk::{take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut, HeaderWithTail};
 use core::convert::TryInto;
 use core::default::Default;
 use core::mem::{size_of};
@@ -314,15 +314,6 @@ impl<'a> Apcb<'a> {
             body.copy_from_slice(payload);
         })
     }
-    /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.
-    pub fn insert_struct_entry<T: EntryCompatible + AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &T) -> Result<()> {
-        let blob = payload.as_bytes();
-        if T::is_entry_compatible(entry_id, blob) {
-            self.insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, priority_mask, blob)
-        } else {
-            Err(Error::EntryTypeMismatch)
-        }
-    }
     /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.  T can be a enum of struct refs (PlatformSpecificElementRef, PlatformTuningElementRef) or just one struct.
     pub fn insert_struct_sequence_as_entry<T: EntryCompatible + UnionAsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &[T]) -> Result<()> {
         let mut payload_size: usize = 0;
@@ -344,17 +335,17 @@ impl<'a> Apcb<'a> {
         })
     }
 
-    /// Inserts a new entry (see insert_entry), puts HEADER and then PAYLOAD into it.
-    pub fn insert_headered_struct_array_entry<H: EntryCompatible + AsBytes + HeaderOfSequence>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, header: &H, payload: &[H::TailSequenceType]) -> Result<()> {
+    /// Inserts a new entry (see insert_entry), puts HEADER and then TAIL into it.  TAIL is allowed to be &[], and often has to be.
+    pub fn insert_struct_entry<H: EntryCompatible + AsBytes + HeaderWithTail>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, header: &H, tail: &[H::TailSequenceType]) -> Result<()> {
         let blob = header.as_bytes();
         if H::is_entry_compatible(entry_id, blob) {
-            let payload_size = size_of::<H>().checked_add(size_of::<H::TailSequenceType>().checked_mul(payload.len()).ok_or_else(|| Error::ArithmeticOverflow)?).ok_or_else(|| Error::ArithmeticOverflow)?;
-            self.internal_insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, payload_size, priority_mask, &mut |body: &mut [u8]| {
+            let tail_size = size_of::<H>().checked_add(size_of::<H::TailSequenceType>().checked_mul(tail.len()).ok_or_else(|| Error::ArithmeticOverflow)?).ok_or_else(|| Error::ArithmeticOverflow)?;
+            self.internal_insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, tail_size, priority_mask, &mut |body: &mut [u8]| {
                 let mut body = body;
                 let (a, rest) = body.split_at_mut(blob.len());
                 a.copy_from_slice(blob);
                 body = rest;
-                for item in payload {
+                for item in tail {
                     let source = item.as_bytes();
                     let (a, rest) = body.split_at_mut(source.len());
                     a.copy_from_slice(source);

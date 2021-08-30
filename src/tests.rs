@@ -3,7 +3,7 @@ mod tests {
     use core::default::Default;
     use crate::Apcb;
     use crate::Error;
-    use crate::ondisk::{PriorityLevels, ContextType, CcxEntryId, DfEntryId, PspEntryId, MemoryEntryId, TokenEntryId, EntryId, GroupId, memory::ConsoleOutControl, memory::DimmInfoSmbusElement, psp::BoardIdGettingMethodEeprom, psp::IdRevApcbMapping};
+    use crate::ondisk::{PriorityLevels, ContextType, CcxEntryId, DfEntryId, PspEntryId, MemoryEntryId, TokenEntryId, EntryId, GroupId, memory::ConsoleOutControl, memory::DimmInfoSmbusElement, psp::BoardIdGettingMethodEeprom, psp::IdRevApcbMapping, memory::ExtVoltageControl};
     use crate::EntryItemBody;
     use crate::types::PriorityLevel;
 
@@ -219,7 +219,7 @@ mod tests {
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
-        apcb.insert_struct_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &ConsoleOutControl::default())?;
+        apcb.insert_struct_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &ConsoleOutControl::default(), &[])?;
 
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups_mut();
@@ -271,7 +271,9 @@ mod tests {
             IdRevApcbMapping::new(5, 4, 9, 3),
             IdRevApcbMapping::new(8, 7, 10, 6),
         ];
-        apcb.insert_headered_struct_array_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &header, &items)?;
+        apcb.insert_struct_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &header, &items)?;
+        let control = ExtVoltageControl::default();
+        apcb.insert_struct_entry(EntryId::Memory(MemoryEntryId::ExtVoltageControl), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &control, &[(), ()])?;
 
         let apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups();
@@ -304,6 +306,9 @@ mod tests {
 
         let mut entries = group.entries();
 
+        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let (control, _) = entry.body_as_headered_struct_array::<ExtVoltageControl>().ok_or_else(|| Error::EntryTypeMismatch)?;
+        assert!(*control == ExtVoltageControl::default());
         assert!(matches!(entries.next(), None));
 
         assert!(matches!(groups.next(), None));

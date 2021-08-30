@@ -23,7 +23,7 @@ pub trait UnionAsBytes {
 
 /// There are (very few) Struct Entries like this: Header S0 S1 S2 S3.
 /// This trait is implemented by structs that are used as a header of a sequence.  Then, the header structs specify (in their impl) what the (struct or enum) type of the sequence will be.
-pub trait HeaderOfSequence {
+pub trait HeaderWithTail {
     type TailSequenceType: AsBytes + FromBytes;
 }
 
@@ -1082,6 +1082,10 @@ pub mod df {
         }
     }
 
+    impl HeaderWithTail for SlinkConfig {
+        type TailSequenceType = ();
+    }
+
     impl SlinkConfig {
         pub fn new(regions: [SlinkRegionDescription; 4]) -> Self {
             Self {
@@ -1272,6 +1276,10 @@ pub mod memory {
         }
     }
 
+    impl HeaderWithTail for ConsoleOutControl {
+        type TailSequenceType = ();
+    }
+
     impl ConsoleOutControl {
         pub fn new(abl_console_out_control: AblConsoleOutControl, abl_breakpoint_control: AblBreakpointControl) -> Self {
             Self {
@@ -1316,6 +1324,10 @@ pub mod memory {
                 _ => false,
             }
         }
+    }
+
+    impl HeaderWithTail for ExtVoltageControl {
+        type TailSequenceType = ();
     }
 
     impl Default for ExtVoltageControl {
@@ -2396,6 +2408,10 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
+    impl HeaderWithTail for ErrorOutEventControl116 {
+        type TailSequenceType = ();
+    }
+
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
@@ -2540,6 +2556,10 @@ macro_rules! impl_bitfield_primitive_conversion {
                 _ => false,
             }
         }
+    }
+
+    impl HeaderWithTail for ErrorOutEventControl112 {
+        type TailSequenceType = ();
     }
 
     make_accessors! {
@@ -2767,6 +2787,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
+
     // An union of one variant.
     impl UnionAsBytes for DdrPostPackageRepairElement {
         #[inline]
@@ -2957,6 +2978,7 @@ macro_rules! impl_bitfield_primitive_conversion {
 
         macro_rules! impl_EntryCompatible {($struct_:ty, $type_:expr, $payload_size:expr) => (
             const_assert!($payload_size as usize + 2usize == size_of::<$struct_>());
+
             impl EntryCompatible for $struct_ {
                 fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
                     match entry_id {
@@ -2967,6 +2989,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                     }
                 }
             }
+//            impl HeaderWithTail for $struct_ {
+//                type TailSequenceType = ();
+//            }
         )}
 
         make_accessors! {
@@ -3842,6 +3867,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                     }
                 }
             }
+//            impl HeaderWithTail for $struct_ {
+//                type TailSequenceType = ();
+//            }
         )}
 
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
@@ -3870,6 +3898,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Terminator::is_entry_compatible(entry_id, prefix)
             }
         }
+//        impl HeaderWithTail for PlatformTuningElementRef<'_> {
+//            type TailSequenceType = ();
+//        }
         impl PlatformTuningElementRef<'_> {
             pub fn skip_step(prefix: &[u8]) -> Result<usize> {
                 if prefix.len() >= 2 {
@@ -4015,10 +4046,6 @@ pub mod psp {
         }
     }
 
-    impl HeaderOfSequence for BoardIdGettingMethodCustom {
-        type TailSequenceType = IdApcbMapping;
-    }
-
     impl Default for BoardIdGettingMethodCustom {
         fn default() -> Self {
             Self {
@@ -4049,6 +4076,9 @@ pub mod psp {
             }
         }
     }
+    impl HeaderWithTail for BoardIdGettingMethodCustom {
+        type TailSequenceType = IdApcbMapping;
+    }
 
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
@@ -4057,10 +4087,6 @@ pub mod psp {
             access_method: U16<LittleEndian>, // 3 for BoardIdGettingMethodGpio
             pub bit_locations: [Gpio; 4], // for the board id FIXME Make accessible
         }
-    }
-
-    impl HeaderOfSequence for BoardIdGettingMethodGpio {
-        type TailSequenceType = IdApcbMapping;
     }
 
     impl Default for BoardIdGettingMethodGpio {
@@ -4098,6 +4124,9 @@ pub mod psp {
             }
         }
     }
+    impl HeaderWithTail for BoardIdGettingMethodGpio {
+        type TailSequenceType = IdApcbMapping;
+    }
 
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
@@ -4109,10 +4138,6 @@ pub mod psp {
             board_id_offset: U16<LittleEndian> : pub get u16 : pub set u16, // Byte offset
             board_rev_offset: U16<LittleEndian> : pub get u16 : pub set u16, // Byte offset
         }
-    }
-
-    impl HeaderOfSequence for BoardIdGettingMethodEeprom {
-        type TailSequenceType = IdRevApcbMapping;
     }
 
     impl Default for BoardIdGettingMethodEeprom {
@@ -4152,6 +4177,10 @@ pub mod psp {
         }
     }
 
+    impl HeaderWithTail for BoardIdGettingMethodEeprom {
+        type TailSequenceType = IdRevApcbMapping;
+    }
+
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
@@ -4164,10 +4193,6 @@ pub mod psp {
             smbus_address: U16<LittleEndian> : pub get u16 : pub set u16,
             register_index: U16<LittleEndian> : pub get u16 : pub set u16,
         }
-    }
-
-    impl HeaderOfSequence for BoardIdGettingMethodSmbus {
-        type TailSequenceType = IdApcbMapping;
     }
 
     impl Default for BoardIdGettingMethodSmbus {
@@ -4209,6 +4234,10 @@ pub mod psp {
                 false
             }
         }
+    }
+
+    impl HeaderWithTail for BoardIdGettingMethodSmbus {
+        type TailSequenceType = IdApcbMapping;
     }
 
     #[cfg(test)]
