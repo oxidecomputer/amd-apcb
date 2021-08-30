@@ -21,8 +21,9 @@ pub trait UnionAsBytes {
     fn as_bytes(&self) -> &[u8];
 }
 
-pub trait UnionFromBytes {
-    fn skip_step(prefix: &[u8]) -> Result<usize>;
+pub trait UnionFromBytes<'a>: Sized {
+    fn skip_step(prefix: &[u8]) -> Option<usize>;
+    fn from_bytes(world: &'a [u8]) -> Option<Self>;
 }
 
 /// There are (very few) Struct Entries like this: Header S0 S1 S2 S3.
@@ -3828,16 +3829,65 @@ macro_rules! impl_bitfield_primitive_conversion {
                 || SolderedDownDimmsPerChannel::is_entry_compatible(entry_id, prefix)
             }
         }
-        impl UnionFromBytes for PlatformSpecificOverrideElementRef<'_> {
-            fn skip_step(prefix: &[u8]) -> Result<usize> {
+
+        impl<'a> UnionFromBytes<'a> for PlatformSpecificOverrideElementRef<'a> {
+            fn skip_step(prefix: &[u8]) -> Option<usize> {
                 if prefix.len() >= 2 {
-                    (prefix[1] as usize).checked_add(2).ok_or_else(|| Error::EntryTypeMismatch)
+                    (prefix[1] as usize).checked_add(2)
                 } else {
-                    Err(Error::EntryTypeMismatch)
+                    None
+                }
+            }
+            #[inline]
+            fn from_bytes(world: &'a [u8]) -> Option<Self> {
+                if world.len() >= 2 {
+                    let mut buf = world.clone();
+                    if size_of::<CkeTristateMap>() == Self::skip_step(world)? && world[0] == CkeTristateMap::default().type_ {
+                        Some(Self::CkeTristateMap(take_header_from_collection::<CkeTristateMap>(&mut buf)?))
+                    } else if size_of::<OdtTristateMap>() == Self::skip_step(world)? && world[0] == OdtTristateMap::default().type_ {
+                        Some(Self::OdtTristateMap(take_header_from_collection::<OdtTristateMap>(&mut buf)?))
+                    } else if size_of::<CsTristateMap>() == Self::skip_step(world)? && world[0] == CsTristateMap::default().type_ {
+                        Some(Self::CsTristateMap(take_header_from_collection::<CsTristateMap>(&mut buf)?))
+                    } else if size_of::<MaxDimmsPerChannel>() == Self::skip_step(world)? && world[0] == MaxDimmsPerChannel::default().type_ {
+                        Some(Self::MaxDimmsPerChannel(take_header_from_collection::<MaxDimmsPerChannel>(&mut buf)?))
+                    } else if size_of::<MemclkMap>() == Self::skip_step(world)? && world[0] == MemclkMap::default().type_ {
+                        Some(Self::MemclkMap(take_header_from_collection::<MemclkMap>(&mut buf)?))
+                    } else if size_of::<MaxChannelsPerSocket>() == Self::skip_step(world)? && world[0] == MaxChannelsPerSocket::default().type_ {
+                        Some(Self::MaxChannelsPerSocket(take_header_from_collection::<MaxChannelsPerSocket>(&mut buf)?))
+                    } else if size_of::<MemBusSpeed>() == Self::skip_step(world)? && world[0] == MemBusSpeed::default().type_ {
+                        Some(Self::MemBusSpeed(take_header_from_collection::<MemBusSpeed>(&mut buf)?))
+                    } else if size_of::<MaxCsPerChannel>() == Self::skip_step(world)? && world[0] == MaxCsPerChannel::default().type_ {
+                        Some(Self::MaxCsPerChannel(take_header_from_collection::<MaxCsPerChannel>(&mut buf)?))
+                    } else if size_of::<MemTechnology>() == Self::skip_step(world)? && world[0] == MemTechnology::default().type_ {
+                        Some(Self::MemTechnology(take_header_from_collection::<MemTechnology>(&mut buf)?))
+                    } else if size_of::<WriteLevellingSeedDelay>() == Self::skip_step(world)? && world[0] == WriteLevellingSeedDelay::default().type_ {
+                        Some(Self::WriteLevellingSeedDelay(take_header_from_collection::<WriteLevellingSeedDelay>(&mut buf)?))
+                    } else if size_of::<RxEnSeed>() == Self::skip_step(world)? && world[0] == RxEnSeed::default().type_ {
+                        Some(Self::RxEnSeed(take_header_from_collection::<RxEnSeed>(&mut buf)?))
+                    } else if size_of::<LrDimmNoCs6Cs7Routing>() == Self::skip_step(world)? && world[0] == LrDimmNoCs6Cs7Routing::default().type_ {
+                        Some(Self::LrDimmNoCs6Cs7Routing(take_header_from_collection::<LrDimmNoCs6Cs7Routing>(&mut buf)?))
+                    } else if size_of::<SolderedDownSodimm>() == Self::skip_step(world)? && world[0] == SolderedDownSodimm::default().type_ {
+                        Some(Self::SolderedDownSodimm(take_header_from_collection::<SolderedDownSodimm>(&mut buf)?))
+                    } else if size_of::<LvDimmForce1V5>() == Self::skip_step(world)? && world[0] == LvDimmForce1V5::default().type_ {
+                        Some(Self::LvDimmForce1V5(take_header_from_collection::<LvDimmForce1V5>(&mut buf)?))
+                    } else if size_of::<MemPowerPolicy>() == Self::skip_step(world)? && world[0] == MemPowerPolicy::default().type_ {
+                        Some(Self::MemPowerPolicy(take_header_from_collection::<MemPowerPolicy>(&mut buf)?))
+                    } else if size_of::<MinimumRwDataEyeWidth>() == Self::skip_step(world)? && world[0] == MinimumRwDataEyeWidth::default().type_ {
+                        Some(Self::MinimumRwDataEyeWidth(take_header_from_collection::<MinimumRwDataEyeWidth>(&mut buf)?))
+                    } else if size_of::<MotherboardLayers>() == Self::skip_step(world)? && world[0] == MotherboardLayers::default().type_ {
+                        Some(Self::MotherboardLayers(take_header_from_collection::<MotherboardLayers>(&mut buf)?))
+                    } else if size_of::<CpuFamilyFilter>() == Self::skip_step(world)? && world[0] == CpuFamilyFilter::default().type_ {
+                        Some(Self::CpuFamilyFilter(take_header_from_collection::<CpuFamilyFilter>(&mut buf)?))
+                    } else if size_of::<SolderedDownDimmsPerChannel>() == Self::skip_step(world)? && world[0] == SolderedDownDimmsPerChannel::default().type_ {
+                        Some(Self::SolderedDownDimmsPerChannel(take_header_from_collection::<SolderedDownDimmsPerChannel>(&mut buf)?))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
                 }
             }
         }
-
         // TODO: conditional overrides, actions.
     }
 
@@ -3849,7 +3899,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         use super::super::*;
         use super::UnionAsBytes;
         use crate::struct_accessors::{Getter, Setter, make_accessors};
-        use crate::types::Result;
+        //use crate::types::Result;
 
         macro_rules! impl_EntryCompatible {($struct_:ty, $type_:expr, $total_size:expr) => (
             const_assert!($total_size as usize == size_of::<$struct_>());
@@ -3882,6 +3932,13 @@ macro_rules! impl_bitfield_primitive_conversion {
             type_: U16<LittleEndian>,
         }
         impl_EntryCompatible!(Terminator, 0xfeef, 2);
+        impl Default for Terminator {
+            fn default() -> Self {
+                Self {
+                    type_: 0xfeef.into(),
+                }
+            }
+        }
 
         // Maintainer: Add struct references in here as you add new structs above.  Also adapt the is_entry_compatible impl.
         pub enum PlatformTuningElementRef<'a> {
@@ -3905,20 +3962,33 @@ macro_rules! impl_bitfield_primitive_conversion {
 //        impl HeaderWithTail for PlatformTuningElementRef<'_> {
 //            type TailSequenceType = ();
 //        }
-        impl UnionFromBytes for PlatformTuningElementRef<'_> {
-            fn skip_step(prefix: &[u8]) -> Result<usize> {
+        impl<'a> UnionFromBytes<'a> for PlatformTuningElementRef<'a> {
+            fn skip_step(prefix: &[u8]) -> Option<usize> {
                 if prefix.len() >= 2 {
                     let type_lo = prefix[0];
                     let type_hi = prefix[1];
                     if type_lo == 0xef && type_hi == 0xfe { // no len available
-                        Ok(2)
+                        Some(2)
                     } else if prefix.len() >= 3 {
-                        (prefix[2] as usize).checked_add(2).ok_or_else(|| Error::EntryTypeMismatch)
+                        (prefix[2] as usize).checked_add(2)
                     } else {
-                        Err(Error::EntryTypeMismatch)
+                        None
                     }
                 } else {
-                    Err(Error::EntryTypeMismatch)
+                    None
+                }
+            }
+            #[inline]
+            fn from_bytes(world: &'a [u8]) -> Option<Self> {
+                if world.len() >= 2 {
+                    if size_of::<Terminator>() == Self::skip_step(world)? && world[0] as u16 == Terminator::default().type_.get() & 0xFF && world[1] as u16 == Terminator::default().type_.get() >> 8 {
+                        let mut buf = world.clone();
+                        Some(Self::Terminator(take_header_from_collection::<Terminator>(&mut buf)?))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
                 }
             }
         }
