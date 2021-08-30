@@ -51,7 +51,7 @@ If the entry is a struct entry, you can use something like
     let mut (entry, _tail) = entry.body_as_struct_mut::<memory::ExtVoltageControl>()?;
     entry.dimm_slot_present
 
-to have the entry represented as a Rust struct.  This is only useful for structs whose name doesn't contain "Element" (since those are the ones without a variable-length payload).
+to have the entry represented as a Rust struct (the `_tail` would be the variable-length array at the end of the struct, if applicable).  This is only useful for structs whose name doesn't contain "Element" (since those are the ones without a variable-length payload).
 
 If the entry is a struct array entry (variable-length array), then you can use something like
 
