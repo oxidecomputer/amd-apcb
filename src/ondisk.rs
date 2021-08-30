@@ -21,6 +21,10 @@ pub trait UnionAsBytes {
     fn as_bytes(&self) -> &[u8];
 }
 
+pub trait UnionFromBytes {
+    fn skip_step(prefix: &[u8]) -> Result<usize>;
+}
+
 /// There are (very few) Struct Entries like this: Header S0 S1 S2 S3.
 /// This trait is implemented by structs that are used as a header of a sequence.  Then, the header structs specify (in their impl) what the (struct or enum) type of the sequence will be.
 pub trait HeaderWithTail {
@@ -3824,8 +3828,8 @@ macro_rules! impl_bitfield_primitive_conversion {
                 || SolderedDownDimmsPerChannel::is_entry_compatible(entry_id, prefix)
             }
         }
-        impl PlatformSpecificOverrideElementRef<'_> {
-            pub fn skip_step(prefix: &[u8]) -> Result<usize> {
+        impl UnionFromBytes for PlatformSpecificOverrideElementRef<'_> {
+            fn skip_step(prefix: &[u8]) -> Result<usize> {
                 if prefix.len() >= 2 {
                     (prefix[1] as usize).checked_add(2).ok_or_else(|| Error::EntryTypeMismatch)
                 } else {
@@ -3901,8 +3905,8 @@ macro_rules! impl_bitfield_primitive_conversion {
 //        impl HeaderWithTail for PlatformTuningElementRef<'_> {
 //            type TailSequenceType = ();
 //        }
-        impl PlatformTuningElementRef<'_> {
-            pub fn skip_step(prefix: &[u8]) -> Result<usize> {
+        impl UnionFromBytes for PlatformTuningElementRef<'_> {
+            fn skip_step(prefix: &[u8]) -> Result<usize> {
                 if prefix.len() >= 2 {
                     let type_lo = prefix[0];
                     let type_hi = prefix[1];
