@@ -32,7 +32,7 @@ To insert a new entry:
 
     apcb.insert_entry(EntryId::Psp(PspEntryId::...), 0, 0xFFFF, 0)?;
 
-(Note: There are convenience functions that you can use to insert raw struct data: `insert_struct_entry`, `insert_struct_sequence_as_entry`)
+(Note: There are convenience functions that you can use to insert Struct data: `insert_struct_entry`, `insert_struct_sequence_as_entry`)
 
 To delete an entry:
 
