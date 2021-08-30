@@ -248,7 +248,7 @@ mod tests {
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
-        let console_out_control = entry.body_as_struct_mut::<ConsoleOutControl>().unwrap();
+        let (console_out_control, _) = entry.body_as_struct_mut::<ConsoleOutControl>().unwrap();
         assert!(*console_out_control == ConsoleOutControl::default());
         if console_out_control.abl_console_out_control.enable_console_logging()? {
             console_out_control.abl_console_out_control.set_enable_console_logging(false);
@@ -289,7 +289,7 @@ mod tests {
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
-        let (header, elements) = entry.body_as_headered_struct_array::<BoardIdGettingMethodEeprom>().ok_or_else(|| Error::EntryTypeMismatch)?;
+        let (header, elements) = entry.body_as_struct::<BoardIdGettingMethodEeprom>().ok_or_else(|| Error::EntryTypeMismatch)?;
         assert!(*header == BoardIdGettingMethodEeprom::new(1,2,3,4));
 
         let mut elements = elements.iter();
@@ -307,7 +307,7 @@ mod tests {
         let mut entries = group.entries();
 
         let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
-        let (control, _) = entry.body_as_headered_struct_array::<ExtVoltageControl>().ok_or_else(|| Error::EntryTypeMismatch)?;
+        let (control, _) = entry.body_as_struct::<ExtVoltageControl>().ok_or_else(|| Error::EntryTypeMismatch)?;
         assert!(*control == ExtVoltageControl::default());
         assert!(matches!(entries.next(), None));
 

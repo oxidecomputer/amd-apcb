@@ -221,19 +221,17 @@ impl<'a> EntryMutItem<'a> {
         }
     }
 
-    pub fn body_as_struct_mut<T: 'a + EntryCompatible + Sized + FromBytes + AsBytes>(&mut self) -> Option<&mut T> {
+    pub fn body_as_struct_mut<H: EntryCompatible + Sized + FromBytes + AsBytes + HeaderWithTail>(&mut self) -> Option<(&'_ mut H, StructArrayEntryMutItem<'_, H::TailSequenceType>)> {
         let id = self.id();
         match &mut self.body {
             EntryItemBody::Struct(buf) => {
-                if T::is_entry_compatible(id, buf) {
-                    let mut buf = buf; // FIXME .clone();
-                    if buf.len() == size_of::<T>() {
-                        let result = take_header_from_collection_mut::<T>(&mut buf)?;
-                        assert!(buf.is_empty());
-                        Some(result)
-                    } else {
-                        None
-                    }
+                if H::is_entry_compatible(id, buf) {
+                    let mut buf = &mut buf[..];
+                    let header = take_header_from_collection_mut::<H>(&mut buf)?;
+                    Some((header, StructArrayEntryMutItem {
+                        buf,
+                        _item: PhantomData,
+                    }))
                 } else {
                     None
                 }
@@ -267,28 +265,6 @@ impl<'a> EntryMutItem<'a> {
             },
         }
     }
-
-    pub fn body_as_headered_struct_array_mut<H: EntryCompatible + Sized + FromBytes + AsBytes + HeaderWithTail>(&mut self) -> Option<(&'_ mut H, StructArrayEntryMutItem<'_, H::TailSequenceType>)> {
-        let id = self.id();
-        match &mut self.body {
-            EntryItemBody::Struct(buf) => {
-                if H::is_entry_compatible(id, buf) {
-                    let mut buf = &mut buf[..];
-                    let header = take_header_from_collection_mut::<H>(&mut buf)?;
-                    Some((header, StructArrayEntryMutItem {
-                        buf,
-                        _item: PhantomData,
-                    }))
-                } else {
-                    None
-                }
-            },
-            _ => {
-                None
-            },
-        }
-    }
-
 }
 
 #[derive(Debug)]
@@ -367,19 +343,17 @@ impl<'a> EntryItem<'a> {
         Ok(())
     }
 
-    pub fn body_as_struct<T: EntryCompatible + Sized + FromBytes>(&self) -> Option<&T> {
+    pub fn body_as_struct<H: EntryCompatible + Sized + FromBytes + HeaderWithTail>(&self) -> Option<(&'a H, StructArrayEntryItem<'a, H::TailSequenceType>)> {
         let id = self.id();
-        match self.body {
+        match &self.body {
             EntryItemBody::Struct(buf) => {
-                if T::is_entry_compatible(id, buf) {
-                    let mut buf = buf.clone();
-                    if buf.len() == size_of::<T>() {
-                        let result = take_header_from_collection::<T>(&mut buf)?;
-                        assert!(buf.is_empty());
-                        Some(result)
-                    } else {
-                        None
-                    }
+                if H::is_entry_compatible(id, buf) {
+                    let mut buf = &buf[..];
+                    let header = take_header_from_collection::<H>(&mut buf)?;
+                    Some((header, StructArrayEntryItem {
+                        buf,
+                        _item: PhantomData,
+                    }))
                 } else {
                     None
                 }
@@ -403,28 +377,6 @@ impl<'a> EntryItem<'a> {
                     } else {
                         None
                     }
-                } else {
-                    None
-                }
-            },
-            _ => {
-                None
-            },
-        }
-    }
-
-    /// This function exists solely to support BoardIdGettingMethod*.  Also, it has weird padding at the end that we are ignoring.
-    pub fn body_as_headered_struct_array<H: EntryCompatible + Sized + FromBytes + HeaderWithTail>(&self) -> Option<(&'a H, StructArrayEntryItem<'a, H::TailSequenceType>)> {
-        let id = self.id();
-        match &self.body {
-            EntryItemBody::Struct(buf) => {
-                if H::is_entry_compatible(id, buf) {
-                    let mut buf = &buf[..];
-                    let header = take_header_from_collection::<H>(&mut buf)?;
-                    Some((header, StructArrayEntryItem {
-                        buf,
-                        _item: PhantomData,
-                    }))
                 } else {
                     None
                 }
