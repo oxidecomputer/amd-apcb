@@ -287,7 +287,7 @@ mod tests {
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
-        let (header, elements) = entry.body_as_headered_struct_array::<BoardIdGettingMethodEeprom, IdRevApcbMapping>().ok_or_else(|| Error::EntryTypeMismatch)?;
+        let (header, elements) = entry.body_as_headered_struct_array::<BoardIdGettingMethodEeprom>().ok_or_else(|| Error::EntryTypeMismatch)?;
         assert!(*header == BoardIdGettingMethodEeprom::new(1,2,3,4));
 
         let mut elements = elements.iter();
