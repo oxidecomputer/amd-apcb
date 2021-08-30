@@ -3793,6 +3793,15 @@ macro_rules! impl_bitfield_primitive_conversion {
                 || SolderedDownDimmsPerChannel::is_entry_compatible(entry_id, prefix)
             }
         }
+        impl PlatformSpecificOverrideElementRef<'_> {
+            pub fn skip_step(prefix: &[u8]) -> Result<usize> {
+                if prefix.len() >= 2 {
+                    (prefix[1] as usize).checked_add(2).ok_or_else(|| Error::EntryTypeMismatch)
+                } else {
+                    Err(Error::EntryTypeMismatch)
+                }
+            }
+        }
 
         // TODO: conditional overrides, actions.
     }
@@ -3855,6 +3864,24 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Terminator::is_entry_compatible(entry_id, prefix)
             }
         }
+        impl PlatformTuningElementRef<'_> {
+            pub fn skip_step(prefix: &[u8]) -> Result<usize> {
+                if prefix.len() >= 2 {
+                    let type_lo = prefix[0];
+                    let type_hi = prefix[1];
+                    if type_lo == 0xef && type_hi == 0xfe { // no len available
+                        Ok(2)
+                    } else if prefix.len() >= 3 {
+                        (prefix[2] as usize).checked_add(2).ok_or_else(|| Error::EntryTypeMismatch)
+                    } else {
+                        Err(Error::EntryTypeMismatch)
+                    }
+                } else {
+                    Err(Error::EntryTypeMismatch)
+                }
+            }
+        }
+
     }
 
     #[cfg(test)]
