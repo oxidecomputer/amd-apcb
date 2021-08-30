@@ -8,7 +8,7 @@ use crate::ondisk::V2_HEADER;
 use crate::ondisk::V3_HEADER_EXT;
 use crate::ondisk::ENTRY_ALIGNMENT;
 pub use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, EntryCompatible, UnionAsBytes};
-use crate::ondisk::{take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
+use crate::ondisk::{take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut, HeaderOfSequence};
 use core::convert::TryInto;
 use core::default::Default;
 use core::mem::{size_of};
@@ -345,10 +345,10 @@ impl<'a> Apcb<'a> {
     }
 
     /// Inserts a new entry (see insert_entry), puts HEADER and then PAYLOAD into it.
-    pub fn insert_headered_struct_array_entry<H: EntryCompatible + AsBytes, T: AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, header: &H, payload: &[T]) -> Result<()> {
+    pub fn insert_headered_struct_array_entry<H: EntryCompatible + AsBytes + HeaderOfSequence>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, header: &H, payload: &[H::TailSequenceType]) -> Result<()> {
         let blob = header.as_bytes();
         if H::is_entry_compatible(entry_id, blob) {
-            let payload_size = size_of::<H>().checked_add(size_of::<T>().checked_mul(payload.len()).ok_or_else(|| Error::ArithmeticOverflow)?).ok_or_else(|| Error::ArithmeticOverflow)?;
+            let payload_size = size_of::<H>().checked_add(size_of::<H::TailSequenceType>().checked_mul(payload.len()).ok_or_else(|| Error::ArithmeticOverflow)?).ok_or_else(|| Error::ArithmeticOverflow)?;
             self.internal_insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, payload_size, priority_mask, &mut |body: &mut [u8]| {
                 let mut body = body;
                 let (a, rest) = body.split_at_mut(blob.len());

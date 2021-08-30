@@ -21,6 +21,12 @@ pub trait UnionAsBytes {
     fn as_bytes(&self) -> &[u8];
 }
 
+/// There are (very few) Struct Entries like this: Header S0 S1 S2 S3.
+/// This trait is implemented by structs that are used as a header of a sequence.  Then, the header structs specify (in their impl) what the (struct or enum) type of the sequence will be.
+pub trait HeaderOfSequence {
+    type TailSequenceType: AsBytes + FromBytes;
+}
+
 /// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
 /// If the item cannot be parsed, returns None and does not advance.
 pub fn take_header_from_collection_mut<'a, T: Sized + FromBytes + AsBytes>(buf: &mut &'a mut [u8]) -> Option<&'a mut T> {
@@ -3948,10 +3954,69 @@ pub mod psp {
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
+        pub struct IdApcbMapping {
+            id_and_feature_mask: u8 : pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
+            id_and_feature_value: u8 : pub get u8 : pub set u8,
+            board_instance_index: u8 : pub get u8 : pub set u8,
+        }
+    }
+    impl IdApcbMapping {
+        pub fn new(id_and_feature_mask: u8, id_and_feature_value: u8, board_instance_index: u8) -> Self {
+            Self {
+                id_and_feature_mask,
+                id_and_feature_value,
+                board_instance_index,
+            }
+        }
+        pub fn board_instance_mask(&self) -> Result<u16> {
+            if self.board_instance_index <= 15 {
+                Ok(1u16 << self.board_instance_index)
+            } else {
+                Err(Error::EntryTypeMismatch)
+            }
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[repr(C, packed)]
+        pub struct IdRevApcbMapping {
+            id_and_rev_and_feature_mask: u8 : pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
+            id_and_feature_value: u8 : pub get u8 : pub set u8,
+            rev_and_feature_value: u8 : pub get u8 : pub set u8, // FIXME: or 0xff=NA
+            board_instance_index: u8 : pub get u8 : pub set u8,
+        }
+    }
+
+    impl IdRevApcbMapping {
+        pub fn new(id_and_rev_and_feature_mask: u8, id_and_feature_value: u8, rev_and_feature_value: u8, board_instance_index: u8) -> Self {
+            Self {
+                id_and_rev_and_feature_mask,
+                id_and_feature_value,
+                rev_and_feature_value,
+                board_instance_index,
+            }
+        }
+        pub fn board_instance_mask(&self) -> Result<u16> {
+            if self.board_instance_index <= 15 {
+                Ok(1u16 << self.board_instance_index)
+            } else {
+                Err(Error::EntryTypeMismatch)
+            }
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[repr(C, packed)]
         pub struct BoardIdGettingMethodCustom {
             access_method: U16<LittleEndian>, // 0xF for BoardIdGettingMethodCustom
             feature_mask: U16<LittleEndian> : pub get u16 : pub set u16,
         }
+    }
+
+    impl HeaderOfSequence for BoardIdGettingMethodCustom {
+        type TailSequenceType = IdApcbMapping;
     }
 
     impl Default for BoardIdGettingMethodCustom {
@@ -3994,6 +4059,10 @@ pub mod psp {
         }
     }
 
+    impl HeaderOfSequence for BoardIdGettingMethodGpio {
+        type TailSequenceType = IdApcbMapping;
+    }
+
     impl Default for BoardIdGettingMethodGpio {
         fn default() -> Self {
             Self {
@@ -4033,32 +4102,6 @@ pub mod psp {
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
-        pub struct IdApcbMapping {
-            id_and_feature_mask: u8 : pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
-            id_and_feature_value: u8 : pub get u8 : pub set u8,
-            board_instance_index: u8 : pub get u8 : pub set u8,
-        }
-    }
-    impl IdApcbMapping {
-        pub fn new(id_and_feature_mask: u8, id_and_feature_value: u8, board_instance_index: u8) -> Self {
-            Self {
-                id_and_feature_mask,
-                id_and_feature_value,
-                board_instance_index,
-            }
-        }
-        pub fn board_instance_mask(&self) -> Result<u16> {
-            if self.board_instance_index <= 15 {
-                Ok(1u16 << self.board_instance_index)
-            } else {
-                Err(Error::EntryTypeMismatch)
-            }
-        }
-    }
-
-    make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-        #[repr(C, packed)]
         pub struct BoardIdGettingMethodEeprom {
             access_method: U16<LittleEndian>, // 2 for BoardIdGettingMethodEeprom
             i2c_controller_index: U16<LittleEndian> : pub get u16 : pub set u16,
@@ -4066,6 +4109,10 @@ pub mod psp {
             board_id_offset: U16<LittleEndian> : pub get u16 : pub set u16, // Byte offset
             board_rev_offset: U16<LittleEndian> : pub get u16 : pub set u16, // Byte offset
         }
+    }
+
+    impl HeaderOfSequence for BoardIdGettingMethodEeprom {
+        type TailSequenceType = IdRevApcbMapping;
     }
 
     impl Default for BoardIdGettingMethodEeprom {
@@ -4119,6 +4166,10 @@ pub mod psp {
         }
     }
 
+    impl HeaderOfSequence for BoardIdGettingMethodSmbus {
+        type TailSequenceType = IdApcbMapping;
+    }
+
     impl Default for BoardIdGettingMethodSmbus {
         fn default() -> Self {
             Self {
@@ -4156,35 +4207,6 @@ pub mod psp {
                 }
             } else {
                 false
-            }
-        }
-    }
-
-    make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-        #[repr(C, packed)]
-        pub struct IdRevApcbMapping {
-            id_and_rev_and_feature_mask: u8 : pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
-            id_and_feature_value: u8 : pub get u8 : pub set u8,
-            rev_and_feature_value: u8 : pub get u8 : pub set u8, // FIXME: or 0xff=NA
-            board_instance_index: u8 : pub get u8 : pub set u8,
-        }
-    }
-
-    impl IdRevApcbMapping {
-        pub fn new(id_and_rev_and_feature_mask: u8, id_and_feature_value: u8, rev_and_feature_value: u8, board_instance_index: u8) -> Self {
-            Self {
-                id_and_rev_and_feature_mask,
-                id_and_feature_value,
-                rev_and_feature_value,
-                board_instance_index,
-            }
-        }
-        pub fn board_instance_mask(&self) -> Result<u16> {
-            if self.board_instance_index <= 15 {
-                Ok(1u16 << self.board_instance_index)
-            } else {
-                Err(Error::EntryTypeMismatch)
             }
         }
     }

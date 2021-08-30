@@ -2,7 +2,7 @@ use core::marker::PhantomData;
 use core::mem::size_of;
 use crate::types::{Result, Error, FileSystemError};
 use crate::ondisk::ENTRY_HEADER;
-pub use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut, EntryCompatible, MemoryEntryId};
+use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, EntryCompatible, HeaderOfSequence};
 use num_traits::FromPrimitive;
 use crate::tokens_entry::TokensEntryBodyItem;
 use zerocopy::{AsBytes, FromBytes};
@@ -268,7 +268,7 @@ impl<'a> EntryMutItem<'a> {
         }
     }
 
-    pub fn body_as_headered_struct_array_mut<H: EntryCompatible + Sized + FromBytes + AsBytes, T: Sized + FromBytes + AsBytes>(&mut self) -> Option<(&'_ mut H, StructArrayEntryMutItem<'_, T>)> {
+    pub fn body_as_headered_struct_array_mut<H: EntryCompatible + Sized + FromBytes + AsBytes + HeaderOfSequence>(&mut self) -> Option<(&'_ mut H, StructArrayEntryMutItem<'_, H::TailSequenceType>)> {
         let id = self.id();
         match &mut self.body {
             EntryItemBody::Struct(buf) => {
@@ -414,7 +414,7 @@ impl<'a> EntryItem<'a> {
     }
 
     /// This function exists solely to support BoardIdGettingMethod*.  Also, it has weird padding at the end that we are ignoring.
-    pub fn body_as_headered_struct_array<H: EntryCompatible + Sized + FromBytes, T: Sized + FromBytes>(&self) -> Option<(&'a H, StructArrayEntryItem<'a, T>)> {
+    pub fn body_as_headered_struct_array<H: EntryCompatible + Sized + FromBytes + HeaderOfSequence>(&self) -> Option<(&'a H, StructArrayEntryItem<'a, H::TailSequenceType>)> {
         let id = self.id();
         match &self.body {
             EntryItemBody::Struct(buf) => {
