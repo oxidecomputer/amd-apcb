@@ -4315,7 +4315,7 @@ pub enum TokenId {
     PspStopOnError = 0xe702_4a21, // bool
     PspPsbAutoFuse = 0x2fcd_70c9, // bool
     PspEnableDebugMode = 0xd109_1cd0, // uint8
-    PspSyshubWatchdogTimer = 0xedb5_e4c9, // uint16
+    PspSyshubWatchdogTimerInterval = 0xedb5_e4c9, // uint16; in ms
 
     // Memory Controller
 
