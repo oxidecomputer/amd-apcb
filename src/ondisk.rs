@@ -1411,6 +1411,14 @@ pub mod memory {
         FchMmio = 7,
     }
 
+    #[repr(u32)]
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    pub enum PortSize {
+        Size8Bit = 1,
+        Size16Bit = 2,
+        Size32Bit = 4,
+    }
+
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
@@ -1419,8 +1427,8 @@ pub mod memory {
             _reserved: [u8; 3],
             input_port: U32<LittleEndian> : pub get u32 : pub set u32,
             output_port: U32<LittleEndian> : pub get u32 : pub set u32,
-            input_port_size: U32<LittleEndian> : pub get u32 : pub set u32, // size in Byte; one of [1, 2, 4]
-            output_port_size: U32<LittleEndian> : pub get u32 : pub set u32, // size in Byte; one of [1, 2, 4]
+            input_port_size: U32<LittleEndian> : pub get Result<PortSize> : pub set PortSize,
+            output_port_size: U32<LittleEndian> : pub get Result<PortSize> : pub set PortSize,
             input_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // default: 6 (FCH)
             output_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // default: 6 (FCH)
             clear_acknowledgement: BU8 : pub get Result<bool> : pub set bool,
@@ -2383,8 +2391,8 @@ macro_rules! impl_bitfield_primitive_conversion {
             output_port: U32<LittleEndian> : pub get u32 : pub set u32,
             stop_on_first_fatal_error: BU8: pub get Result<bool> : pub set bool,
             _reserved: [u8; 3],
-            input_port_size: U32<LittleEndian> : pub get u32 : pub set u32, // in Byte; 1|2|4
-            output_port_size: U32<LittleEndian> : pub get u32 : pub set u32, // in Byte; 1|2|4
+            input_port_size: U32<LittleEndian> : pub get Result<PortSize> : pub set PortSize,
+            output_port_size: U32<LittleEndian> : pub get Result<PortSize> : pub set PortSize,
             input_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // PortType; default: 6
             output_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // PortType; default: 6
             clear_acknowledgement: BU8 : pub get Result<bool> : pub set bool,
@@ -2536,8 +2544,8 @@ macro_rules! impl_bitfield_primitive_conversion {
             output_port: U32<LittleEndian> : pub get u32 : pub set u32,
             stop_on_first_fatal_error: BU8 : pub get Result<bool> : pub set bool,
             _reserved: [u8; 3],
-            input_port_size: U32<LittleEndian> : pub get u32 : pub set u32, // in Byte; 1|2|4
-            output_port_size: U32<LittleEndian> : pub get u32 : pub set u32, // in Byte; 1|2|4
+            input_port_size: U32<LittleEndian> : pub get Result<PortSize> : pub set PortSize,
+            output_port_size: U32<LittleEndian> : pub get Result<PortSize> : pub set PortSize,
             input_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // default: 6
             output_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // default: 6
             clear_acknowledgement: BU8 : pub get Result<bool> : pub set bool,
