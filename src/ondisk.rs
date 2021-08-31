@@ -4305,7 +4305,7 @@ pub mod psp {
 pub enum TokenId {
     // ABL
 
-    AblSerialBaudRate = 0xae46_cea4, // uint8; ?
+    AblSerialBaudRate = 0xae46_cea4, // uint8; 0: 2400 baud; 1: 3600 baud; 2: 4800 baud; 3: 7200 baud; 4: 9600 baud; 5: 19200 baud; 6: 38400 baud; 7: 57600 baud; 8: 115200 baud; default: 8
 
     // PSP
 
