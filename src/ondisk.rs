@@ -4303,6 +4303,20 @@ pub mod psp {
 
 #[repr(u32)]
 pub enum TokenId {
+    // ABL
+
+    AblSerialBaudRate = 0xae46_cea4, // uint8; ?
+
+    // PSP
+
+    PspTpPort = 0x0460_abe8, // bool
+    PspErrorDisplay = 0xdc33_ff21, // bool
+    PspEventLogDisplay = 0x0c47_3e1c, // bool
+    PspStopOnError = 0xe702_4a21, // bool
+    PspPsbAutoFuse = 0x2fcd_70c9, // bool
+    PspEnableDebugMode = 0xd109_1cd0, // uint8
+    PspSyshubWatchdogTimer = 0xedb5_e4c9, // uint16
+
     // Memory Controller
 
     MemEnableChipSelectInterleaving = 0x6f81_a115, // bool
@@ -4332,6 +4346,11 @@ pub enum TokenId {
     MemDdrRouteBalancedTee = 0xe68c_363d, // bool; default: false
     CbsMemAddrCmdParityRetryDdr4 = 0xbe8b_ebce, // enum; Enabled=1|Disabled=0|Auto=0xff
     CbsMemAddrCmdParityErrorMaxReplayDdr4 = 0x04e6_a482, // uint8; 0...0x3f
+    CbsMemWriteCrcRetryDdr4 = 0x25fb_6ea6, // bool
+    CbsMemWriteCrcErrorMaxReplayDdr4 = 0x74a0_8bec, // uint8
+    CbsMemControllerWriteCrcEnableDdr4 = 0x9445_1a4b, // bool
+
+    MemRcdParity = 0x647d_7662, // uint8; 0 or 1
     MemUncorrectedEccRetryDdr4 = 0xbff0_0125, // bool; default: true
     MemUrgRefLimit = 0x1333_32df, // uint8 ??; UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first); default: 6
     MemSubUrgRefLowerBound = 0xe756_2ab6, // uint8 ??; UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first); default: 4
@@ -4339,16 +4358,18 @@ pub enum TokenId {
     MemControllerPmuTrainDfeDdr4 = 0x36a4_bb5b, // enum: Enable|Disable|Auto=0xff; default: Auto
     MemTsmeEnable = 0xd1fa_6660, // bool; default: true; See Transparent Secure Memory Encryption in PPR
     MemTrainingHdtCtrl = 0xaf6d_3a6f, // uint8; enum: DetailedDebug|CoarseDebug|StageCompletion|FirmwareCompletionOnly
-    MemMbistDataEyeType = 0x4e2e_dc1b, // uint8 ??; 1D voltage sweep=0|1D timing sweep=1|2D Full Data Eye=2|Worst Case Margin Only=3(default)
+    MemMbistDataEyeType = 0x4e2e_dc1b, // uint8 ??; 0: 1D voltage sweep; 1: 1D timing sweep; 2: 2D Full Data Eye; 3: Worst Case Margin Only (default)
     MemMbistDataEyeSilentExecution = 0x3f74_c7e7, // bool
-    MemHealBistEnable = 0xfba2_3a28, // uint8: 0:disabled|1:test all memory|2:run JEDEC self healing|3:run both
+    MemHealBistEnable = 0xfba2_3a28, // uint8: 0:disabled; 1:test all memory; 2:run JEDEC self healing; 3:run both
     MemSelfHealBistEnable = 0x2c23_924c, // uint8|bool
     MemSelfHealBistTimeout = 0xbe75_97d4, // uint32; in ms
     MemPmuBistTestSelect = 0x7034_fbfb, // uint8
     MemHealTestSelect = 0x5908_2cf2, // uint8; enum: 0:default|1:no vendor tests|2:all vendor tests regardless of vendor
     MemHealPprType = 0x5418_1a61, // uint8: 0:soft repair|1:hard repair|2:no repair; default: 0
     MemHealMaxBankFails = 0x632e_55d8, // uint8; per bank; int; default: 3
-    MemEccSyncFlood = 0x88bd40c2, // bool
+    MemEccSyncFlood = 0x88bd_40c2, // bool
+    MemRestoreControl = 0xfedb_01f8, // bool
+    MemRestoreValidDays = 0x6bd7_0482, // uint32
 
     // Ccx
 
@@ -4361,6 +4382,7 @@ pub enum TokenId {
     FchSmbusSpeed = 0x2447_3329, // uint8; x in (66 MHz/(4 * x))
     FchRom3BaseHigh = 0x3e7d_5274, // uint32
     FchGppClkMap = 0xcd7e_6983, // u16; bitfield; GppAllClkForceOn; Auto; S0Gpp0ClkOff; ...; S1Gpp4ClkOff
+    FchConsoleOutEnable = 0xddb7_59da, // uint8
     FchConsoleOutSuperIoType = 0x5c8d_6e82, // uint8; type for init; enum: None|Type1|Type2; so it's rather an init mode
 
     // Df
@@ -4368,6 +4390,32 @@ pub enum TokenId {
     DfGroupDPlatform = 0x6831_8493, // bool; default: false; [F17M30] needs it to be true
     DfExtIpSyncFloodPropagation = 0xfffe_0b07, // uint8; 0: allow syncflood propagation, 1: disable syncflood propagation; 0xff: auto; default: 0
     DfSyncFloodPropagation = 0x4963_9134, // uint8; 0: allow syncflood propagation; 1: disable syncflood propagation; 0xff: auto; default: 0
+    DfMemInterleaving = 0xce01_87ef, // uint8; 0:none; 1:channel; 2:die; 3: socket; 7: auto
+    DfMemInterleavingSize = 0x2606_c42e, // uint8; 0: 256 byte; 1: 512 byte; 2: 1024 byte; 3: 2048 byte; 4: 4096 byte; 7: auto
+    DfDramNumaPerSocket = 0x2cf3_dac9, // uint8; 0:no NUMA nodes; 1:1 NUMA node per socket; 2:2 NUMA nodes per socket; 3:4 NUMA nodes per socket; 7: Auto
+    DfProbeFilter = 0x6597_c573, // uint8; 0:disable; 1:enable; 3:auto
+    DfMemClear = 0x9d17_7e57, // uint8; 0:disable; 1:enable; 3:auto
+    DfGmiEncrypt = 0x08a4_5920, // uint8; 0:disable; 1:enable; 3:auto
+    DfXgmiEncrypt = 0x6bd3_2f1c, // uint8; 0:disable; 1:enable; 3:auto
+    DfSaveRestoreMemEncrypt = 0x7b3d_1f75, // uint8; 0:disable; 1:enable; 3:auto
+    DfBottomIo = 0x8fb9_8529, // uint8
+    DfPciMmioSize = 0x3d9b_7d7b, // uint32
+    DfSysStorageAtTopOfMem = 0x249e_08d5, // uint8; 0:mem distributed; 1:mem consolidated; 2: 1st mem consolidated; 0xff: auto
+    DfRemapAt1TiB = 0x35ee_96f3, // uint8; 0:false; 1:true; 0xff:auto; iommu
+    Df3Xgmi2LinkConfig = 0xb0b6_ad3a, // uint8; 0: 2link; 1: 3link; 2: 4link
+    Df3LinkMaxXgmiSpeed = 0x53ba_449b, // uint8; enum
+    Df4LinkMaxXgmiSpeed = 0x3f30_7cb3, // uint8; enum
+    DfXgmiTxEqMode = 0xade7_9549, // uint8; 0: disabled; 1: enabled by lane; 2: enabled by link; 3: enabled by link and rx vetting; 0xff: auto
+    DfCakeCrcThresholdBounds = 0x9258_cf45, // uint32
+    DfInvertDramMap = 0x6574_b2c0, // uint8
+
+    // Dxio
+
+    DxioVgaApiEnable = 0xbd5a_a3c6, // bool
+    DxioPhyParamVga = 0xde09_c43b, // uint32
+    DxioPhyParamPole = 0xb189_447e, // uint32
+    DxioPhyParamDc = 0x2066_7c30, // uint32
+    DxioPhyParamIqofc = 0x7e60_69c5, // int32
 
     // Misc
 
@@ -4375,6 +4423,8 @@ pub enum TokenId {
     SecondPcieLinkSpeed = 0x8723_750f, // uint8; 0:keep default; 1:gen1; 2: gen2
     SecondPcieLinkMaxPayload = 0xe02d_f04b, // uint8; 0:128 byte; 1:256 byte; 2:512 byte; 3:1024 byte; 4: 2048 byte; 5: 4096 byte; 0xff: hardware default
     PerformanceTracing = 0xf27a_10f0, // bool; default: false
+    DisplayPmuTrainingResults = 0x9e36_a9d4, // bool
+    WorkloadProfile = 0x22f4_299f, // uint8; 0...18
 }
 
 #[cfg(test)]
