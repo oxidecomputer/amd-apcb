@@ -1136,16 +1136,102 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct DimmInfoSmbusElement {
-            dimm_slot_present: BU8 : pub get Result<bool> : pub set bool,
+            dimm_slot_present: BU8 : pub get Result<bool>, // if false, it's soldered-down and not a slot
             socket_id: u8 : pub get u8 : pub set u8,
             channel_id: u8 : pub get u8 : pub set u8,
             dimm_id: u8 : pub get u8 : pub set u8,
-            dimm_smbus_address: u8 : pub get u8 : pub set u8,
-            i2c_mux_address: u8 : pub get u8 : pub set u8,
-            mux_control_address: u8 : pub get u8 : pub set u8,
-            mux_channel: u8 : pub get u8 : pub set u8,
+            // For soldered-down DIMMs, SPD data is hardcoded in APCB (in entry MemoryEntryId::SpdInfo), and DIMM_SMBUS_ADDRESS here is the index in the structure for SpdInfo.
+            dimm_smbus_address: u8,
+            i2c_mux_address: u8,
+            mux_control_address: u8,
+            mux_channel: u8,
         }
     }
+    impl DimmInfoSmbusElement {
+        pub fn i2c_mux_address(&self) -> Option<u8> {
+            match self.i2c_mux_address {
+                0xFF => None,
+                x => Some(x),
+            }
+        }
+        pub fn set_i2c_mux_address(&mut self, value: Option<u8>) -> Result<()> {
+            self.i2c_mux_address = match value {
+                None => 0xFF,
+                Some(0xFF) => {
+                    return Err(Error::EntryTypeMismatch);
+                },
+                Some(x) => x,
+             };
+             Ok(())
+        }
+        pub fn dimm_smbus_address(&self) -> Option<u8> {
+             match self.dimm_slot_present {
+                 BU8(0) => None,
+                 _ => Some(self.dimm_smbus_address),
+             }
+        }
+        pub fn set_dimm_smbus_address(&mut self, value: u8) -> Result<()> {
+             match self.dimm_slot_present {
+                 BU8(0) => Err(Error::EntryTypeMismatch),
+                 _ => {
+                     self.dimm_smbus_address = value;
+                     Ok(())
+                 },
+             }
+        }
+        pub fn dimm_spd_info_index(&self) -> Option<u8> {
+             match self.dimm_slot_present {
+                 BU8(0) => {
+                     Some(self.dimm_smbus_address)
+                 },
+                 _ => {
+                     None
+                 },
+             }
+        }
+        pub fn set_dimm_spd_info_index(&mut self, value: u8) -> Result<()> {
+             self.dimm_smbus_address = match self.dimm_slot_present {
+                 BU8(0) => value,
+                 _ => {
+                     return Err(Error::EntryTypeMismatch);
+                 },
+             };
+             Ok(())
+        }
+        pub fn mux_control_address(&self) -> Option<u8> {
+            match self.mux_control_address {
+                0xFF => None,
+                x => Some(x),
+            }
+        }
+        pub fn set_mux_control_address(&mut self, value: Option<u8>) -> Result<()> {
+            self.mux_control_address = match value {
+                None => 0xFF,
+                Some(0xFF) => {
+                    return Err(Error::EntryTypeMismatch);
+                },
+                Some(x) => x,
+             };
+             Ok(())
+        }
+        pub fn mux_channel(&self) -> Option<u8> {
+            match self.mux_channel {
+                0xFF => None,
+                x => Some(x),
+            }
+        }
+        pub fn set_mux_channel(&mut self, value: Option<u8>) -> Result<()> {
+            self.mux_channel = match value {
+                None => 0xFF,
+                Some(0xFF) => {
+                    return Err(Error::EntryTypeMismatch);
+                },
+                Some(x) => x,
+             };
+             Ok(())
+        }
+    }
+
     // An union of one variant.
     impl UnionAsBytes for DimmInfoSmbusElement {
         #[inline]
@@ -1166,17 +1252,37 @@ pub mod memory {
                 mux_channel: 0,
             }
         }
-        pub fn new(socket_id: u8, channel_id: u8, dimm_id: u8, dimm_smbus_address: u8, i2c_mux_address: u8, mux_control_address: u8, mux_channel: u8) -> Self {
-            Self {
+        pub fn new_slot(socket_id: u8, channel_id: u8, dimm_id: u8, dimm_smbus_address: u8, i2c_mux_address: Option<u8>, mux_control_address: Option<u8>, mux_channel: Option<u8>) -> Result<Self> {
+            let mut result = Self {
                 dimm_slot_present: BU8(1),
                 socket_id,
                 channel_id,
                 dimm_id,
                 dimm_smbus_address,
-                i2c_mux_address,
-                mux_control_address,
-                mux_channel,
-            }
+                i2c_mux_address: 0xFF,
+                mux_control_address: 0xFF,
+                mux_channel: 0xFF,
+            };
+            result.set_i2c_mux_address(i2c_mux_address)?;
+            result.set_mux_control_address(mux_control_address)?;
+            result.set_mux_channel(mux_channel)?;
+            Ok(result)
+        }
+        pub fn new_soldered_down(socket_id: u8, channel_id: u8, dimm_id: u8, dimm_spd_info_index: u8, i2c_mux_address: Option<u8>, mux_control_address: Option<u8>, mux_channel: Option<u8>) -> Result<Self> {
+            let mut result = Self {
+                dimm_slot_present: BU8(0),
+                socket_id,
+                channel_id,
+                dimm_id,
+                dimm_smbus_address: dimm_spd_info_index,
+                i2c_mux_address: 0xFF,
+                mux_control_address: 0xFF,
+                mux_channel: 0xFF,
+            };
+            result.set_i2c_mux_address(i2c_mux_address)?;
+            result.set_mux_control_address(mux_control_address)?;
+            result.set_mux_channel(mux_channel)?;
+            Ok(result)
         }
     }
 
@@ -4027,18 +4133,19 @@ macro_rules! impl_bitfield_primitive_conversion {
 
         #[test]
         fn test_memory_struct_accessors() {
-            let dimm_info = DimmInfoSmbusElement::new(1, 2, 3, 4, 5, 6, 7);
+            let dimm_info = DimmInfoSmbusElement::new_slot(1, 2, 3, 4, Some(5), Some(6), Some(7)).unwrap();
             assert!(dimm_info.dimm_slot_present().unwrap());
             assert!(dimm_info.socket_id() == 1);
             assert!(dimm_info.channel_id() == 2);
             assert!(dimm_info.dimm_id() == 3);
-            assert!(dimm_info.dimm_smbus_address() == 4);
-            assert!(dimm_info.i2c_mux_address() == 5);
-            assert!(dimm_info.mux_control_address() == 6);
-            assert!(dimm_info.mux_channel() == 7);
-            let mut dimm_info = DimmInfoSmbusElement::new(1, 2, 3, 4, 5, 6, 7);
-            dimm_info.set_dimm_slot_present(false);
-            assert!(!dimm_info.dimm_slot_present().unwrap());
+            assert!(dimm_info.dimm_smbus_address() == Some(4));
+            assert!(dimm_info.i2c_mux_address() == Some(5));
+            assert!(dimm_info.mux_control_address() == Some(6));
+            assert!(dimm_info.mux_channel() == Some(7));
+            let dimm_info = DimmInfoSmbusElement::new_slot(1, 2, 3, 4, Some(5), Some(6), Some(7)).unwrap();
+            assert!(dimm_info.dimm_slot_present().unwrap());
+            let dimm_info_2 = DimmInfoSmbusElement::new_soldered_down(1, 2, 3, 4, Some(5), Some(6), Some(7)).unwrap();
+            assert!(!dimm_info_2.dimm_slot_present().unwrap());
 
             let mut abl_console_out_control = AblConsoleOutControl::default();
             abl_console_out_control.set_enable_mem_setreg_logging(true);

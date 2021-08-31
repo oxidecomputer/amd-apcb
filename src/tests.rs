@@ -323,8 +323,8 @@ mod tests {
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
         let items = [
-            DimmInfoSmbusElement::new(2, 3, 4, 5, 6, 7, 8),
-            DimmInfoSmbusElement::new(10, 11, 12, 13, 14, 15, 16),
+            DimmInfoSmbusElement::new_slot(2, 3, 4, 5, Some(6), Some(7), Some(8)).unwrap(),
+            DimmInfoSmbusElement::new_slot(10, 11, 12, 13, Some(14), Some(15), Some(16)).unwrap(),
         ];
         apcb.insert_struct_sequence_as_entry(EntryId::Memory(MemoryEntryId::DimmInfoSmbus), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &items)?;
 
@@ -367,8 +367,8 @@ mod tests {
         let elements = entry.body_as_struct_array::<DimmInfoSmbusElement>().ok_or_else(|| Error::EntryTypeMismatch)?;
         let mut elements = elements.iter();
 
-        assert_eq!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)?, DimmInfoSmbusElement::new(2, 3, 4, 5, 6, 7, 8));
-        assert_eq!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)?, DimmInfoSmbusElement::new(10, 11, 12, 13, 14, 15, 16));
+        assert_eq!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)?, DimmInfoSmbusElement::new_slot(2, 3, 4, 5, Some(6), Some(7), Some(8)).unwrap());
+        assert_eq!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)?, DimmInfoSmbusElement::new_slot(10, 11, 12, 13, Some(14), Some(15), Some(16)).unwrap());
         assert!(matches!(elements.next(), None));
 
         assert!(matches!(entries.next(), None));
@@ -385,8 +385,8 @@ mod tests {
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
         let items = [
-            DimmInfoSmbusElement::new(2, 3, 4, 5, 6, 7, 8),
-            DimmInfoSmbusElement::new(10, 11, 12, 13, 14, 15, 16),
+            DimmInfoSmbusElement::new_slot(2, 3, 4, 5, Some(6), Some(7), Some(8)).unwrap(),
+            DimmInfoSmbusElement::new_slot(10, 11, 12, 13, Some(14), Some(15), Some(16)).unwrap(),
         ];
         match apcb.insert_struct_sequence_as_entry(EntryId::Memory(MemoryEntryId::ConsoleOutControl), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &items) {
             Err(Error::EntryTypeMismatch) => {
