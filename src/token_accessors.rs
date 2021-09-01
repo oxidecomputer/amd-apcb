@@ -7,14 +7,7 @@ use crate::tokens_entry::TokensEntryBodyItem;
 use crate::struct_accessors::Getter;
 
 pub struct TokensMut<'a> {
-    pub(crate) body: TokensEntryBodyItem<&'a mut [u8]>,
-}
-impl<'a> TokensMut<'a> {
-    pub(crate) fn new(body: TokensEntryBodyItem<&'a mut [u8]>) -> Self {
-        Self {
-            body,
-        }
-    }
+    pub(crate) u8: TokensEntryBodyItem<&'a mut [u8]>,
 }
 pub struct Tokens<'a> {
     body: TokensEntryBodyItem<&'a [u8]>,
@@ -32,7 +25,7 @@ macro_rules! make_token_accessors {(
         $(
             $(#[$field_meta:meta])*
             $field_vis:vis
-            $field_name:ident($field_ty:ty, default $field_default_value:expr, id $field_key:expr) $(: $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
+            $field_name:ident($field_ty:ident, default $field_default_value:expr, id $field_key:expr) $(: $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
         ),* $(,)?
     }
 ) => (
@@ -55,7 +48,7 @@ macro_rules! make_token_accessors {(
             fn $field_name (self: &'_ Self)
                 -> $field_user_ty
             {
-                match self.body.token($field_key) {
+                match self.$field_ty.token($field_key) {
                     None => {
                         ($field_default_value as u32).get1()
                     },
@@ -70,7 +63,7 @@ macro_rules! make_token_accessors {(
                   #[inline]
                   $setter_vis
                   fn [<set_ $field_name>] (self: &'_ mut Self, value: $field_setter_user_ty) -> Result<()> {
-                      let mut entry = self.body.token_mut($field_key).ok_or_else(|| Error::TokenNotFound)?;
+                      let mut entry = self.$field_ty.token_mut($field_key).ok_or_else(|| Error::TokenNotFound)?;
                       entry.set_value(value.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?)
                   }
               }

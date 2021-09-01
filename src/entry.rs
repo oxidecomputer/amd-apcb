@@ -279,7 +279,9 @@ impl<'a> EntryMutItem<'a> {
     pub(crate) fn body_tokens_mut(self) -> Option<TokensMut<'a>> {
         match self.body {
             EntryItemBody::<_>::Tokens(a) => {
-                Some(TokensMut::new(a))
+                Some(TokensMut {
+                    u8: a
+                })
             },
             _ => None,
         }
