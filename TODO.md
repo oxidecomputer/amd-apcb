@@ -8,7 +8,7 @@
 * DdrPostPackageRepairElement ?!  Debug output looks weird.  Name weird.
   I think the getters should check `valid` first.  Maybe that means we need to do our own thing instead of bitfield.
 * Convert board_instance_mask to bitfield?!
-* Make "weird" struct array iterator
+* Make "weird" struct array iterator (sequence of different types iterator)
 * The Token for post package repair enable is DISABLED by default!
 * IdRevApcbMapping
   * rev_and_feature_value: 0xff for NA
