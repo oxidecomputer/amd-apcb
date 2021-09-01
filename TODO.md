@@ -1,5 +1,6 @@
 # Features
 
+* AMD# 55483 6.3 AGESA Boot Loader Debug
 * Sanity-check "new" fns that exist
 * Add "new" fn for the others, too?
 * AMD# 55483 4.1.7 ABL Error Reporting Configuration Items
@@ -37,6 +38,7 @@
 * Allow/implement insert_headered_struct_array_entry with padding?!  Check what AMD says here
 * Also make_accessors! the ENTRY_HEADER, GROUP_HEADER, V2_HEADER and so on
 * Maybe remove PartialEq from structs
+* Maybe remove "EventControl" id
 
 # Security
 
@@ -58,6 +60,7 @@
 * insert_token: "&" instead of "%"
 * Check error handling crate "failure" or "anyhow". `#[source]`
 * Entry alignment relative to containing group instead??
+* AMD# 55483 4.1.3 SPD_Info DIMM_INFO_ARRAY does not seem to exist
 
 # Alternate Bitfield implementations
 
