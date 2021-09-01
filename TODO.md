@@ -1,5 +1,18 @@
 # Features
 
+* Sanity-check fn new
+* Make ErrorOutEventControl (they call it ErrorReportingControl) defaults like AMD docs say
+  * .input port = 0
+  * .input_port_size = 8 bit
+  * .output_port_size = 32 bit
+  * .output_delay = 15000
+  * .stop_on_first_fatal_error = true
+  * .clear_acknowledgement = true
+  * .enable_heart_beat = true
+* Make PortSize a enum for 8, 16, 32 bit.
+* AMD# 55483 4.1.7 ABL Error Reporting Configuration Items
+* AMD# 55483 PTO 4.1.5.6 UMC Category
+* TX EQ struct; bitfield for sockets; bitfield for dies; bitfield for lanes; lane data (variable-length body!)
 * body_as_struct_sequence; body_as_struct_array: Where is the check whether it is EntryCompatible ?
 * DdrPostPackageRepairElement ?!  Debug output looks weird.  Name weird.
   I think the getters should check `valid` first.  Maybe that means we need to do our own thing instead of bitfield.
