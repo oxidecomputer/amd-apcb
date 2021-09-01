@@ -414,14 +414,14 @@ mod tests {
         // pub(crate) fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         apcb.insert_token(EntryId::Token(TokenEntryId::Bool), 0, 1, 0x014FBF20, 1)?;
 
-        let apcb = Apcb::load(&mut buffer[0..]).unwrap();
-        let mut groups = apcb.groups();
+        let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
+        let mut groups = apcb.groups_mut();
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let mut group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Df);
         assert!(group.signature() == *b"DFG ");
 
-        let mut entries = group.entries();
+        let mut entries = group.entries_mut();
 
         let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Df(DfEntryId::SlinkConfig));
@@ -442,17 +442,17 @@ mod tests {
             assert!(false);
         }
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let mut group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Token);
         assert!(group.signature() == *b"TOKN");
 
-        let mut entries = group.entries();
+        let mut entries = group.entries_mut();
 
         let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Token(TokenEntryId::Bool));
 
         match entry.body {
-            EntryItemBody::Tokens(tokens) => {
+            EntryItemBody::Tokens(ref tokens) => {
                  let mut tokens = tokens.iter();
 
                  let token = tokens.next().ok_or_else(|| Error::TokenNotFound)?;
@@ -463,6 +463,8 @@ mod tests {
             },
             _ => panic!("no tokens"),
         }
+        let tokens = entry.body_tokens_mut().ok_or_else(|| Error::TokenNotFound)?;
+        tokens.AblSerialBaudRate();
 
         assert!(matches!(entries.next(), None));
 

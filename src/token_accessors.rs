@@ -4,9 +4,17 @@ use num_traits::{FromPrimitive, ToPrimitive};
 use crate::types::Error;
 use crate::types::Result;
 use crate::tokens_entry::TokensEntryBodyItem;
+use crate::struct_accessors::Getter;
 
 pub struct TokensMut<'a> {
-    body: TokensEntryBodyItem<&'a mut [u8]>,
+    pub(crate) body: TokensEntryBodyItem<&'a mut [u8]>,
+}
+impl<'a> TokensMut<'a> {
+    pub(crate) fn new(body: TokensEntryBodyItem<&'a mut [u8]>) -> Self {
+        Self {
+            body,
+        }
+    }
 }
 pub struct Tokens<'a> {
     body: TokensEntryBodyItem<&'a [u8]>,
@@ -47,22 +55,23 @@ macro_rules! make_token_accessors {(
             fn $field_name (self: &'_ Self)
                 -> $field_user_ty
             {
-                let entry = match self.body.token($field_key) {
+                match self.body.token($field_key) {
                     None => {
-                        return T::from_u32($field_default_value);
+                        ($field_default_value as u32).get1()
                     },
-                    x => x,
-                };
-                assert!(entry.id() == token_id);
-                T::from_u32(entry.value())
+                    Some(ref entry) => {
+                        assert!(entry.id() == $field_key);
+                        entry.value().get1()
+                    },
+                }
             }
             $(
               paste! {
                   #[inline]
                   $setter_vis
                   fn [<set_ $field_name>] (self: &'_ mut Self, value: $field_setter_user_ty) -> Result<()> {
-                      let entry = self.body.token(token_id).ok_or_else(|| Error::TokenNotFound)?;
-                      entry.set_value(value.to_u32())
+                      let mut entry = self.body.token_mut($field_key).ok_or_else(|| Error::TokenNotFound)?;
+                      entry.set_value(value.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?)
                   }
               }
             )?

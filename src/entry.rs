@@ -5,6 +5,7 @@ use crate::ondisk::ENTRY_HEADER;
 use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, EntryCompatible, HeaderWithTail};
 use num_traits::FromPrimitive;
 use crate::tokens_entry::{TokensEntryBodyItem, TokensEntryItem, TokensEntryItemMut};
+use crate::token_accessors::{TokensMut};
 use zerocopy::{AsBytes, FromBytes};
 
 /* Note: high-level interface is:
@@ -270,6 +271,15 @@ impl<'a> EntryMutItem<'a> {
         match &mut self.body {
             EntryItemBody::<_>::Tokens(a) => {
                 a.token_mut(token_id)
+            },
+            _ => None,
+        }
+    }
+    // Note: This is not public because it could be that we need to insert_entry first.
+    pub(crate) fn body_tokens_mut(self) -> Option<TokensMut<'a>> {
+        match self.body {
+            EntryItemBody::<_>::Tokens(a) => {
+                Some(TokensMut::new(a))
             },
             _ => None,
         }

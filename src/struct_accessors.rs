@@ -44,6 +44,12 @@ impl<T: FromPrimitive> Getter<Result<T>> for U32<LittleEndian> {
         T::from_u32(self.get()).ok_or_else(|| Error::EntryTypeMismatch)
     }
 }
+// For Token
+impl<T: FromPrimitive> Getter<Result<T>> for u32 {
+    fn get1(self) -> Result<T> {
+        T::from_u32(self).ok_or_else(|| Error::EntryTypeMismatch)
+    }
+}
 #[derive(Debug, PartialEq, FromBytes, AsBytes, Clone, Copy)]
 #[repr(C, packed)]
 pub(crate) struct BU8(pub(crate) u8);
