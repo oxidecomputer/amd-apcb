@@ -1,7 +1,6 @@
 # Features
 
 * Sanity-check fn new
-* Make PortSize a enum for 8, 16, 32 bit.
 * AMD# 55483 4.1.7 ABL Error Reporting Configuration Items
 * AMD# 55483 PTO 4.1.5.6 UMC Category
 * TX EQ struct; bitfield for sockets; bitfield for dies; bitfield for lanes; lane data (variable-length body!)
