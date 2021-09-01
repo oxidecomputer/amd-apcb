@@ -385,7 +385,7 @@ pub enum MemoryEntryId {
 
     ConsoleOutControl,
     EventControl,
-    ErrorOutEventControl,
+    ErrorOutControl,
     ExtVoltageControl,
 
     PsLrdimmDdr4OdtPat,
@@ -441,7 +441,7 @@ impl ToPrimitive for MemoryEntryId {
 
             Self::ConsoleOutControl => 0x50,
             Self::EventControl => 0x51,
-            Self::ErrorOutEventControl => 0x52,
+            Self::ErrorOutControl => 0x52,
             Self::ExtVoltageControl => 0x53,
 
             Self::PsLrdimmDdr4OdtPat => 0x54,
@@ -503,7 +503,7 @@ impl FromPrimitive for MemoryEntryId {
 
                 0x50 => Self::ConsoleOutControl,
                 0x51 => Self::EventControl,
-                0x52 => Self::ErrorOutEventControl,
+                0x52 => Self::ErrorOutControl,
                 0x53 => Self::ExtVoltageControl,
 
                 0x54 => Self::PsLrdimmDdr4OdtPat,
@@ -2270,7 +2270,7 @@ macro_rules! impl_bitfield_primitive_conversion {
     bitfield! {
         #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy, PartialEq)]
         #[repr(C, packed)]
-        pub struct ErrorOutEventControlBeepCodePeakAttr(U32<LittleEndian>);
+        pub struct ErrorOutControlBeepCodePeakAttr(U32<LittleEndian>);
         no default BitRange;
         impl Debug;
         u16;
@@ -2279,7 +2279,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         pub peak_count, set_peak_count: 4, 0;
     }
 
-    impl BitRange<u16> for ErrorOutEventControlBeepCodePeakAttr {
+    impl BitRange<u16> for ErrorOutControlBeepCodePeakAttr {
         fn bit_range(&self, msb: usize, lsb: usize) -> u16 {
             assert!(lsb <= msb);
             let width = msb - lsb + 1;
@@ -2300,7 +2300,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    impl Bit for ErrorOutEventControlBeepCodePeakAttr {
+    impl Bit for ErrorOutControlBeepCodePeakAttr {
         fn bit(&self, index: usize) -> bool {
             match self.0.get() & (1u32 << index) {
                 0 => false,
@@ -2319,7 +2319,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    impl ErrorOutEventControlBeepCodePeakAttr {
+    impl ErrorOutControlBeepCodePeakAttr {
         /// PULSE_WIDTH: in units of 0.1 s
         pub fn new(peak_count: u16, pulse_width: u16, repeat_count: u16) -> Option<Self> {
             let mut result = Self(0.into());
@@ -2344,7 +2344,7 @@ macro_rules! impl_bitfield_primitive_conversion {
 
     #[repr(u8)]
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
-    pub enum ErrorOutEventControlBeepCodeErrorType {
+    pub enum ErrorOutControlBeepCodeErrorType {
         General = 3,
         Memory = 4,
         Df = 5,
@@ -2356,20 +2356,20 @@ macro_rules! impl_bitfield_primitive_conversion {
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
-        pub struct ErrorOutEventControlBeepCode {
+        pub struct ErrorOutControlBeepCode {
             error_type: U16<LittleEndian>,
             peak_map: U16<LittleEndian> : pub get u16 : pub set u16,
-            pub peak_attr: ErrorOutEventControlBeepCodePeakAttr,
+            pub peak_attr: ErrorOutControlBeepCodePeakAttr,
         }
     }
-    impl ErrorOutEventControlBeepCode {
-        pub fn error_type(&self) -> Result<ErrorOutEventControlBeepCodeErrorType> {
-            Ok(ErrorOutEventControlBeepCodeErrorType::from_u16((self.error_type.get() & 0xF000) >> 12).ok_or_else(|| Error::EntryTypeMismatch)?)
+    impl ErrorOutControlBeepCode {
+        pub fn error_type(&self) -> Result<ErrorOutControlBeepCodeErrorType> {
+            Ok(ErrorOutControlBeepCodeErrorType::from_u16((self.error_type.get() & 0xF000) >> 12).ok_or_else(|| Error::EntryTypeMismatch)?)
         }
-        pub fn set_error_type(&mut self, value: ErrorOutEventControlBeepCodeErrorType) {
+        pub fn set_error_type(&mut self, value: ErrorOutControlBeepCodeErrorType) {
             self.error_type.set((self.error_type.get() & 0x0FFF) | (value.to_u16().unwrap() << 12));
         }
-        pub fn new(error_type: ErrorOutEventControlBeepCodeErrorType, peak_map: u16, peak_attr: ErrorOutEventControlBeepCodePeakAttr) -> Self {
+        pub fn new(error_type: ErrorOutControlBeepCodeErrorType, peak_map: u16, peak_attr: ErrorOutControlBeepCodePeakAttr) -> Self {
             Self {
                 error_type: ((error_type.to_u16().unwrap() << 12) | 0xFFF).into(),
                 peak_map: peak_map.into(),
@@ -2378,7 +2378,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    macro_rules! define_ErrorOutEventControl {($struct_name:ident, $padding_before_gpio:expr, $padding_after_gpio: expr) => (
+    macro_rules! define_ErrorOutControl {($struct_name:ident, $padding_before_gpio:expr, $padding_after_gpio: expr) => (
 
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
@@ -2401,7 +2401,7 @@ macro_rules! impl_bitfield_primitive_conversion {
             _reserved_before_gpio: [u8; $padding_before_gpio],
             error_reporting_gpio: Gpio,
             _reserved_after_gpio: [u8; $padding_after_gpio],
-            pub beep_code_table: [ErrorOutEventControlBeepCode; 8], // FIXME: Make accessible
+            pub beep_code_table: [ErrorOutControlBeepCode; 8], // FIXME: Make accessible
             enable_heart_beat: BU8 : pub get Result<bool> : pub set bool,
             enable_power_good_gpio: BU8,
             power_good_gpio: Gpio,
@@ -2453,7 +2453,7 @@ macro_rules! impl_bitfield_primitive_conversion {
     impl EntryCompatible for $struct_name {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
-                EntryId::Memory(MemoryEntryId::ErrorOutEventControl) => true,
+                EntryId::Memory(MemoryEntryId::ErrorOutControl) => true,
                 _ => false,
             }
         }
@@ -2484,45 +2484,45 @@ macro_rules! impl_bitfield_primitive_conversion {
                 error_reporting_gpio: Gpio::new(0, 0, 0), // probably invalid
                 _reserved_after_gpio: [0; $padding_after_gpio],
                 beep_code_table: [
-                    ErrorOutEventControlBeepCode {
+                    ErrorOutControlBeepCode {
                         error_type: U16::<LittleEndian>::new(0x3fff),
                         peak_map: 1.into(),
-                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(8, 0, 0).unwrap(),
+                        peak_attr: ErrorOutControlBeepCodePeakAttr::new(8, 0, 0).unwrap(),
                     },
-                    ErrorOutEventControlBeepCode {
+                    ErrorOutControlBeepCode {
                         error_type: 0x4fff.into(),
                         peak_map: 2.into(),
-                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                        peak_attr: ErrorOutControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
                     },
-                    ErrorOutEventControlBeepCode {
+                    ErrorOutControlBeepCode {
                         error_type: 0x5fff.into(),
                         peak_map: 3.into(),
-                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                        peak_attr: ErrorOutControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
                     },
-                    ErrorOutEventControlBeepCode {
+                    ErrorOutControlBeepCode {
                         error_type: 0x6fff.into(),
                         peak_map: 4.into(),
-                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                        peak_attr: ErrorOutControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
                     },
-                    ErrorOutEventControlBeepCode {
+                    ErrorOutControlBeepCode {
                         error_type: 0x7fff.into(),
                         peak_map: 5.into(),
-                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                        peak_attr: ErrorOutControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
                     },
-                    ErrorOutEventControlBeepCode {
+                    ErrorOutControlBeepCode {
                         error_type: 0x8fff.into(),
                         peak_map: 6.into(),
-                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                        peak_attr: ErrorOutControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
                     },
-                    ErrorOutEventControlBeepCode {
+                    ErrorOutControlBeepCode {
                         error_type: 0x9fff.into(),
                         peak_map: 7.into(),
-                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                        peak_attr: ErrorOutControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
                     },
-                    ErrorOutEventControlBeepCode {
+                    ErrorOutControlBeepCode {
                         error_type: 0xffff.into(),
                         peak_map: 2.into(),
-                        peak_attr: ErrorOutEventControlBeepCodePeakAttr::new(4, 0, 0).unwrap(),
+                        peak_attr: ErrorOutControlBeepCodePeakAttr::new(4, 0, 0).unwrap(),
                     },
                 ],
                 enable_heart_beat: BU8(1),
@@ -2535,8 +2535,8 @@ macro_rules! impl_bitfield_primitive_conversion {
 
 )}
 
-    define_ErrorOutEventControl!(ErrorOutEventControl116, 3, 1); // Milan
-    define_ErrorOutEventControl!(ErrorOutEventControl112, 0, 0);
+    define_ErrorOutControl!(ErrorOutControl116, 3, 1); // Milan
+    define_ErrorOutControl!(ErrorOutControl112, 0, 0);
 
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
@@ -3984,16 +3984,16 @@ macro_rules! impl_bitfield_primitive_conversion {
             const_assert!(size_of::<MaxFreqElement>() == 16);
             const_assert!(size_of::<LrMaxFreqElement>() == 16);
             const_assert!(size_of::<Gpio>() == 3);
-            const_assert!(size_of::<ErrorOutEventControlBeepCode>() == 8);
-            const_assert!(size_of::<ErrorOutEventControlBeepCodePeakAttr>() == 4);
-            assert!(offset_of!(ErrorOutEventControl116, beep_code_table) == 44);
-            assert!(offset_of!(ErrorOutEventControl116, enable_heart_beat) == 108);
-            assert!(offset_of!(ErrorOutEventControl116, power_good_gpio) == 110);
-            const_assert!(size_of::<ErrorOutEventControl116>() == 116);
-            assert!(offset_of!(ErrorOutEventControl112, beep_code_table) == 40);
-            assert!(offset_of!(ErrorOutEventControl112, enable_heart_beat) == 104);
-            assert!(offset_of!(ErrorOutEventControl112, power_good_gpio) == 106);
-            const_assert!(size_of::<ErrorOutEventControl112>() == 112);
+            const_assert!(size_of::<ErrorOutControlBeepCode>() == 8);
+            const_assert!(size_of::<ErrorOutControlBeepCodePeakAttr>() == 4);
+            assert!(offset_of!(ErrorOutControl116, beep_code_table) == 44);
+            assert!(offset_of!(ErrorOutControl116, enable_heart_beat) == 108);
+            assert!(offset_of!(ErrorOutControl116, power_good_gpio) == 110);
+            const_assert!(size_of::<ErrorOutControl116>() == 116);
+            assert!(offset_of!(ErrorOutControl112, beep_code_table) == 40);
+            assert!(offset_of!(ErrorOutControl112, enable_heart_beat) == 104);
+            assert!(offset_of!(ErrorOutControl112, power_good_gpio) == 106);
+            const_assert!(size_of::<ErrorOutControl112>() == 112);
         }
 
         #[test]
