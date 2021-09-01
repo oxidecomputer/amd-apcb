@@ -4370,7 +4370,7 @@ pub enum TokenId {
     MemEccSyncFlood = 0x88bd_40c2, // bool
     MemRestoreControl = 0xfedb_01f8, // bool
     MemRestoreValidDays = 0x6bd7_0482, // uint32
-    MemPostPackageRepairEnable = 0xcdc0_3e4e, // bool
+    MemPostPackageRepairEnable = 0xcdc0_3e4e, // bool; default: false
 
     // Ccx
 
