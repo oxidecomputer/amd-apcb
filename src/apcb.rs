@@ -308,12 +308,15 @@ impl<'a> Apcb<'a> {
             Err(e) => Err(e),
         }
     }
-    pub fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, priority_mask: PriorityLevels, payload: &[u8]) -> Result<()> {
+
+    // Security--and it would be nicer if the person using this would instead contribute a struct layout so we can use it normally
+    pub(crate) fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, priority_mask: PriorityLevels, payload: &[u8]) -> Result<()> {
         let payload_size = payload.len();
         self.internal_insert_entry(entry_id, instance_id, board_instance_mask, context_type, payload_size, priority_mask, &mut |body: &mut [u8]| {
             body.copy_from_slice(payload);
         })
     }
+
     /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.  T can be a enum of struct refs (PlatformSpecificElementRef, PlatformTuningElementRef) or just one struct.
     pub fn insert_struct_sequence_as_entry<T: EntryCompatible + UnionAsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &[T]) -> Result<()> {
         let mut payload_size: usize = 0;
