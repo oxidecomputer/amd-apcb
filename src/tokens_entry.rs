@@ -308,6 +308,22 @@ impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
             remaining_used_size: self.used_size,
         }
     }
+    pub fn token(&self, token_id: u32) -> Option<TokensEntryItem<'_>> {
+        for entry in self.iter() {
+            if entry.id() == token_id {
+                return Some(entry);
+            }
+        }
+        None
+    }
+    pub fn token_mut(&mut self, token_id: u32) -> Option<TokensEntryItemMut<'_>> {
+        for entry in self.iter_mut() {
+            if entry.id() == token_id {
+                return Some(entry);
+            }
+        }
+        None
+    }
 
     pub(crate) fn insert_token(&mut self, token_id: u32, token_value: u32) -> Result<()> {
         match self.iter_mut().insert_token(token_id, token_value) {
@@ -328,5 +344,13 @@ impl<'a> TokensEntryBodyItem<&'a [u8]> {
             buf: self.buf,
             remaining_used_size: self.used_size,
         }
+    }
+    pub fn token(&self, token_id: u32) -> Option<TokensEntryItem<'_>> {
+        for entry in self.iter() {
+            if entry.id() == token_id {
+                return Some(entry);
+            }
+        }
+        None
     }
 }
