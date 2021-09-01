@@ -7,7 +7,6 @@
 * body_as_struct_sequence; body_as_struct_array: Where is the check whether it is EntryCompatible ?
 * DdrPostPackageRepairElement ?!  Debug output looks weird.  Name weird.
   I think the getters should check `valid` first.  Maybe that means we need to do our own thing instead of bitfield.
-* platform_specific_override: See TODO_platform_specific_override ?!  That's enough?!
 * Convert board_instance_mask to bitfield?!
 * Make "weird" struct array iterator
 * The Token for post package repair enable is DISABLED by default!
