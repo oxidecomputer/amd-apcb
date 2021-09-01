@@ -55,7 +55,6 @@
 # Unimportant/later
 
 * Make builder pattern constructors
-* Add "new" functions to the structs.  That's nicer than Default.
 * apcb::insert_entry: Replace by shifts and masks (if not compile time)
 * insert_token: "&" instead of "%"
 * Check error handling crate "failure" or "anyhow". `#[source]`
