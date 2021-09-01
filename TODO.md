@@ -21,7 +21,6 @@
 * Enums for stuff with a "|" or "one of" comment.
   * ddr_rates (bitfield done; need unit tests!)
   * ref_dq
-  * port size
   * a lot of platform_specific_override::* enums
     * Cs
 * rustdoc
