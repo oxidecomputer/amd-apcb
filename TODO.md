@@ -1,6 +1,7 @@
 # Features
 
-* Sanity-check fn new
+* Sanity-check "new" fns that exist
+* Add "new" fn for the others, too?
 * AMD# 55483 4.1.7 ABL Error Reporting Configuration Items
 * AMD# 55483 PTO 4.1.5.6 UMC Category
 * TX EQ struct; bitfield for sockets; bitfield for dies; bitfield for lanes; lane data (variable-length body!)
@@ -14,7 +15,6 @@
   * rev_and_feature_value: 0xff for NA
   * id_and_feature_mask: bit 7: 1=user controlled; 0=normal
 * Add test to insert wrong-type struct using insert_struct*entry
-* DimmInfoSmbusElement::new -> Result; Add "new" fn for the others, too?
 * Check checksum on load?
 * Apcb: Dirty-type, original-type; automate calling update_checksum
   * My own idea: Just implement Drop and have a flag you refer to.
