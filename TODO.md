@@ -1,14 +1,6 @@
 # Features
 
 * Sanity-check fn new
-* Make ErrorOutEventControl (they call it ErrorReportingControl) defaults like AMD docs say
-  * .input port = 0
-  * .input_port_size = 8 bit
-  * .output_port_size = 32 bit
-  * .output_delay = 15000
-  * .stop_on_first_fatal_error = true
-  * .clear_acknowledgement = true
-  * .enable_heart_beat = true
 * Make PortSize a enum for 8, 16, 32 bit.
 * AMD# 55483 4.1.7 ABL Error Reporting Configuration Items
 * AMD# 55483 PTO 4.1.5.6 UMC Category
