@@ -4302,12 +4302,26 @@ pub mod psp {
     }
 }
 
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum BaudRate {
+    B2400 = 0,
+    B3600 = 1,
+    B4800 = 2,
+    B7200 = 3,
+    B9600 = 4,
+    B19200 = 5,
+    B38400 = 6,
+    B57600 = 7,
+    B115200 = 8,
+}
+
 make_token_accessors! {
 #[repr(u32)]
 pub enum TokenId {
     // ABL
 
-    AblSerialBaudRate(u8, default 8, id 0xae46_cea4) : pub get u8 : pub set u8, // uint8; 0: 2400 baud; 1: 3600 baud; 2: 4800 baud; 3: 7200 baud; 4: 9600 baud; 5: 19200 baud; 6: 38400 baud; 7: 57600 baud; 8: 115200 baud; default: 8
+    abl_serial_baud_rate(u8, default 8, id 0xae46_cea4) : pub get Result<BaudRate> : pub set BaudRate,
 
     // PSP
 

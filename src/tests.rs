@@ -464,7 +464,7 @@ mod tests {
             _ => panic!("no tokens"),
         }
         let tokens = entry.body_tokens_mut().ok_or_else(|| Error::TokenNotFound)?;
-        tokens.AblSerialBaudRate();
+        tokens.abl_serial_baud_rate()?;
 
         assert!(matches!(entries.next(), None));
 
