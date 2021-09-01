@@ -318,6 +318,7 @@ impl<'a> Apcb<'a> {
     }
 
     /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.  T can be a enum of struct refs (PlatformSpecificElementRef, PlatformTuningElementRef) or just one struct.
+    /// Note: Currently, INSTANCE_ID is always supposed to be 0.
     pub fn insert_struct_sequence_as_entry<T: EntryCompatible + UnionAsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &[T]) -> Result<()> {
         let mut payload_size: usize = 0;
         for item in payload {
@@ -339,6 +340,7 @@ impl<'a> Apcb<'a> {
     }
 
     /// Inserts a new entry (see insert_entry), puts HEADER and then TAIL into it.  TAIL is allowed to be &[], and often has to be.
+    /// Note: Currently, INSTANCE_ID is always supposed to be 0.
     pub fn insert_struct_entry<H: EntryCompatible + AsBytes + HeaderWithTail>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, header: &H, tail: &[H::TailSequenceType]) -> Result<()> {
         let blob = header.as_bytes();
         if H::is_entry_compatible(entry_id, blob) {
@@ -360,6 +362,7 @@ impl<'a> Apcb<'a> {
         }
     }
 
+    /// Note: INSTANCE_ID is sometimes != 0.
     pub fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         let group_id = entry_id.group_id();
         // Make sure that the entry exists before resizing the group
