@@ -4316,6 +4316,131 @@ pub enum BaudRate {
     B115200 = 8,
 }
 
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemActionOnBistFailure {
+    DoNothing = 0,
+    DisableProblematicCcds = 1,
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemRcwWeakDriveDisable {
+    Disabled = 0,
+    Enabled = 1,
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemSelfRefreshExitStaggering {
+    Disabled = 0,
+    OneThird = 3, // Trfc/3
+    OneFourth = 4, // Trfc/4
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum CbsMemAddrCmdParityRetryDdr4 {
+    Disabled = 0,
+    Enabled = 1,
+    Auto = 0xff,
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum CcxSevAsidCount {
+    Count253 = 0,
+    Count509 = 1,
+    Auto = 3,
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum FchConsoleOutSuperIoType {
+    Auto = 0,
+    Type1 = 1,
+    Type2 = 2,
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum DfToggle {
+    Disabled = 0,
+    Enabled = 1,
+    Auto = 3,
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemHealPprType {
+    SoftRepair = 0,
+    HardRepair = 1,
+    NoRepair = 2,
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemHealTestSelect {
+    Default = 0,
+    NoVendorTests = 1,
+    ForceAllVendorTests = 2,
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum DfExtIpSyncFloodPropagation {
+    Allow = 0,
+    Disable = 1,
+    Auto = 0xff,
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum DfSyncFloodPropagation {
+    Allow = 0,
+    Disable = 1,
+    Auto = 0xff,
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum DfMemInterleaving {
+    None = 0,
+    Channel = 1,
+    Die = 2,
+    Socket = 3,
+    Auto = 7,
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum DfMemInterleavingSize {
+    Size256Byte = 0,
+    Size512Byte = 1,
+    Size1024Byte = 2,
+    Size2048Byte = 3,
+    Size4096Byte = 4,
+    Auto = 7,
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum DfDramNumaPerSocket {
+   None = 0,
+   One = 1,
+   Two = 2,
+   Four = 3,
+   Auto = 7,
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum DfRemapAt1TiB {
+    Disabled = 0,
+    Enabled = 1,
+    Auto = 0xff,
+}
+
 make_token_accessors! {
 #[repr(u32)]
 pub enum TokenId {
@@ -4340,17 +4465,17 @@ pub enum TokenId {
     MemEnableParity(bool, default 1, id 0x3cb8_cbd2),
     MemBusFrequencyLimit(u32, default 1600, id 0x3497_0a3c), // int32; enum: Ddr400Frequency = 200|Ddr533|Ddr667|Ddr800|Ddr1066|Ddr1333|Ddr1600|Ddr1866|Ddr2100|Ddr2133|Ddr2400|Ddr2667|Ddr2933|Ddr3200|Auto
     MemClockValue(u32, default 0xff, id 0xcc83_f65f), // FIXME: Default value auto; FIXME: enums Ddr400Frequency|...|Ddr3200
-    CbsMemSpeedDdr4(u8, default 0xff, id 0xe060_4ce9), // uint8; 0xff: auto; funny values otherwise
+    cbs_mem_speed_ddr4(u8, default 0xff, id 0xe060_4ce9) : pub get Result<u8> : pub set u8, // uint8; 0xff: auto; funny values otherwise // FIXME enum
     MemEnableBankSwizzle(bool, default 1, id 0x6414_d160), // bool
-    MemActionOnBistFailure(u8, default 0, id 0xcbc2_c0dd), // uint8; 0: do nothing; 1: disable CCDs that are problematic
-    MemRcwWeakDriveDisable(u8, default 1, id 0xa30d_781a), // int; 0: weak drive disabled; 1: weak drive enabled (default); FIXME is it u32 ?
+    mem_action_on_bist_failure(u8, default 0, id 0xcbc2_c0dd) : pub get Result<MemActionOnBistFailure> : pub set MemActionOnBistFailure,
+    mem_rcw_weak_drive_disable(u8, default 1, id 0xa30d_781a) : pub get Result<MemRcwWeakDriveDisable> : pub set MemRcwWeakDriveDisable, // FIXME is it u32 ?
 
-    MemUserTimingMode(u32, default 0xff, id 0xfc56_0d7d), // enum; Auto|Limited|Specific|Auto; FIXME default
+    MemUserTimingMode(u32, default 0xff, id 0xfc56_0d7d), // enum; auto; limited; specific; FIXME default
     MemIgnoreSpdChecksum(bool, default 0, id 0x7d36_9dbc),
     MemSpdReadOptimizationDdr4(bool, default 1, id 0x6816_f949), // bool
     CbsMemSpdReadOptimizationDdr4(bool, default 0, id 0x8d3a_b10e), // FIXME: default
     MemEnablePowerDown(bool, default 1, id 0xbbb1_85a2),
-    MemSelfRefreshExitStaggering(u8, default 0, id 0xbc52_e5f7), // uint8; 0: Disabled; 3: Trfc/3; 4: Trfc/4
+    mem_self_refresh_exit_staggering(u8, default 0, id 0xbc52_e5f7) : pub get Result<MemSelfRefreshExitStaggering> : pub set MemSelfRefreshExitStaggering,
     CbsMemPowerDownDelay(u16, default 0xff, id 0x1ebe_755a), // uint16; number of clock cycles; 0xff: auto; not 0
     MemTempControlledRefreshEnable(bool, default 0, id 0xf051_e1c4),
     MemOdtsCmdThrottleEnable(bool, default 1, id 0xc073_6395),
@@ -4360,16 +4485,16 @@ pub enum TokenId {
     MemEnableBankGroupSwapAlt(bool, default 1, id 0xa89d_1be8),
     MemEnableBankGroupSwap(bool, default 1, id 0x4692_0968),
     MemDdrRouteBalancedTee(bool, default 0, id 0xe68c_363d),
-    CbsMemAddrCmdParityRetryDdr4(u8, default 0, id 0xbe8b_ebce), // enum; 1: enabled; 0: disabled; 0xff: auto; FIXME: Is it u32 ?
-    CbsMemAddrCmdParityErrorMaxReplayDdr4(u8, default 8, id 0x04e6_a482), // uint8; 0...0x3f
+    cbs_mem_addr_cmd_parity_retry_ddr4(u8, default 0, id 0xbe8b_ebce) : pub get Result<CbsMemAddrCmdParityRetryDdr4> : pub set CbsMemAddrCmdParityRetryDdr4, // FIXME: Is it u32 ?
+    cbs_mem_addr_cmd_parity_error_max_replay_ddr4(u8, default 8, id 0x04e6_a482) : pub get Result<u8> : pub set u8, // 0...0x3f
     CbsMemWriteCrcRetryDdr4(bool, default 0, id 0x25fb_6ea6),
-    CbsMemWriteCrcErrorMaxReplayDdr4(u8, default 8, id 0x74a0_8bec),
+    cbs_mem_write_crc_error_max_replay_ddr4(u8, default 8, id 0x74a0_8bec) : pub get Result<u8> : pub set u8,
     CbsMemControllerWriteCrcEnableDdr4(bool, default 0, id 0x9445_1a4b),
 
     MemRcdParity(bool, default 1, id 0x647d_7662),
     MemUncorrectedEccRetryDdr4(bool, default 1, id 0xbff0_0125),
-    MemUrgRefLimit(u8, default 6, id 0x1333_32df), // UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first); FIXME: is it u32 ?
-    MemSubUrgRefLowerBound(u8, default 4, id 0xe756_2ab6), // UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first); default: 4; FIXME: is it u32 ?
+    mem_urg_ref_limit(u8, default 6, id 0x1333_32df) : pub get Result<u8> : pub set u8, // UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first); FIXME: is it u32 ?
+    mem_sub_urg_ref_lower_bound(u8, default 4, id 0xe756_2ab6) : pub get Result<u8> : pub set u8, // UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first); FIXME: is it u32 ?
     MemControllerPmuTrainFfeDdr4(u8, default 0xff, id 0x0d46_186d), // enum; 1: enable; 0: disable; 0xff: auto; default: auto; FIXME: is it bool ?
     MemControllerPmuTrainDfeDdr4(u8, default 0xff, id 0x36a4_bb5b), // enum; enable; disable; 0xff: auto; default: auto; FIXME: is it bool ?
     MemTsmeEnable(bool, default 1, id 0xd1fa_6660), // See Transparent Secure Memory Encryption in PPR
@@ -4380,9 +4505,9 @@ pub enum TokenId {
     MemSelfHealBistEnable(u8, default 0, id 0x2c23_924c), // FIXME: is it bool ?  FIXME: default?
     MemSelfHealBistTimeout(u32, default 1000, id 0xbe75_97d4), // in ms; FIXME: default
     MemPmuBistTestSelect(u8, default 0, id 0x7034_fbfb), // FIXME: default
-    MemHealTestSelect(u8, default 0, id 0x5908_2cf2), // enum; 0: default; 1: no vendor tests; 2: all vendor tests regardless of vendor
-    MemHealPprType(u8, default 0, id 0x5418_1a61), // 0: soft repair (default); 1:hard repair; 2:no repair
-    MemHealMaxBankFails(u8, default 3, id 0x632e_55d8), // per bank
+    mem_heal_test_select(u8, default 0, id 0x5908_2cf2) : pub get Result<MemHealTestSelect> : pub set MemHealTestSelect,
+    mem_heal_ppr_type(u8, default 0, id 0x5418_1a61) : pub get Result<MemHealPprType> : pub set MemHealPprType,
+    mem_heal_max_bank_fails(u8, default 3, id 0x632e_55d8) : pub get Result<u8> : pub set u8, // per bank
     MemEccSyncFlood(bool, default 0, id 0x88bd_40c2), // FIXME: default
     MemRestoreControl(bool, default 0, id 0xfedb_01f8),
     MemRestoreValidDays(u32, default 30, id 0x6bd7_0482),
@@ -4390,7 +4515,7 @@ pub enum TokenId {
 
     // Ccx
 
-    CcxSevAsidCount(u8, default 1, id 0x5587_6720), // 0: 253 ASIDs; 1: 509 ASIDs; 3: Auto
+    ccx_sev_asid_count(u8, default 1, id 0x5587_6720) : pub get Result<CcxSevAsidCount> : pub set CcxSevAsidCount,
     CcxMinSevAsid(u32, default 1, id 0xa7c3_3753),
     CcxPpinOptIn(bool, default 0, id 0x6a67_00fd), // bool; FIXME: default
 
@@ -4400,25 +4525,25 @@ pub enum TokenId {
     FchRom3BaseHigh(u32, default 0, id 0x3e7d_5274),
     FchGppClkMap(u16, default 0xffff, id 0xcd7e_6983), // u16; bitfield; GppAllClkForceOn; Auto; S0Gpp0ClkOff; ...; S1Gpp4ClkOff
     FchConsoleOutEnable(u8, default 0, id 0xddb7_59da), // FIXME: default
-    FchConsoleOutSuperIoType(u8, default 0, id 0x5c8d_6e82), // init mode; enum; 0: Auto(default); 1: Type1; 2: Type2
+    fch_console_out_super_io_type(u8, default 0, id 0x5c8d_6e82) : pub get Result<FchConsoleOutSuperIoType> : pub set FchConsoleOutSuperIoType, // init mode
 
     // Df
 
     DfGroupDPlatform(bool, default 0, id 0x6831_8493), // [F17M30] needs it to be true
-    DfExtIpSyncFloodPropagation(u8, default 0, id 0xfffe_0b07), // enum; 0: allow syncflood propagation, 1: disable syncflood propagation; 0xff: auto
-    DfSyncFloodPropagation(u8, default 0, id 0x4963_9134), // enum; 0: allow syncflood propagation; 1: disable syncflood propagation; 0xff: auto
-    DfMemInterleaving(u8, default 7, id 0xce01_87ef), // enum; 0: none; 1: channel; 2: die; 3: socket; 7: auto
-    DfMemInterleavingSize(u8, default 7, id 0x2606_c42e), // enum; 0: 256 byte; 1: 512 byte; 2: 1024 byte; 3: 2048 byte; 4: 4096 byte; 7: auto
-    DfDramNumaPerSocket(u8, default 1, id 0x2cf3_dac9), // enum; 0: no NUMA nodes; 1: 1 NUMA node per socket; 2: 2 NUMA nodes per socket; 3: 4 NUMA nodes per socket; 7: Auto
-    DfProbeFilter(u8, default 1, id 0x6597_c573), // enum; 0: disable; 1:enable; 3: auto
-    DfMemClear(u8, default 3, id 0x9d17_7e57), // enum; 0: disable; 1: enable; 3: auto
-    DfGmiEncrypt(u8, default 0, id 0x08a4_5920), // enum; 0: disable; 1: enable; 3: auto
-    DfXgmiEncrypt(u8, default 0, id 0x6bd3_2f1c), // enum; 0: disable; 1: enable; 3: auto
-    DfSaveRestoreMemEncrypt(u8, default 1, id 0x7b3d_1f75), // enum; 0: disable; 1: enable; 3: auto
-    DfBottomIo(u8, default 0xe0, id 0x8fb9_8529), // Where the PCI MMIO hole will start (bits 31 to 24 inclusive)
+    df_ext_ip_sync_flood_propagation(u8, default 0, id 0xfffe_0b07) : pub get Result<DfExtIpSyncFloodPropagation> : pub set DfExtIpSyncFloodPropagation,
+    df_sync_flood_propagation(u8, default 0, id 0x4963_9134) : pub get Result<DfSyncFloodPropagation> : pub set DfSyncFloodPropagation, // enum; 0: allow syncflood propagation; 1: disable syncflood propagation; 0xff: auto
+    df_mem_interleaving(u8, default 7, id 0xce01_87ef) : pub get Result<DfMemInterleaving> : pub set DfMemInterleaving,
+    df_mem_interleaving_size(u8, default 7, id 0x2606_c42e) : pub get Result<DfMemInterleavingSize> : pub set DfMemInterleavingSize,
+    df_dram_numa_per_socket(u8, default 1, id 0x2cf3_dac9) : pub get Result<DfDramNumaPerSocket> : pub set DfDramNumaPerSocket,
+    df_probe_filter(u8, default 1, id 0x6597_c573) : pub get Result<DfToggle> : pub set DfToggle,
+    df_mem_clear(u8, default 3, id 0x9d17_7e57) : pub get Result<DfToggle> : pub set DfToggle,
+    df_gmi_encrypt(u8, default 0, id 0x08a4_5920) : pub get Result<DfToggle> : pub set DfToggle,
+    df_xgmi_encrypt(u8, default 0, id 0x6bd3_2f1c) : pub get Result<DfToggle> : pub set DfToggle,
+    df_save_restore_mem_encrypt(u8, default 1, id 0x7b3d_1f75) : pub get Result<DfToggle> : pub set DfToggle,
+    df_bottom_io(u8, default 0xe0, id 0x8fb9_8529) : pub get Result<u8> : pub set u8, // Where the PCI MMIO hole will start (bits 31 to 24 inclusive)
     DfPciMmioSize(u32, default 0x1000_0000, id 0x3d9b_7d7b),
     DfSysStorageAtTopOfMem(u8, default 0, id 0x249e_08d5), // Where to map PSP, SMU, CC6; enum; 0: mem distributed; 1: mem consolidated; 2: 1st mem consolidated; 0xff: auto
-    DfRemapAt1TiB(u8, default 0, id 0x35ee_96f3), // Remap DRAM underneath IOMMU; 0: false; 1: true; 0xff: auto
+    df_remap_at_1tib(u8, default 0, id 0x35ee_96f3) : pub get Result<DfRemapAt1TiB> : pub set DfRemapAt1TiB,
     //Df3Xgmi2LinkConfig(u8, default ?, id 0xb0b6_ad3a), // enum; 0: 2link; 1: 3link; 2: 4link
     //Df3LinkMaxXgmiSpeed(u8, default ?, id 0x53ba_449b),
     //Df4LinkMaxXgmiSpeed(u8, default ?, id 0x3f30_7cb3),
