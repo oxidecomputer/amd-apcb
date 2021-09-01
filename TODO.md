@@ -8,7 +8,6 @@
 * body_as_struct_sequence; body_as_struct_array: Where is the check whether it is EntryCompatible ?
 * Convert board_instance_mask to bitfield?!
 * Make "weird" struct array iterator (sequence of different types iterator)
-* The Token for post package repair enable is DISABLED by default!
 * IdRevApcbMapping
   * rev_and_feature_value: 0xff for NA
   * id_and_feature_mask: bit 7: 1=user controlled; 0=normal
