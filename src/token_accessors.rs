@@ -80,7 +80,7 @@ macro_rules! make_token_accessors {(
                 // FIXME: match properly (body_token does not check whether the thing is a token entry in the first place)
                 match entry.body_token($field_key) {
                     None => {
-                        ($field_default_value as u32).get1()
+                        Err(Error::TokenNotFound)
                     },
                     Some(ref token) => {
                         assert!(token.id() == $field_key);
@@ -100,7 +100,7 @@ macro_rules! make_token_accessors {(
                 // FIXME: match properly (body_token does not check whether the thing is a token entry in the first place)
                 match entry.body_token($field_key) {
                     None => {
-                        ($field_default_value as u32).get1()
+                        Err(Error::TokenNotFound)
                     },
                     Some(ref token) => {
                         assert!(token.id() == $field_key);
