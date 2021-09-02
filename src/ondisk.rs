@@ -4605,8 +4605,8 @@ make_token_accessors! {
     // Misc
 
     ConfigureSecondPcieLink(TokenEntryId::Bool, default 0, id 0x7142_8092),
-    SecondPcieLinkSpeed(TokenEntryId::Byte, default 0, id 0x8723_750f) : pub get Result<SecondPcieLinkSpeed> : pub set SecondPcieLinkSpeed,
-    SecondPcieLinkMaxPayload(TokenEntryId::Byte, default 0xff, id 0xe02d_f04b) : pub get Result<SecondPcieLinkMaxPayload> : pub set SecondPcieLinkMaxPayload, // FIXME: default
+    second_pcie_link_speed(TokenEntryId::Byte, default 0, id 0x8723_750f) : pub get Result<SecondPcieLinkSpeed> : pub set SecondPcieLinkSpeed,
+    second_pcie_link_max_payload(TokenEntryId::Byte, default 0xff, id 0xe02d_f04b) : pub get Result<SecondPcieLinkMaxPayload> : pub set SecondPcieLinkMaxPayload, // FIXME: default
     PerformanceTracing(TokenEntryId::Bool, default 0, id 0xf27a_10f0),
     DisplayPmuTrainingResults(TokenEntryId::Bool, default 0, id 0x9e36_a9d4),
     workload_profile(TokenEntryId::Byte, default 0, id 0x22f4_299f) : pub get Result<WorkloadProfile> : pub set WorkloadProfile, // enum; 0...18
