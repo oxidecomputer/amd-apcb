@@ -9,6 +9,7 @@ use crate::ondisk::V3_HEADER_EXT;
 use crate::ondisk::ENTRY_ALIGNMENT;
 pub use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, EntryCompatible, UnionAsBytes};
 use crate::ondisk::{take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut, HeaderWithTail};
+use crate::entry::EntryItemBody;
 use core::convert::TryInto;
 use core::default::Default;
 use core::mem::{size_of};
@@ -376,7 +377,21 @@ impl<'a> Apcb<'a> {
         let group_id = entry_id.group_id();
         // Make sure that the entry exists before resizing the group
         let group = self.group(group_id).ok_or_else(|| Error::GroupNotFound)?;
-        group.entry(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
+        let entry = group.entry(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
+        match &entry.body {
+            EntryItemBody::<_>::Tokens(a) => {
+                match a.token(token_id) {
+                    None => {
+                    },
+                    _ => {
+                        return Err(Error::TokenUniqueKeyViolation);
+                    },
+                }
+            },
+            _ => {
+                return Err(Error::EntryTypeMismatch); // it's just not a Token Entry.
+            },
+        }
         // Tokens that destroy the alignment in the container have not been tested, are impossible right now anyway and have never been seen.  So disallow those.
         const TOKEN_SIZE: u16 = size_of::<TOKEN_ENTRY>() as u16;
         const_assert!(TOKEN_SIZE % (ENTRY_ALIGNMENT as u16) == 0);
