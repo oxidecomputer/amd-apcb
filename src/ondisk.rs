@@ -841,7 +841,7 @@ pub struct GROUP_HEADER {
     pub group_id: U16<LittleEndian>,
     pub header_size: U16<LittleEndian>, // == sizeof(GROUP_HEADER)
     pub version: U16<LittleEndian>,     // == 0 << 4 | 1
-    reserved: U16<LittleEndian>,
+    _reserved: U16<LittleEndian>,
     pub group_size: U32<LittleEndian>, // including header!
 }
 
@@ -868,7 +868,7 @@ impl Default for GROUP_HEADER {
             group_id: 0u16.into(), // probably invalid
             header_size: (size_of::<Self>() as u16).into(),
             version: 0x01u16.into(),
-            reserved: 0u16.into(),
+            _reserved: 0u16.into(),
             group_size: (size_of::<Self>() as u32).into(), // probably invalid
         }
     }
