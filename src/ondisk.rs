@@ -4441,6 +4441,50 @@ pub enum DfRemapAt1TiB {
     Auto = 0xff,
 }
 
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum SecondPcieLinkSpeed {
+    Keep = 0,
+    Gen1 = 1,
+    Gen2 = 2,
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum SecondPcieLinkMaxPayload {
+    P128Byte = 0,
+    P256Byte = 1,
+    P512Byte = 2,
+    P1024Byte = 3,
+    P2048Byte = 4,
+    P4096Byte = 5,
+    HardwareDefault = 0xff,
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum WorkloadProfile {
+    Disabled = 0,
+    CpuIntensive = 1,
+    JavaThroughput = 2,
+    JavaLatency = 3,
+    PowerEfficiency = 4,
+    MemoryThroughputIntensive = 5,
+    StorageIoIntensive = 6,
+    NicThroughputIntensive = 7,
+    NicLatencySensitive = 8,
+    AcceleratorThroughput = 9,
+    VmwareVsphereOptimized = 10,
+    LinuxKvmOptimized = 11,
+    ContainerOptimized = 12,
+    RdbmsOptimized = 13,
+    BigDataAnalyticsOptimized = 14,
+    IotGateway = 15,
+    HpcOptimized = 16,
+    OpenStackNfv = 17,
+    OpenStackForRealTimeKernel = 18,
+}
+
 make_token_accessors! {
     // ABL
 
@@ -4560,11 +4604,11 @@ make_token_accessors! {
     // Misc
 
     ConfigureSecondPcieLink(bool, default 0, id 0x7142_8092),
-    SecondPcieLinkSpeed(u8, default 0, id 0x8723_750f), // enum; 0: keep default; 1: gen1; 2: gen2
-    SecondPcieLinkMaxPayload(u8, default 0xff, id 0xe02d_f04b), // enum; 0: 128 byte; 1: 256 byte; 2: 512 byte; 3: 1024 byte; 4: 2048 byte; 5: 4096 byte; 0xff: hardware default; FIXME: default
+    SecondPcieLinkSpeed(u8, default 0, id 0x8723_750f) : pub get Result<SecondPcieLinkSpeed> : pub set SecondPcieLinkSpeed,
+    SecondPcieLinkMaxPayload(u8, default 0xff, id 0xe02d_f04b) : pub get Result<SecondPcieLinkMaxPayload> : pub set SecondPcieLinkMaxPayload, // FIXME: default
     PerformanceTracing(bool, default 0, id 0xf27a_10f0),
     DisplayPmuTrainingResults(bool, default 0, id 0x9e36_a9d4),
-    WorkloadProfile(u8, default 0, id 0x22f4_299f), // enum; 0...18
+    workload_profile(u8, default 0, id 0x22f4_299f) : pub get Result<WorkloadProfile> : pub set WorkloadProfile, // enum; 0...18
 }
 
 #[cfg(test)]
