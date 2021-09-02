@@ -4442,8 +4442,6 @@ pub enum DfRemapAt1TiB {
 }
 
 make_token_accessors! {
-#[repr(u32)]
-pub enum TokenId {
     // ABL
 
     abl_serial_baud_rate(u8, default 8, id 0xae46_cea4) : pub get Result<BaudRate> : pub set BaudRate,
@@ -4567,7 +4565,6 @@ pub enum TokenId {
     PerformanceTracing(bool, default 0, id 0xf27a_10f0),
     DisplayPmuTrainingResults(bool, default 0, id 0x9e36_a9d4),
     WorkloadProfile(u8, default 0, id 0x22f4_299f), // enum; 0...18
-}
 }
 
 #[cfg(test)]
