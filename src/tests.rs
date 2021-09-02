@@ -470,8 +470,10 @@ mod tests {
         let tokens = apcb.tokens(0, 1).unwrap();
         assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::B4800);
 
-        let tokens = apcb.tokens_mut(0, 1, PriorityLevels::from_level(PriorityLevel::Default)).unwrap();
+        let mut tokens = apcb.tokens_mut(0, 1, PriorityLevels::from_level(PriorityLevel::Default)).unwrap();
         assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::B4800);
+        tokens.set_abl_serial_baud_rate(BaudRate::B9600).unwrap();
+        assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::B9600);
         Ok(())
     }
 
