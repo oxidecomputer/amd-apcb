@@ -15,6 +15,7 @@ pub enum Error {
     GroupNotFound,
     GroupUniqueKeyViolation,
     EntryNotFound,
+    EntryUniqueKeyViolation,
     EntryTypeMismatch,
     TokenNotFound,
     TokenRange,

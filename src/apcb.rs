@@ -296,6 +296,15 @@ impl<'a> Apcb<'a> {
     }
     fn internal_insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: usize, priority_mask: PriorityLevels, payload_initializer: &mut dyn FnMut(&mut [u8]) -> ()) -> Result<()> {
         let group_id = entry_id.group_id();
+        let mut group = self.group_mut(group_id).ok_or_else(|| Error::GroupNotFound)?;
+        match group.entry_mut(entry_id, instance_id, board_instance_mask) {
+            None => {
+            },
+            _ => {
+                return Err(Error::EntryUniqueKeyViolation);
+            },
+        }
+
         let mut entry_allocation: u16 = (size_of::<ENTRY_HEADER>() as u16).checked_add(payload_size.try_into().map_err(|_| Error::ArithmeticOverflow)?).ok_or_else(|| Error::OutOfSpace)?;
         while entry_allocation % (ENTRY_ALIGNMENT as u16) != 0 {
             entry_allocation += 1;
