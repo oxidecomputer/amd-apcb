@@ -3,7 +3,7 @@ mod tests {
     use core::default::Default;
     use crate::Apcb;
     use crate::Error;
-    use crate::ondisk::{PriorityLevels, ContextType, CcxEntryId, DfEntryId, PspEntryId, MemoryEntryId, TokenEntryId, EntryId, GroupId, memory::ConsoleOutControl, memory::DimmInfoSmbusElement, psp::BoardIdGettingMethodEeprom, psp::IdRevApcbMapping, memory::ExtVoltageControl};
+    use crate::ondisk::{PriorityLevels, ContextType, CcxEntryId, DfEntryId, PspEntryId, MemoryEntryId, TokenEntryId, EntryId, GroupId, memory::ConsoleOutControl, memory::DimmInfoSmbusElement, psp::BoardIdGettingMethodEeprom, psp::IdRevApcbMapping, memory::ExtVoltageControl, BaudRate};
     use crate::EntryItemBody;
     use crate::types::PriorityLevel;
 
@@ -409,10 +409,10 @@ mod tests {
         apcb.insert_entry(EntryId::Df(DfEntryId::XgmiPhyOverride), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Default), &[2u8; 1])?;
 
         // Insert empty "Token Entry"
-        apcb.insert_entry(EntryId::Token(TokenEntryId::Bool), 0, 1, ContextType::Tokens, PriorityLevels::from_level(PriorityLevel::Default), &[])?;
+        apcb.insert_entry(EntryId::Token(TokenEntryId::Byte), 0, 1, ContextType::Tokens, PriorityLevels::from_level(PriorityLevel::Default), &[])?;
 
         // pub(crate) fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
-        apcb.insert_token(EntryId::Token(TokenEntryId::Bool), 0, 1, 0x014FBF20, 1)?;
+        apcb.insert_token(EntryId::Token(TokenEntryId::Byte), 0, 1, 0xae46_cea4, 2)?;
 
         let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
         let mut groups = apcb.groups_mut();
@@ -449,26 +449,26 @@ mod tests {
         let mut entries = group.entries_mut();
 
         let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
-        assert!(entry.id() == EntryId::Token(TokenEntryId::Bool));
+        assert!(entry.id() == EntryId::Token(TokenEntryId::Byte));
 
         match entry.body {
             EntryItemBody::Tokens(ref tokens) => {
                  let mut tokens = tokens.iter();
 
                  let token = tokens.next().ok_or_else(|| Error::TokenNotFound)?;
-                 assert!(token.id() == 0x014FBF20);
-                 assert!(token.value() == 1);
+                 assert!(token.id() == 0xae46_cea4);
+                 assert!(token.value() == 2);
 
                  assert!(matches!(tokens.next(), None));
             },
             _ => panic!("no tokens"),
         }
-        let tokens = entry.body_tokens_mut().ok_or_else(|| Error::TokenNotFound)?;
-        tokens.abl_serial_baud_rate()?;
 
         assert!(matches!(entries.next(), None));
 
         assert!(matches!(groups.next(), None));
+        let tokens = apcb.tokens_mut(0, 1, PriorityLevels::from_level(PriorityLevel::Default)).unwrap();
+        assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::B4800);
         Ok(())
     }
 
