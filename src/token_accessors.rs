@@ -12,7 +12,7 @@ pub struct Tokens<'a> {
 
 /// Automatically impl getters (and setters) for the fields where there was "get" (and "set") specified.
 /// The getters and setters so generated are hardcoded as calling get1() and to_u32(), respectively.
-/// Variant syntax:   NAME(TYPE, DEFAULT_VALUE) = KEY[: pub get TYPE [: pub set TYPE]]
+/// Variant syntax:   NAME(TYPE, default DEFAULT_VALUE, id TOKEN_ID) = KEY[: pub get TYPE [: pub set TYPE]]
 macro_rules! make_token_accessors {(
         $(
             $(#[$field_meta:meta])*
