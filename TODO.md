@@ -44,11 +44,12 @@
 
 * Sanity-check non-clone in body_as_struct_mut
 * Add unit test for token entries!!  mutation
-* insert_*: Check for duplicate key
-  * insert_group: Check globally unique (group_id) on load.
-  * insert_entry: Check globally unique (group_id, entry_id, instance_id, board_instance_mask) on load.
-  * insert_token: group_id==Token.  entry_id should be datatype-dependent, so only one makes sense per token_id anyway--so it's not part of the unique key.  Check globally-unique (group_id, instance_id, token_id) on load.
-    * That means a nice token accessor needs to select the instance_id to use, and the effective tokens is presumably a union of all the different instance_id in priority order.  That's what PRIORITY_MASK is for.  It's assumed that AMD can turn on and off individual token-per-instance_id depending on priority_masks.  Very often, NOT all token_ids are present in the entry with a new instance_mask.
+* Check for unique key on load
+  * Check globally unique (group_id) on load.
+  * Check globally unique (group_id, entry_id, instance_id, board_instance_mask) on load.
+  * Check globally-unique (group_id, instance_id, token_id) on load.
+    * insert_token: group_id==Token.  entry_id should be datatype-dependent, so only one makes sense per token_id anyway--so entry_id is not part of the unique key.
+      * That means a nice token accessor needs to select the instance_id to use, and the AMD-effective tokens is presumably a union of all the different instance_id in priority order.  That's what PRIORITY_MASK is for.  It's assumed that AMD can turn on and off individual token-per-instance_id depending on priority_masks.  Very often, NOT all token_ids are present in the entry with a new instance_mask.
 * Fuzzing!
   * https://rust-fuzz.github.io/book/cargo-fuzz.html
   * Fuzz after:
