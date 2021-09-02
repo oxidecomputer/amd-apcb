@@ -1,11 +1,11 @@
 #![macro_use]
 
-use num_traits::{FromPrimitive, ToPrimitive};
-use crate::types::Result;
-use crate::types::Error;
 use crate::apcb::Apcb;
-use crate::ondisk::PriorityLevels;
 use crate::ondisk::GroupId;
+use crate::ondisk::PriorityLevels;
+use crate::types::Error;
+use crate::types::Result;
+use num_traits::{FromPrimitive, ToPrimitive};
 
 pub struct TokensMut<'a> {
     pub(crate) apcb: &'a mut Apcb<'a>,
@@ -14,28 +14,45 @@ pub struct TokensMut<'a> {
     pub(crate) priority_mask: PriorityLevels,
 }
 pub struct Tokens<'a> {
-    pub(crate) apcb: &'a mut Apcb<'a>,
+    pub(crate) apcb: &'a Apcb<'a>,
     pub(crate) instance_id: u16,
     pub(crate) board_instance_mask: u16,
     //pub(crate) priority_mask: PriorityLevels,
 }
 
 impl<'a> TokensMut<'a> {
-    pub(crate) fn new(apcb: &'a mut Apcb<'a>, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels) -> Result<TokensMut<'a>> {
+    pub(crate) fn new(
+        apcb: &'a mut Apcb<'a>,
+        instance_id: u16,
+        board_instance_mask: u16,
+        priority_mask: PriorityLevels,
+    ) -> Result<Self> {
         match apcb.insert_group(GroupId::Token, *b"TOKN") {
-            Err(Error::GroupUniqueKeyViolation) => {
-            },
+            Err(Error::GroupUniqueKeyViolation) => {}
             Err(x) => {
                 return Err(x);
-            },
-            _ => {
-            },
+            }
+            _ => {}
         };
-        Ok(TokensMut {
+        Ok(Self {
             apcb,
             instance_id,
             board_instance_mask,
             priority_mask,
+        })
+    }
+}
+
+impl<'a> Tokens<'a> {
+    pub(crate) fn new(
+        apcb: &'a Apcb<'a>,
+        instance_id: u16,
+        board_instance_mask: u16,
+    ) -> Result<Self> {
+        Ok(Self {
+            apcb,
+            instance_id,
+            board_instance_mask,
         })
     }
 }
@@ -50,8 +67,29 @@ macro_rules! make_token_accessors {(
             $field_name:ident($field_ty:expr, default $field_default_value:expr, id $field_key:expr) $(: $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
         ),* $(,)?
 ) => (
-    impl<'a> TokensMut<'a> {
-        $($(
+    $(
+        $(
+            impl<'a> Tokens<'a> {
+            #[inline]
+            $getter_vis
+            fn $field_name (self: &'_ Self)
+                -> $field_user_ty
+            {
+                let group = self.apcb.group(GroupId::Token).ok_or_else(|| Error::GroupNotFound)?;
+                let entry = group.entry(EntryId::Token($field_ty), self.instance_id, self.board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
+                // FIXME: match properly (body_token does not check whether the thing is a token entry in the first place)
+                match entry.body_token($field_key) {
+                    None => {
+                        ($field_default_value as u32).get1()
+                    },
+                    Some(ref token) => {
+                        assert!(token.id() == $field_key);
+                        token.value().get1()
+                    },
+                }
+            }
+            }
+            impl<'a> TokensMut<'a> {
             #[inline]
             $getter_vis
             fn $field_name (self: &'_ Self)
@@ -108,8 +146,9 @@ macro_rules! make_token_accessors {(
                   }
               }
             )?
-        )?)*
-    }
+            }
+        )?
+    )*
 )}
 
 pub(crate) use make_token_accessors;

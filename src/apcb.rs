@@ -18,7 +18,7 @@ use static_assertions::const_assert;
 use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use zerocopy::AsBytes;
-use crate::token_accessors::TokensMut;
+use crate::token_accessors::{Tokens, TokensMut};
 
 pub struct Apcb<'a> {
     header: &'a mut V2_HEADER,
@@ -593,5 +593,9 @@ impl<'a> Apcb<'a> {
     /// The proxy takes care of creating the group, entry and token as necessary.  It does not delete stuff.
     pub fn tokens_mut(self: &'a mut Self, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels) -> Result<TokensMut<'a>> {
         TokensMut::new(self, instance_id, board_instance_mask, priority_mask)
+    }
+    /// Constructs a attribute accessor proxy for the given combination of (INSTANCE_ID, BOARD_INSTANCE_MASK).  ENTRY_ID is inferred on access.
+    pub fn tokens(self: &'a Self, instance_id: u16, board_instance_mask: u16) -> Result<Tokens<'a>> {
+        Tokens::new(self, instance_id, board_instance_mask)
     }
 }

@@ -467,6 +467,9 @@ mod tests {
         assert!(matches!(entries.next(), None));
 
         assert!(matches!(groups.next(), None));
+        let tokens = apcb.tokens(0, 1).unwrap();
+        assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::B4800);
+
         let tokens = apcb.tokens_mut(0, 1, PriorityLevels::from_level(PriorityLevel::Default)).unwrap();
         assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::B4800);
         Ok(())
