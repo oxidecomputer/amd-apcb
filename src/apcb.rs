@@ -397,6 +397,19 @@ impl<'a> Apcb<'a> {
 
     pub fn insert_group(&mut self, group_id: GroupId, signature: [u8; 4]) -> Result<GroupMutItem<'_>> {
         // TODO: insert sorted.
+
+        let mut groups = self.groups_mut();
+        match groups.move_point_to(group_id) {
+            Err(Error::GroupNotFound) => {
+            },
+            Err(x) => {
+                return Err(x);
+            },
+            _ => {
+                return Err(Error::GroupUniqueKeyViolation);
+            },
+        }
+
         let size = size_of::<GROUP_HEADER>();
         let old_apcb_size = self.header.apcb_size.get();
         let new_apcb_size = old_apcb_size.checked_add(size as u32).ok_or_else(|| Error::OutOfSpace)?;

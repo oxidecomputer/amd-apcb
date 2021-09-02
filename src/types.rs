@@ -13,6 +13,7 @@ pub enum Error {
     FileSystem(FileSystemError, &'static str), // message, field name
     OutOfSpace,
     GroupNotFound,
+    GroupUniqueKeyViolation,
     EntryNotFound,
     EntryTypeMismatch,
     TokenNotFound,
