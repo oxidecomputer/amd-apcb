@@ -4,7 +4,7 @@ use crate::types::{Result, Error, FileSystemError};
 use crate::ondisk::ENTRY_HEADER;
 use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, EntryCompatible, HeaderWithTail};
 use num_traits::FromPrimitive;
-use crate::tokens_entry::{TokensEntryBodyItem, TokensEntryItem, TokensEntryItemMut};
+use crate::tokens_entry::{TokensEntryBodyItem};
 use zerocopy::{AsBytes, FromBytes};
 
 /* Note: high-level interface is:
@@ -265,15 +265,6 @@ impl<'a> EntryMutItem<'a> {
             },
         }
     }
-
-    pub fn body_token_mut(&mut self, token_id: u32) -> Option<TokensEntryItemMut<'_>> {
-        match &mut self.body {
-            EntryItemBody::<_>::Tokens(a) => {
-                a.token_mut(token_id)
-            },
-            _ => None,
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -393,15 +384,6 @@ impl<'a> EntryItem<'a> {
             _ => {
                 None
             },
-        }
-    }
-
-    pub fn body_token(&self, token_id: u32) -> Option<TokensEntryItem<'_>> {
-        match &self.body {
-            EntryItemBody::<_>::Tokens(a) => {
-                a.token(token_id)
-            },
-            _ => None,
         }
     }
 }
