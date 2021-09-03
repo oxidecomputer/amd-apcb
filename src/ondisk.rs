@@ -4486,9 +4486,11 @@ pub enum WorkloadProfile {
     OpenStackForRealTimeKernel = 18,
 }
 
+// This trait exists so we can impl it for bool; the macro MAKE_TOKEN_ACCESSORS will call the function by name without specifying the trait anyway.
 trait ToPrimitive1 {
     fn to_u32(&self) -> Option<u32>;
 }
+// This trait exists so we can impl it for bool; the macro MAKE_TOKEN_ACCESSORS will call the function by name without specifying the trait anyway.
 trait FromPrimitive1: Sized {
     fn from_u32(value: u32) -> Option<Self>;
 }
