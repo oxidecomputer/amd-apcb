@@ -5036,7 +5036,7 @@ make_token_accessors! {
     second_pcie_link_max_payload(TokenEntryId::Byte, default 0xff, id 0xe02d_f04b) : pub get SecondPcieLinkMaxPayload : pub set SecondPcieLinkMaxPayload, // TODO: Before using default, fix default.  It's possibly not correct.
     performance_tracing(TokenEntryId::Bool, default 0, id 0xf27a_10f0) : pub get bool : pub set bool,
     display_pmu_training_results(TokenEntryId::Bool, default 0, id 0x9e36_a9d4) : pub get bool : pub set bool,
-    workload_profile(TokenEntryId::Byte, default 0, id 0x22f4_299f) : pub get WorkloadProfile : pub set WorkloadProfile, // enum; 0...18
+    workload_profile(TokenEntryId::Byte, default 0, id 0x22f4_299f) : pub get WorkloadProfile : pub set WorkloadProfile,
 }
 
 #[cfg(test)]
