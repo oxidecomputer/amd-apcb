@@ -4710,6 +4710,50 @@ pub enum MemClockValue { // in MHz
 
 type MemBusFrequencyLimit = MemClockValue;
 
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum CbsMemPowerDownDelay {
+    Value(u16), // not 0, not 0xffff
+    Auto,
+}
+
+impl FromPrimitive for CbsMemPowerDownDelay {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x1_0000 {
+            match value {
+                0xffff => Some(Self::Auto),
+                x => Some(Self::Value(x as u16)),
+            }
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 && value < 0x1_0000 {
+            let value: u64 = value.try_into().unwrap();
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
+}
+impl ToPrimitive for CbsMemPowerDownDelay {
+    fn to_i64(&self) -> Option<i64> {
+        match self {
+            Self::Value(x) => {
+                if *x == 0xffff {
+                    None
+                } else {
+                    Some((*x).into())
+                }
+            },
+            Self::Auto => Some(0xffff),
+        }
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+
 make_token_accessors! {
     // ABL
 
@@ -4743,7 +4787,7 @@ make_token_accessors! {
     cbs_mem_spd_read_optimization_ddr4(TokenEntryId::Bool, default 0, id 0x8d3a_b10e) : pub get bool : pub set bool, // TODO: Before using default, fix default.  It's possibly not correct.
     mem_enable_power_down(TokenEntryId::Bool, default 1, id 0xbbb1_85a2) : pub get bool : pub set bool,
     mem_self_refresh_exit_staggering(TokenEntryId::Byte, default 0, id 0xbc52_e5f7) : pub get MemSelfRefreshExitStaggering : pub set MemSelfRefreshExitStaggering,
-    CbsMemPowerDownDelay(TokenEntryId::Word, default 0xff, id 0x1ebe_755a), // uint16; number of clock cycles; 0xff: auto; not 0
+    cbs_mem_power_down_delay(TokenEntryId::Word, default 0xff, id 0x1ebe_755a) : pub get CbsMemPowerDownDelay : pub set CbsMemPowerDownDelay,
     mem_temp_controlled_refresh_enable(TokenEntryId::Bool, default 0, id 0xf051_e1c4) : pub get bool : pub set bool,
     mem_odts_cmd_throttle_enable(TokenEntryId::Bool, default 1, id 0xc073_6395) : pub get bool : pub set bool,
     mem_sw_cmd_throttle_enable(TokenEntryId::Bool, default 0, id 0xa29c_1cf9) : pub get bool : pub set bool,
