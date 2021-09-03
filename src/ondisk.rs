@@ -4524,7 +4524,7 @@ make_token_accessors! {
 
     psp_tp_port(TokenEntryId::Bool, default 1, id 0x0460_abe8) : pub get bool : pub set bool,
     psp_error_display(TokenEntryId::Bool, default 1, id 0xdc33_ff21) : pub get bool : pub set bool,
-    psp_event_log_display(TokenEntryId::Bool, default 0, id 0x0c47_3e1c) : pub get bool : pub set bool, // FIXME: default
+    psp_event_log_display(TokenEntryId::Bool, default 0, id 0x0c47_3e1c) : pub get bool : pub set bool, // TODO: Before using default, fix default.  It's possibly not correct.
     psp_stop_on_error(TokenEntryId::Bool, default 0, id 0xe702_4a21) : pub get bool : pub set bool,
     psp_psb_auto_fuse(TokenEntryId::Bool, default 1, id 0x2fcd_70c9) : pub get bool : pub set bool,
     psp_enable_debug_mode(TokenEntryId::Bool, default 0, id 0xd109_1cd0) : pub get bool : pub set bool, // FIXME: is it u8 ?
@@ -4536,16 +4536,16 @@ make_token_accessors! {
     mem_enable_ecc_feature(TokenEntryId::Bool, default 1, id 0xfa35_f040) : pub get bool : pub set bool,
     mem_enable_parity(TokenEntryId::Bool, default 1, id 0x3cb8_cbd2) : pub get bool : pub set bool,
     MemBusFrequencyLimit(TokenEntryId::DWord, default 1600, id 0x3497_0a3c), // int32; enum: Ddr400Frequency = 200|Ddr533|Ddr667|Ddr800|Ddr1066|Ddr1333|Ddr1600|Ddr1866|Ddr2100|Ddr2133|Ddr2400|Ddr2667|Ddr2933|Ddr3200|Auto
-    MemClockValue(TokenEntryId::DWord, default 0xff, id 0xcc83_f65f), // FIXME: Default value auto; FIXME: enums Ddr400Frequency|...|Ddr3200
+    MemClockValue(TokenEntryId::DWord, default 0xff, id 0xcc83_f65f), // TODO: Before using default, fix default.  It's possibly not correct (auto); FIXME: enums Ddr400Frequency|...|Ddr3200
     cbs_mem_speed_ddr4(TokenEntryId::Byte, default 0xff, id 0xe060_4ce9) : pub get u8 : pub set u8, // uint8; 0xff: auto; funny values otherwise // FIXME enum
     mem_enable_bank_swizzle(TokenEntryId::Bool, default 1, id 0x6414_d160) : pub get bool : pub set bool,
     mem_action_on_bist_failure(TokenEntryId::Byte, default 0, id 0xcbc2_c0dd) : pub get MemActionOnBistFailure : pub set MemActionOnBistFailure,
     mem_rcw_weak_drive_disable(TokenEntryId::Byte, default 1, id 0xa30d_781a) : pub get MemRcwWeakDriveDisable : pub set MemRcwWeakDriveDisable, // FIXME is it u32 ?
 
-    MemUserTimingMode(TokenEntryId::DWord, default 0xff, id 0xfc56_0d7d), // enum; auto; limited; specific; FIXME default
+    MemUserTimingMode(TokenEntryId::DWord, default 0xff, id 0xfc56_0d7d), // enum; auto; limited; specific; // TODO: Before using default, fix default.  It's possibly not correct.
     mem_ignore_spd_checksum(TokenEntryId::Bool, default 0, id 0x7d36_9dbc) : pub get bool : pub set bool,
     mem_spd_read_optimization_ddr4(TokenEntryId::Bool, default 1, id 0x6816_f949) : pub get bool : pub set bool,
-    cbs_mem_spd_read_optimization_ddr4(TokenEntryId::Bool, default 0, id 0x8d3a_b10e) : pub get bool : pub set bool, // FIXME: default
+    cbs_mem_spd_read_optimization_ddr4(TokenEntryId::Bool, default 0, id 0x8d3a_b10e) : pub get bool : pub set bool, // TODO: Before using default, fix default.  It's possibly not correct.
     mem_enable_power_down(TokenEntryId::Bool, default 1, id 0xbbb1_85a2) : pub get bool : pub set bool,
     mem_self_refresh_exit_staggering(TokenEntryId::Byte, default 0, id 0xbc52_e5f7) : pub get MemSelfRefreshExitStaggering : pub set MemSelfRefreshExitStaggering,
     CbsMemPowerDownDelay(TokenEntryId::Word, default 0xff, id 0x1ebe_755a), // uint16; number of clock cycles; 0xff: auto; not 0
@@ -4570,17 +4570,17 @@ make_token_accessors! {
     MemControllerPmuTrainFfeDdr4(TokenEntryId::Byte, default 0xff, id 0x0d46_186d), // enum; 1: enable; 0: disable; 0xff: auto; default: auto; FIXME: is it bool ?
     MemControllerPmuTrainDfeDdr4(TokenEntryId::Byte, default 0xff, id 0x36a4_bb5b), // enum; enable; disable; 0xff: auto; default: auto; FIXME: is it bool ?
     mem_tsme_enable(TokenEntryId::Bool, default 1, id 0xd1fa_6660) : pub get bool : pub set bool, // See Transparent Secure Memory Encryption in PPR
-    MemTrainingHdtCtrl(TokenEntryId::Byte, default 0, id 0xaf6d_3a6f), // enum; DetailedDebug|CoarseDebug|StageCompletion|FirmwareCompletionOnly; FIXME: default
+    MemTrainingHdtCtrl(TokenEntryId::Byte, default 0, id 0xaf6d_3a6f), // enum; DetailedDebug|CoarseDebug|StageCompletion|FirmwareCompletionOnly; // TODO: Before using default, fix default.  It's possibly not correct.
     MemMbistDataEyeType(TokenEntryId::Byte, default 3, id 0x4e2e_dc1b), // 0: 1D voltage sweep; 1: 1D timing sweep; 2: 2D Full Data Eye; 3: Worst Case Margin Only (default); FIXME: is it u32 ?
     mem_mbist_data_eye_silent_execution(TokenEntryId::Bool, default 0, id 0x3f74_c7e7) : pub get bool : pub set bool,
     MemHealBistEnable(TokenEntryId::Byte, default 0, id 0xfba2_3a28), // 0:disabled; 1:test all memory; 2:run JEDEC self healing; 3:run both
-    MemSelfHealBistEnable(TokenEntryId::Byte, default 0, id 0x2c23_924c), // FIXME: is it bool ?  FIXME: default?
-    mem_self_heal_bist_timeout(TokenEntryId::DWord, default 1000, id 0xbe75_97d4) : pub get u32 : pub set u32, // in ms; FIXME: default
-    MemPmuBistTestSelect(TokenEntryId::Byte, default 0, id 0x7034_fbfb), // FIXME: default
+    MemSelfHealBistEnable(TokenEntryId::Byte, default 0, id 0x2c23_924c), // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
+    mem_self_heal_bist_timeout(TokenEntryId::DWord, default 1000, id 0xbe75_97d4) : pub get u32 : pub set u32, // in ms; // TODO: Before using default, fix default.  It's possibly not correct.
+    MemPmuBistTestSelect(TokenEntryId::Byte, default 0, id 0x7034_fbfb), // TODO: Before using default, fix default.  It's possibly not correct.
     mem_heal_test_select(TokenEntryId::Byte, default 0, id 0x5908_2cf2) : pub get MemHealTestSelect : pub set MemHealTestSelect,
     mem_heal_ppr_type(TokenEntryId::Byte, default 0, id 0x5418_1a61) : pub get MemHealPprType : pub set MemHealPprType,
     mem_heal_max_bank_fails(TokenEntryId::Byte, default 3, id 0x632e_55d8) : pub get u8 : pub set u8, // per bank
-    mem_ecc_sync_flood(TokenEntryId::Bool, default 0, id 0x88bd_40c2) : pub get bool : pub set bool, // FIXME: default
+    mem_ecc_sync_flood(TokenEntryId::Bool, default 0, id 0x88bd_40c2) : pub get bool : pub set bool, // TODO: Before using default, fix default.  It's possibly not correct.
     mem_restore_control(TokenEntryId::Bool, default 0, id 0xfedb_01f8) : pub get bool : pub set bool,
     mem_restore_valid_days(TokenEntryId::DWord, default 30, id 0x6bd7_0482) : pub get u32 : pub set u32,
     mem_post_package_repair_enable(TokenEntryId::Bool, default 0, id 0xcdc0_3e4e) : pub get bool : pub set bool,
@@ -4589,14 +4589,14 @@ make_token_accessors! {
 
     ccx_sev_asid_count(TokenEntryId::Byte, default 1, id 0x5587_6720) : pub get CcxSevAsidCount : pub set CcxSevAsidCount,
     ccx_min_sev_asid(TokenEntryId::DWord, default 1, id 0xa7c3_3753) : pub get u32 : pub set u32,
-    ccx_ppin_opt_in(TokenEntryId::Bool, default 0, id 0x6a67_00fd) : pub get bool : pub set bool, // FIXME: default
+    ccx_ppin_opt_in(TokenEntryId::Bool, default 0, id 0x6a67_00fd) : pub get bool : pub set bool, // TODO: Before using default, fix default.  It's possibly not correct.
 
     // Fch
 
     FchSmbusSpeed(TokenEntryId::Byte, default 42, id 0x2447_3329), // x in (66 MHz/(4 * x))
     fch_rom3_base_high(TokenEntryId::DWord, default 0, id 0x3e7d_5274) : pub get u32 : pub set u32,
     FchGppClkMap(TokenEntryId::Word, default 0xffff, id 0xcd7e_6983), // u16; bitfield; GppAllClkForceOn; Auto; S0Gpp0ClkOff; ...; S1Gpp4ClkOff
-    FchConsoleOutEnable(TokenEntryId::Byte, default 0, id 0xddb7_59da), // FIXME: default
+    FchConsoleOutEnable(TokenEntryId::Byte, default 0, id 0xddb7_59da), // TODO: Before using default, fix default.  It's possibly not correct.
     fch_console_out_super_io_type(TokenEntryId::Byte, default 0, id 0x5c8d_6e82) : pub get FchConsoleOutSuperIoType : pub set FchConsoleOutSuperIoType, // init mode
 
     // Df
@@ -4629,7 +4629,7 @@ make_token_accessors! {
     DxioPhyParamVga(TokenEntryId::DWord, default 0xffff_ffff, id 0xde09_c43b), // default: skip
     DxioPhyParamPole(TokenEntryId::DWord, default 0xffff_ffff, id 0xb189_447e), // default: skip
     DxioPhyParamDc(TokenEntryId::DWord, default 0xffff_ffff, id 0x2066_7c30), // default: skip
-    DxioPhyParamIqofc(TokenEntryId::DWord, default 0, id 0x7e60_69c5), // FIXME: default; FIXME: i32
+    DxioPhyParamIqofc(TokenEntryId::DWord, default 0, id 0x7e60_69c5), // FIXME: i32 // TODO: Before using default, fix default.  It's possibly not correct.
 
     // Misc
 
