@@ -846,7 +846,6 @@ pub struct GROUP_HEADER {
     pub group_size: U32<LittleEndian>, // including header!
 }
 
-#[repr(u8)]
 #[derive(Debug, PartialEq, FromPrimitive, Copy, Clone)]
 pub enum ContextFormat {
     Raw = 0,
@@ -854,7 +853,6 @@ pub enum ContextFormat {
     SortDescending = 2, // don't use
 }
 
-#[repr(u8)]
 #[derive(Debug, PartialEq, FromPrimitive, Copy, Clone)]
 pub enum ContextType {
     Struct = 0,
@@ -1029,7 +1027,6 @@ pub mod df {
     use crate::struct_accessors::{Getter, Setter, make_accessors};
     use crate::types::Result;
 
-    #[repr(u8)]
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     pub enum SlinkRegionDescriptionInterleavingSize {
         B256 = 0,
@@ -1404,7 +1401,6 @@ pub mod memory {
         }
     }
 
-    #[repr(u32)]
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     pub enum PortType {
         PcieHt0 = 0,
@@ -1414,7 +1410,6 @@ pub mod memory {
         FchMmio = 7,
     }
 
-    #[repr(u32)]
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     pub enum PortSize {
         Size8Bit = 1,
@@ -1551,7 +1546,6 @@ macro_rules! impl_bitfield_primitive_conversion {
     }
     impl_bitfield_primitive_conversion!(LrdimmDdr4DimmRanks, 0b11);
 
-    #[repr(u8)]
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     pub enum CadBusClkDriveStrength {
         Auto = 0xFF,
@@ -1922,7 +1916,6 @@ macro_rules! impl_bitfield_primitive_conversion {
 
     // Those are all divisors of 240, except for the 34
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
-    #[repr(u32)]
     pub enum RttNom {
         RttOff = 0,
         Rtt60Ohm = 1,
@@ -1935,7 +1928,6 @@ macro_rules! impl_bitfield_primitive_conversion {
     }
     type RttPark = RttNom;
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
-    #[repr(u32)]
     pub enum RttWr {
         RttOff = 0,
         Rtt120Ohm = 1,
@@ -2078,7 +2070,6 @@ macro_rules! impl_bitfield_primitive_conversion {
     }
 
     // ACTUAL 1/T, where T is one period.  For DDR, that means DDR400 has frequency 200.
-    #[repr(u16)]
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     pub enum DdrSpeed {
         Ddr400 = 200,
@@ -2345,7 +2336,6 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    #[repr(u8)]
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     pub enum ErrorOutControlBeepCodeErrorType {
         General = 3,
@@ -3155,7 +3145,6 @@ macro_rules! impl_bitfield_primitive_conversion {
             }
         }
 
-        #[repr(u32)]
         #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
         pub enum TimingMode {
             Auto = 0,
@@ -3163,7 +3152,6 @@ macro_rules! impl_bitfield_primitive_conversion {
             Specific = 2,
         }
 
-        #[repr(u32)]
         #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
         pub enum MemBusSpeedType { // in MHz
             Ddr400 = 200,
@@ -3272,7 +3260,6 @@ macro_rules! impl_bitfield_primitive_conversion {
             }
         }
 
-        #[repr(u32)]
         #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
         pub enum MemTechnologyType {
             Ddr2 = 0,
@@ -3605,7 +3592,6 @@ macro_rules! impl_bitfield_primitive_conversion {
             }
         }
 
-        #[repr(u32)]
         #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
         pub enum MemPowerPolicyType {
             Performance = 0,
@@ -3650,7 +3636,6 @@ macro_rules! impl_bitfield_primitive_conversion {
             }
         }
 
-        #[repr(u8)]
         #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
         pub enum MotherboardLayerCount {
             L4 = 0,
