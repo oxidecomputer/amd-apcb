@@ -4481,6 +4481,15 @@ pub enum DfInvertDramMap {
     Inverted = 1,
 }
 
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum DfXgmiTxEqMode {
+    Disabled = 0,
+    EnabledByLane = 1,
+    EnabledByLink = 2,
+    EnabledByLinkAndRxVetting = 3,
+    Auto = 0xff,
+}
+
 // This trait exists so we can impl it for bool; the macro MAKE_TOKEN_ACCESSORS will call the function by name without specifying the trait anyway.
 trait ToPrimitive1 {
     fn to_u32(&self) -> Option<u32>;
@@ -4772,7 +4781,7 @@ make_token_accessors! {
     //Df3Xgmi2LinkConfig(TokenEntryId::Byte, default ?, id 0xb0b6_ad3a), // enum; 0: 2link; 1: 3link; 2: 4link
     //Df3LinkMaxXgmiSpeed(TokenEntryId::Byte, default ?, id 0x53ba_449b),
     //Df4LinkMaxXgmiSpeed(TokenEntryId::Byte, default ?, id 0x3f30_7cb3),
-    DfXgmiTxEqMode(TokenEntryId::Byte, default 0xff, id 0xade7_9549), // enum; 0: disabled; 1: enabled by lane; 2: enabled by link; 3: enabled by link and rx vetting; 0xff: auto
+    df_xgmi_tx_eq_mode(TokenEntryId::Byte, default 0xff, id 0xade7_9549) : pub get DfXgmiTxEqMode : pub set DfXgmiTxEqMode,
     DfCakeCrcThresholdBounds(TokenEntryId::DWord, default 100, id 0x9258_cf45), // default: 0.001%
     df_invert_dram_map(TokenEntryId::Byte, default 0, id 0x6574_b2c0) : pub get DfInvertDramMap : pub set DfInvertDramMap,
 
