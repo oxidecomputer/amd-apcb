@@ -12,10 +12,6 @@
   * rev_and_feature_value: 0xff for NA
   * id_and_feature_mask: bit 7: 1=user controlled; 0=normal
 * Check checksum on load?
-* Apcb: Dirty-type, original-type; automate calling update_checksum
-  * My own idea: Just implement Drop and have a flag you refer to.
-  * Give a reference to the flag to all the iterators that would need to change it
-    * If there are &mut to struct that doesn't work, now does it?
 * OdtPatElement: Availability of dimm0_rank, dimm1_rank should be conditional.
 * Enums for stuff with a "|" or "one of" comment.
   * ref_dq
@@ -65,6 +61,10 @@
 * Entry alignment relative to containing group instead??
 * AMD# 55483 4.1.3 SPD_Info DIMM_INFO_ARRAY does not seem to exist
 * TX EQ struct; bitfield for sockets; bitfield for dies; bitfield for lanes; lane data (variable-length body!)
+* Apcb: Dirty-type, original-type; automate calling update_checksum
+  * My own idea: Just implement Drop and have a flag you refer to.
+  * Give a reference to the flag to all the iterators that would need to change it
+    * If there are &mut to struct that doesn't work, now does it?
 
 # Alternate Bitfield implementations
 
