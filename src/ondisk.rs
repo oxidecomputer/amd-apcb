@@ -4723,7 +4723,7 @@ make_token_accessors! {
     MemHealBistEnable(TokenEntryId::Byte, default 0, id 0xfba2_3a28), // 0:disabled; 1:test all memory; 2:run JEDEC self healing; 3:run both
     MemSelfHealBistEnable(TokenEntryId::Byte, default 0, id 0x2c23_924c), // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
     mem_self_heal_bist_timeout(TokenEntryId::DWord, default 1000, id 0xbe75_97d4) : pub get u32 : pub set u32, // in ms; // TODO: Before using default, fix default.  It's possibly not correct.
-    MemPmuBistTestSelect(TokenEntryId::Byte, default 0, id 0x7034_fbfb), // TODO: Before using default, fix default.  It's possibly not correct.
+    MemPmuBistTestSelect(TokenEntryId::Byte, default 0, id 0x7034_fbfb), // TODO: Before using default, fix default.  It's possibly not correct.; note: range 1...7
     mem_heal_test_select(TokenEntryId::Byte, default 0, id 0x5908_2cf2) : pub get MemHealTestSelect : pub set MemHealTestSelect,
     mem_heal_ppr_type(TokenEntryId::Byte, default 0, id 0x5418_1a61) : pub get MemHealPprType : pub set MemHealPprType,
     mem_heal_max_bank_fails(TokenEntryId::Byte, default 3, id 0x632e_55d8) : pub get u8 : pub set u8, // per bank
