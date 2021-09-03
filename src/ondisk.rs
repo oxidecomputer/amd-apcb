@@ -4475,6 +4475,12 @@ pub enum MemMbistDataEyeType {
     TypeWorstCaseMarginOnly = 3,
 }
 
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum DfInvertDramMap {
+    Normal = 0,
+    Inverted = 1,
+}
+
 // This trait exists so we can impl it for bool; the macro MAKE_TOKEN_ACCESSORS will call the function by name without specifying the trait anyway.
 trait ToPrimitive1 {
     fn to_u32(&self) -> Option<u32>;
@@ -4768,7 +4774,7 @@ make_token_accessors! {
     //Df4LinkMaxXgmiSpeed(TokenEntryId::Byte, default ?, id 0x3f30_7cb3),
     DfXgmiTxEqMode(TokenEntryId::Byte, default 0xff, id 0xade7_9549), // enum; 0: disabled; 1: enabled by lane; 2: enabled by link; 3: enabled by link and rx vetting; 0xff: auto
     DfCakeCrcThresholdBounds(TokenEntryId::DWord, default 100, id 0x9258_cf45), // default: 0.001%
-    DfInvertDramMap(TokenEntryId::Byte, default 0, id 0x6574_b2c0),
+    df_invert_dram_map(TokenEntryId::Byte, default 0, id 0x6574_b2c0) : pub get DfInvertDramMap : pub set DfInvertDramMap,
 
     // Dxio
 
