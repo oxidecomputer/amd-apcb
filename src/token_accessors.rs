@@ -5,7 +5,6 @@ use crate::ondisk::GroupId;
 use crate::ondisk::PriorityLevels;
 use crate::types::Error;
 use crate::types::Result;
-use num_traits::{FromPrimitive, ToPrimitive};
 
 pub struct TokensMut<'a> {
     pub(crate) apcb: &'a mut Apcb<'a>,
