@@ -4776,7 +4776,6 @@ make_token_accessors! {
     df_save_restore_mem_encrypt(TokenEntryId::Byte, default 1, id 0x7b3d_1f75) : pub get DfToggle : pub set DfToggle,
     df_bottom_io(TokenEntryId::Byte, default 0xe0, id 0x8fb9_8529) : pub get u8 : pub set u8, // Where the PCI MMIO hole will start (bits 31 to 24 inclusive)
     df_pci_mmio_size(TokenEntryId::DWord, default 0x1000_0000, id 0x3d9b_7d7b) : pub get u32 : pub set u32,
-    DfSysStorageAtTopOfMem(TokenEntryId::Byte, default 0, id 0x249e_08d5), // Where to map PSP, SMU, CC6; enum; 0: mem distributed; 1: mem consolidated; 2: 1st mem consolidated; 0xff: auto
     df_remap_at_1tib(TokenEntryId::Byte, default 0, id 0x35ee_96f3) : pub get DfRemapAt1TiB : pub set DfRemapAt1TiB,
     //Df3Xgmi2LinkConfig(TokenEntryId::Byte, default ?, id 0xb0b6_ad3a), // enum; 0: 2link; 1: 3link; 2: 4link
     //Df3LinkMaxXgmiSpeed(TokenEntryId::Byte, default ?, id 0x53ba_449b),
