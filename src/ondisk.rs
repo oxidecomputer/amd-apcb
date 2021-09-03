@@ -4764,6 +4764,33 @@ pub enum MemHealBistEnable {
     TestAndRepairAllMemoryAndJedecSelfHealing = 3,
 }
 
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum CbsMemSpeedDdr4 {
+    Ddr333 = 4,
+    Ddr400 = 6,
+    Ddr533 = 0xa,
+    Ddr667 = 0x14,
+    Ddr800 = 0x18,
+    Ddr933 = 0x1c,
+    Ddr1050 = 0x19,
+    Ddr1066 = 0x1a,
+    Ddr1067 = 0x20,
+    Ddr1200 = 0x24,
+    Ddr1333 = 0x28,
+    Ddr1400 = 0x2a,
+    Ddr1467 = 0x2c,
+    Ddr1533 = 0x2e,
+    Ddr1600 = 0x30,
+    Ddr1667 = 0x32,
+    Ddr1733 = 0x34,
+    Ddr1800 = 0x36,
+    Ddr1867 = 0x38,
+    Ddr1933 = 0x3a,
+    Ddr2000 = 0x3c,
+
+    Auto = 0xff,
+}
+
 make_token_accessors! {
     // ABL
 
@@ -4786,7 +4813,7 @@ make_token_accessors! {
     mem_enable_parity(TokenEntryId::Bool, default 1, id 0x3cb8_cbd2) : pub get bool : pub set bool,
     mem_bus_frequency_limit(TokenEntryId::DWord, default 1600, id 0x3497_0a3c) : pub get MemBusFrequencyLimit : pub set MemBusFrequencyLimit,
     mem_clock_value(TokenEntryId::DWord, default 0xffff_ffff, id 0xcc83_f65f) : pub get MemClockValue : pub set MemClockValue,
-    cbs_mem_speed_ddr4(TokenEntryId::Byte, default 0xff, id 0xe060_4ce9) : pub get u8 : pub set u8, // uint8; 0xff: auto; funny values otherwise // FIXME enum
+    cbs_mem_speed_ddr4(TokenEntryId::Byte, default 0xff, id 0xe060_4ce9) : pub get CbsMemSpeedDdr4 : pub set CbsMemSpeedDdr4,
     mem_enable_bank_swizzle(TokenEntryId::Bool, default 1, id 0x6414_d160) : pub get bool : pub set bool,
     mem_action_on_bist_failure(TokenEntryId::Byte, default 0, id 0xcbc2_c0dd) : pub get MemActionOnBistFailure : pub set MemActionOnBistFailure,
     mem_rcw_weak_drive_disable(TokenEntryId::Byte, default 1, id 0xa30d_781a) : pub get MemRcwWeakDriveDisable : pub set MemRcwWeakDriveDisable, // FIXME is it u32 ?
