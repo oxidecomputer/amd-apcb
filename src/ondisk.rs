@@ -4856,6 +4856,15 @@ impl ToPrimitive for DfCakeCrcThresholdBounds {
     }
 }
 
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemTrainingHdtControl {
+    DetailedDebugMessages = 5,
+    CoarseDebugMessages = 10,
+    StageCompletionMessages = 200,
+    // TODO: Seen in the wild: 201
+    FirmwareCompletionMessagesOnly = 0xfe,
+}
+
 make_token_accessors! {
     // ABL
 
@@ -4911,7 +4920,7 @@ make_token_accessors! {
     mem_controller_pmu_train_ffe_ddr4(TokenEntryId::Byte, default 0xff, id 0x0d46_186d) : pub get MemControllerPmuTrainFfeDdr4 : pub set MemControllerPmuTrainFfeDdr4, // FIXME: is it bool ?
     mem_controller_pmu_train_dfe_ddr4(TokenEntryId::Byte, default 0xff, id 0x36a4_bb5b) : pub get MemControllerPmuTrainDfeDdr4 : pub set MemControllerPmuTrainDfeDdr4, // FIXME: is it bool ?
     mem_tsme_enable(TokenEntryId::Bool, default 1, id 0xd1fa_6660) : pub get bool : pub set bool, // See Transparent Secure Memory Encryption in PPR
-    MemTrainingHdtCtrl(TokenEntryId::Byte, default 0, id 0xaf6d_3a6f), // enum; DetailedDebug|CoarseDebug|StageCompletion|FirmwareCompletionOnly; // TODO: Before using default, fix default.  It's possibly not correct.
+    mem_training_hdt_control(TokenEntryId::Byte, default 200, id 0xaf6d_3a6f) : pub get MemTrainingHdtControl : pub set MemTrainingHdtControl, // TODO: Before using default, fix default.  It's possibly not correct.
     mem_mbist_data_eye_type(TokenEntryId::Byte, default 3, id 0x4e2e_dc1b) : pub get MemMbistDataEyeType : pub set MemMbistDataEyeType, // FIXME: is it DWord ?
     mem_mbist_data_eye_silent_execution(TokenEntryId::Bool, default 0, id 0x3f74_c7e7) : pub get bool : pub set bool,
     mem_heal_bist_enable(TokenEntryId::Byte, default 0, id 0xfba2_3a28) : pub get MemHealBistEnable : pub set MemHealBistEnable,
