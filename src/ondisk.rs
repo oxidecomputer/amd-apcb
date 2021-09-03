@@ -2579,6 +2579,7 @@ macro_rules! impl_bitfield_primitive_conversion {
             match entry_id {
                 // definitely not EntryId::Memory(MemoryEntryId::PsLrdimmDdr4OdtPat) => true,
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr4OdtPat) => true,
+                EntryId::Memory(MemoryEntryId::PsUdimmDdr4OdtPat) => true,
                 _ => false,
             }
         }
