@@ -64,7 +64,7 @@ macro_rules! make_token_accessors {(
         $(
             $(#[$field_meta:meta])*
             $field_vis:vis
-            $field_name:ident($field_ty:expr, default $field_default_value:expr, id $field_key:expr) $(: $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
+            $field_name:ident($field_entry_id:expr, default $field_default_value:expr, id $field_key:expr) $(: $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
         ),* $(,)?
 ) => (
     $(
@@ -73,10 +73,10 @@ macro_rules! make_token_accessors {(
             #[inline]
             $getter_vis
             fn $field_name (self: &'_ Self)
-                -> $field_user_ty
+                -> Result<$field_user_ty>
             {
                 let group = self.apcb.group(GroupId::Token).ok_or_else(|| Error::GroupNotFound)?;
-                let entry = group.entry(EntryId::Token($field_ty), self.instance_id, self.board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
+                let entry = group.entry(EntryId::Token($field_entry_id), self.instance_id, self.board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
                 // FIXME: match properly (body_token does not check whether the thing is a token entry in the first place)
                 match entry.body_token($field_key) {
                     None => {
@@ -84,7 +84,8 @@ macro_rules! make_token_accessors {(
                     },
                     Some(ref token) => {
                         assert!(token.id() == $field_key);
-                        token.value().get1()
+                        let token_value = token.value();
+                        <$field_user_ty>::from_u32(token_value).ok_or_else(|| Error::EntryTypeMismatch)
                     },
                 }
             }
@@ -93,10 +94,10 @@ macro_rules! make_token_accessors {(
             #[inline]
             $getter_vis
             fn $field_name (self: &'_ Self)
-                -> $field_user_ty
+                -> Result<$field_user_ty>
             {
                 let group = self.apcb.group(GroupId::Token).ok_or_else(|| Error::GroupNotFound)?;
-                let entry = group.entry(EntryId::Token($field_ty), self.instance_id, self.board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
+                let entry = group.entry(EntryId::Token($field_entry_id), self.instance_id, self.board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
                 // FIXME: match properly (body_token does not check whether the thing is a token entry in the first place)
                 match entry.body_token($field_key) {
                     None => {
@@ -104,7 +105,8 @@ macro_rules! make_token_accessors {(
                     },
                     Some(ref token) => {
                         assert!(token.id() == $field_key);
-                        token.value().get1()
+                        let token_value = token.value();
+                        <$field_user_ty>::from_u32(token_value).ok_or_else(|| Error::EntryTypeMismatch)
                     },
                 }
             }
@@ -113,9 +115,10 @@ macro_rules! make_token_accessors {(
                   #[inline]
                   $setter_vis
                   fn [<set_ $field_name>] (self: &'_ mut Self, value: $field_setter_user_ty) -> Result<()> {
-                      let entry_id = EntryId::Token($field_ty);
+                      let entry_id = EntryId::Token($field_entry_id);
                       let token_id = $field_key;
-                      let token_value = value.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?;
+                      let token_value = value.to_u32().unwrap();
+                      //let token_value = value.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?;
                       match self.apcb.insert_token(entry_id, self.instance_id, self.board_instance_mask, token_id, token_value) {
                           Err(Error::EntryNotFound) => {
                               match self.apcb.insert_entry(entry_id, self.instance_id, self.board_instance_mask, ContextType::Tokens, self.priority_mask, &[]) {

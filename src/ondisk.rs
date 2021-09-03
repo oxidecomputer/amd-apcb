@@ -4486,130 +4486,156 @@ pub enum WorkloadProfile {
     OpenStackForRealTimeKernel = 18,
 }
 
+trait ToPrimitive1 {
+    fn to_u32(&self) -> Option<u32>;
+}
+trait FromPrimitive1: Sized {
+    fn from_u32(value: u32) -> Option<Self>;
+}
+
+impl ToPrimitive1 for bool {
+    fn to_u32(&self) -> Option<u32> {
+        match self {
+            true => Some(1),
+            false => Some(0),
+        }
+    }
+}
+
+impl FromPrimitive1 for bool {
+    fn from_u32(value: u32) -> Option<Self> {
+        match value {
+            1 => Some(true),
+            0 => Some(false),
+            _ => None,
+        }
+    }
+}
+
 make_token_accessors! {
     // ABL
 
-    abl_serial_baud_rate(TokenEntryId::Byte, default 8, id 0xae46_cea4) : pub get Result<BaudRate> : pub set BaudRate,
+    abl_serial_baud_rate(TokenEntryId::Byte, default 8, id 0xae46_cea4) : pub get BaudRate : pub set BaudRate,
 
     // PSP
 
-    PspTpPort(TokenEntryId::Bool, default 1, id 0x0460_abe8),
-    PspErrorDisplay(TokenEntryId::Bool, default 1, id 0xdc33_ff21),
-    PspEventLogDisplay(TokenEntryId::Bool, default 0, id 0x0c47_3e1c), // FIXME: default
-    PspStopOnError(TokenEntryId::Bool, default 0, id 0xe702_4a21),
-    PspPsbAutoFuse(TokenEntryId::Bool, default 1, id 0x2fcd_70c9),
-    PspEnableDebugMode(TokenEntryId::Bool, default 0, id 0xd109_1cd0), // FIXME: is it u8 ?
-    PspSyshubWatchdogTimerInterval(TokenEntryId::Word, default 2600, id 0xedb5_e4c9), // in ms
+    psp_tp_port(TokenEntryId::Bool, default 1, id 0x0460_abe8) : pub get bool : pub set bool,
+    psp_error_display(TokenEntryId::Bool, default 1, id 0xdc33_ff21) : pub get bool : pub set bool,
+    psp_event_log_display(TokenEntryId::Bool, default 0, id 0x0c47_3e1c) : pub get bool : pub set bool, // FIXME: default
+    psp_stop_on_error(TokenEntryId::Bool, default 0, id 0xe702_4a21) : pub get bool : pub set bool,
+    psp_psb_auto_fuse(TokenEntryId::Bool, default 1, id 0x2fcd_70c9) : pub get bool : pub set bool,
+    psp_enable_debug_mode(TokenEntryId::Bool, default 0, id 0xd109_1cd0) : pub get bool : pub set bool, // FIXME: is it u8 ?
+    psp_syshubWatchdogTimerInterval(TokenEntryId::Word, default 2600, id 0xedb5_e4c9) : pub get u16 : pub set u16, // in ms
 
     // Memory Controller
 
-    MemEnableChipSelectInterleaving(TokenEntryId::Bool, default 1, id 0x6f81_a115),
-    MemEnableEccFeature(TokenEntryId::Bool, default 1, id 0xfa35_f040),
-    MemEnableParity(TokenEntryId::Bool, default 1, id 0x3cb8_cbd2),
-    MemBusFrequencyLimit(u32, default 1600, id 0x3497_0a3c), // int32; enum: Ddr400Frequency = 200|Ddr533|Ddr667|Ddr800|Ddr1066|Ddr1333|Ddr1600|Ddr1866|Ddr2100|Ddr2133|Ddr2400|Ddr2667|Ddr2933|Ddr3200|Auto
-    MemClockValue(u32, default 0xff, id 0xcc83_f65f), // FIXME: Default value auto; FIXME: enums Ddr400Frequency|...|Ddr3200
-    cbs_mem_speed_ddr4(TokenEntryId::Byte, default 0xff, id 0xe060_4ce9) : pub get Result<u8> : pub set u8, // uint8; 0xff: auto; funny values otherwise // FIXME enum
-    MemEnableBankSwizzle(TokenEntryId::Bool, default 1, id 0x6414_d160), // bool
-    mem_action_on_bist_failure(TokenEntryId::Byte, default 0, id 0xcbc2_c0dd) : pub get Result<MemActionOnBistFailure> : pub set MemActionOnBistFailure,
-    mem_rcw_weak_drive_disable(TokenEntryId::Byte, default 1, id 0xa30d_781a) : pub get Result<MemRcwWeakDriveDisable> : pub set MemRcwWeakDriveDisable, // FIXME is it u32 ?
+    mem_enable_chip_select_interleaving(TokenEntryId::Bool, default 1, id 0x6f81_a115) : pub get bool : pub set bool,
+    mem_enable_ecc_feature(TokenEntryId::Bool, default 1, id 0xfa35_f040) : pub get bool : pub set bool,
+    mem_enable_parity(TokenEntryId::Bool, default 1, id 0x3cb8_cbd2) : pub get bool : pub set bool,
+    MemBusFrequencyLimit(TokenEntryId::DWord, default 1600, id 0x3497_0a3c), // int32; enum: Ddr400Frequency = 200|Ddr533|Ddr667|Ddr800|Ddr1066|Ddr1333|Ddr1600|Ddr1866|Ddr2100|Ddr2133|Ddr2400|Ddr2667|Ddr2933|Ddr3200|Auto
+    MemClockValue(TokenEntryId::DWord, default 0xff, id 0xcc83_f65f), // FIXME: Default value auto; FIXME: enums Ddr400Frequency|...|Ddr3200
+    cbs_mem_speed_ddr4(TokenEntryId::Byte, default 0xff, id 0xe060_4ce9) : pub get u8 : pub set u8, // uint8; 0xff: auto; funny values otherwise // FIXME enum
+    mem_enable_bank_swizzle(TokenEntryId::Bool, default 1, id 0x6414_d160) : pub get bool : pub set bool,
+    mem_action_on_bist_failure(TokenEntryId::Byte, default 0, id 0xcbc2_c0dd) : pub get MemActionOnBistFailure : pub set MemActionOnBistFailure,
+    mem_rcw_weak_drive_disable(TokenEntryId::Byte, default 1, id 0xa30d_781a) : pub get MemRcwWeakDriveDisable : pub set MemRcwWeakDriveDisable, // FIXME is it u32 ?
 
-    MemUserTimingMode(u32, default 0xff, id 0xfc56_0d7d), // enum; auto; limited; specific; FIXME default
-    MemIgnoreSpdChecksum(TokenEntryId::Bool, default 0, id 0x7d36_9dbc),
-    MemSpdReadOptimizationDdr4(TokenEntryId::Bool, default 1, id 0x6816_f949), // bool
-    CbsMemSpdReadOptimizationDdr4(TokenEntryId::Bool, default 0, id 0x8d3a_b10e), // FIXME: default
-    MemEnablePowerDown(TokenEntryId::Bool, default 1, id 0xbbb1_85a2),
-    mem_self_refresh_exit_staggering(TokenEntryId::Byte, default 0, id 0xbc52_e5f7) : pub get Result<MemSelfRefreshExitStaggering> : pub set MemSelfRefreshExitStaggering,
+    MemUserTimingMode(TokenEntryId::DWord, default 0xff, id 0xfc56_0d7d), // enum; auto; limited; specific; FIXME default
+    mem_ignore_spd_checksum(TokenEntryId::Bool, default 0, id 0x7d36_9dbc) : pub get bool : pub set bool,
+    mem_spd_read_optimization_ddr4(TokenEntryId::Bool, default 1, id 0x6816_f949) : pub get bool : pub set bool,
+    cbs_mem_spd_read_optimization_ddr4(TokenEntryId::Bool, default 0, id 0x8d3a_b10e) : pub get bool : pub set bool, // FIXME: default
+    mem_enable_power_down(TokenEntryId::Bool, default 1, id 0xbbb1_85a2) : pub get bool : pub set bool,
+    mem_self_refresh_exit_staggering(TokenEntryId::Byte, default 0, id 0xbc52_e5f7) : pub get MemSelfRefreshExitStaggering : pub set MemSelfRefreshExitStaggering,
     CbsMemPowerDownDelay(TokenEntryId::Word, default 0xff, id 0x1ebe_755a), // uint16; number of clock cycles; 0xff: auto; not 0
-    MemTempControlledRefreshEnable(TokenEntryId::Bool, default 0, id 0xf051_e1c4),
-    MemOdtsCmdThrottleEnable(TokenEntryId::Bool, default 1, id 0xc073_6395),
-    MemSwCmdThrottleEnable(TokenEntryId::Bool, default 0, id 0xa29c_1cf9),
-    MemForcePowerDownThrottleEnable(TokenEntryId::Bool, default 1, id 0x1084_9d6c),
-    MemHoleRemapping(TokenEntryId::Bool, default 1, id 0x6a13_3ac5),
-    MemEnableBankGroupSwapAlt(TokenEntryId::Bool, default 1, id 0xa89d_1be8),
-    MemEnableBankGroupSwap(TokenEntryId::Bool, default 1, id 0x4692_0968),
-    MemDdrRouteBalancedTee(TokenEntryId::Bool, default 0, id 0xe68c_363d),
-    cbs_mem_addr_cmd_parity_retry_ddr4(TokenEntryId::Byte, default 0, id 0xbe8b_ebce) : pub get Result<CbsMemAddrCmdParityRetryDdr4> : pub set CbsMemAddrCmdParityRetryDdr4, // FIXME: Is it u32 ?
-    cbs_mem_addr_cmd_parity_error_max_replay_ddr4(TokenEntryId::Byte, default 8, id 0x04e6_a482) : pub get Result<u8> : pub set u8, // 0...0x3f
-    CbsMemWriteCrcRetryDdr4(TokenEntryId::Bool, default 0, id 0x25fb_6ea6),
-    cbs_mem_write_crc_error_max_replay_ddr4(TokenEntryId::Byte, default 8, id 0x74a0_8bec) : pub get Result<u8> : pub set u8,
-    CbsMemControllerWriteCrcEnableDdr4(TokenEntryId::Bool, default 0, id 0x9445_1a4b),
+    mem_temp_controlled_refresh_enable(TokenEntryId::Bool, default 0, id 0xf051_e1c4) : pub get bool : pub set bool,
+    mem_odts_cmd_throttle_enable(TokenEntryId::Bool, default 1, id 0xc073_6395) : pub get bool : pub set bool,
+    mem_sw_cmd_throttle_enable(TokenEntryId::Bool, default 0, id 0xa29c_1cf9) : pub get bool : pub set bool,
+    mem_force_power_down_throttle_enable(TokenEntryId::Bool, default 1, id 0x1084_9d6c) : pub get bool : pub set bool,
+    mem_hole_remapping(TokenEntryId::Bool, default 1, id 0x6a13_3ac5) : pub get bool : pub set bool,
+    mem_enable_bank_group_swap_alt(TokenEntryId::Bool, default 1, id 0xa89d_1be8) : pub get bool : pub set bool,
+    mem_enable_bank_group_swap(TokenEntryId::Bool, default 1, id 0x4692_0968) : pub get bool : pub set bool,
+    mem_ddr_route_balanced_tee(TokenEntryId::Bool, default 0, id 0xe68c_363d) : pub get bool : pub set bool,
+    cbs_mem_addr_cmd_parity_retry_ddr4(TokenEntryId::Byte, default 0, id 0xbe8b_ebce) : pub get CbsMemAddrCmdParityRetryDdr4 : pub set CbsMemAddrCmdParityRetryDdr4, // FIXME: Is it u32 ?
+    cbs_mem_addr_cmd_parity_error_max_replay_ddr4(TokenEntryId::Byte, default 8, id 0x04e6_a482) : pub get u8 : pub set u8, // 0...0x3f
+    cbs_mem_write_crc_retry_ddr4(TokenEntryId::Bool, default 0, id 0x25fb_6ea6) : pub get bool : pub set bool,
+    cbs_mem_write_crc_error_max_replay_ddr4(TokenEntryId::Byte, default 8, id 0x74a0_8bec) : pub get u8 : pub set u8,
+    cbs_mem_controller_write_crc_enable_ddr4(TokenEntryId::Bool, default 0, id 0x9445_1a4b) : pub get bool : pub set bool,
 
-    MemRcdParity(TokenEntryId::Bool, default 1, id 0x647d_7662),
-    MemUncorrectedEccRetryDdr4(TokenEntryId::Bool, default 1, id 0xbff0_0125),
-    mem_urg_ref_limit(TokenEntryId::Byte, default 6, id 0x1333_32df) : pub get Result<u8> : pub set u8, // UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first); FIXME: is it u32 ?
-    mem_sub_urg_ref_lower_bound(TokenEntryId::Byte, default 4, id 0xe756_2ab6) : pub get Result<u8> : pub set u8, // UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first); FIXME: is it u32 ?
+    mem_rcd_parity(TokenEntryId::Bool, default 1, id 0x647d_7662) : pub get bool : pub set bool,
+    mem_uncorrected_ecc_retry_ddr4(TokenEntryId::Bool, default 1, id 0xbff0_0125) : pub get bool : pub set bool,
+    mem_urg_ref_limit(TokenEntryId::Byte, default 6, id 0x1333_32df) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first); FIXME: is it u32 ?
+    mem_sub_urg_ref_lower_bound(TokenEntryId::Byte, default 4, id 0xe756_2ab6) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first); FIXME: is it u32 ?
     MemControllerPmuTrainFfeDdr4(TokenEntryId::Byte, default 0xff, id 0x0d46_186d), // enum; 1: enable; 0: disable; 0xff: auto; default: auto; FIXME: is it bool ?
     MemControllerPmuTrainDfeDdr4(TokenEntryId::Byte, default 0xff, id 0x36a4_bb5b), // enum; enable; disable; 0xff: auto; default: auto; FIXME: is it bool ?
-    MemTsmeEnable(TokenEntryId::Bool, default 1, id 0xd1fa_6660), // See Transparent Secure Memory Encryption in PPR
+    mem_tsme_enable(TokenEntryId::Bool, default 1, id 0xd1fa_6660) : pub get bool : pub set bool, // See Transparent Secure Memory Encryption in PPR
     MemTrainingHdtCtrl(TokenEntryId::Byte, default 0, id 0xaf6d_3a6f), // enum; DetailedDebug|CoarseDebug|StageCompletion|FirmwareCompletionOnly; FIXME: default
     MemMbistDataEyeType(TokenEntryId::Byte, default 3, id 0x4e2e_dc1b), // 0: 1D voltage sweep; 1: 1D timing sweep; 2: 2D Full Data Eye; 3: Worst Case Margin Only (default); FIXME: is it u32 ?
-    MemMbistDataEyeSilentExecution(TokenEntryId::Bool, default 0, id 0x3f74_c7e7),
+    mem_mbist_data_eye_silent_execution(TokenEntryId::Bool, default 0, id 0x3f74_c7e7) : pub get bool : pub set bool,
     MemHealBistEnable(TokenEntryId::Byte, default 0, id 0xfba2_3a28), // 0:disabled; 1:test all memory; 2:run JEDEC self healing; 3:run both
     MemSelfHealBistEnable(TokenEntryId::Byte, default 0, id 0x2c23_924c), // FIXME: is it bool ?  FIXME: default?
-    MemSelfHealBistTimeout(u32, default 1000, id 0xbe75_97d4), // in ms; FIXME: default
+    mem_self_heal_bist_timeout(TokenEntryId::DWord, default 1000, id 0xbe75_97d4) : pub get u32 : pub set u32, // in ms; FIXME: default
     MemPmuBistTestSelect(TokenEntryId::Byte, default 0, id 0x7034_fbfb), // FIXME: default
-    mem_heal_test_select(TokenEntryId::Byte, default 0, id 0x5908_2cf2) : pub get Result<MemHealTestSelect> : pub set MemHealTestSelect,
-    mem_heal_ppr_type(TokenEntryId::Byte, default 0, id 0x5418_1a61) : pub get Result<MemHealPprType> : pub set MemHealPprType,
-    mem_heal_max_bank_fails(TokenEntryId::Byte, default 3, id 0x632e_55d8) : pub get Result<u8> : pub set u8, // per bank
-    MemEccSyncFlood(TokenEntryId::Bool, default 0, id 0x88bd_40c2), // FIXME: default
-    MemRestoreControl(TokenEntryId::Bool, default 0, id 0xfedb_01f8),
-    MemRestoreValidDays(u32, default 30, id 0x6bd7_0482),
-    MemPostPackageRepairEnable(TokenEntryId::Bool, default 0, id 0xcdc0_3e4e),
+    mem_heal_test_select(TokenEntryId::Byte, default 0, id 0x5908_2cf2) : pub get MemHealTestSelect : pub set MemHealTestSelect,
+    mem_heal_ppr_type(TokenEntryId::Byte, default 0, id 0x5418_1a61) : pub get MemHealPprType : pub set MemHealPprType,
+    mem_heal_max_bank_fails(TokenEntryId::Byte, default 3, id 0x632e_55d8) : pub get u8 : pub set u8, // per bank
+    mem_ecc_sync_flood(TokenEntryId::Bool, default 0, id 0x88bd_40c2) : pub get bool : pub set bool, // FIXME: default
+    mem_restore_control(TokenEntryId::Bool, default 0, id 0xfedb_01f8) : pub get bool : pub set bool,
+    mem_restore_valid_days(TokenEntryId::DWord, default 30, id 0x6bd7_0482) : pub get u32 : pub set u32,
+    mem_post_package_repair_enable(TokenEntryId::Bool, default 0, id 0xcdc0_3e4e) : pub get bool : pub set bool,
 
     // Ccx
 
-    ccx_sev_asid_count(TokenEntryId::Byte, default 1, id 0x5587_6720) : pub get Result<CcxSevAsidCount> : pub set CcxSevAsidCount,
-    CcxMinSevAsid(u32, default 1, id 0xa7c3_3753),
-    CcxPpinOptIn(TokenEntryId::Bool, default 0, id 0x6a67_00fd), // bool; FIXME: default
+    ccx_sev_asid_count(TokenEntryId::Byte, default 1, id 0x5587_6720) : pub get CcxSevAsidCount : pub set CcxSevAsidCount,
+    ccx_min_sev_asid(TokenEntryId::DWord, default 1, id 0xa7c3_3753) : pub get u32 : pub set u32,
+    ccx_ppin_opt_in(TokenEntryId::Bool, default 0, id 0x6a67_00fd) : pub get bool : pub set bool, // FIXME: default
 
     // Fch
 
     FchSmbusSpeed(TokenEntryId::Byte, default 42, id 0x2447_3329), // x in (66 MHz/(4 * x))
-    FchRom3BaseHigh(u32, default 0, id 0x3e7d_5274),
+    fch_rom3_base_high(TokenEntryId::DWord, default 0, id 0x3e7d_5274) : pub get u32 : pub set u32,
     FchGppClkMap(TokenEntryId::Word, default 0xffff, id 0xcd7e_6983), // u16; bitfield; GppAllClkForceOn; Auto; S0Gpp0ClkOff; ...; S1Gpp4ClkOff
     FchConsoleOutEnable(TokenEntryId::Byte, default 0, id 0xddb7_59da), // FIXME: default
-    fch_console_out_super_io_type(TokenEntryId::Byte, default 0, id 0x5c8d_6e82) : pub get Result<FchConsoleOutSuperIoType> : pub set FchConsoleOutSuperIoType, // init mode
+    fch_console_out_super_io_type(TokenEntryId::Byte, default 0, id 0x5c8d_6e82) : pub get FchConsoleOutSuperIoType : pub set FchConsoleOutSuperIoType, // init mode
 
     // Df
 
-    DfGroupDPlatform(TokenEntryId::Bool, default 0, id 0x6831_8493), // [F17M30] needs it to be true
-    df_ext_ip_sync_flood_propagation(TokenEntryId::Byte, default 0, id 0xfffe_0b07) : pub get Result<DfExtIpSyncFloodPropagation> : pub set DfExtIpSyncFloodPropagation,
-    df_sync_flood_propagation(TokenEntryId::Byte, default 0, id 0x4963_9134) : pub get Result<DfSyncFloodPropagation> : pub set DfSyncFloodPropagation, // enum; 0: allow syncflood propagation; 1: disable syncflood propagation; 0xff: auto
-    df_mem_interleaving(TokenEntryId::Byte, default 7, id 0xce01_87ef) : pub get Result<DfMemInterleaving> : pub set DfMemInterleaving,
-    df_mem_interleaving_size(TokenEntryId::Byte, default 7, id 0x2606_c42e) : pub get Result<DfMemInterleavingSize> : pub set DfMemInterleavingSize,
-    df_dram_numa_per_socket(TokenEntryId::Byte, default 1, id 0x2cf3_dac9) : pub get Result<DfDramNumaPerSocket> : pub set DfDramNumaPerSocket,
-    df_probe_filter(TokenEntryId::Byte, default 1, id 0x6597_c573) : pub get Result<DfToggle> : pub set DfToggle,
-    df_mem_clear(TokenEntryId::Byte, default 3, id 0x9d17_7e57) : pub get Result<DfToggle> : pub set DfToggle,
-    df_gmi_encrypt(TokenEntryId::Byte, default 0, id 0x08a4_5920) : pub get Result<DfToggle> : pub set DfToggle,
-    df_xgmi_encrypt(TokenEntryId::Byte, default 0, id 0x6bd3_2f1c) : pub get Result<DfToggle> : pub set DfToggle,
-    df_save_restore_mem_encrypt(TokenEntryId::Byte, default 1, id 0x7b3d_1f75) : pub get Result<DfToggle> : pub set DfToggle,
-    df_bottom_io(TokenEntryId::Byte, default 0xe0, id 0x8fb9_8529) : pub get Result<u8> : pub set u8, // Where the PCI MMIO hole will start (bits 31 to 24 inclusive)
-    DfPciMmioSize(u32, default 0x1000_0000, id 0x3d9b_7d7b),
+    df_group_d_platform(TokenEntryId::Bool, default 0, id 0x6831_8493) : pub get bool : pub set bool, // [F17M30] needs it to be true
+    df_ext_ip_sync_flood_propagation(TokenEntryId::Byte, default 0, id 0xfffe_0b07) : pub get DfExtIpSyncFloodPropagation : pub set DfExtIpSyncFloodPropagation,
+    df_sync_flood_propagation(TokenEntryId::Byte, default 0, id 0x4963_9134) : pub get DfSyncFloodPropagation : pub set DfSyncFloodPropagation, // enum; 0: allow syncflood propagation; 1: disable syncflood propagation; 0xff: auto
+    df_mem_interleaving(TokenEntryId::Byte, default 7, id 0xce01_87ef) : pub get DfMemInterleaving : pub set DfMemInterleaving,
+    df_mem_interleaving_size(TokenEntryId::Byte, default 7, id 0x2606_c42e) : pub get DfMemInterleavingSize : pub set DfMemInterleavingSize,
+    df_dram_numa_per_socket(TokenEntryId::Byte, default 1, id 0x2cf3_dac9) : pub get DfDramNumaPerSocket : pub set DfDramNumaPerSocket,
+    df_probe_filter(TokenEntryId::Byte, default 1, id 0x6597_c573) : pub get DfToggle : pub set DfToggle,
+    df_mem_clear(TokenEntryId::Byte, default 3, id 0x9d17_7e57) : pub get DfToggle : pub set DfToggle,
+    df_gmi_encrypt(TokenEntryId::Byte, default 0, id 0x08a4_5920) : pub get DfToggle : pub set DfToggle,
+    df_xgmi_encrypt(TokenEntryId::Byte, default 0, id 0x6bd3_2f1c) : pub get DfToggle : pub set DfToggle,
+    df_save_restore_mem_encrypt(TokenEntryId::Byte, default 1, id 0x7b3d_1f75) : pub get DfToggle : pub set DfToggle,
+    df_bottom_io(TokenEntryId::Byte, default 0xe0, id 0x8fb9_8529) : pub get u8 : pub set u8, // Where the PCI MMIO hole will start (bits 31 to 24 inclusive)
+    df_pci_mmio_size(TokenEntryId::DWord, default 0x1000_0000, id 0x3d9b_7d7b) : pub get u32 : pub set u32,
     DfSysStorageAtTopOfMem(TokenEntryId::Byte, default 0, id 0x249e_08d5), // Where to map PSP, SMU, CC6; enum; 0: mem distributed; 1: mem consolidated; 2: 1st mem consolidated; 0xff: auto
-    df_remap_at_1tib(TokenEntryId::Byte, default 0, id 0x35ee_96f3) : pub get Result<DfRemapAt1TiB> : pub set DfRemapAt1TiB,
+    df_remap_at_1tib(TokenEntryId::Byte, default 0, id 0x35ee_96f3) : pub get DfRemapAt1TiB : pub set DfRemapAt1TiB,
     //Df3Xgmi2LinkConfig(TokenEntryId::Byte, default ?, id 0xb0b6_ad3a), // enum; 0: 2link; 1: 3link; 2: 4link
     //Df3LinkMaxXgmiSpeed(TokenEntryId::Byte, default ?, id 0x53ba_449b),
     //Df4LinkMaxXgmiSpeed(TokenEntryId::Byte, default ?, id 0x3f30_7cb3),
     DfXgmiTxEqMode(TokenEntryId::Byte, default 0xff, id 0xade7_9549), // enum; 0: disabled; 1: enabled by lane; 2: enabled by link; 3: enabled by link and rx vetting; 0xff: auto
-    DfCakeCrcThresholdBounds(u32, default 100, id 0x9258_cf45), // default: 0.001%
+    DfCakeCrcThresholdBounds(TokenEntryId::DWord, default 100, id 0x9258_cf45), // default: 0.001%
     DfInvertDramMap(TokenEntryId::Byte, default 0, id 0x6574_b2c0),
 
     // Dxio
 
-    DxioVgaApiEnable(TokenEntryId::Bool, default 0, id 0xbd5a_a3c6),
-    DxioPhyParamVga(u32, default 0xffff_ffff, id 0xde09_c43b), // default: skip
-    DxioPhyParamPole(u32, default 0xffff_ffff, id 0xb189_447e), // default: skip
-    DxioPhyParamDc(u32, default 0xffff_ffff, id 0x2066_7c30), // default: skip
-    DxioPhyParamIqofc(i32, default 0, id 0x7e60_69c5), // FIXME: default
+    dxio_vga_api_enable(TokenEntryId::Bool, default 0, id 0xbd5a_a3c6) : pub get bool : pub set bool,
+    DxioPhyParamVga(TokenEntryId::DWord, default 0xffff_ffff, id 0xde09_c43b), // default: skip
+    DxioPhyParamPole(TokenEntryId::DWord, default 0xffff_ffff, id 0xb189_447e), // default: skip
+    DxioPhyParamDc(TokenEntryId::DWord, default 0xffff_ffff, id 0x2066_7c30), // default: skip
+    DxioPhyParamIqofc(TokenEntryId::DWord, default 0, id 0x7e60_69c5), // FIXME: default; FIXME: i32
 
     // Misc
 
-    ConfigureSecondPcieLink(TokenEntryId::Bool, default 0, id 0x7142_8092),
-    second_pcie_link_speed(TokenEntryId::Byte, default 0, id 0x8723_750f) : pub get Result<SecondPcieLinkSpeed> : pub set SecondPcieLinkSpeed,
-    second_pcie_link_max_payload(TokenEntryId::Byte, default 0xff, id 0xe02d_f04b) : pub get Result<SecondPcieLinkMaxPayload> : pub set SecondPcieLinkMaxPayload, // FIXME: default
-    PerformanceTracing(TokenEntryId::Bool, default 0, id 0xf27a_10f0),
-    DisplayPmuTrainingResults(TokenEntryId::Bool, default 0, id 0x9e36_a9d4),
-    workload_profile(TokenEntryId::Byte, default 0, id 0x22f4_299f) : pub get Result<WorkloadProfile> : pub set WorkloadProfile, // enum; 0...18
+    configure_second_pcie_link(TokenEntryId::Bool, default 0, id 0x7142_8092) : pub get bool : pub set bool,
+    second_pcie_link_speed(TokenEntryId::Byte, default 0, id 0x8723_750f) : pub get SecondPcieLinkSpeed : pub set SecondPcieLinkSpeed,
+    second_pcie_link_max_payload(TokenEntryId::Byte, default 0xff, id 0xe02d_f04b) : pub get SecondPcieLinkMaxPayload : pub set SecondPcieLinkMaxPayload, // FIXME: default
+    performance_tracing(TokenEntryId::Bool, default 0, id 0xf27a_10f0) : pub get bool : pub set bool,
+    display_pmu_training_results(TokenEntryId::Bool, default 0, id 0x9e36_a9d4) : pub get bool : pub set bool,
+    workload_profile(TokenEntryId::Byte, default 0, id 0x22f4_299f) : pub get WorkloadProfile : pub set WorkloadProfile, // enum; 0...18
 }
 
 #[cfg(test)]
