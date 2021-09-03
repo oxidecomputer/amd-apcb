@@ -4791,6 +4791,40 @@ pub enum CbsMemSpeedDdr4 {
     Auto = 0xff,
 }
 
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum FchSmbusSpeed {
+    Value(u8),  // x in 66 MHz / (4 x)
+    // Auto
+}
+impl FromPrimitive for FchSmbusSpeed {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x100 {
+            Some(Self::Value(value as u8))
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 {
+            Self::from_u64(value as u64)
+        } else {
+            None
+        }
+    }
+}
+impl ToPrimitive for FchSmbusSpeed {
+    fn to_u64(&self) -> Option<u64> {
+        match self {
+            Self::Value(x) => Some((*x) as u64),
+        }
+    }
+    fn to_i64(&self) -> Option<i64> {
+        let result = self.to_u64()?;
+        Some(result as i64)
+    }
+}
+
+
 make_token_accessors! {
     // ABL
 
@@ -4869,7 +4903,7 @@ make_token_accessors! {
 
     // Fch
 
-    FchSmbusSpeed(TokenEntryId::Byte, default 42, id 0x2447_3329), // x in (66 MHz/(4 * x))
+    fch_smbus_speed(TokenEntryId::Byte, default 42, id 0x2447_3329) : pub get FchSmbusSpeed : pub set FchSmbusSpeed,
     fch_rom3_base_high(TokenEntryId::DWord, default 0, id 0x3e7d_5274) : pub get u32 : pub set u32,
     FchGppClkMap(TokenEntryId::Word, default 0xffff, id 0xcd7e_6983), // u16; bitfield; GppAllClkForceOn; Auto; S0Gpp0ClkOff; ...; S1Gpp4ClkOff
     FchConsoleOutEnable(TokenEntryId::Byte, default 0, id 0xddb7_59da), // TODO: Before using default, fix default.  It's possibly not correct.
