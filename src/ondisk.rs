@@ -4495,6 +4495,165 @@ impl FromPrimitive1 for bool {
     }
 }
 
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum DxioPhyParamVga {
+    Value(u32), // not 0xffff_ffff
+    Skip,
+}
+impl FromPrimitive for DxioPhyParamVga {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x1_0000_0000 {
+            match value {
+                0xffff_ffff => Some(Self::Skip),
+                x => Some(Self::Value(x as u32)),
+            }
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 && value < 0x1_0000_0000 {
+            let value: u64 = value.try_into().unwrap();
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
+}
+impl ToPrimitive for DxioPhyParamVga {
+    fn to_i64(&self) -> Option<i64> {
+        match self {
+            Self::Value(x) => {
+                if *x == 0xffff_ffff {
+                    None
+                } else {
+                    Some((*x).into())
+                }
+            },
+            Self::Skip => Some(0xffff_ffff),
+        }
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum DxioPhyParamPole {
+    Value(u32), // not 0xffff_ffff
+    Skip,
+}
+impl FromPrimitive for DxioPhyParamPole {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x1_0000_0000 {
+            match value {
+                0xffff_ffff => Some(Self::Skip),
+                x => Some(Self::Value(x as u32)),
+            }
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 && value < 0x1_0000_0000 {
+            let value: u64 = value.try_into().unwrap();
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
+}
+impl ToPrimitive for DxioPhyParamPole {
+    fn to_i64(&self) -> Option<i64> {
+        match self {
+            Self::Value(x) => {
+                if *x == 0xffff_ffff {
+                    None
+                } else {
+                    Some((*x).into())
+                }
+            },
+            Self::Skip => Some(0xffff_ffff),
+        }
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum DxioPhyParamDc {
+    Value(u32), // not 0xffff_ffff
+    Skip,
+}
+impl FromPrimitive for DxioPhyParamDc {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x1_0000_0000 {
+            match value {
+                0xffff_ffff => Some(Self::Skip),
+                x => Some(Self::Value(x as u32)),
+            }
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 && value < 0x1_0000_0000 {
+            let value: u64 = value.try_into().unwrap();
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
+}
+impl ToPrimitive for DxioPhyParamDc {
+    fn to_i64(&self) -> Option<i64> {
+        match self {
+            Self::Value(x) => {
+                if *x == 0xffff_ffff {
+                    None
+                } else {
+                    Some((*x).into())
+                }
+            },
+            Self::Skip => Some(0xffff_ffff),
+        }
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum DxioPhyParamIqofc {
+    Value(i32),
+    // Skip
+}
+impl FromPrimitive for DxioPhyParamIqofc {
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= -4 && value <= 4 {
+            Some(Self::Value(value as i32))
+        } else {
+            None
+        }
+    }
+    fn from_u64(value: u64) -> Option<Self> {
+        Self::from_i64(value as i64)
+    }
+}
+impl ToPrimitive for DxioPhyParamIqofc {
+    fn to_i64(&self) -> Option<i64> {
+        match self {
+            Self::Value(x) => {
+                Some((*x).into())
+            },
+        }
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+
 make_token_accessors! {
     // ABL
 
@@ -4606,10 +4765,10 @@ make_token_accessors! {
     // Dxio
 
     dxio_vga_api_enable(TokenEntryId::Bool, default 0, id 0xbd5a_a3c6) : pub get bool : pub set bool,
-    DxioPhyParamVga(TokenEntryId::DWord, default 0xffff_ffff, id 0xde09_c43b), // default: skip
-    DxioPhyParamPole(TokenEntryId::DWord, default 0xffff_ffff, id 0xb189_447e), // default: skip
-    DxioPhyParamDc(TokenEntryId::DWord, default 0xffff_ffff, id 0x2066_7c30), // default: skip
-    DxioPhyParamIqofc(TokenEntryId::DWord, default 0, id 0x7e60_69c5), // FIXME: i32 // TODO: Before using default, fix default.  It's possibly not correct.
+    dxio_phy_param_vga(TokenEntryId::DWord, default 0xffff_ffff, id 0xde09_c43b) : pub get DxioPhyParamVga : pub set DxioPhyParamVga,
+    dxio_phy_param_pole(TokenEntryId::DWord, default 0xffff_ffff, id 0xb189_447e) : pub get DxioPhyParamPole : pub set DxioPhyParamPole,
+    dxio_phy_param_dc(TokenEntryId::DWord, default 0xffff_ffff, id 0x2066_7c30) : pub get DxioPhyParamDc : pub set DxioPhyParamDc,
+    dxio_phy_param_iqofc(TokenEntryId::DWord, default 0, id 0x7e60_69c5) : pub get DxioPhyParamIqofc : pub set DxioPhyParamIqofc, // TODO: Before using default, fix default.  It's possibly not correct.
 
     // Misc
 
