@@ -4042,13 +4042,56 @@ pub mod psp {
         }
     }
 
+    #[derive(Debug, PartialEq, Copy, Clone)]
+    pub enum RevAndFeatureValue {
+        Value(u8),
+        NotApplicable,
+    }
+    impl FromPrimitive for RevAndFeatureValue {
+        fn from_u64(value: u64) -> Option<Self> {
+            if value < 0x100 {
+                match value {
+                    0xff => Some(Self::NotApplicable),
+                    x => Some(Self::Value(x as u8)),
+                }
+            } else {
+                None
+            }
+        }
+        fn from_i64(value: i64) -> Option<Self> {
+            if value >= 0 && value < 0x100 {
+                let value: u64 = value.try_into().unwrap();
+                Self::from_u64(value)
+            } else {
+                None
+            }
+        }
+    }
+    impl ToPrimitive for RevAndFeatureValue {
+        fn to_i64(&self) -> Option<i64> {
+            match self {
+                Self::Value(x) => {
+                    if *x == 0xff {
+                        None
+                    } else {
+                        Some((*x).into())
+                    }
+                },
+                Self::NotApplicable => Some(0xff),
+            }
+        }
+        fn to_u64(&self) -> Option<u64> {
+            Some(self.to_i64()? as u64)
+        }
+    }
+
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct IdRevApcbMapping {
             id_and_rev_and_feature_mask: u8 : pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
             id_and_feature_value: u8 : pub get u8 : pub set u8,
-            rev_and_feature_value: u8 : pub get u8 : pub set u8, // FIXME: or 0xff=NA
+            rev_and_feature_value: u8 : pub get Result<RevAndFeatureValue> : pub set RevAndFeatureValue,
             board_instance_index: u8 : pub get u8 : pub set u8,
         }
     }
