@@ -4304,7 +4304,6 @@ pub mod psp {
     }
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum BaudRate {
     B2400 = 0,
@@ -4318,21 +4317,18 @@ pub enum BaudRate {
     B115200 = 8,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemActionOnBistFailure {
     DoNothing = 0,
     DisableProblematicCcds = 1,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemRcwWeakDriveDisable {
     Disabled = 0,
     Enabled = 1,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemSelfRefreshExitStaggering {
     Disabled = 0,
@@ -4340,7 +4336,6 @@ pub enum MemSelfRefreshExitStaggering {
     OneFourth = 4, // Trfc/4
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum CbsMemAddrCmdParityRetryDdr4 {
     Disabled = 0,
@@ -4348,7 +4343,6 @@ pub enum CbsMemAddrCmdParityRetryDdr4 {
     Auto = 0xff,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum CcxSevAsidCount {
     Count253 = 0,
@@ -4356,7 +4350,6 @@ pub enum CcxSevAsidCount {
     Auto = 3,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum FchConsoleOutSuperIoType {
     Auto = 0,
@@ -4364,7 +4357,6 @@ pub enum FchConsoleOutSuperIoType {
     Type2 = 2,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum DfToggle {
     Disabled = 0,
@@ -4372,7 +4364,6 @@ pub enum DfToggle {
     Auto = 3,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemHealPprType {
     SoftRepair = 0,
@@ -4380,7 +4371,6 @@ pub enum MemHealPprType {
     NoRepair = 2,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemHealTestSelect {
     Default = 0,
@@ -4388,7 +4378,6 @@ pub enum MemHealTestSelect {
     ForceAllVendorTests = 2,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum DfExtIpSyncFloodPropagation {
     Allow = 0,
@@ -4396,7 +4385,6 @@ pub enum DfExtIpSyncFloodPropagation {
     Auto = 0xff,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum DfSyncFloodPropagation {
     Allow = 0,
@@ -4404,7 +4392,6 @@ pub enum DfSyncFloodPropagation {
     Auto = 0xff,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum DfMemInterleaving {
     None = 0,
@@ -4414,7 +4401,6 @@ pub enum DfMemInterleaving {
     Auto = 7,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum DfMemInterleavingSize {
     Size256Byte = 0,
@@ -4425,7 +4411,6 @@ pub enum DfMemInterleavingSize {
     Auto = 7,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum DfDramNumaPerSocket {
    None = 0,
@@ -4435,7 +4420,6 @@ pub enum DfDramNumaPerSocket {
    Auto = 7,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum DfRemapAt1TiB {
     Disabled = 0,
@@ -4443,7 +4427,6 @@ pub enum DfRemapAt1TiB {
     Auto = 0xff,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum SecondPcieLinkSpeed {
     Keep = 0,
@@ -4451,7 +4434,6 @@ pub enum SecondPcieLinkSpeed {
     Gen2 = 2,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum SecondPcieLinkMaxPayload {
     P128Byte = 0,
@@ -4463,7 +4445,6 @@ pub enum SecondPcieLinkMaxPayload {
     HardwareDefault = 0xff,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum WorkloadProfile {
     Disabled = 0,
@@ -4487,7 +4468,6 @@ pub enum WorkloadProfile {
     OpenStackForRealTimeKernel = 18,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemControllerPmuTrainFfeDdr4 {
     Disabled = 0,
@@ -4495,7 +4475,6 @@ pub enum MemControllerPmuTrainFfeDdr4 {
     Auto = 0xff,
 }
 
-#[repr(u32)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemControllerPmuTrainDfeDdr4 {
     Disabled = 0,
