@@ -3857,7 +3857,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         use zerocopy::{AsBytes, FromBytes, Unaligned, U16};
         use super::super::*;
         use super::UnionAsBytes;
-        use crate::struct_accessors::{Getter, Setter, make_accessors};
+        //use crate::struct_accessors::{Getter, Setter, make_accessors};
         //use crate::types::Result;
 
         macro_rules! impl_EntryCompatible {($struct_:ty, $type_:expr, $total_size:expr) => (
