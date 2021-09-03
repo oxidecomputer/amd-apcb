@@ -4754,6 +4754,8 @@ impl ToPrimitive for CbsMemPowerDownDelay {
     }
 }
 
+type MemUserTimingMode = memory::platform_specific_override::TimingMode;
+
 make_token_accessors! {
     // ABL
 
@@ -4781,7 +4783,7 @@ make_token_accessors! {
     mem_action_on_bist_failure(TokenEntryId::Byte, default 0, id 0xcbc2_c0dd) : pub get MemActionOnBistFailure : pub set MemActionOnBistFailure,
     mem_rcw_weak_drive_disable(TokenEntryId::Byte, default 1, id 0xa30d_781a) : pub get MemRcwWeakDriveDisable : pub set MemRcwWeakDriveDisable, // FIXME is it u32 ?
 
-    MemUserTimingMode(TokenEntryId::DWord, default 0xff, id 0xfc56_0d7d), // enum; auto; limited; specific; // TODO: Before using default, fix default.  It's possibly not correct.
+    mem_user_timing_mode(TokenEntryId::DWord, default 0xff, id 0xfc56_0d7d) : pub get MemUserTimingMode : pub set MemUserTimingMode,
     mem_ignore_spd_checksum(TokenEntryId::Bool, default 0, id 0x7d36_9dbc) : pub get bool : pub set bool,
     mem_spd_read_optimization_ddr4(TokenEntryId::Bool, default 1, id 0x6816_f949) : pub get bool : pub set bool,
     cbs_mem_spd_read_optimization_ddr4(TokenEntryId::Bool, default 0, id 0x8d3a_b10e) : pub get bool : pub set bool, // TODO: Before using default, fix default.  It's possibly not correct.
