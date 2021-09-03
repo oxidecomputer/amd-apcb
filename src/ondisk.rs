@@ -4756,6 +4756,14 @@ impl ToPrimitive for CbsMemPowerDownDelay {
 
 type MemUserTimingMode = memory::platform_specific_override::TimingMode;
 
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemHealBistEnable {
+    Disabled = 0,
+    TestAndRepairAllMemory = 1,
+    JedecSelfHealing = 2,
+    TestAndRepairAllMemoryAndJedecSelfHealing = 3,
+}
+
 make_token_accessors! {
     // ABL
 
@@ -4814,7 +4822,7 @@ make_token_accessors! {
     MemTrainingHdtCtrl(TokenEntryId::Byte, default 0, id 0xaf6d_3a6f), // enum; DetailedDebug|CoarseDebug|StageCompletion|FirmwareCompletionOnly; // TODO: Before using default, fix default.  It's possibly not correct.
     mem_mbist_data_eye_type(TokenEntryId::Byte, default 3, id 0x4e2e_dc1b) : pub get MemMbistDataEyeType : pub set MemMbistDataEyeType, // FIXME: is it DWord ?
     mem_mbist_data_eye_silent_execution(TokenEntryId::Bool, default 0, id 0x3f74_c7e7) : pub get bool : pub set bool,
-    MemHealBistEnable(TokenEntryId::Byte, default 0, id 0xfba2_3a28), // 0:disabled; 1:test all memory; 2:run JEDEC self healing; 3:run both
+    mem_heal_bist_enable(TokenEntryId::Byte, default 0, id 0xfba2_3a28) : pub get MemHealBistEnable : pub set MemHealBistEnable,
     MemSelfHealBistEnable(TokenEntryId::Byte, default 0, id 0x2c23_924c), // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
     mem_self_heal_bist_timeout(TokenEntryId::DWord, default 1000, id 0xbe75_97d4) : pub get u32 : pub set u32, // in ms; // TODO: Before using default, fix default.  It's possibly not correct.
     MemPmuBistTestSelect(TokenEntryId::Byte, default 0, id 0x7034_fbfb), // TODO: Before using default, fix default.  It's possibly not correct.; note: range 1...7
