@@ -4824,6 +4824,37 @@ impl ToPrimitive for FchSmbusSpeed {
     }
 }
 
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum DfCakeCrcThresholdBounds {
+    Value(u32), // x: 0...1_000_000d; Percentage is 0.00001% * x
+}
+impl FromPrimitive for DfCakeCrcThresholdBounds {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value <= 1_000_000 {
+            Some(Self::Value(value as u32))
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 {
+            Self::from_u64(value as u64)
+        } else {
+            None
+        }
+    }
+}
+impl ToPrimitive for DfCakeCrcThresholdBounds {
+    fn to_u64(&self) -> Option<u64> {
+        match self {
+            Self::Value(x) => Some((*x) as u64),
+        }
+    }
+    fn to_i64(&self) -> Option<i64> {
+        let result = self.to_u64()?;
+        Some(result as i64)
+    }
+}
 
 make_token_accessors! {
     // ABL
@@ -4929,7 +4960,7 @@ make_token_accessors! {
     //Df3LinkMaxXgmiSpeed(TokenEntryId::Byte, default ?, id 0x53ba_449b),
     //Df4LinkMaxXgmiSpeed(TokenEntryId::Byte, default ?, id 0x3f30_7cb3),
     df_xgmi_tx_eq_mode(TokenEntryId::Byte, default 0xff, id 0xade7_9549) : pub get DfXgmiTxEqMode : pub set DfXgmiTxEqMode,
-    DfCakeCrcThresholdBounds(TokenEntryId::DWord, default 100, id 0x9258_cf45), // default: 0.001%
+    df_cake_crc_threshold_bounds(TokenEntryId::DWord, default 100, id 0x9258_cf45) : pub get DfCakeCrcThresholdBounds : pub set DfCakeCrcThresholdBounds, // default: 0.001%
     df_invert_dram_map(TokenEntryId::Byte, default 0, id 0x6574_b2c0) : pub get DfInvertDramMap : pub set DfInvertDramMap,
 
     // Dxio
