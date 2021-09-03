@@ -4865,6 +4865,12 @@ pub enum MemTrainingHdtControl {
     FirmwareCompletionMessagesOnly = 0xfe,
 }
 
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum PspEnableDebugMode {
+    Disabled = 0,
+    Enabled = 1,
+}
+
 make_token_accessors! {
     // ABL
 
@@ -4877,7 +4883,7 @@ make_token_accessors! {
     psp_event_log_display(TokenEntryId::Bool, default 0, id 0x0c47_3e1c) : pub get bool : pub set bool, // TODO: Before using default, fix default.  It's possibly not correct.
     psp_stop_on_error(TokenEntryId::Bool, default 0, id 0xe702_4a21) : pub get bool : pub set bool,
     psp_psb_auto_fuse(TokenEntryId::Bool, default 1, id 0x2fcd_70c9) : pub get bool : pub set bool,
-    psp_enable_debug_mode(TokenEntryId::Bool, default 0, id 0xd109_1cd0) : pub get bool : pub set bool, // FIXME: is it u8 ?
+    psp_enable_debug_mode(TokenEntryId::Byte, default 0, id 0xd109_1cd0) : pub get PspEnableDebugMode : pub set PspEnableDebugMode,
     psp_syshub_watchdog_timer_interval(TokenEntryId::Word, default 2600, id 0xedb5_e4c9) : pub get u16 : pub set u16, // in ms
 
     // Memory Controller
@@ -4915,13 +4921,13 @@ make_token_accessors! {
 
     mem_rcd_parity(TokenEntryId::Bool, default 1, id 0x647d_7662) : pub get bool : pub set bool,
     mem_uncorrected_ecc_retry_ddr4(TokenEntryId::Bool, default 1, id 0xbff0_0125) : pub get bool : pub set bool,
-    mem_urg_ref_limit(TokenEntryId::Byte, default 6, id 0x1333_32df) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first); FIXME: is it u32 ?
-    mem_sub_urg_ref_lower_bound(TokenEntryId::Byte, default 4, id 0xe756_2ab6) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first); FIXME: is it u32 ?
+    mem_urg_ref_limit(TokenEntryId::Byte, default 6, id 0x1333_32df) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first)
+    mem_sub_urg_ref_lower_bound(TokenEntryId::Byte, default 4, id 0xe756_2ab6) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first)
     mem_controller_pmu_train_ffe_ddr4(TokenEntryId::Byte, default 0xff, id 0x0d46_186d) : pub get MemControllerPmuTrainFfeDdr4 : pub set MemControllerPmuTrainFfeDdr4, // FIXME: is it bool ?
     mem_controller_pmu_train_dfe_ddr4(TokenEntryId::Byte, default 0xff, id 0x36a4_bb5b) : pub get MemControllerPmuTrainDfeDdr4 : pub set MemControllerPmuTrainDfeDdr4, // FIXME: is it bool ?
     mem_tsme_enable(TokenEntryId::Bool, default 1, id 0xd1fa_6660) : pub get bool : pub set bool, // See Transparent Secure Memory Encryption in PPR
     mem_training_hdt_control(TokenEntryId::Byte, default 200, id 0xaf6d_3a6f) : pub get MemTrainingHdtControl : pub set MemTrainingHdtControl, // TODO: Before using default, fix default.  It's possibly not correct.
-    mem_mbist_data_eye_type(TokenEntryId::Byte, default 3, id 0x4e2e_dc1b) : pub get MemMbistDataEyeType : pub set MemMbistDataEyeType, // FIXME: is it DWord ?
+    mem_mbist_data_eye_type(TokenEntryId::Byte, default 3, id 0x4e2e_dc1b) : pub get MemMbistDataEyeType : pub set MemMbistDataEyeType,
     mem_mbist_data_eye_silent_execution(TokenEntryId::Bool, default 0, id 0x3f74_c7e7) : pub get bool : pub set bool,
     mem_heal_bist_enable(TokenEntryId::Byte, default 0, id 0xfba2_3a28) : pub get MemHealBistEnable : pub set MemHealBistEnable,
     MemSelfHealBistEnable(TokenEntryId::Byte, default 0, id 0x2c23_924c), // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
@@ -4984,7 +4990,7 @@ make_token_accessors! {
 
     configure_second_pcie_link(TokenEntryId::Bool, default 0, id 0x7142_8092) : pub get bool : pub set bool,
     second_pcie_link_speed(TokenEntryId::Byte, default 0, id 0x8723_750f) : pub get SecondPcieLinkSpeed : pub set SecondPcieLinkSpeed,
-    second_pcie_link_max_payload(TokenEntryId::Byte, default 0xff, id 0xe02d_f04b) : pub get SecondPcieLinkMaxPayload : pub set SecondPcieLinkMaxPayload, // FIXME: default
+    second_pcie_link_max_payload(TokenEntryId::Byte, default 0xff, id 0xe02d_f04b) : pub get SecondPcieLinkMaxPayload : pub set SecondPcieLinkMaxPayload, // TODO: Before using default, fix default.  It's possibly not correct.
     performance_tracing(TokenEntryId::Bool, default 0, id 0xf27a_10f0) : pub get bool : pub set bool,
     display_pmu_training_results(TokenEntryId::Bool, default 0, id 0x9e36_a9d4) : pub get bool : pub set bool,
     workload_profile(TokenEntryId::Byte, default 0, id 0x22f4_299f) : pub get WorkloadProfile : pub set WorkloadProfile, // enum; 0...18
