@@ -12,7 +12,6 @@
 * IdRevApcbMapping
   * rev_and_feature_value: 0xff for NA
   * id_and_feature_mask: bit 7: 1=user controlled; 0=normal
-* Add test to insert wrong-type struct using insert_struct*entry
 * Check checksum on load?
 * Apcb: Dirty-type, original-type; automate calling update_checksum
   * My own idea: Just implement Drop and have a flag you refer to.
@@ -20,14 +19,16 @@
     * If there are &mut to struct that doesn't work, now does it?
 * OdtPatElement: Availability of dimm0_rank, dimm1_rank should be conditional.
 * Enums for stuff with a "|" or "one of" comment.
-  * ddr_rates (bitfield done; need unit tests!)
   * ref_dq
   * a lot of platform_specific_override::* enums
     * Cs
 * rustdoc
 
-# Accessor tests
+# Tests
 
+* Add unit test for token entries!!  mutation
+* test ddr_rates
+* Add test to insert wrong-type struct using insert_struct*entry
 * bitfield out-of-range
 * struct field out-of-range
 * bitfield in-range
@@ -43,7 +44,6 @@
 # Security
 
 * Sanity-check non-clone in body_as_struct_mut
-* Add unit test for token entries!!  mutation
 * Check for unique key on load
   * Check globally unique (group_id) on load.
   * Check globally unique (group_id, entry_id, instance_id, board_instance_mask) on load.
