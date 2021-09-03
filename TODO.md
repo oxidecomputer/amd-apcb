@@ -5,7 +5,6 @@
 * Add "new" fn for the others, too?
 * AMD# 55483 4.1.7 ABL Error Reporting Configuration Items
 * AMD# 55483 PTO 4.1.5.6 UMC Category
-* TX EQ struct; bitfield for sockets; bitfield for dies; bitfield for lanes; lane data (variable-length body!)
 * body_as_struct_sequence; body_as_struct_array: Where is the check whether it is EntryCompatible ?
 * Convert board_instance_mask to bitfield?!
 * Make "weird" struct array iterator (sequence of different types iterator)
@@ -65,6 +64,7 @@
 * Check error handling crate "failure" or "anyhow". `#[source]`
 * Entry alignment relative to containing group instead??
 * AMD# 55483 4.1.3 SPD_Info DIMM_INFO_ARRAY does not seem to exist
+* TX EQ struct; bitfield for sockets; bitfield for dies; bitfield for lanes; lane data (variable-length body!)
 
 # Alternate Bitfield implementations
 
