@@ -135,15 +135,14 @@ macro_rules! make_token_accessors {(
                               let mut group = self.apcb.group_mut(GroupId::Token).unwrap();
                               let mut entry = group.entry_mut(entry_id, self.instance_id, self.board_instance_mask).unwrap();
                               match &mut entry.body {
-                    EntryItemBody::<_>::Tokens(ref mut a) => {
-                        let mut token = a.token_mut(token_id).unwrap();
-                                                      token.set_value(token_value)?;
-                    },
-                    _ => {
-                        return Err(Error::EntryTypeMismatch);
-                    },
-                }
-
+                                  EntryItemBody::<_>::Tokens(ref mut a) => {
+                                      let mut token = a.token_mut(token_id).unwrap();
+                                      token.set_value(token_value)?;
+                                  },
+                                  _ => {
+                                      return Err(Error::EntryTypeMismatch);
+                                  },
+                              }
                           },
                           Err(x) => {
                               return Err(x);
