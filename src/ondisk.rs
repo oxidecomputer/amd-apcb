@@ -4487,6 +4487,22 @@ pub enum WorkloadProfile {
     OpenStackForRealTimeKernel = 18,
 }
 
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemControllerPmuTrainFfeDdr4 {
+    Disabled = 0,
+    Enabled = 1,
+    Auto = 0xff,
+}
+
+#[repr(u32)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemControllerPmuTrainDfeDdr4 {
+    Disabled = 0,
+    Enabled = 1,
+    Auto = 0xff,
+}
+
 // This trait exists so we can impl it for bool; the macro MAKE_TOKEN_ACCESSORS will call the function by name without specifying the trait anyway.
 trait ToPrimitive1 {
     fn to_u32(&self) -> Option<u32>;
@@ -4567,8 +4583,8 @@ make_token_accessors! {
     mem_uncorrected_ecc_retry_ddr4(TokenEntryId::Bool, default 1, id 0xbff0_0125) : pub get bool : pub set bool,
     mem_urg_ref_limit(TokenEntryId::Byte, default 6, id 0x1333_32df) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first); FIXME: is it u32 ?
     mem_sub_urg_ref_lower_bound(TokenEntryId::Byte, default 4, id 0xe756_2ab6) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first); FIXME: is it u32 ?
-    MemControllerPmuTrainFfeDdr4(TokenEntryId::Byte, default 0xff, id 0x0d46_186d), // enum; 1: enable; 0: disable; 0xff: auto; default: auto; FIXME: is it bool ?
-    MemControllerPmuTrainDfeDdr4(TokenEntryId::Byte, default 0xff, id 0x36a4_bb5b), // enum; enable; disable; 0xff: auto; default: auto; FIXME: is it bool ?
+    mem_controller_pmu_train_ffe_ddr4(TokenEntryId::Byte, default 0xff, id 0x0d46_186d) : pub get MemControllerPmuTrainFfeDdr4 : pub set MemControllerPmuTrainFfeDdr4, // FIXME: is it bool ?
+    mem_controller_pmu_train_dfe_ddr4(TokenEntryId::Byte, default 0xff, id 0x36a4_bb5b) : pub get MemControllerPmuTrainDfeDdr4 : pub set MemControllerPmuTrainDfeDdr4, // FIXME: is it bool ?
     mem_tsme_enable(TokenEntryId::Bool, default 1, id 0xd1fa_6660) : pub get bool : pub set bool, // See Transparent Secure Memory Encryption in PPR
     MemTrainingHdtCtrl(TokenEntryId::Byte, default 0, id 0xaf6d_3a6f), // enum; DetailedDebug|CoarseDebug|StageCompletion|FirmwareCompletionOnly; // TODO: Before using default, fix default.  It's possibly not correct.
     MemMbistDataEyeType(TokenEntryId::Byte, default 3, id 0x4e2e_dc1b), // 0: 1D voltage sweep; 1: 1D timing sweep; 2: 2D Full Data Eye; 3: Worst Case Margin Only (default); FIXME: is it u32 ?
