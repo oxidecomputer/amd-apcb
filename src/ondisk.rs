@@ -5005,7 +5005,7 @@ make_token_accessors! {
     df_sync_flood_propagation(TokenEntryId::Byte, default 0, id 0x4963_9134) : pub get DfSyncFloodPropagation : pub set DfSyncFloodPropagation, // enum; 0: allow syncflood propagation; 1: disable syncflood propagation; 0xff: auto
     df_mem_interleaving(TokenEntryId::Byte, default 7, id 0xce01_87ef) : pub get DfMemInterleaving : pub set DfMemInterleaving,
     df_mem_interleaving_size(TokenEntryId::Byte, default 7, id 0x2606_c42e) : pub get DfMemInterleavingSize : pub set DfMemInterleavingSize,
-    df_dram_numa_per_socket(TokenEntryId::Byte, default 1, id 0x2cf3_dac9) : pub get DfDramNumaPerSocket : pub set DfDramNumaPerSocket,
+    df_dram_numa_per_socket(TokenEntryId::Byte, default 1, id 0x2cf3_dac9) : pub get DfDramNumaPerSocket : pub set DfDramNumaPerSocket, // TODO: Maybe the default value here should be 7
     df_probe_filter(TokenEntryId::Byte, default 1, id 0x6597_c573) : pub get DfToggle : pub set DfToggle,
     df_mem_clear(TokenEntryId::Byte, default 3, id 0x9d17_7e57) : pub get DfToggle : pub set DfToggle,
     df_gmi_encrypt(TokenEntryId::Byte, default 0, id 0x08a4_5920) : pub get DfToggle : pub set DfToggle,
