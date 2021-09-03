@@ -4677,6 +4677,39 @@ impl ToPrimitive for DxioPhyParamIqofc {
     }
 }
 
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemClockValue { // in MHz
+    Ddr400 = 200,
+    Ddr533 = 266,
+    Ddr667 = 333,
+    Ddr800 = 400,
+    Ddr1066 = 533,
+    Ddr1333 = 667,
+    Ddr1600 = 800,
+    Ddr1866 = 933,
+    Ddr2100 = 1050,
+    Ddr2133 = 1067,
+    Ddr2400 = 1200,
+    Ddr2667 = 1333,
+    Ddr2800 = 1400,
+    Ddr2933 = 1467,
+    Ddr3066 = 1533,
+    Ddr3200 = 1600,
+    Ddr3333 = 1667,
+    Ddr3466 = 1733,
+    Ddr3600 = 1800,
+    Ddr3733 = 1867,
+    Ddr3866 = 1933,
+    Ddr4000 = 2000,
+    Ddr4200 = 2100,
+    Ddr4267 = 2133,
+    Ddr4333 = 2167,
+    Ddr4400 = 2200,
+    Auto = 0xffff_ffff, // FIXME: verify
+}
+
+type MemBusFrequencyLimit = MemClockValue;
+
 make_token_accessors! {
     // ABL
 
@@ -4697,8 +4730,8 @@ make_token_accessors! {
     mem_enable_chip_select_interleaving(TokenEntryId::Bool, default 1, id 0x6f81_a115) : pub get bool : pub set bool,
     mem_enable_ecc_feature(TokenEntryId::Bool, default 1, id 0xfa35_f040) : pub get bool : pub set bool,
     mem_enable_parity(TokenEntryId::Bool, default 1, id 0x3cb8_cbd2) : pub get bool : pub set bool,
-    MemBusFrequencyLimit(TokenEntryId::DWord, default 1600, id 0x3497_0a3c), // int32; enum: Ddr400Frequency = 200|Ddr533|Ddr667|Ddr800|Ddr1066|Ddr1333|Ddr1600|Ddr1866|Ddr2100|Ddr2133|Ddr2400|Ddr2667|Ddr2933|Ddr3200|Auto
-    MemClockValue(TokenEntryId::DWord, default 0xff, id 0xcc83_f65f), // TODO: Before using default, fix default.  It's possibly not correct (auto); FIXME: enums Ddr400Frequency|...|Ddr3200
+    mem_bus_frequency_limit(TokenEntryId::DWord, default 1600, id 0x3497_0a3c) : pub get MemBusFrequencyLimit : pub set MemBusFrequencyLimit,
+    mem_clock_value(TokenEntryId::DWord, default 0xffff_ffff, id 0xcc83_f65f) : pub get MemClockValue : pub set MemClockValue,
     cbs_mem_speed_ddr4(TokenEntryId::Byte, default 0xff, id 0xe060_4ce9) : pub get u8 : pub set u8, // uint8; 0xff: auto; funny values otherwise // FIXME enum
     mem_enable_bank_swizzle(TokenEntryId::Bool, default 1, id 0x6414_d160) : pub get bool : pub set bool,
     mem_action_on_bist_failure(TokenEntryId::Byte, default 0, id 0xcbc2_c0dd) : pub get MemActionOnBistFailure : pub set MemActionOnBistFailure,
