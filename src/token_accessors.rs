@@ -77,15 +77,15 @@ macro_rules! make_token_accessors {(
             {
                 let group = self.apcb.group(GroupId::Token).ok_or_else(|| Error::GroupNotFound)?;
                 let entry = group.entry(EntryId::Token($field_entry_id), self.instance_id, self.board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
-                // FIXME: match properly (body_token does not check whether the thing is a token entry in the first place)
-                match entry.body_token($field_key) {
-                    None => {
-                        Err(Error::TokenNotFound)
-                    },
-                    Some(ref token) => {
+                match &entry.body {
+                    EntryItemBody::<_>::Tokens(ref a) => {
+                        let token = a.token($field_key).ok_or_else(|| Error::TokenNotFound)?;
                         assert!(token.id() == $field_key);
                         let token_value = token.value();
                         <$field_user_ty>::from_u32(token_value).ok_or_else(|| Error::EntryTypeMismatch)
+                    },
+                    _ => {
+                        return Err(Error::EntryTypeMismatch);
                     },
                 }
             }
@@ -98,15 +98,15 @@ macro_rules! make_token_accessors {(
             {
                 let group = self.apcb.group(GroupId::Token).ok_or_else(|| Error::GroupNotFound)?;
                 let entry = group.entry(EntryId::Token($field_entry_id), self.instance_id, self.board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
-                // FIXME: match properly (body_token does not check whether the thing is a token entry in the first place)
-                match entry.body_token($field_key) {
-                    None => {
-                        Err(Error::TokenNotFound)
-                    },
-                    Some(ref token) => {
+                match &entry.body {
+                    EntryItemBody::<_>::Tokens(ref a) => {
+                        let token = a.token($field_key).ok_or_else(|| Error::TokenNotFound)?;
                         assert!(token.id() == $field_key);
                         let token_value = token.value();
                         <$field_user_ty>::from_u32(token_value).ok_or_else(|| Error::EntryTypeMismatch)
+                    },
+                    _ => {
+                        return Err(Error::EntryTypeMismatch);
                     },
                 }
             }
@@ -135,9 +135,16 @@ macro_rules! make_token_accessors {(
                           Err(Error::TokenUniqueKeyViolation) => {
                               let mut group = self.apcb.group_mut(GroupId::Token).unwrap();
                               let mut entry = group.entry_mut(entry_id, self.instance_id, self.board_instance_mask).unwrap();
-                              // FIXME: match properly (body_token_mut does not check whether the thing is a token entry in the first place)
-                              let mut token = entry.body_token_mut(token_id).unwrap();
-                              token.set_value(token_value)?;
+                              match &mut entry.body {
+                    EntryItemBody::<_>::Tokens(ref mut a) => {
+                        let mut token = a.token_mut(token_id).unwrap();
+                                                      token.set_value(token_value)?;
+                    },
+                    _ => {
+                        return Err(Error::EntryTypeMismatch);
+                    },
+                }
+
                           },
                           Err(x) => {
                               return Err(x);

@@ -15,6 +15,7 @@ use crate::types::Error;
 use crate::types::Result;
 use crate::struct_accessors::{Getter, Setter, make_accessors};
 use crate::token_accessors::{make_token_accessors, TokensMut, Tokens};
+use crate::entry::EntryItemBody;
 use crate::types::PriorityLevel;
 
 /// AsBytes that we CAN implement ourselves.  Used for platform_specific_override and platform_tuning, which both are a sequence of variable-length records.
