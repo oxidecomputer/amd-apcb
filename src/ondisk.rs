@@ -4528,7 +4528,7 @@ make_token_accessors! {
     psp_stop_on_error(TokenEntryId::Bool, default 0, id 0xe702_4a21) : pub get bool : pub set bool,
     psp_psb_auto_fuse(TokenEntryId::Bool, default 1, id 0x2fcd_70c9) : pub get bool : pub set bool,
     psp_enable_debug_mode(TokenEntryId::Bool, default 0, id 0xd109_1cd0) : pub get bool : pub set bool, // FIXME: is it u8 ?
-    psp_syshubWatchdogTimerInterval(TokenEntryId::Word, default 2600, id 0xedb5_e4c9) : pub get u16 : pub set u16, // in ms
+    psp_syshub_watchdog_timer_interval(TokenEntryId::Word, default 2600, id 0xedb5_e4c9) : pub get u16 : pub set u16, // in ms
 
     // Memory Controller
 
