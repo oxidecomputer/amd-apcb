@@ -1573,7 +1573,7 @@ pub mod memory {
         pub four_dimms: bool,
         #[skip] __: B28,
     }
-    impl_bitfield_primitive_conversion!(DimmsPerChannelDimms, 0b111, u32);
+    impl_bitfield_primitive_conversion!(DimmsPerChannelDimms, 0b1111, u32);
 
     pub enum DimmsPerChannel {
         NoSlot, // 0xf0
