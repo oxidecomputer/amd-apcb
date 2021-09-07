@@ -4,6 +4,7 @@
 
 use byteorder::LittleEndian;
 use core::mem::{replace, size_of};
+use modular_bitfield::prelude::*;
 use num_derive::FromPrimitive;
 use num_derive::ToPrimitive;
 use num_traits::FromPrimitive;
@@ -873,52 +874,64 @@ impl Default for GROUP_HEADER {
     }
 }
 
-bitfield! {
-    #[derive(Copy, Clone)]
-    pub struct PriorityLevels(u8);
-    impl Debug;
-    bool;
-    hard_force, set_hard_force: 0;
-    high, set_high: 1;
-    medium, set_medium: 2;
-    event_logging, set_event_logging: 3;
-    low, set_low: 4;
-    default, set_default: 5;
+#[bitfield(bits = 8)]
+#[repr(u8)]
+#[derive(Copy, Clone)]
+pub struct PriorityLevels {
+    pub hard_force: bool,
+    pub high: bool,
+    pub medium: bool,
+    pub event_logging: bool,
+    pub low: bool,
+    pub default: bool,
+    #[skip] __: B2,
 }
 
-impl FromPrimitive for PriorityLevels {
-    #[inline]
-    fn from_u64(raw_value: u64) -> Option<Self> {
-        if raw_value < 64 { // valid
-            Some(Self(raw_value as u8))
-        } else {
-            None
+macro_rules! impl_bitfield_primitive_conversion {
+    ($bitfield:ty, $valid_bits:expr, $bitfield_primitive_compatible_type:ty) => (
+        impl $bitfield {
+            const VALID_BITS: u64 = $valid_bits;
+            pub const fn all_reserved_bits_are_unused(value: u64) -> bool {
+                value & !Self::VALID_BITS == 0
+            }
         }
-    }
-    #[inline]
-    fn from_i64(raw_value: i64) -> Option<Self> {
-        if raw_value >= 0 {
-            Self::from_u64(raw_value as u64)
-        } else {
-            None
+        impl ToPrimitive for $bitfield {
+            fn to_u64(&self) -> Option<u64> {
+                Some(<$bitfield_primitive_compatible_type>::from(*self).into())
+            }
+            fn to_i64(&self) -> Option<i64> {
+                Some(self.to_u64()? as i64)
+            }
         }
-    }
+        impl FromPrimitive for $bitfield {
+            fn from_u64(value: u64) -> Option<Self> {
+                if Self::all_reserved_bits_are_unused(value) {
+                    let cut_value = value as $bitfield_primitive_compatible_type;
+                    if cut_value as u64 == value {
+                        Some(Self::from(cut_value))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            }
+            fn from_i64(value: i64) -> Option<Self> {
+                if value >= 0 {
+                    Some(Self::from_u64(value as u64)?)
+                } else {
+                    None
+                }
+            }
+        }
+    )
 }
 
-impl ToPrimitive for PriorityLevels {
-    #[inline]
-    fn to_i64(&self) -> Option<i64> {
-        Some(self.0.into())
-    }
-    #[inline]
-    fn to_u64(&self) -> Option<u64> {
-        Some(self.0.into())
-    }
-}
+impl_bitfield_primitive_conversion!(PriorityLevels, 0b111111, u8);
 
 impl PriorityLevels {
     pub fn from_level(level: PriorityLevel) -> Self {
-        let mut result = Self(0);
+        let mut result = Self::new();
         match level {
             PriorityLevel::HardForce => {
                 result.set_hard_force(true);
@@ -1129,8 +1142,6 @@ pub mod memory {
     use super::*;
     use crate::struct_accessors::{Getter, Setter, make_accessors, BU8};
     use crate::types::Result;
-    use bitfield::Bit;
-    use bitfield::BitRange;
 
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
@@ -1464,87 +1475,28 @@ pub mod memory {
         }
     }
 
-    bitfield! {
-        pub struct Ddr4DimmRanks(u32);
-        impl Debug;
-        bool;
-        #[inline]
-        pub unpopulated, set_unpopulated: 0;
-        #[inline]
-        pub single_rank, set_single_rank: 1;
-        #[inline]
-        pub dual_rank, set_dual_rank: 2;
-        #[inline]
-        pub quad_rank, set_quad_rank: 3;
+    #[bitfield(bits = 32)]
+    #[repr(u32)]
+    #[derive(Clone, Copy)]
+    pub struct Ddr4DimmRanks {
+        pub unpopulated: bool,
+        pub single_rank: bool,
+        pub dual_rank: bool,
+        pub quad_rank: bool,
+        #[skip] __: B28,
     }
 
-macro_rules! impl_bitfield_primitive_conversion {
-    ($bitfield:ty, $valid_bits:expr) => (
-    impl $bitfield {
-        const VALID_BITS: u32 = $valid_bits;
-        pub const fn all_reserved_bits_are_unused(value: u32) -> bool {
-            value & !Self::VALID_BITS == 0
-        }
-    }
-    impl FromPrimitive for $bitfield {
-        #[inline]
-        fn from_u64(raw_value: u64) -> Option<Self> {
-            if raw_value > 0xffff_ffff {
-                None
-            } else {
-                let raw_value: u32 = match raw_value.try_into() {
-                                         Ok(v) => {
-                                             v
-                                         },
-                                         Err(_) => {
-                                             return None;
-                                         }
-                                     };
-                if Self::all_reserved_bits_are_unused(raw_value) { // valid
-                    Some(Self(raw_value as u32))
-                } else {
-                    None
-                }
-            }
-        }
-        #[inline]
-        fn from_i64(raw_value: i64) -> Option<Self> {
-            if raw_value >= 0 {
-                Self::from_u64(raw_value as u64)
-            } else {
-                None
-            }
-        }
-    }
+    impl_bitfield_primitive_conversion!(Ddr4DimmRanks, 0b1111, u32);
 
-    impl ToPrimitive for $bitfield {
-        #[inline]
-        fn to_i64(&self) -> Option<i64> {
-            Some(self.0.into())
-        }
-        #[inline]
-        fn to_u64(&self) -> Option<u64> {
-            Some(self.0.into())
-        }
+    #[bitfield(bits = 32)]
+    #[repr(u32)]
+    #[derive(Clone, Copy)]
+    pub struct LrdimmDdr4DimmRanks {
+        pub unpopulated: bool,
+        pub lr: bool,
+        #[skip] __: B30,
     }
-)}
-    impl_bitfield_primitive_conversion!(Ddr4DimmRanks, 0b111);
-    impl Ddr4DimmRanks {
-        pub fn new() -> Self {
-            Self(0)
-        }
-    }
-
-    bitfield! {
-        pub struct LrdimmDdr4DimmRanks(u32);
-        impl Debug;
-        bool;
-        #[inline]
-        pub unpopulated, set_unpopulated: 0;
-        #[inline]
-        pub lr, set_lr: 1;
-    }
-    impl_bitfield_primitive_conversion!(LrdimmDdr4DimmRanks, 0b11);
+    impl_bitfield_primitive_conversion!(LrdimmDdr4DimmRanks, 0b11, u32);
 
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     pub enum CadBusClkDriveStrength {
@@ -1561,40 +1513,43 @@ macro_rules! impl_bitfield_primitive_conversion {
     type CadBusCkeDriveStrength = CadBusClkDriveStrength;
     type CadBusCsOdtDriveStrength = CadBusClkDriveStrength;
 
-    bitfield! {
-        pub struct DdrRates(u32);
-        impl Debug;
-        bool;
+    #[bitfield(bits = 32)]
+    #[repr(u32)]
+    #[derive(Clone, Copy)]
+    pub struct DdrRates {
         // Note: Bit index is (x/2)//66 of ddrx
-        #[inline]
-        pub ddr400, set_ddr400: 3;
-        #[inline]
-        pub ddr533, set_ddr533: 4;
-        #[inline]
-        pub ddr667, set_ddr667: 5;
-        #[inline]
-        pub ddr800, set_ddr800: 6;
-        #[inline]
-        pub ddr1066, set_ddr1066: 8;
-        #[inline]
-        pub ddr1333, set_ddr1333: 10;
-        #[inline]
-        pub ddr1600, set_ddr1600: 12;
-        #[inline]
-        pub ddr1866, set_ddr1866: 14;
-        // AMD-missing pub ddr2100, set_ddr2100: 15,
-        #[inline]
-        pub ddr2133, set_ddr2133: 16;
-        #[inline]
-        pub ddr2400, set_ddr2400: 18;
-        #[inline]
-        pub ddr2667, set_ddr2667: 20;
-        // AMD-missing pub ddr2800, set_ddr2800: 21,
-        #[inline]
-        pub ddr2933, set_ddr2933: 22;
-        // AMD-missing pub ddr3066, set_ddr3066: 23,
-        #[inline]
-        pub ddr3200, set_ddr3200: 24;
+        #[skip] __: bool,
+        #[skip] __: bool,
+        #[skip] __: bool,
+        pub ddr400: bool, // @3
+        pub ddr533: bool, // @4
+        pub ddr667: bool, // @5
+        pub ddr800: bool, // @6
+        #[skip] __: bool,
+        pub ddr1066: bool, // @8
+        #[skip] __: bool,
+        pub ddr1333: bool, // @10
+        #[skip] __: bool,
+        pub ddr1600: bool, // @12
+        #[skip] __: bool,
+        pub ddr1866: bool, // @14
+        #[skip] __: bool, // AMD-missing pub ddr2100 // @15
+        pub ddr2133: bool, // @16
+        #[skip] __: bool,
+        pub ddr2400: bool, // @18
+        #[skip] __: bool,
+        pub ddr2667: bool, // @20
+        #[skip] __: bool, // AMD-missing pub ddr2800 // @21
+        pub ddr2933: bool, // @22
+        #[skip] __: bool, // AMD-missing pub ddr3066: // @23
+        pub ddr3200: bool, // @24
+        #[skip] __: bool, // @25
+        #[skip] __: bool, // @26
+        #[skip] __: bool, // @27
+        #[skip] __: bool, // @28
+        #[skip] __: bool, // @29
+        #[skip] __: bool, // @30
+        #[skip] __: bool, // @31
         // AMD-missing pub ddr3334, set_ddr3334: 25,
         // AMD-missing pub ddr3466, set_ddr3466: 26,
         // AMD-missing pub ddr3600, set_ddr3600: 27,
@@ -1606,43 +1561,24 @@ macro_rules! impl_bitfield_primitive_conversion {
         // AMD-missing pub ddr4334, set_ddr4334: 32,
         // AMD-missing pub ddr4400, set_ddr4400: 33,
     }
-    impl_bitfield_primitive_conversion!(DdrRates, 0b0000_0001_0101_0101_0101_0101_0111_1000);
-    impl DdrRates {
-        pub fn new() -> Self {
-            Self(0)
-        }
-    }
+    impl_bitfield_primitive_conversion!(DdrRates, 0b0000_0001_0101_0101_0101_0101_0111_1000, u32);
 
-    bitfield! {
-        pub struct DimmsPerChannel(u32);
-        impl Debug;
-        bool;
-        pub one_dimm, set_one_dimm: 0;
-        pub two_dimms, set_two_dimms: 1;
-        pub three_dimms, set_three_dimms: 2;
-        pub four_dimms, set_four_dimms: 3;
+    #[bitfield(bits = 32)]
+    #[repr(u32)]
+    #[derive(Clone, Copy)]
+    pub struct DimmsPerChannelDimms {
+        pub one_dimm: bool,
+        pub two_dimms: bool,
+        pub three_dimms: bool,
+        pub four_dimms: bool,
+        #[skip] __: B28,
     }
-    //impl_bitfield_primitive_conversion!(DimmsPerChannel, 0b111);
-    impl DimmsPerChannel {
-        const VALID_BITS: u32 = 0b111;
-        pub const fn all_reserved_bits_are_unused(value: u32) -> bool {
-            value & !Self::VALID_BITS == 0
-        }
-        pub fn new() -> Self {
-            Self(0)
-        }
-        pub fn dont_care() -> Self {
-            Self(0xFF)
-        }
-        pub fn no_slot() -> Self {
-            Self(0xF0)
-        }
-        pub fn is_no_slot(&self) -> bool {
-            self.0 == 0xF0
-        }
-        pub fn is_dont_care(&self) -> bool {
-            self.0 == 0xFF
-        }
+    impl_bitfield_primitive_conversion!(DimmsPerChannelDimms, 0b111, u32);
+
+    pub enum DimmsPerChannel {
+        NoSlot, // 0xf0
+        DontCare, // 0xff
+        Specific(DimmsPerChannelDimms)
     }
     impl FromPrimitive for DimmsPerChannel {
         #[inline]
@@ -1651,10 +1587,12 @@ macro_rules! impl_bitfield_primitive_conversion {
                 None
             } else {
                 let raw_value = raw_value as u32;
-                if raw_value == 0xFF || raw_value == 0xF0 || Self::all_reserved_bits_are_unused(raw_value) {
-                    Some(Self(raw_value.into()))
+                if raw_value == 0xff {
+                    Some(Self::DontCare)
+                } else if raw_value == 0xf0 {
+                    Some(Self::NoSlot)
                 } else {
-                    None
+                    Some(Self::Specific(DimmsPerChannelDimms::from_u32(raw_value)?))
                 }
             }
         }
@@ -1671,11 +1609,12 @@ macro_rules! impl_bitfield_primitive_conversion {
     impl ToPrimitive for DimmsPerChannel {
         #[inline]
         fn to_i64(&self) -> Option<i64> {
-            let value = self.0;
-            if value == 0xFF || Self::all_reserved_bits_are_unused(value) {
-                Some(value.into())
-            } else {
-                None
+            match self {
+                Self::NoSlot => Some(0xf0),
+                Self::DontCare => Some(0xff),
+                Self::Specific(dimms) => {
+                    Some(dimms.to_i64()?.into()) // Assumption: Not 0xf0 and not 0xff
+                },
             }
         }
         #[inline]
@@ -1684,14 +1623,15 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    bitfield! {
-        pub struct RdimmDdr4Voltages(u32);
-        impl Debug;
-        bool;
-        pub v_1_2, set_v_1_2: 0;
+    #[bitfield(bits = 32)]
+    #[repr(u32)]
+    #[derive(Clone, Copy)]
+    pub struct RdimmDdr4Voltages {
+        pub v_1_2: bool,
+        #[skip] __: B31,
         // all = 7
     }
-    impl_bitfield_primitive_conversion!(RdimmDdr4Voltages, 0b111);
+    impl_bitfield_primitive_conversion!(RdimmDdr4Voltages, 0b111, u32);
 
     // Usually an array of those is used
     make_accessors! {
@@ -1761,16 +1701,17 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    bitfield! {
-        pub struct UdimmDdr4Voltages(u32);
-        impl Debug;
-        bool;
-        pub v_1_5, set_v_1_5: 0;
-        pub v_1_35, set_v_1_35: 1;
-        pub v_1_25, set_v_1_25: 2;
+    #[bitfield(bits = 32)]
+    #[repr(u32)]
+    #[derive(Clone, Copy)]
+    pub struct UdimmDdr4Voltages {
+        pub v_1_5: bool,
+        pub v_1_35: bool,
+        pub v_1_25: bool,
         // all = 7
+        #[skip] __: B29,
     }
-    impl_bitfield_primitive_conversion!(UdimmDdr4Voltages, 0b111);
+    impl_bitfield_primitive_conversion!(UdimmDdr4Voltages, 0b111, u32);
 
     // Usually an array of those is used
     make_accessors! {
@@ -1840,14 +1781,15 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    bitfield! {
-        pub struct LrdimmDdr4Voltages(u32);
-        impl Debug;
-        bool;
-        pub v_1_2, set_v_1_2: 0;
+    #[bitfield(bits = 32)]
+    #[repr(u32)]
+    #[derive(Clone, Copy)]
+    pub struct LrdimmDdr4Voltages {
+        pub v_1_2: bool,
         // all = 7
+        #[skip] __: B31,
     }
-    impl_bitfield_primitive_conversion!(LrdimmDdr4Voltages, 0b111);
+    impl_bitfield_primitive_conversion!(LrdimmDdr4Voltages, 0b111, u32);
 
     // Usually an array of those is used
     make_accessors! {
@@ -2261,80 +2203,17 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    bitfield! {
-        #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy, PartialEq)]
-        #[repr(C, packed)]
-        pub struct ErrorOutControlBeepCodePeakAttr(U32<LittleEndian>);
-        no default BitRange;
-        impl Debug;
-        u16;
-        pub repeat_count, set_repeat_count: 11, 8;
-        pub pulse_width, set_pulse_width: 7, 5; // in units of 0.1 s
-        pub peak_count, set_peak_count: 4, 0;
-    }
-
-    impl BitRange<u16> for ErrorOutControlBeepCodePeakAttr {
-        fn bit_range(&self, msb: usize, lsb: usize) -> u16 {
-            assert!(lsb <= msb);
-            let width = msb - lsb + 1;
-            assert!(width <= 15);
-            let mask = (1u32 << width) - 1;
-            ((self.0.get() >> lsb) & mask) as u16
-        }
-        fn set_bit_range(&mut self, msb: usize, lsb: usize, value: u16) {
-            assert!(lsb <= msb);
-            let width = msb - lsb + 1;
-            assert!(width <= 15);
-            let mask = (1u32 << width) - 1;
-            assert!(u32::from(value) <= mask);
-            let mut dest = self.0.get();
-            dest &=! (mask << lsb);
-            dest |= (value as u32) << lsb;
-            self.0.set(dest);
-        }
-    }
-
-    impl Bit for ErrorOutControlBeepCodePeakAttr {
-        fn bit(&self, index: usize) -> bool {
-            match self.0.get() & (1u32 << index) {
-                0 => false,
-                _ => true,
-            }
-        }
-        fn set_bit(&mut self, index: usize, value: bool) {
-            match value {
-                true => {
-                    self.0.set(self.0.get() | (1u32 << index));
-                },
-                false => {
-                    self.0.set(self.0.get() &! (1u32 << index));
-                },
-            }
-        }
-    }
-
-    impl ErrorOutControlBeepCodePeakAttr {
+    #[bitfield(bits = 32)]
+    #[derive(Clone, Copy, PartialEq, Debug)]
+    #[repr(u32)]
+    pub struct ErrorOutControlBeepCodePeakAttr {
+        pub peak_count: B5,
         /// PULSE_WIDTH: in units of 0.1 s
-        pub fn new(peak_count: u16, pulse_width: u16, repeat_count: u16) -> Option<Self> {
-            let mut result = Self(0.into());
-            if peak_count < 32 {
-                result.set_peak_count(peak_count);
-            } else {
-                return None;
-            }
-            if pulse_width < 8 {
-                result.set_pulse_width(pulse_width);
-            } else {
-                return None;
-            }
-            if repeat_count < 16 {
-                result.set_repeat_count(repeat_count);
-            } else {
-                return None;
-            }
-            Some(result)
-        }
+        pub pulse_width: B3,
+        pub repeat_count: B4,
+        #[skip] __: B20,
     }
+    impl_bitfield_primitive_conversion!(ErrorOutControlBeepCodePeakAttr, 0b1111_1111_1111, u32);
 
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     pub enum ErrorOutControlBeepCodeErrorType {
@@ -2352,7 +2231,7 @@ macro_rules! impl_bitfield_primitive_conversion {
         pub struct ErrorOutControlBeepCode {
             error_type: U16<LittleEndian>,
             peak_map: U16<LittleEndian> : pub get u16 : pub set u16,
-            pub peak_attr: ErrorOutControlBeepCodePeakAttr,
+            peak_attr: U32<LittleEndian> : pub get Result<ErrorOutControlBeepCodePeakAttr> : pub set ErrorOutControlBeepCodePeakAttr,
         }
     }
     impl ErrorOutControlBeepCode {
@@ -2366,7 +2245,7 @@ macro_rules! impl_bitfield_primitive_conversion {
             Self {
                 error_type: ((error_type.to_u16().unwrap() << 12) | 0xFFF).into(),
                 peak_map: peak_map.into(),
-                peak_attr
+                peak_attr: peak_attr.to_u32().unwrap().into(),
             }
         }
     }
@@ -2480,42 +2359,42 @@ macro_rules! impl_bitfield_primitive_conversion {
                     ErrorOutControlBeepCode {
                         error_type: U16::<LittleEndian>::new(0x3fff),
                         peak_map: 1.into(),
-                        peak_attr: ErrorOutControlBeepCodePeakAttr::new(8, 0, 0).unwrap(),
+                        peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(8).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
                     },
                     ErrorOutControlBeepCode {
                         error_type: 0x4fff.into(),
                         peak_map: 2.into(),
-                        peak_attr: ErrorOutControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                        peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
                     },
                     ErrorOutControlBeepCode {
                         error_type: 0x5fff.into(),
                         peak_map: 3.into(),
-                        peak_attr: ErrorOutControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                        peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
                     },
                     ErrorOutControlBeepCode {
                         error_type: 0x6fff.into(),
                         peak_map: 4.into(),
-                        peak_attr: ErrorOutControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                        peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
                     },
                     ErrorOutControlBeepCode {
                         error_type: 0x7fff.into(),
                         peak_map: 5.into(),
-                        peak_attr: ErrorOutControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                        peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
                     },
                     ErrorOutControlBeepCode {
                         error_type: 0x8fff.into(),
                         peak_map: 6.into(),
-                        peak_attr: ErrorOutControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                        peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
                     },
                     ErrorOutControlBeepCode {
                         error_type: 0x9fff.into(),
                         peak_map: 7.into(),
-                        peak_attr: ErrorOutControlBeepCodePeakAttr::new(20, 0, 0).unwrap(),
+                        peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
                     },
                     ErrorOutControlBeepCode {
                         error_type: 0xffff.into(),
                         peak_map: 2.into(),
-                        peak_attr: ErrorOutControlBeepCodePeakAttr::new(4, 0, 0).unwrap(),
+                        peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(4).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
                     },
                 ],
                 enable_heart_beat: BU8(1),
@@ -2654,77 +2533,64 @@ macro_rules! impl_bitfield_primitive_conversion {
         }
     }
 
-    bitfield! {
-        #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
+/*
+    #[derive(BitfieldSpecifier, Debug, PartialEq)]
+    #[bits = 1]
+    pub enum DdrPostPackageRepairBodyDeviceWidth {
+        Width0 = 0,
+        Width30 = 0x1e,
+        NotApplicable = 0x1f,
+    }
+*/
+
+    #[bitfield(bits = 64)]
+    #[repr(u64)]
+    #[derive(Clone, Copy)]
+    pub struct DdrPostPackageRepairBody {
+        pub bank: B5,
+        pub rank_multiplier: B3,
+        xdevice_width: B5, // device width of DIMMs to repair; or 0x1F for heeding target_device instead
+        pub chip_select: B2,
+        pub column: B10,
+        pub hard_repair: bool,
+        pub valid: bool,
+        pub target_device: B5,
+        pub row: B18,
+        pub socket: B3,
+        pub channel: B3,
+        #[skip] __: B8,
+    }
+
+    impl DdrPostPackageRepairBody {
+        pub fn device_width(&self) -> Option<u8> {
+            match self.xdevice_width() {
+                0x1f => None,
+                x => Some(x),
+            }
+        }
+        pub fn set_device_width(&mut self, value: Option<u8>) {
+            self.set_xdevice_width(match value {
+                None => 0x1f,
+                Some(x) => x,
+            })
+        }
+    }
+
+    impl_bitfield_primitive_conversion!(DdrPostPackageRepairBody, 0b1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111, u64);
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, Debug)]
         #[repr(C, packed)]
-        pub struct DdrPostPackageRepairBody(U64<LittleEndian>);
-        no default BitRange;
-        impl Debug;
-        u64;
-        pub channel, set_channel: 55, 53;
-        pub socket, set_socket: 52, 50;
-        pub row, set_row: 49, 32;
-        pub target_device, set_target_device: 31, 27;
-        pub valid, set_valid: 26;
-        pub hard_repair, set_hard_repair: 25;
-        pub column, set_column: 24, 15;
-        pub chip_select, set_chip_select: 14, 13;
-        pub device_width, set_device_width: 12, 8; // device width of DIMMs to repair; or 0x1F for heeding target_device instead
-        pub rank_multiplier, set_rank_multiplier: 7, 5;
-        pub bank, set_bank: 4, 0;
-    }
-
-    impl BitRange<u64> for DdrPostPackageRepairBody {
-        fn bit_range(&self, msb: usize, lsb: usize) -> u64 {
-            assert!(lsb <= msb);
-            let width = msb - lsb + 1;
-            assert!(width <= 63);
-            let mask = (1u64 << width) - 1;
-            (self.0.get() >> lsb) & mask
+        pub struct DdrPostPackageRepairElement {
+            body: [u8; 8], // no: pub get DdrPostPackageRepairBody : pub set DdrPostPackageRepairBody,
         }
-        fn set_bit_range(&mut self, msb: usize, lsb: usize, value: u64) {
-            assert!(lsb <= msb);
-            let width = msb - lsb + 1;
-            assert!(width <= 63);
-            let mask = (1u64 << width) - 1;
-            assert!(u64::from(value) <= mask);
-            let mut dest = self.0.get();
-            dest &=! ((mask as u64) << lsb);
-            dest |= (value as u64) << lsb;
-            self.0.set(dest);
-        }
-    }
-
-    impl Bit for DdrPostPackageRepairBody {
-        fn bit(&self, index: usize) -> bool {
-            match self.0.get() & (1u64 << index) {
-                0 => false,
-                _ => true,
-            }
-        }
-        fn set_bit(&mut self, index: usize, value: bool) {
-            match value {
-                true => {
-                    self.0.set(self.0.get() | (1u64 << index));
-                },
-                false => {
-                    self.0.set(self.0.get() &! (1u64 << index));
-                },
-            }
-        }
-    }
-
-    #[derive(FromBytes, AsBytes, Unaligned, Debug)]
-    #[repr(C, packed)]
-    pub struct DdrPostPackageRepairElement {
-        body: DdrPostPackageRepairBody,
     }
 
     impl DdrPostPackageRepairElement {
         #[inline]
-        pub fn body(&self) -> Option<&DdrPostPackageRepairBody> {
-            if self.body.valid() {
-                Some(&self.body)
+        pub fn body(&self) -> Option<DdrPostPackageRepairBody> {
+            if self.body[3] & (1 << 2) != 0 { // valid @ ((3 * 8 + 2 == 26))
+                Some(DdrPostPackageRepairBody::from_bytes(self.body))
             } else {
                 None
             }
@@ -2732,14 +2598,14 @@ macro_rules! impl_bitfield_primitive_conversion {
         #[inline]
         pub fn invalid() -> DdrPostPackageRepairElement {
             Self {
-                body: DdrPostPackageRepairBody(0xff00_0000_0000_0000.into()),
+                body: [0, 0, 0, 0, 0, 0, 0, 0xff],
             }
         }
         #[inline]
-        pub fn set_body(&mut self, value: Option<&DdrPostPackageRepairBody>) {
+        pub fn set_body(&mut self, value: Option<DdrPostPackageRepairBody>) {
             match value {
                 Some(body) => {
-                    self.body = *body;
+                    self.body = body.into_bytes();
                 },
                 None => {
                     self.body = Self::invalid().body;
@@ -2778,33 +2644,34 @@ macro_rules! impl_bitfield_primitive_conversion {
         use crate::struct_accessors::{Getter, Setter, make_accessors};
         use crate::types::Result;
 
-        bitfield! {
-            pub struct ChannelIds(u8);
-            impl Debug;
-            bool;
-            #[inline]
-            pub a, set_a: 0;
-            #[inline]
-            pub b, set_b: 1;
-            #[inline]
-            pub c, set_c: 2;
-            #[inline]
-            pub d, set_d: 3;
-            #[inline]
-            pub e, set_e: 4;
-            #[inline]
-            pub f, set_f: 5;
-            #[inline]
-            pub g, set_g: 6;
-            #[inline]
-            pub h, set_h: 7;
+        #[bitfield(filled = true, bits = 8)]
+        #[repr(u8)]
+        #[derive(Clone, Copy)]
+        pub struct ChannelIdsSelection {
+            pub a: bool,
+            pub b: bool,
+            pub c: bool,
+            pub d: bool,
+            pub e: bool,
+            pub f: bool,
+            pub g: bool,
+            pub h: bool,
+        }
+
+        impl_bitfield_primitive_conversion!(ChannelIdsSelection, 0b1111_1111, u8);
+
+        pub enum ChannelIds {
+            Any, // 0xff
+            Specific(ChannelIdsSelection),
         }
 
         impl FromPrimitive for ChannelIds {
             #[inline]
             fn from_u64(raw_value: u64) -> Option<Self> {
-                if raw_value <= 0xFF { // valid
-                    Some(Self(raw_value as u8))
+                if raw_value == 0xff {
+                    Some(Self::Any)
+                } else if raw_value < 0xff { // other valid
+                    Some(Self::Specific(ChannelIdsSelection::from_u8(raw_value as u8)?))
                 } else {
                     None
                 }
@@ -2822,99 +2689,62 @@ macro_rules! impl_bitfield_primitive_conversion {
         impl ToPrimitive for ChannelIds {
             #[inline]
             fn to_i64(&self) -> Option<i64> {
-                Some(self.0.into())
-            }
-            #[inline]
-            fn to_u64(&self) -> Option<u64> {
-                Some(self.0.into())
-            }
-        }
-
-        impl ChannelIds {
-            pub fn all() -> Self {
-                Self(0xFF)
-            }
-        }
-
-        bitfield! {
-            pub struct SocketIds(u8);
-            impl Debug;
-            bool;
-            #[inline]
-            pub socket_0, set_socket_0: 0;
-            #[inline]
-            pub socket_1, set_socket_1: 1;
-            #[inline]
-            pub socket_2, set_socket_2: 2;
-            #[inline]
-            pub socket_3, set_socket_3: 3;
-            #[inline]
-            pub socket_4, set_socket_4: 4;
-            #[inline]
-            pub socket_5, set_socket_5: 5;
-            #[inline]
-            pub socket_6, set_socket_6: 6;
-            #[inline]
-            pub socket_7, set_socket_7: 7;
-        }
-
-        impl FromPrimitive for SocketIds {
-            #[inline]
-            fn from_u64(raw_value: u64) -> Option<Self> {
-                if raw_value <= 0xFF { // valid
-                    Some(Self(raw_value as u8))
-                } else {
-                    None
+                match self {
+                    Self::Any => Some(0xff),
+                    Self::Specific(ids) => Some(ids.to_i64()?), // Assumption: resulting value is not 0xff
                 }
             }
             #[inline]
-            fn from_i64(raw_value: i64) -> Option<Self> {
-                if raw_value >= 0 {
-                    Self::from_u64(raw_value as u64)
-                } else {
-                    None
+            fn to_u64(&self) -> Option<u64> {
+                match self {
+                    Self::Any => Some(0xff),
+                    Self::Specific(ids) => Some(ids.to_u64()?), // Assumption: resulting value is not 0xff
                 }
             }
         }
 
-        impl ToPrimitive for SocketIds {
-            #[inline]
-            fn to_i64(&self) -> Option<i64> {
-                Some(self.0.into())
-            }
-            #[inline]
-            fn to_u64(&self) -> Option<u64> {
-                Some(self.0.into())
-            }
+        #[bitfield(filled = true, bits = 8)]
+        #[repr(u8)]
+        #[derive(Clone, Copy)]
+        pub struct SocketIds {
+            pub socket_0: bool,
+            pub socket_1: bool,
+            pub socket_2: bool,
+            pub socket_3: bool,
+            pub socket_4: bool,
+            pub socket_5: bool,
+            pub socket_6: bool,
+            pub socket_7: bool,
         }
+        impl_bitfield_primitive_conversion!(SocketIds, 0b1111_1111, u8);
 
         impl SocketIds {
-            pub fn all() -> Self {
-                Self(0xFF)
-            }
+            const All: Self = Self::from_bytes([0xff]);
         }
 
-        bitfield! {
-            pub struct DimmSlots(u8);
-            impl Debug;
-            bool;
-            #[inline]
-            pub dimm_slot_0, set_dimm_slot_0: 0;
-            #[inline]
-            pub dimm_slot_1, set_dimm_slot_1: 1;
-            #[inline]
-            pub dimm_slot_2, set_dimm_slot_2: 2;
-            #[inline]
-            pub dimm_slot_3, set_dimm_slot_3: 3;
+        #[bitfield(bits = 8)]
+        #[repr(u8)]
+        #[derive(Clone, Copy)]
+        pub struct DimmSlotsSelection {
+            pub dimm_slot_0: bool, // @0
+            pub dimm_slot_1: bool, // @1
+            pub dimm_slot_2: bool, // @2
+            pub dimm_slot_3: bool, // @3
+            #[skip] __: B4,
+        }
+        impl_bitfield_primitive_conversion!(DimmSlotsSelection, 0b1111, u8);
+        pub enum DimmSlots {
+            Any, // 0xff
+            Specific(DimmSlotsSelection),
         }
 
         impl FromPrimitive for DimmSlots {
             #[inline]
             fn from_u64(raw_value: u64) -> Option<Self> {
-                if raw_value == 0xFF { // valid
-                    Some(Self(raw_value as u8))
+                if raw_value == 0xff { // valid
+                    Some(Self::Any)
                 } else if raw_value < 16 { // valid
-                    Some(Self(raw_value as u8))
+                    Some(Self::Specific(DimmSlotsSelection::from_u8(raw_value as u8)?))
                 } else {
                     None
                 }
@@ -2932,17 +2762,17 @@ macro_rules! impl_bitfield_primitive_conversion {
         impl ToPrimitive for DimmSlots {
             #[inline]
             fn to_i64(&self) -> Option<i64> {
-                Some(self.0.into())
+                match self {
+                    Self::Any => Some(0xff),
+                    Self::Specific(value) => Some(value.to_i64()?), // Assumption: not 0xff
+                }
             }
             #[inline]
             fn to_u64(&self) -> Option<u64> {
-                Some(self.0.into())
-            }
-        }
-
-        impl DimmSlots {
-            pub fn all() -> Self {
-                Self(0xFF)
+                match self {
+                    Self::Any => Some(0xff),
+                    Self::Specific(value) => Some(value.to_u64()?), // Assumption: not 0xff
+                }
             }
         }
 
@@ -2983,9 +2813,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 1.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     connections: [0; 4], // probably invalid
                 }
             }
@@ -3010,9 +2840,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 2.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     connections: [0; 4], // probably invalid
                 }
             }
@@ -3037,9 +2867,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 3.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     connections: [0; 8], // probably invalid
                 }
             }
@@ -3063,9 +2893,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 4.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 2,
                 }
             }
@@ -3090,9 +2920,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 7.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     connections: [0; 8], // all disabled
                 }
             }
@@ -3127,9 +2957,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 8.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 2,
                 }
             }
@@ -3202,9 +3032,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 9.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     timing_mode: TimingMode::Auto.to_u32().unwrap().into(),
                     bus_speed: MemBusSpeedType::Ddr1600.to_u32().unwrap().into(), // User probably wants to change this
                 }
@@ -3242,9 +3072,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 10.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 0, // probably invalid
                 }
             }
@@ -3293,9 +3123,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 11.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     technology_type: 0.into(), // probably invalid
                 }
             }
@@ -3331,9 +3161,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 12.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     seed: [0.into(); 8], // probably invalid
                     ecc_seed: 0.into(), // probably invalid
                 }
@@ -3360,9 +3190,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 13.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     seed: [0.into(); 8], // probably invalid
                     ecc_seed: 0.into(), // probably invalid
                 }
@@ -3399,9 +3229,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 14.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 1,
                 }
             }
@@ -3435,9 +3265,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 15.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 1,
                 }
             }
@@ -3471,9 +3301,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 16.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 1,
                 }
             }
@@ -3508,9 +3338,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 17.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     min_read_data_eye_width: 0, // probably invalid
                     min_write_data_eye_width: 0, // probably invalid
                 }
@@ -3575,9 +3405,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 19.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 0, // probably invalid
                 }
             }
@@ -3618,9 +3448,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 20.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 0, // probably invalid
                 }
             }
@@ -3661,9 +3491,9 @@ macro_rules! impl_bitfield_primitive_conversion {
                 Self {
                     type_: 21.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::all().to_u8().unwrap(),
-                    channels: ChannelIds::all().to_u8().unwrap(),
-                    dimms: DimmSlots::all().to_u8().unwrap(),
+                    sockets: SocketIds::All.to_u8().unwrap(),
+                    channels: ChannelIds::Any.to_u8().unwrap(),
+                    dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 0, // probably invalid
                 }
             }

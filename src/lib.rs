@@ -2,9 +2,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(elided_lifetimes_in_paths)]
 
-#[macro_use]
-extern crate bitfield;
-
 #[cfg(test)]
 #[macro_use]
 extern crate memoffset;
