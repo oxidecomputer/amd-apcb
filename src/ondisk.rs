@@ -1789,7 +1789,7 @@ pub mod memory {
         // all = 7
         #[skip] __: B31,
     }
-    impl_bitfield_primitive_conversion!(LrdimmDdr4Voltages, 0b111, u32);
+    impl_bitfield_primitive_conversion!(LrdimmDdr4Voltages, 0b1, u32);
 
     // Usually an array of those is used
     make_accessors! {
