@@ -473,7 +473,7 @@ impl<'a> Apcb<'a> {
         }
         if header.version.get() == 0x30 {
         } else {
-            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::version"));
+//            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::version"));
         }
 
         let v3_header_ext = if usize::from(header.header_size)
@@ -541,6 +541,8 @@ impl<'a> Apcb<'a> {
             let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
                     .ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER"))?;
             header.checksum_byte = 0;
+            // Use the chance to also update unique_apcb_instance (assumption: user calls update_checksum only when there was an actual change).
+            header.unique_apcb_instance.set(header.unique_apcb_instance.get().wrapping_add(1));
             apcb_size = header.apcb_size.get();
         }
         let mut checksum_byte = 0u8;
@@ -554,11 +556,7 @@ impl<'a> Apcb<'a> {
             let mut backing_store = &mut *backing_store;
             let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
                     .ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER"))?;
-            let checksum_byte = (0x100u16 - u16::from(checksum_byte)) as u8; // Note: This can overflow
-
-            // Use the chance to also update unique_apcb_instance (assumption: user calls update_checksum only when there was an actual change).
-            header.unique_apcb_instance.set(header.unique_apcb_instance.get().wrapping_add(1));
-            header.checksum_byte = checksum_byte.wrapping_sub(1); // correct for changed unique_apcb_instance
+            header.checksum_byte = (0x100u16 - u16::from(checksum_byte)) as u8; // Note: This can overflow
         }
         Ok(())
     }
