@@ -1,5 +1,7 @@
 # Features
 
+* "Assumption" -> assert ?
+* s|default|normal| in PriorityLevels and PriorityLevel
 * AMD# 55483 6.3 AGESA Boot Loader Debug
 * Sanity-check "new" fns that exist
 * Add "new" fn for the others, too?
