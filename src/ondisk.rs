@@ -2719,7 +2719,7 @@ pub mod memory {
         impl_bitfield_primitive_conversion!(SocketIds, 0b1111_1111, u8);
 
         impl SocketIds {
-            const All: Self = Self::from_bytes([0xff]);
+            const ALL: Self = Self::from_bytes([0xff]);
         }
 
         #[bitfield(bits = 8)]
@@ -2813,7 +2813,7 @@ pub mod memory {
                 Self {
                     type_: 1.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     connections: [0; 4], // probably invalid
@@ -2840,7 +2840,7 @@ pub mod memory {
                 Self {
                     type_: 2.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     connections: [0; 4], // probably invalid
@@ -2867,7 +2867,7 @@ pub mod memory {
                 Self {
                     type_: 3.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     connections: [0; 8], // probably invalid
@@ -2893,7 +2893,7 @@ pub mod memory {
                 Self {
                     type_: 4.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 2,
@@ -2920,7 +2920,7 @@ pub mod memory {
                 Self {
                     type_: 7.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     connections: [0; 8], // all disabled
@@ -2957,7 +2957,7 @@ pub mod memory {
                 Self {
                     type_: 8.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 2,
@@ -3032,7 +3032,7 @@ pub mod memory {
                 Self {
                     type_: 9.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     timing_mode: TimingMode::Auto.to_u32().unwrap().into(),
@@ -3072,7 +3072,7 @@ pub mod memory {
                 Self {
                     type_: 10.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 0, // probably invalid
@@ -3123,7 +3123,7 @@ pub mod memory {
                 Self {
                     type_: 11.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     technology_type: 0.into(), // probably invalid
@@ -3161,7 +3161,7 @@ pub mod memory {
                 Self {
                     type_: 12.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     seed: [0.into(); 8], // probably invalid
@@ -3190,7 +3190,7 @@ pub mod memory {
                 Self {
                     type_: 13.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     seed: [0.into(); 8], // probably invalid
@@ -3229,7 +3229,7 @@ pub mod memory {
                 Self {
                     type_: 14.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 1,
@@ -3265,7 +3265,7 @@ pub mod memory {
                 Self {
                     type_: 15.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 1,
@@ -3301,7 +3301,7 @@ pub mod memory {
                 Self {
                     type_: 16.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 1,
@@ -3338,7 +3338,7 @@ pub mod memory {
                 Self {
                     type_: 17.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     min_read_data_eye_width: 0, // probably invalid
@@ -3405,7 +3405,7 @@ pub mod memory {
                 Self {
                     type_: 19.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 0, // probably invalid
@@ -3448,7 +3448,7 @@ pub mod memory {
                 Self {
                     type_: 20.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 0, // probably invalid
@@ -3491,7 +3491,7 @@ pub mod memory {
                 Self {
                     type_: 21.into(),
                     payload_size: (size_of::<Self>() - 2) as u8,
-                    sockets: SocketIds::All.to_u8().unwrap(),
+                    sockets: SocketIds::ALL.to_u8().unwrap(),
                     channels: ChannelIds::Any.to_u8().unwrap(),
                     dimms: DimmSlots::Any.to_u8().unwrap(),
                     value: 0, // probably invalid
