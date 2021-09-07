@@ -70,4 +70,4 @@
 # Alternate Bitfield implementations
 
 * Most important would be to partially evaluate at compile time!
-* https://crates.io/crates/modular-bitfield
+* bitstruct
