@@ -3,7 +3,7 @@ mod tests {
     use core::default::Default;
     use crate::Apcb;
     use crate::Error;
-    use crate::ondisk::{PriorityLevels, ContextType, CcxEntryId, DfEntryId, PspEntryId, MemoryEntryId, TokenEntryId, EntryId, GroupId, memory::ConsoleOutControl, memory::DimmInfoSmbusElement, psp::BoardIdGettingMethodEeprom, psp::IdRevApcbMapping, memory::ExtVoltageControl, BaudRate};
+    use crate::ondisk::{PriorityLevels, ContextType, CcxEntryId, DfEntryId, PspEntryId, MemoryEntryId, TokenEntryId, EntryId, GroupId, memory::ConsoleOutControl, memory::DimmInfoSmbusElement, psp::BoardIdGettingMethodEeprom, psp::IdRevApcbMapping, memory::ExtVoltageControl, BaudRate, psp::RevAndFeatureValue};
     use crate::EntryItemBody;
     use crate::types::PriorityLevel;
 
@@ -268,8 +268,8 @@ mod tests {
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         let header = BoardIdGettingMethodEeprom::new(1, 2, 3, 4);
         let items = [
-            IdRevApcbMapping::new(5, 4, 9, 3),
-            IdRevApcbMapping::new(8, 7, 10, 6),
+            IdRevApcbMapping::new(5, 4, RevAndFeatureValue::Value(9), 3).unwrap(),
+            IdRevApcbMapping::new(8, 7, RevAndFeatureValue::Value(10), 6).unwrap(),
         ];
         apcb.insert_struct_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &header, &items)?;
         let control = ExtVoltageControl::default();
@@ -294,8 +294,8 @@ mod tests {
 
         let mut elements = elements.iter();
 
-        assert!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)? == IdRevApcbMapping::new(5, 4, 9, 3));
-        assert!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)? == IdRevApcbMapping::new(8, 7, 10, 6));
+        assert!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)? == IdRevApcbMapping::new(5, 4, RevAndFeatureValue::Value(9), 3).unwrap());
+        assert!(*elements.next().ok_or_else(|| Error::EntryTypeMismatch)? == IdRevApcbMapping::new(8, 7, RevAndFeatureValue::Value(10), 6).unwrap());
         assert!(matches!(elements.next(), None));
 
         assert!(matches!(entries.next(), None));

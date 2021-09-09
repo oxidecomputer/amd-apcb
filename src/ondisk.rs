@@ -3928,13 +3928,13 @@ pub mod psp {
     }
 
     impl IdRevApcbMapping {
-        pub fn new(id_and_rev_and_feature_mask: u8, id_and_feature_value: u8, rev_and_feature_value: u8, board_instance_index: u8) -> Self {
-            Self {
+        pub fn new(id_and_rev_and_feature_mask: u8, id_and_feature_value: u8, rev_and_feature_value: RevAndFeatureValue, board_instance_index: u8) -> Result<Self> {
+            Ok(Self {
                 id_and_rev_and_feature_mask,
                 id_and_feature_value,
-                rev_and_feature_value,
+                rev_and_feature_value: rev_and_feature_value.to_u8().ok_or_else(|| Error::EntryTypeMismatch)?,
                 board_instance_index,
-            }
+            })
         }
         pub fn board_instance_mask(&self) -> Result<u16> {
             if self.board_instance_index <= 15 {
