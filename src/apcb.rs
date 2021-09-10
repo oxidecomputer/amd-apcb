@@ -353,6 +353,9 @@ impl<'a> Apcb<'a> {
         let mut payload_size: usize = 0;
         for item in payload {
             let blob = item.as_bytes();
+            if !T::is_entry_compatible(entry_id, blob) {
+                return Err(Error::EntryTypeMismatch);
+            }
             payload_size = payload_size.checked_add(blob.len()).ok_or_else(|| Error::ArithmeticOverflow)?;
         }
         self.internal_insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, payload_size, priority_mask, &mut |body: &mut [u8]| {
