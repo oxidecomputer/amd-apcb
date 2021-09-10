@@ -19,6 +19,11 @@ use crate::token_accessors::{make_token_accessors, TokensMut, Tokens};
 use crate::entry::EntryItemBody;
 use crate::types::PriorityLevel;
 
+/// Work around Rust issue# 51443, in case it ever will be phased out.
+pub trait AsBytes51443 {
+    fn as_bytes(&self) -> &[u8];
+}
+
 /// There are (very few) Struct Entries like this: Header S0 S1 S2 S3.
 /// This trait is implemented by structs that are used as a header of a sequence.  Then, the header structs specify (in their impl) what the (struct or enum) type of the sequence will be.
 pub trait HeaderWithTail {
@@ -2736,6 +2741,12 @@ pub mod memory {
                 }
             }
 
+            impl AsBytes51443 for $struct_ {
+                fn as_bytes(&self) -> &[u8] {
+                    AsBytes::as_bytes(self)
+                }
+            }
+
 //            impl HeaderWithTail for $struct_ {
 //                type TailArrayItemType = ();
 //            }
@@ -3510,6 +3521,12 @@ pub mod memory {
                     _ => {
                         return None;
                     }
+                }
+            }
+
+            impl AsBytes51443 for $struct_ {
+                fn as_bytes(&self) -> &[u8] {
+                    AsBytes::as_bytes(self)
                 }
             }
 
