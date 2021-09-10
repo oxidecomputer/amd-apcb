@@ -26,7 +26,7 @@ pub trait AsBytes51443 {
 }
 
 /// There are (very few) Struct Entries like this: Header S0 S1 S2 S3.
-/// This trait is implemented by structs that are used as a header of a sequence.  Then, the header structs specify (in their impl) what the (struct or enum) type of the sequence will be.
+/// This trait is implemented by structs that are used as a header of a sequence.  Then, the header structs specify (in their impl) what the struct type of the sequence will be.
 pub trait HeaderWithTail {
     type TailArrayItemType: AsBytes + FromBytes;
 }
