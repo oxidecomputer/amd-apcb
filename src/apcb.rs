@@ -328,7 +328,7 @@ impl<'a> Apcb<'a> {
         })
     }
 
-    /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.  T can be a enum of struct refs (PlatformSpecificElementRef, PlatformTuningElementRef) or just one struct.
+    /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.  Usually that's for platform_specific_override or platform_tuning structs.
     /// Note: Currently, INSTANCE_ID is always supposed to be 0.
     pub fn insert_struct_sequence_as_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &[&dyn AsBytes51443]) -> Result<()> {
         let mut payload_size: usize = 0;
