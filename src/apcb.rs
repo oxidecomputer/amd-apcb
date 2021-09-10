@@ -333,18 +333,13 @@ impl<'a> Apcb<'a> {
     pub fn insert_struct_sequence_as_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &[&dyn AsBytes51443]) -> Result<()> {
         let mut payload_size: usize = 0;
         for item in payload {
-            let blob = item.as_bytes();
-/* FIXME
-            if !item.is_entry_compatible(entry_id, blob) {
-                return Err(Error::EntryTypeMismatch);
-            }
-*/
+            let blob = item.checked_as_bytes(entry_id).ok_or_else(|| Error::EntryTypeMismatch)?;
             payload_size = payload_size.checked_add(blob.len()).ok_or_else(|| Error::ArithmeticOverflow)?;
         }
         self.internal_insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, payload_size, priority_mask, &mut |body: &mut [u8]| {
             let mut body = body;
             for item in payload {
-                let source = item.as_bytes();
+                let source = item.checked_as_bytes(entry_id).unwrap();
                 let (a, rest) = body.split_at_mut(source.len());
                 a.copy_from_slice(source);
                 body = rest;
@@ -358,9 +353,6 @@ impl<'a> Apcb<'a> {
         let mut payload_size: usize = 0;
         for item in payload {
             let blob = item.as_bytes();
-            if !T::is_entry_compatible(entry_id, blob) {
-                return Err(Error::EntryTypeMismatch);
-            }
             payload_size = payload_size.checked_add(blob.len()).ok_or_else(|| Error::ArithmeticOverflow)?;
         }
         self.internal_insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, payload_size, priority_mask, &mut |body: &mut [u8]| {
