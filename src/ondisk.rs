@@ -1031,6 +1031,10 @@ pub trait EntryCompatible {
     fn is_entry_compatible(_entry_id: EntryId, _prefix: &[u8]) -> bool {
         false
     }
+    // Try to find enough info to be able to skip over incompatible/half-compatible structures.
+    fn skip_step(_entry_id: EntryId, _prefix: &[u8]) -> Option<usize> {
+        None
+    }
 }
 
 // Starting here come the actual Entry formats (struct )
@@ -2666,7 +2670,6 @@ pub mod memory {
         use static_assertions::const_assert;
         use zerocopy::{AsBytes, FromBytes, Unaligned, U16, U32};
         use super::super::*;
-        use super::UnionAsBytes;
         use crate::struct_accessors::{Getter, Setter, make_accessors};
         use crate::types::Result;
 
@@ -2814,7 +2817,22 @@ pub mod memory {
                         _ => false,
                     }
                 }
+                fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<usize> {
+                    match entry_id {
+                        EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
+                            if prefix.len() >= 2 {
+                                (prefix[1] as usize).checked_add(2)
+                            } else {
+                                None
+                            }
+                        },
+                        _ => {
+                            None
+                        }
+                    }
+                }
             }
+
 //            impl HeaderWithTail for $struct_ {
 //                type TailSequenceType = ();
 //            }
@@ -3536,174 +3554,6 @@ pub mod memory {
             }
         }
 
-        // Maintainer: Add struct references in here as you add new structs above.  Also adapt the is_entry_compatible impl.
-        pub enum PlatformSpecificOverrideElementRef<'a> {
-            CkeTristateMap(&'a CkeTristateMap),
-            OdtTristateMap(&'a OdtTristateMap),
-            CsTristateMap(&'a CsTristateMap),
-            MaxDimmsPerChannel(&'a MaxDimmsPerChannel),
-            MemclkMap(&'a MemclkMap),
-            MaxChannelsPerSocket(&'a MaxChannelsPerSocket),
-            MemBusSpeed(&'a MemBusSpeed),
-            MaxCsPerChannel(&'a MaxCsPerChannel),
-            MemTechnology(&'a MemTechnology),
-            WriteLevellingSeedDelay(&'a WriteLevellingSeedDelay),
-            RxEnSeed(&'a RxEnSeed),
-            LrDimmNoCs6Cs7Routing(&'a LrDimmNoCs6Cs7Routing),
-            SolderedDownSodimm(&'a SolderedDownSodimm),
-            LvDimmForce1V5(&'a LvDimmForce1V5),
-            MemPowerPolicy(&'a MemPowerPolicy),
-            MinimumRwDataEyeWidth(&'a MinimumRwDataEyeWidth),
-            MotherboardLayers(&'a MotherboardLayers),
-            CpuFamilyFilter(&'a CpuFamilyFilter),
-            SolderedDownDimmsPerChannel(&'a SolderedDownDimmsPerChannel),
-        }
-        impl UnionAsBytes for PlatformSpecificOverrideElementRef<'_> {
-            #[inline]
-            fn as_bytes(&self) -> &[u8] {
-                match self {
-                    Self::CkeTristateMap(item) => {
-                        item.as_bytes()
-                    },
-                    Self::OdtTristateMap(item) => {
-                        item.as_bytes()
-                    },
-                    Self::CsTristateMap(item) => {
-                        item.as_bytes()
-                    },
-                    Self::MaxDimmsPerChannel(item) => {
-                        item.as_bytes()
-                    },
-                    Self::MemclkMap(item) => {
-                        item.as_bytes()
-                    },
-                    Self::MaxChannelsPerSocket(item) => {
-                        item.as_bytes()
-                    },
-                    Self::MemBusSpeed(item) => {
-                        item.as_bytes()
-                    },
-                    Self::MaxCsPerChannel(item) => {
-                        item.as_bytes()
-                    },
-                    Self::MemTechnology(item) => {
-                        item.as_bytes()
-                    },
-                    Self::WriteLevellingSeedDelay(item) => {
-                        item.as_bytes()
-                    },
-                    Self::RxEnSeed(item) => {
-                        item.as_bytes()
-                    },
-                    Self::LrDimmNoCs6Cs7Routing(item) => {
-                        item.as_bytes()
-                    },
-                    Self::SolderedDownSodimm(item) => {
-                        item.as_bytes()
-                    },
-                    Self::LvDimmForce1V5(item) => {
-                        item.as_bytes()
-                    },
-                    Self::MemPowerPolicy(item) => {
-                        item.as_bytes()
-                    },
-                    Self::MinimumRwDataEyeWidth(item) => {
-                        item.as_bytes()
-                    },
-                    Self::MotherboardLayers(item) => {
-                        item.as_bytes()
-                    },
-                    Self::CpuFamilyFilter(item) => {
-                        item.as_bytes()
-                    },
-                    Self::SolderedDownDimmsPerChannel(item) => {
-                        item.as_bytes()
-                    },
-                }
-            }
-        }
-        impl EntryCompatible for PlatformSpecificOverrideElementRef<'_> {
-            fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
-                CkeTristateMap::is_entry_compatible(entry_id, prefix)
-                || OdtTristateMap::is_entry_compatible(entry_id, prefix)
-                || CsTristateMap::is_entry_compatible(entry_id, prefix)
-                || MaxDimmsPerChannel::is_entry_compatible(entry_id, prefix)
-                || MemclkMap::is_entry_compatible(entry_id, prefix)
-                || MaxChannelsPerSocket::is_entry_compatible(entry_id, prefix)
-                || MemBusSpeed::is_entry_compatible(entry_id, prefix)
-                || MaxCsPerChannel::is_entry_compatible(entry_id, prefix)
-                || MemTechnology::is_entry_compatible(entry_id, prefix)
-                || WriteLevellingSeedDelay::is_entry_compatible(entry_id, prefix)
-                || RxEnSeed::is_entry_compatible(entry_id, prefix)
-                || LrDimmNoCs6Cs7Routing::is_entry_compatible(entry_id, prefix)
-                || SolderedDownSodimm::is_entry_compatible(entry_id, prefix)
-                || LvDimmForce1V5::is_entry_compatible(entry_id, prefix)
-                || MemPowerPolicy::is_entry_compatible(entry_id, prefix)
-                || MinimumRwDataEyeWidth::is_entry_compatible(entry_id, prefix)
-                || MotherboardLayers::is_entry_compatible(entry_id, prefix)
-                || CpuFamilyFilter::is_entry_compatible(entry_id, prefix)
-                || SolderedDownDimmsPerChannel::is_entry_compatible(entry_id, prefix)
-            }
-        }
-
-        impl<'a> UnionFromBytes<'a> for PlatformSpecificOverrideElementRef<'a> {
-            fn skip_step(prefix: &[u8]) -> Option<usize> {
-                if prefix.len() >= 2 {
-                    (prefix[1] as usize).checked_add(2)
-                } else {
-                    None
-                }
-            }
-            #[inline]
-            fn from_bytes(world: &'a [u8]) -> Option<Self> {
-                if world.len() >= 2 {
-                    let mut buf = world.clone();
-                    if size_of::<CkeTristateMap>() == Self::skip_step(world)? && world[0] == CkeTristateMap::default().type_ {
-                        Some(Self::CkeTristateMap(take_header_from_collection::<CkeTristateMap>(&mut buf)?))
-                    } else if size_of::<OdtTristateMap>() == Self::skip_step(world)? && world[0] == OdtTristateMap::default().type_ {
-                        Some(Self::OdtTristateMap(take_header_from_collection::<OdtTristateMap>(&mut buf)?))
-                    } else if size_of::<CsTristateMap>() == Self::skip_step(world)? && world[0] == CsTristateMap::default().type_ {
-                        Some(Self::CsTristateMap(take_header_from_collection::<CsTristateMap>(&mut buf)?))
-                    } else if size_of::<MaxDimmsPerChannel>() == Self::skip_step(world)? && world[0] == MaxDimmsPerChannel::default().type_ {
-                        Some(Self::MaxDimmsPerChannel(take_header_from_collection::<MaxDimmsPerChannel>(&mut buf)?))
-                    } else if size_of::<MemclkMap>() == Self::skip_step(world)? && world[0] == MemclkMap::default().type_ {
-                        Some(Self::MemclkMap(take_header_from_collection::<MemclkMap>(&mut buf)?))
-                    } else if size_of::<MaxChannelsPerSocket>() == Self::skip_step(world)? && world[0] == MaxChannelsPerSocket::default().type_ {
-                        Some(Self::MaxChannelsPerSocket(take_header_from_collection::<MaxChannelsPerSocket>(&mut buf)?))
-                    } else if size_of::<MemBusSpeed>() == Self::skip_step(world)? && world[0] == MemBusSpeed::default().type_ {
-                        Some(Self::MemBusSpeed(take_header_from_collection::<MemBusSpeed>(&mut buf)?))
-                    } else if size_of::<MaxCsPerChannel>() == Self::skip_step(world)? && world[0] == MaxCsPerChannel::default().type_ {
-                        Some(Self::MaxCsPerChannel(take_header_from_collection::<MaxCsPerChannel>(&mut buf)?))
-                    } else if size_of::<MemTechnology>() == Self::skip_step(world)? && world[0] == MemTechnology::default().type_ {
-                        Some(Self::MemTechnology(take_header_from_collection::<MemTechnology>(&mut buf)?))
-                    } else if size_of::<WriteLevellingSeedDelay>() == Self::skip_step(world)? && world[0] == WriteLevellingSeedDelay::default().type_ {
-                        Some(Self::WriteLevellingSeedDelay(take_header_from_collection::<WriteLevellingSeedDelay>(&mut buf)?))
-                    } else if size_of::<RxEnSeed>() == Self::skip_step(world)? && world[0] == RxEnSeed::default().type_ {
-                        Some(Self::RxEnSeed(take_header_from_collection::<RxEnSeed>(&mut buf)?))
-                    } else if size_of::<LrDimmNoCs6Cs7Routing>() == Self::skip_step(world)? && world[0] == LrDimmNoCs6Cs7Routing::default().type_ {
-                        Some(Self::LrDimmNoCs6Cs7Routing(take_header_from_collection::<LrDimmNoCs6Cs7Routing>(&mut buf)?))
-                    } else if size_of::<SolderedDownSodimm>() == Self::skip_step(world)? && world[0] == SolderedDownSodimm::default().type_ {
-                        Some(Self::SolderedDownSodimm(take_header_from_collection::<SolderedDownSodimm>(&mut buf)?))
-                    } else if size_of::<LvDimmForce1V5>() == Self::skip_step(world)? && world[0] == LvDimmForce1V5::default().type_ {
-                        Some(Self::LvDimmForce1V5(take_header_from_collection::<LvDimmForce1V5>(&mut buf)?))
-                    } else if size_of::<MemPowerPolicy>() == Self::skip_step(world)? && world[0] == MemPowerPolicy::default().type_ {
-                        Some(Self::MemPowerPolicy(take_header_from_collection::<MemPowerPolicy>(&mut buf)?))
-                    } else if size_of::<MinimumRwDataEyeWidth>() == Self::skip_step(world)? && world[0] == MinimumRwDataEyeWidth::default().type_ {
-                        Some(Self::MinimumRwDataEyeWidth(take_header_from_collection::<MinimumRwDataEyeWidth>(&mut buf)?))
-                    } else if size_of::<MotherboardLayers>() == Self::skip_step(world)? && world[0] == MotherboardLayers::default().type_ {
-                        Some(Self::MotherboardLayers(take_header_from_collection::<MotherboardLayers>(&mut buf)?))
-                    } else if size_of::<CpuFamilyFilter>() == Self::skip_step(world)? && world[0] == CpuFamilyFilter::default().type_ {
-                        Some(Self::CpuFamilyFilter(take_header_from_collection::<CpuFamilyFilter>(&mut buf)?))
-                    } else if size_of::<SolderedDownDimmsPerChannel>() == Self::skip_step(world)? && world[0] == SolderedDownDimmsPerChannel::default().type_ {
-                        Some(Self::SolderedDownDimmsPerChannel(take_header_from_collection::<SolderedDownDimmsPerChannel>(&mut buf)?))
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
-            }
-        }
         // TODO: conditional overrides, actions.
     }
 
@@ -3713,7 +3563,6 @@ pub mod memory {
         use static_assertions::const_assert;
         use zerocopy::{AsBytes, FromBytes, Unaligned, U16};
         use super::super::*;
-        use super::UnionAsBytes;
         //use crate::struct_accessors::{Getter, Setter, make_accessors};
         //use crate::types::Result;
 
@@ -3737,6 +3586,30 @@ pub mod memory {
                     }
                 }
             }
+
+            fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<usize> {
+                match entry_id {
+                    EntryId::Memory(MemoryEntryId::PlatformTuning) => {
+                        if prefix.len() >= 2 {
+                            let type_lo = prefix[0];
+                            let type_hi = prefix[1];
+                            if type_lo == 0xef && type_hi == 0xfe { // no len available
+                                Some(2)
+                            } else if prefix.len() >= 3 {
+                                (prefix[2] as usize).checked_add(2)
+                            } else {
+                                None
+                            }
+                        } else {
+                             None
+                        }
+                    },
+                    _ => {
+                        return None;
+                    }
+                }
+            }
+
 //            impl HeaderWithTail for $struct_ {
 //                type TailSequenceType = ();
 //            }
@@ -3756,59 +3629,9 @@ pub mod memory {
             }
         }
 
-        // Maintainer: Add struct references in here as you add new structs above.  Also adapt the is_entry_compatible impl.
-        pub enum PlatformTuningElementRef<'a> {
-            Terminator(&'a Terminator),
-        }
-        impl UnionAsBytes for PlatformTuningElementRef<'_> {
-            #[inline]
-            fn as_bytes(&self) -> &[u8] {
-                match self {
-                    Self::Terminator(item) => {
-                        item.as_bytes()
-                    },
-                }
-            }
-        }
-        impl EntryCompatible for PlatformTuningElementRef<'_> {
-            fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
-                Terminator::is_entry_compatible(entry_id, prefix)
-            }
-        }
 //        impl HeaderWithTail for PlatformTuningElementRef<'_> {
 //            type TailSequenceType = ();
 //        }
-        impl<'a> UnionFromBytes<'a> for PlatformTuningElementRef<'a> {
-            fn skip_step(prefix: &[u8]) -> Option<usize> {
-                if prefix.len() >= 2 {
-                    let type_lo = prefix[0];
-                    let type_hi = prefix[1];
-                    if type_lo == 0xef && type_hi == 0xfe { // no len available
-                        Some(2)
-                    } else if prefix.len() >= 3 {
-                        (prefix[2] as usize).checked_add(2)
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
-            }
-            #[inline]
-            fn from_bytes(world: &'a [u8]) -> Option<Self> {
-                if world.len() >= 2 {
-                    if size_of::<Terminator>() == Self::skip_step(world)? && world[0] as u16 == Terminator::default().type_.get() & 0xFF && world[1] as u16 == Terminator::default().type_.get() >> 8 {
-                        let mut buf = world.clone();
-                        Some(Self::Terminator(take_header_from_collection::<Terminator>(&mut buf)?))
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
-            }
-        }
-
     }
 
     #[cfg(test)]
