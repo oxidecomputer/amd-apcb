@@ -738,4 +738,53 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn insert_platform_specific_overrides() -> Result<(), Error> {
+        use crate::memory::platform_specific_override::{SocketIds, ChannelIds, DimmSlots, PlatformSpecificOverrideElementRef, LvDimmForce1V5, DimmSlotsSelection, SolderedDownSodimm};
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
+        apcb.insert_group(GroupId::Psp, *b"PSPG")?;
+        apcb.insert_group(GroupId::Memory, *b"MEMG")?;
+        apcb.insert_entry(EntryId::Psp(PspEntryId::BoardIdGettingMethod), 0, 0xFFFF, ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
+        apcb.insert_struct_sequence_as_entry(EntryId::Memory(MemoryEntryId::PlatformSpecificOverride), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &[
+            PlatformSpecificOverrideElementRef::LvDimmForce1V5(&LvDimmForce1V5::new(SocketIds::ALL, ChannelIds::Any, DimmSlots::Any)),
+            PlatformSpecificOverrideElementRef::SolderedDownSodimm(&SolderedDownSodimm::new(SocketIds::ALL, ChannelIds::Any, DimmSlots::Specific(DimmSlotsSelection::new().with_dimm_slot_2(true)))),
+        ])?;
+
+        let mut apcb = Apcb::load(&mut buffer[0..]).unwrap();
+        let mut groups = apcb.groups_mut();
+
+        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        assert!(group.id() == GroupId::Psp);
+        assert!(group.signature() ==*b"PSPG");
+
+        let mut entries = group.entries();
+
+        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        assert!(entry.id() == EntryId::Psp(PspEntryId::BoardIdGettingMethod));
+        assert!(entry.instance_id() == 0);
+        assert!(entry.board_instance_mask() == 0xFFFF);
+
+        assert!(matches!(entries.next(), None));
+
+        let mut group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        assert!(group.id() == GroupId::Memory);
+        assert!(group.signature() ==*b"MEMG");
+
+        let mut entries = group.entries_mut();
+
+        let mut entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        assert!(entry.id() == EntryId::Memory(MemoryEntryId::PlatformSpecificOverride));
+        assert!(entry.instance_id() == 0);
+        assert!(entry.board_instance_mask() == 0xFFFF);
+
+        //FIXME let platform_specific_overrides = entry.body_as_struct_sequence_mut::<PlatformSpecificOverrideElementRef>().unwrap();
+        //for platform_specific_overrides.iter_mut() FIXME
+
+        assert!(matches!(entries.next(), None));
+
+        assert!(matches!(groups.next(), None));
+        Ok(())
+    }
+
 }
