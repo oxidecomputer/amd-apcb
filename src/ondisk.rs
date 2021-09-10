@@ -1041,7 +1041,7 @@ pub mod df {
     use crate::types::Result;
 
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
-    pub enum SlinkRegionDescriptionInterleavingSize {
+    pub enum SlinkRegionInterleavingSize {
         B256 = 0,
         B512 = 1,
         B1024 = 2,
@@ -1052,32 +1052,32 @@ pub mod df {
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
-        pub struct SlinkRegionDescription {
+        pub struct SlinkRegion {
             size: U64<LittleEndian> : pub get u64 : pub set u64,
             alignment: u8 : pub get u8 : pub set u8,
             socket: u8 : pub get u8 : pub set u8, // 0|1
             phys_nbio_map: u8 : pub get u8 : pub set u8, // bitmap
-            interleaving: u8 : pub get Result<SlinkRegionDescriptionInterleavingSize> : pub set SlinkRegionDescriptionInterleavingSize,
+            interleaving: u8 : pub get Result<SlinkRegionInterleavingSize> : pub set SlinkRegionInterleavingSize,
             _reserved: [u8; 4],
         }
     }
 
-    impl Default for SlinkRegionDescription {
+    impl Default for SlinkRegion {
         fn default() -> Self {
             Self {
                 size: 0.into(),
                 alignment: 0,
                 socket: 0,
                 phys_nbio_map: 0,
-                interleaving: SlinkRegionDescriptionInterleavingSize::B256 as u8,
+                interleaving: SlinkRegionInterleavingSize::B256 as u8,
                 _reserved: [0; 4],
             }
         }
     }
 
-    impl SlinkRegionDescription {
+    impl SlinkRegion {
         // Not sure why AMD still uses those--but it does use them, so whatever.
-        pub fn dummy(socket: u8) -> SlinkRegionDescription {
+        pub fn dummy(socket: u8) -> SlinkRegion {
             let mut result = Self::default();
             result.socket = socket;
             result
@@ -1088,7 +1088,7 @@ pub mod df {
     #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
     #[repr(C, packed)]
     pub struct SlinkConfig {
-        pub regions: [SlinkRegionDescription; 4],
+        pub regions: [SlinkRegion; 4],
     }
 
     impl EntryCompatible for SlinkConfig {
@@ -1105,7 +1105,7 @@ pub mod df {
     }
 
     impl SlinkConfig {
-        pub fn new(regions: [SlinkRegionDescription; 4]) -> Self {
+        pub fn new(regions: [SlinkRegion; 4]) -> Self {
             Self {
                 regions,
             }
@@ -1120,16 +1120,16 @@ pub mod df {
         #[test]
         fn test_df_structs() {
             const_assert!(size_of::<SlinkConfig>() == 16 * 4);
-            const_assert!(size_of::<SlinkRegionDescription>() == 16);
-            assert!(offset_of!(SlinkRegionDescription, alignment) == 8);
-            assert!(offset_of!(SlinkRegionDescription, socket) == 9);
-            assert!(offset_of!(SlinkRegionDescription, phys_nbio_map) == 10);
-            assert!(offset_of!(SlinkRegionDescription, interleaving) == 11);
+            const_assert!(size_of::<SlinkRegion>() == 16);
+            assert!(offset_of!(SlinkRegion, alignment) == 8);
+            assert!(offset_of!(SlinkRegion, socket) == 9);
+            assert!(offset_of!(SlinkRegion, phys_nbio_map) == 10);
+            assert!(offset_of!(SlinkRegion, interleaving) == 11);
         }
 
         #[test]
         fn test_df_struct_accessors() {
-            let slink_config = SlinkConfig::new([SlinkRegionDescription::dummy(0), SlinkRegionDescription::dummy(0), SlinkRegionDescription::dummy(1), SlinkRegionDescription::dummy(1)]);
+            let slink_config = SlinkConfig::new([SlinkRegion::dummy(0), SlinkRegion::dummy(0), SlinkRegion::dummy(1), SlinkRegion::dummy(1)]);
             assert!(slink_config.regions[0].socket == 0);
             assert!(slink_config.regions[1].socket == 0);
             assert!(slink_config.regions[2].socket == 1);
