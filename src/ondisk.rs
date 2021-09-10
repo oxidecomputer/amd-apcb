@@ -2572,7 +2572,7 @@ pub mod memory {
     }
 
 
-    pub mod platform_specific_override {
+    pub mod platform_specific_override { crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!{ {}{}
         // See AMD #44065
 
         use byteorder::LittleEndian;
@@ -3476,9 +3476,9 @@ pub mod memory {
         }
 
         // TODO: conditional overrides, actions.
-    }
+    }}
 
-    pub mod platform_tuning {
+    pub mod platform_tuning { crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!{ {}{}
         use byteorder::LittleEndian;
         use core::mem::size_of;
         use static_assertions::const_assert;
@@ -3553,6 +3553,7 @@ pub mod memory {
             type_: U16<LittleEndian>,
         }
         impl_EntryCompatible!(Terminator, 0xfeef, 2);
+
         impl Default for Terminator {
             fn default() -> Self {
                 Self {
@@ -3564,7 +3565,7 @@ pub mod memory {
 //        impl HeaderWithTail for PlatformTuningElementRef<'_> {
 //            type TailArrayItemType = ();
 //        }
-    }
+    }}
 
     #[cfg(test)]
     mod tests {

@@ -14,6 +14,7 @@ mod group;
 mod ondisk;
 mod tests;
 mod struct_accessors;
+mod struct_variants_enum;
 mod token_accessors;
 pub use apcb::Apcb;
 pub use types::Result;
