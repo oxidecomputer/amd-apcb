@@ -2277,161 +2277,160 @@ pub mod memory {
     }
 
     macro_rules! define_ErrorOutControl {($struct_name:ident, $padding_before_gpio:expr, $padding_after_gpio: expr) => (
-
-    make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-        #[repr(C, packed)]
-        pub struct $struct_name {
-            enable_error_reporting: BU8 : pub get Result<bool> : pub set bool,
-            enable_error_reporting_gpio: BU8,
-            enable_error_reporting_beep_codes: BU8 : pub get Result<bool> : pub set bool,
-            enable_using_handshake: BU8 : pub get Result<bool> : pub set bool, // otherwise see output_delay
-            input_port: U32<LittleEndian> : pub get u32 : pub set u32, // for handshake
-            output_delay: U32<LittleEndian> : pub get u32 : pub set u32, // if no handshake; in units of 10 ns.
-            output_port: U32<LittleEndian> : pub get u32 : pub set u32,
-            stop_on_first_fatal_error: BU8: pub get Result<bool> : pub set bool,
-            _reserved: [u8; 3],
-            input_port_size: U32<LittleEndian> : pub get Result<PortSize> : pub set PortSize,
-            output_port_size: U32<LittleEndian> : pub get Result<PortSize> : pub set PortSize,
-            input_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // PortType; default: 6
-            output_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // PortType; default: 6
-            clear_acknowledgement: BU8 : pub get Result<bool> : pub set bool,
-            _reserved_before_gpio: [u8; $padding_before_gpio],
-            error_reporting_gpio: Gpio,
-            _reserved_after_gpio: [u8; $padding_after_gpio],
-            pub beep_code_table: [ErrorOutControlBeepCode; 8], // FIXME: Make accessible
-            enable_heart_beat: BU8 : pub get Result<bool> : pub set bool,
-            enable_power_good_gpio: BU8,
-            power_good_gpio: Gpio,
-            _reserved_end: [u8; 3], // pad
-        }
-    }
-
-    impl $struct_name {
-        pub fn error_reporting_gpio(&self) -> Result<Option<Gpio>> {
-            match self.enable_error_reporting_gpio {
-                BU8(1) => Ok(Some(self.error_reporting_gpio)),
-                BU8(0) => Ok(None),
-                _ => Err(Error::EntryTypeMismatch),
+        make_accessors! {
+            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+            #[repr(C, packed)]
+            pub struct $struct_name {
+                enable_error_reporting: BU8 : pub get Result<bool> : pub set bool,
+                enable_error_reporting_gpio: BU8,
+                enable_error_reporting_beep_codes: BU8 : pub get Result<bool> : pub set bool,
+                enable_using_handshake: BU8 : pub get Result<bool> : pub set bool, // otherwise see output_delay
+                input_port: U32<LittleEndian> : pub get u32 : pub set u32, // for handshake
+                output_delay: U32<LittleEndian> : pub get u32 : pub set u32, // if no handshake; in units of 10 ns.
+                output_port: U32<LittleEndian> : pub get u32 : pub set u32,
+                stop_on_first_fatal_error: BU8: pub get Result<bool> : pub set bool,
+                _reserved: [u8; 3],
+                input_port_size: U32<LittleEndian> : pub get Result<PortSize> : pub set PortSize,
+                output_port_size: U32<LittleEndian> : pub get Result<PortSize> : pub set PortSize,
+                input_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // PortType; default: 6
+                output_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // PortType; default: 6
+                clear_acknowledgement: BU8 : pub get Result<bool> : pub set bool,
+                _reserved_before_gpio: [u8; $padding_before_gpio],
+                error_reporting_gpio: Gpio,
+                _reserved_after_gpio: [u8; $padding_after_gpio],
+                pub beep_code_table: [ErrorOutControlBeepCode; 8], // FIXME: Make accessible
+                enable_heart_beat: BU8 : pub get Result<bool> : pub set bool,
+                enable_power_good_gpio: BU8,
+                power_good_gpio: Gpio,
+                _reserved_end: [u8; 3], // pad
             }
         }
-        pub fn set_error_reporting_gpio(&mut self, value: Option<Gpio>) {
-            match value {
-                Some(value) => {
-                    self.enable_error_reporting_gpio = BU8(1);
-                    self.error_reporting_gpio = value;
-                },
-                None => {
-                    self.enable_error_reporting_gpio = BU8(0);
-                    self.error_reporting_gpio = Gpio::new(0, 0, 0);
-                },
-            }
-        }
-        pub fn power_good_gpio(&self) -> Result<Option<Gpio>> {
-            match self.enable_power_good_gpio {
-                BU8(1) => Ok(Some(self.power_good_gpio)),
-                BU8(0) => Ok(None),
-                _ => Err(Error::EntryTypeMismatch),
-            }
-        }
-        pub fn set_power_good_gpio(&mut self, value: Option<Gpio>) {
-            match value {
-                Some(value) => {
-                    self.enable_power_good_gpio = BU8(1);
-                    self.power_good_gpio = value;
-                },
-                None => {
-                    self.enable_power_good_gpio = BU8(0);
-                    self.power_good_gpio = Gpio::new(0, 0, 0);
-                },
-            }
-        }
-    }
 
-    impl EntryCompatible for $struct_name {
-        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
-            match entry_id {
-                EntryId::Memory(MemoryEntryId::ErrorOutControl) => true,
-                _ => false,
+        impl $struct_name {
+            pub fn error_reporting_gpio(&self) -> Result<Option<Gpio>> {
+                match self.enable_error_reporting_gpio {
+                    BU8(1) => Ok(Some(self.error_reporting_gpio)),
+                    BU8(0) => Ok(None),
+                    _ => Err(Error::EntryTypeMismatch),
+                }
+            }
+            pub fn set_error_reporting_gpio(&mut self, value: Option<Gpio>) {
+                match value {
+                    Some(value) => {
+                        self.enable_error_reporting_gpio = BU8(1);
+                        self.error_reporting_gpio = value;
+                    },
+                    None => {
+                        self.enable_error_reporting_gpio = BU8(0);
+                        self.error_reporting_gpio = Gpio::new(0, 0, 0);
+                    },
+                }
+            }
+            pub fn power_good_gpio(&self) -> Result<Option<Gpio>> {
+                match self.enable_power_good_gpio {
+                    BU8(1) => Ok(Some(self.power_good_gpio)),
+                    BU8(0) => Ok(None),
+                    _ => Err(Error::EntryTypeMismatch),
+                }
+            }
+            pub fn set_power_good_gpio(&mut self, value: Option<Gpio>) {
+                match value {
+                    Some(value) => {
+                        self.enable_power_good_gpio = BU8(1);
+                        self.power_good_gpio = value;
+                    },
+                    None => {
+                        self.enable_power_good_gpio = BU8(0);
+                        self.power_good_gpio = Gpio::new(0, 0, 0);
+                    },
+                }
             }
         }
-    }
 
-    impl HeaderWithTail for $struct_name {
-        type TailSequenceType = ();
-    }
-
-    impl Default for $struct_name {
-        fn default() -> Self {
-            Self {
-                enable_error_reporting: BU8(0),
-                enable_error_reporting_gpio: BU8(0),
-                enable_error_reporting_beep_codes: BU8(0),
-                enable_using_handshake: BU8(0),
-                input_port: 0.into(),
-                output_delay: 15000.into(),
-                output_port: 0x80.into(),
-                stop_on_first_fatal_error: BU8(1), // !
-                _reserved: [0; 3],
-                input_port_size: 1.into(),
-                output_port_size: 4.into(),
-                input_port_type: (PortType::FchHtIo as u32).into(),
-                output_port_type: (PortType::FchHtIo as u32).into(),
-                clear_acknowledgement: BU8(1),
-                _reserved_before_gpio: [0; $padding_before_gpio],
-                error_reporting_gpio: Gpio::new(0, 0, 0), // probably invalid
-                _reserved_after_gpio: [0; $padding_after_gpio],
-                beep_code_table: [
-                    ErrorOutControlBeepCode {
-                        error_type: U16::<LittleEndian>::new(0x3fff),
-                        peak_map: 1.into(),
-                        peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(8).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
-                    },
-                    ErrorOutControlBeepCode {
-                        error_type: 0x4fff.into(),
-                        peak_map: 2.into(),
-                        peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
-                    },
-                    ErrorOutControlBeepCode {
-                        error_type: 0x5fff.into(),
-                        peak_map: 3.into(),
-                        peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
-                    },
-                    ErrorOutControlBeepCode {
-                        error_type: 0x6fff.into(),
-                        peak_map: 4.into(),
-                        peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
-                    },
-                    ErrorOutControlBeepCode {
-                        error_type: 0x7fff.into(),
-                        peak_map: 5.into(),
-                        peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
-                    },
-                    ErrorOutControlBeepCode {
-                        error_type: 0x8fff.into(),
-                        peak_map: 6.into(),
-                        peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
-                    },
-                    ErrorOutControlBeepCode {
-                        error_type: 0x9fff.into(),
-                        peak_map: 7.into(),
-                        peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
-                    },
-                    ErrorOutControlBeepCode {
-                        error_type: 0xffff.into(),
-                        peak_map: 2.into(),
-                        peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(4).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
-                    },
-                ],
-                enable_heart_beat: BU8(1),
-                enable_power_good_gpio: BU8(0),
-                power_good_gpio: Gpio::new(0, 0, 0), // probably invalid
-                _reserved_end: [0; 3],
+        impl EntryCompatible for $struct_name {
+            fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+                match entry_id {
+                    EntryId::Memory(MemoryEntryId::ErrorOutControl) => true,
+                    _ => false,
+                }
             }
         }
-    }
 
-)}
+        impl HeaderWithTail for $struct_name {
+            type TailSequenceType = ();
+        }
+
+        impl Default for $struct_name {
+            fn default() -> Self {
+                Self {
+                    enable_error_reporting: BU8(0),
+                    enable_error_reporting_gpio: BU8(0),
+                    enable_error_reporting_beep_codes: BU8(0),
+                    enable_using_handshake: BU8(0),
+                    input_port: 0.into(),
+                    output_delay: 15000.into(),
+                    output_port: 0x80.into(),
+                    stop_on_first_fatal_error: BU8(1), // !
+                    _reserved: [0; 3],
+                    input_port_size: 1.into(),
+                    output_port_size: 4.into(),
+                    input_port_type: (PortType::FchHtIo as u32).into(),
+                    output_port_type: (PortType::FchHtIo as u32).into(),
+                    clear_acknowledgement: BU8(1),
+                    _reserved_before_gpio: [0; $padding_before_gpio],
+                    error_reporting_gpio: Gpio::new(0, 0, 0), // probably invalid
+                    _reserved_after_gpio: [0; $padding_after_gpio],
+                    beep_code_table: [
+                        ErrorOutControlBeepCode {
+                            error_type: U16::<LittleEndian>::new(0x3fff),
+                            peak_map: 1.into(),
+                            peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(8).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
+                        },
+                        ErrorOutControlBeepCode {
+                            error_type: 0x4fff.into(),
+                            peak_map: 2.into(),
+                            peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
+                        },
+                        ErrorOutControlBeepCode {
+                            error_type: 0x5fff.into(),
+                            peak_map: 3.into(),
+                            peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
+                        },
+                        ErrorOutControlBeepCode {
+                            error_type: 0x6fff.into(),
+                            peak_map: 4.into(),
+                            peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
+                        },
+                        ErrorOutControlBeepCode {
+                            error_type: 0x7fff.into(),
+                            peak_map: 5.into(),
+                            peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
+                        },
+                        ErrorOutControlBeepCode {
+                            error_type: 0x8fff.into(),
+                            peak_map: 6.into(),
+                            peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
+                        },
+                        ErrorOutControlBeepCode {
+                            error_type: 0x9fff.into(),
+                            peak_map: 7.into(),
+                            peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(20).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
+                        },
+                        ErrorOutControlBeepCode {
+                            error_type: 0xffff.into(),
+                            peak_map: 2.into(),
+                            peak_attr: ErrorOutControlBeepCodePeakAttr::new().with_peak_count(4).with_pulse_width(0).with_repeat_count(0).to_u32().unwrap().into(),
+                        },
+                    ],
+                    enable_heart_beat: BU8(1),
+                    enable_power_good_gpio: BU8(0),
+                    power_good_gpio: Gpio::new(0, 0, 0), // probably invalid
+                    _reserved_end: [0; 3],
+                }
+            }
+        }
+
+    )}
 
     define_ErrorOutControl!(ErrorOutControl116, 3, 1); // Milan
     define_ErrorOutControl!(ErrorOutControl112, 0, 0);
