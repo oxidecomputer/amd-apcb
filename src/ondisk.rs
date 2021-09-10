@@ -1489,14 +1489,14 @@ pub mod memory {
             result.set_input_port_type(input_port_type);
             result.set_input_port(input_port);
             result.set_input_port_size(input_port_size);
-            result.set_output_port_type(input_port_type);
-            result.set_output_port(input_port);
-            result.set_output_port_size(input_port_size);
+            result.set_output_port_type(output_port_type);
+            result.set_output_port(output_port);
+            result.set_output_port_size(output_port_size);
             result.set_clear_acknowledgement(clear_acknowledgement);
             result
         }
         pub fn new_disabled() -> Self {
-            let mut result = Self::default();
+            let result = Self::default();
             result
         }
     }
