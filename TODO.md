@@ -1,12 +1,10 @@
 # Features
 
+* gear_down_mode, slow_mode
 * "Assumption" -> assert ?
 * s|default|normal| in PriorityLevels and PriorityLevel
-* AMD# 55483 6.3 AGESA Boot Loader Debug
 * Sanity-check "new" fns that exist
 * Add "new" fn for the others, too?
-* AMD# 55483 4.1.7 ABL Error Reporting Configuration Items
-* AMD# 55483 PTO 4.1.5.6 UMC Category
 * body_as_struct_sequence; body_as_struct_array: Where is the check whether it is EntryCompatible ?
 * Convert board_instance_mask to bitfield?!
 * Make "weird" struct array iterator (sequence of different types iterator)
@@ -29,6 +27,7 @@
 * struct field out-of-range
 * bitfield in-range
 * struct field in-range
+* checksum tests
 
 # (Future) Compatibility
 
