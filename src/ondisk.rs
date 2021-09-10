@@ -1344,6 +1344,12 @@ pub mod memory {
         }
     }
 
+    impl AblConsoleOutControl {
+        pub fn new() -> Self {
+            Self::default()
+        }
+    }
+
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
@@ -1432,7 +1438,7 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct ExtVoltageControl {
-            enable: BU8 : pub get Result<bool> : pub set bool,
+            enabled: BU8 : pub get Result<bool> : pub set bool,
             _reserved: [u8; 3],
             input_port: U32<LittleEndian> : pub get u32 : pub set u32,
             output_port: U32<LittleEndian> : pub get u32 : pub set u32,
@@ -1461,7 +1467,7 @@ pub mod memory {
     impl Default for ExtVoltageControl {
         fn default() -> Self {
             Self {
-                enable: BU8(0),
+                enabled: BU8(0),
                 _reserved: [0; 3],
                 input_port: 0x84u32.into(),
                 output_port: 0x80u32.into(),
@@ -1472,6 +1478,26 @@ pub mod memory {
                 clear_acknowledgement: BU8(0),
                 _reserved_2: [0; 3],
             }
+        }
+    }
+
+    impl ExtVoltageControl {
+        /// "input", "output": From the point of view of the PSP.
+        pub fn new_enabled(input_port_type: PortType, input_port: u32, input_port_size: PortSize, output_port_type: PortType, output_port: u32, output_port_size: PortSize, clear_acknowledgement: bool) -> Self {
+            let mut result = Self::default();
+            result.set_enabled(true);
+            result.set_input_port_type(input_port_type);
+            result.set_input_port(input_port);
+            result.set_input_port_size(input_port_size);
+            result.set_output_port_type(input_port_type);
+            result.set_output_port(input_port);
+            result.set_output_port_size(input_port_size);
+            result.set_clear_acknowledgement(clear_acknowledgement);
+            result
+        }
+        pub fn new_disabled() -> Self {
+            let mut result = Self::default();
+            result
         }
     }
 
