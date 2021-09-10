@@ -1592,19 +1592,19 @@ pub mod memory {
     #[bitfield(bits = 32)]
     #[repr(u32)]
     #[derive(Clone, Copy)]
-    pub struct DimmsPerChannelDimms {
+    pub struct DimmsPerChannelSelector {
         pub one_dimm: bool,
         pub two_dimms: bool,
         pub three_dimms: bool,
         pub four_dimms: bool,
         #[skip] __: B28,
     }
-    impl_bitfield_primitive_conversion!(DimmsPerChannelDimms, 0b1111, u32);
+    impl_bitfield_primitive_conversion!(DimmsPerChannelSelector, 0b1111, u32);
 
     pub enum DimmsPerChannel {
         NoSlot, // 0xf0
         DontCare, // 0xff
-        Specific(DimmsPerChannelDimms)
+        Specific(DimmsPerChannelSelector)
     }
     impl FromPrimitive for DimmsPerChannel {
         #[inline]
@@ -1618,7 +1618,7 @@ pub mod memory {
                 } else if raw_value == 0xf0 {
                     Some(Self::NoSlot)
                 } else {
-                    Some(Self::Specific(DimmsPerChannelDimms::from_u32(raw_value)?))
+                    Some(Self::Specific(DimmsPerChannelSelector::from_u32(raw_value)?))
                 }
             }
         }
