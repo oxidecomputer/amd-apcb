@@ -103,6 +103,43 @@ pub struct EntryMutItem<'a> {
     pub body: EntryItemBody<&'a mut [u8]>,
 }
 
+pub struct StructSequenceEntryMutItem<'a> {
+    buf: &'a mut [u8],
+    entry_id: EntryId,
+}
+
+impl<'a> StructSequenceEntryMutItem<'a> {
+    pub fn iter_mut(self: &'a mut Self) -> StructSequenceEntryMutIter<'a> {
+        StructSequenceEntryMutIter {
+            buf: self.buf,
+            entry_id: self.entry_id,
+        }
+    }
+}
+
+pub struct StructSequenceEntryMutIter<'a> {
+    buf: &'a mut [u8],
+    entry_id: EntryId,
+}
+
+impl<'a> StructSequenceEntryMutIter<'a> {
+    // Note: We could limit that to SequenceElementFromBytes--but right now, why would we?
+    pub fn next<T: AsBytes + FromBytes + EntryCompatible>(self: &'a mut Self) -> Result<&'a mut T> {
+        if self.buf.is_empty() {
+            Err(Error::EndOfEntry)
+        } else if !T::is_entry_compatible(self.entry_id, self.buf) {
+            Err(Error::EntryTypeMismatch)
+        } else {
+            let skip_count = size_of::<T>();
+            // Advance
+            let (mut a, b) = self.buf.split_at_mut(skip_count);
+            let result = take_header_from_collection_mut::<T>(&mut a).ok_or_else(|| Error::EntryTypeMismatch)?;
+            self.buf = b;
+            Ok(result)
+        }
+    }
+}
+
 pub struct StructArrayEntryMutItem<'a, T: Sized + FromBytes + AsBytes> {
     buf: &'a mut [u8],
     _item: PhantomData<&'a T>,
@@ -259,6 +296,22 @@ impl<'a> EntryMutItem<'a> {
                 } else {
                     None
                 }
+            },
+            _ => {
+                None
+            },
+        }
+    }
+
+    /// This allows the user to iterate over a sequence of different-size structs in the same Entry.
+    pub fn body_as_struct_sequence_mut(self: &'a mut Self) -> Option<StructSequenceEntryMutItem<'a>> {
+        let id = self.id();
+        match &mut self.body {
+            EntryItemBody::Struct(buf) => {
+                Some(StructSequenceEntryMutItem {
+                     buf,
+                     entry_id: id,
+                })
             },
             _ => {
                 None

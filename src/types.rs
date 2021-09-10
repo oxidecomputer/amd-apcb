@@ -21,6 +21,7 @@ pub enum Error {
     TokenNotFound,
     TokenUniqueKeyViolation,
     TokenRange,
+    EndOfEntry,
 }
 
 pub type Result<Q> = core::result::Result<Q, Error>;
