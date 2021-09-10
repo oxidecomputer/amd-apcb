@@ -14,6 +14,7 @@ pub enum Error {
     OutOfSpace,
     GroupNotFound,
     GroupUniqueKeyViolation,
+    GroupTypeMismatch,
     EntryNotFound,
     EntryUniqueKeyViolation,
     EntryTypeMismatch,

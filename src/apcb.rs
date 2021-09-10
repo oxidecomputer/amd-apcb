@@ -423,6 +423,21 @@ impl<'a> Apcb<'a> {
     pub fn insert_group(&mut self, group_id: GroupId, signature: [u8; 4]) -> Result<GroupMutItem<'_>> {
         // TODO: insert sorted.
 
+        if !match group_id {
+            GroupId::Psp => signature == *b"PSPG",
+            GroupId::Ccx => signature == *b"CCXG",
+            GroupId::Df => signature == *b"DFG ",
+            GroupId::Memory => signature == *b"MEMG",
+            GroupId::Gnb => signature == *b"GNBG",
+            GroupId::Fch => signature == *b"FCHG",
+            GroupId::Cbs => signature == *b"CBSG",
+            GroupId::Oem => signature == *b"OEMG",
+            GroupId::Token => signature == *b"TOKN",
+            GroupId::Unknown(_) => true,
+        } {
+            return Err(Error::GroupTypeMismatch);
+        }
+
         let mut groups = self.groups_mut();
         match groups.move_point_to(group_id) {
             Err(Error::GroupNotFound) => {
