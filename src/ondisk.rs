@@ -21,7 +21,7 @@ use crate::types::PriorityLevel;
 
 /// Work around Rust issue# 51443, in case it ever will be phased out.
 /// (zerocopy 0.5.0 has a as_bytes_mut with a Self-where--which is not supposed to be used anymore)
-pub trait AsBytes51443 {
+pub trait SequenceElementAsBytes {
     /// Checks whether we are compatible with ENTRY_ID.  If so, return our zerocopy.as_bytes representation.  Otherwise, return None.
     fn checked_as_bytes(&self, entry_id: EntryId) -> Option<&[u8]>;
 }
@@ -2743,7 +2743,7 @@ pub mod memory {
                 }
             }
 
-            impl AsBytes51443 for $struct_ {
+            impl SequenceElementAsBytes for $struct_ {
                 fn checked_as_bytes(&self, entry_id: EntryId) -> Option<&[u8]> {
                     let blob = AsBytes::as_bytes(self);
                     if <$struct_>::is_entry_compatible(entry_id, blob) {
@@ -3531,7 +3531,7 @@ pub mod memory {
                 }
             }
 
-            impl AsBytes51443 for $struct_ {
+            impl SequenceElementAsBytes for $struct_ {
                 fn checked_as_bytes(&self, entry_id: EntryId) -> Option<&[u8]> {
                     let blob = AsBytes::as_bytes(self);
                     if <$struct_>::is_entry_compatible(entry_id, blob) {

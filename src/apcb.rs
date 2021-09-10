@@ -8,7 +8,7 @@ use crate::ondisk::V2_HEADER;
 use crate::ondisk::V3_HEADER_EXT;
 use crate::ondisk::ENTRY_ALIGNMENT;
 pub use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, EntryCompatible};
-use crate::ondisk::{take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut, HeaderWithTail, AsBytes51443};
+use crate::ondisk::{take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut, HeaderWithTail, SequenceElementAsBytes};
 use crate::entry::EntryItemBody;
 use core::convert::TryInto;
 use core::default::Default;
@@ -330,7 +330,7 @@ impl<'a> Apcb<'a> {
 
     /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.  Usually that's for platform_specific_override or platform_tuning structs.
     /// Note: Currently, INSTANCE_ID is always supposed to be 0.
-    pub fn insert_struct_sequence_as_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &[&dyn AsBytes51443]) -> Result<()> {
+    pub fn insert_struct_sequence_as_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &[&dyn SequenceElementAsBytes]) -> Result<()> {
         let mut payload_size: usize = 0;
         for item in payload {
             let blob = item.checked_as_bytes(entry_id).ok_or_else(|| Error::EntryTypeMismatch)?;
