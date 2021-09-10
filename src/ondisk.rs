@@ -2284,6 +2284,7 @@ pub mod memory {
                 enable_error_reporting: BU8 : pub get Result<bool> : pub set bool,
                 enable_error_reporting_gpio: BU8,
                 enable_error_reporting_beep_codes: BU8 : pub get Result<bool> : pub set bool,
+                /// Note: Receiver of the error log: Send 0xDEAD5555 to the INPUT_PORT to acknowledge.
                 enable_using_handshake: BU8 : pub get Result<bool> : pub set bool, // otherwise see output_delay
                 input_port: U32<LittleEndian> : pub get u32 : pub set u32, // for handshake
                 output_delay: U32<LittleEndian> : pub get u32 : pub set u32, // if no handshake; in units of 10 ns.
