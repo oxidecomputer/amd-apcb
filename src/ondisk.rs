@@ -32,7 +32,7 @@ pub trait UnionFromBytes<'a>: Sized {
 /// There are (very few) Struct Entries like this: Header S0 S1 S2 S3.
 /// This trait is implemented by structs that are used as a header of a sequence.  Then, the header structs specify (in their impl) what the (struct or enum) type of the sequence will be.
 pub trait HeaderWithTail {
-    type TailSequenceType: AsBytes + FromBytes;
+    type TailArrayItemType: AsBytes + FromBytes;
 }
 
 /// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
@@ -1105,7 +1105,7 @@ pub mod df {
     }
 
     impl HeaderWithTail for SlinkConfig {
-        type TailSequenceType = ();
+        type TailArrayItemType = ();
     }
 
     impl SlinkConfig {
@@ -1409,7 +1409,7 @@ pub mod memory {
     }
 
     impl HeaderWithTail for ConsoleOutControl {
-        type TailSequenceType = ();
+        type TailArrayItemType = ();
     }
 
     impl ConsoleOutControl {
@@ -1465,7 +1465,7 @@ pub mod memory {
     }
 
     impl HeaderWithTail for ExtVoltageControl {
-        type TailSequenceType = ();
+        type TailArrayItemType = ();
     }
 
     impl Default for ExtVoltageControl {
@@ -2362,7 +2362,7 @@ pub mod memory {
         }
 
         impl HeaderWithTail for $struct_name {
-            type TailSequenceType = ();
+            type TailArrayItemType = ();
         }
 
         impl Default for $struct_name {
@@ -2834,7 +2834,7 @@ pub mod memory {
             }
 
 //            impl HeaderWithTail for $struct_ {
-//                type TailSequenceType = ();
+//                type TailArrayItemType = ();
 //            }
         )}
 
@@ -3611,7 +3611,7 @@ pub mod memory {
             }
 
 //            impl HeaderWithTail for $struct_ {
-//                type TailSequenceType = ();
+//                type TailArrayItemType = ();
 //            }
         )}
 
@@ -3630,7 +3630,7 @@ pub mod memory {
         }
 
 //        impl HeaderWithTail for PlatformTuningElementRef<'_> {
-//            type TailSequenceType = ();
+//            type TailArrayItemType = ();
 //        }
     }
 
@@ -3834,7 +3834,7 @@ pub mod psp {
         }
     }
     impl HeaderWithTail for BoardIdGettingMethodCustom {
-        type TailSequenceType = IdApcbMapping;
+        type TailArrayItemType = IdApcbMapping;
     }
 
     make_accessors! {
@@ -3882,7 +3882,7 @@ pub mod psp {
         }
     }
     impl HeaderWithTail for BoardIdGettingMethodGpio {
-        type TailSequenceType = IdApcbMapping;
+        type TailArrayItemType = IdApcbMapping;
     }
 
     make_accessors! {
@@ -3935,7 +3935,7 @@ pub mod psp {
     }
 
     impl HeaderWithTail for BoardIdGettingMethodEeprom {
-        type TailSequenceType = IdRevApcbMapping;
+        type TailArrayItemType = IdRevApcbMapping;
     }
 
     make_accessors! {
@@ -3994,7 +3994,7 @@ pub mod psp {
     }
 
     impl HeaderWithTail for BoardIdGettingMethodSmbus {
-        type TailSequenceType = IdApcbMapping;
+        type TailArrayItemType = IdApcbMapping;
     }
 
     #[cfg(test)]

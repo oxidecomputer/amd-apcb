@@ -376,10 +376,10 @@ impl<'a> Apcb<'a> {
 
     /// Inserts a new entry (see insert_entry), puts HEADER and then TAIL into it.  TAIL is allowed to be &[], and often has to be.
     /// Note: Currently, INSTANCE_ID is always supposed to be 0.
-    pub fn insert_struct_entry<H: EntryCompatible + AsBytes + HeaderWithTail>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, header: &H, tail: &[H::TailSequenceType]) -> Result<()> {
+    pub fn insert_struct_entry<H: EntryCompatible + AsBytes + HeaderWithTail>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, header: &H, tail: &[H::TailArrayItemType]) -> Result<()> {
         let blob = header.as_bytes();
         if H::is_entry_compatible(entry_id, blob) {
-            let tail_size = size_of::<H>().checked_add(size_of::<H::TailSequenceType>().checked_mul(tail.len()).ok_or_else(|| Error::ArithmeticOverflow)?).ok_or_else(|| Error::ArithmeticOverflow)?;
+            let tail_size = size_of::<H>().checked_add(size_of::<H::TailArrayItemType>().checked_mul(tail.len()).ok_or_else(|| Error::ArithmeticOverflow)?).ok_or_else(|| Error::ArithmeticOverflow)?;
             self.internal_insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, tail_size, priority_mask, &mut |body: &mut [u8]| {
                 let mut body = body;
                 let (a, rest) = body.split_at_mut(blob.len());

@@ -221,7 +221,7 @@ impl<'a> EntryMutItem<'a> {
         }
     }
 
-    pub fn body_as_struct_mut<H: EntryCompatible + Sized + FromBytes + AsBytes + HeaderWithTail>(&mut self) -> Option<(&'_ mut H, StructArrayEntryMutItem<'_, H::TailSequenceType>)> {
+    pub fn body_as_struct_mut<H: EntryCompatible + Sized + FromBytes + AsBytes + HeaderWithTail>(&mut self) -> Option<(&'_ mut H, StructArrayEntryMutItem<'_, H::TailArrayItemType>)> {
         let id = self.id();
         match &mut self.body {
             EntryItemBody::Struct(buf) => {
@@ -343,7 +343,7 @@ impl<'a> EntryItem<'a> {
         Ok(())
     }
 
-    pub fn body_as_struct<H: EntryCompatible + Sized + FromBytes + HeaderWithTail>(&self) -> Option<(&'a H, StructArrayEntryItem<'a, H::TailSequenceType>)> {
+    pub fn body_as_struct<H: EntryCompatible + Sized + FromBytes + HeaderWithTail>(&self) -> Option<(&'a H, StructArrayEntryItem<'a, H::TailArrayItemType>)> {
         let id = self.id();
         match &self.body {
             EntryItemBody::Struct(buf) => {
