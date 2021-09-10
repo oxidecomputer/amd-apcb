@@ -20,6 +20,7 @@ use crate::entry::EntryItemBody;
 use crate::types::PriorityLevel;
 
 /// Work around Rust issue# 51443, in case it ever will be phased out.
+/// (zerocopy 0.5.0 has a as_bytes_mut with a Self-where--which is not supposed to be used anymore)
 pub trait AsBytes51443 {
     fn as_bytes(&self) -> &[u8];
 }
