@@ -19,16 +19,6 @@ use crate::token_accessors::{make_token_accessors, TokensMut, Tokens};
 use crate::entry::EntryItemBody;
 use crate::types::PriorityLevel;
 
-/// AsBytes that we CAN implement ourselves.  Used for platform_specific_override and platform_tuning, which both are a sequence of variable-length records.
-pub trait UnionAsBytes {
-    fn as_bytes(&self) -> &[u8];
-}
-
-pub trait UnionFromBytes<'a>: Sized {
-    fn skip_step(prefix: &[u8]) -> Option<usize>;
-    fn from_bytes(world: &'a [u8]) -> Option<Self>;
-}
-
 /// There are (very few) Struct Entries like this: Header S0 S1 S2 S3.
 /// This trait is implemented by structs that are used as a header of a sequence.  Then, the header structs specify (in their impl) what the (struct or enum) type of the sequence will be.
 pub trait HeaderWithTail {
@@ -1247,13 +1237,6 @@ pub mod memory {
         }
     }
 
-    // An union of one variant.
-    impl UnionAsBytes for DimmInfoSmbusElement {
-        #[inline]
-        fn as_bytes(&self) -> &[u8] {
-            AsBytes::as_bytes(self)
-        }
-    }
     impl DimmInfoSmbusElement {
         pub fn not_present() -> Self {
             Self {
@@ -1688,14 +1671,6 @@ pub mod memory {
         }
     }
 
-    // An union of one variant.
-    impl UnionAsBytes for RdimmDdr4CadBusElement {
-        #[inline]
-        fn as_bytes(&self) -> &[u8] {
-            AsBytes::as_bytes(self)
-        }
-    }
-
     impl Default for RdimmDdr4CadBusElement {
         fn default() -> Self {
             Self {
@@ -1768,14 +1743,6 @@ pub mod memory {
         }
     }
 
-    // An union of one variant.
-    impl UnionAsBytes for UdimmDdr4CadBusElement {
-        #[inline]
-        fn as_bytes(&self) -> &[u8] {
-            AsBytes::as_bytes(self)
-        }
-    }
-
     impl Default for UdimmDdr4CadBusElement {
         fn default() -> Self {
             Self {
@@ -1843,14 +1810,6 @@ pub mod memory {
             cs_odt_drive_strength: u8 : pub get Result<CadBusCsOdtDriveStrength> : pub set CadBusCsOdtDriveStrength,
             address_command_drive_strength: u8 : pub get Result<CadBusAddressCommandDriveStrength> : pub set CadBusAddressCommandDriveStrength,
             clk_drive_strength: u8 : pub get Result<CadBusClkDriveStrength> : pub set CadBusClkDriveStrength,
-        }
-    }
-
-    // An union of one variant.
-    impl UnionAsBytes for LrdimmDdr4CadBusElement {
-        #[inline]
-        fn as_bytes(&self) -> &[u8] {
-            AsBytes::as_bytes(self)
         }
     }
 
@@ -1933,14 +1892,6 @@ pub mod memory {
         }
     }
 
-    // An union of one variant.
-    impl UnionAsBytes for Ddr4DataBusElement {
-        #[inline]
-        fn as_bytes(&self) -> &[u8] {
-            AsBytes::as_bytes(self)
-        }
-    }
-
     pub type RdimmDdr4DataBusElement = Ddr4DataBusElement; // AMD does this implicitly.
     pub type UdimmDdr4DataBusElement = Ddr4DataBusElement; // AMD does this implicitly.
 
@@ -1998,14 +1949,6 @@ pub mod memory {
             pmu_phy_vref: U32<LittleEndian> : pub get u32 : pub set u32,
             // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
             vref_dq: U32<LittleEndian> : pub get u32 : pub set u32, // MR6 vref calibration value; 23|30|32
-        }
-    }
-
-    // An union of one variant.
-    impl UnionAsBytes for LrdimmDdr4DataBusElement {
-        #[inline]
-        fn as_bytes(&self) -> &[u8] {
-            AsBytes::as_bytes(self)
         }
     }
 
@@ -2165,14 +2108,6 @@ pub mod memory {
         }
     }
 
-    // An union of one variant.
-    impl UnionAsBytes for MaxFreqElement {
-        #[inline]
-        fn as_bytes(&self) -> &[u8] {
-            AsBytes::as_bytes(self)
-        }
-    }
-
     // Usually an array of those is used
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
@@ -2202,14 +2137,6 @@ pub mod memory {
                 EntryId::Memory(MemoryEntryId::PsLrdimmDdr4MaxFreq) => true,
                 _ => false,
             }
-        }
-    }
-
-    // An union of one variant.
-    impl UnionAsBytes for LrMaxFreqElement {
-        #[inline]
-        fn as_bytes(&self) -> &[u8] {
-            AsBytes::as_bytes(self)
         }
     }
 
@@ -2494,14 +2421,6 @@ pub mod memory {
         }
     }
 
-    // An union of one variant.
-    impl UnionAsBytes for Ddr4OdtPatElement {
-        #[inline]
-        fn as_bytes(&self) -> &[u8] {
-            AsBytes::as_bytes(self)
-        }
-    }
-
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
@@ -2552,14 +2471,6 @@ pub mod memory {
                 // definitely not EntryId::Memory(MemoryEntryId::PsRdimmDdr4OdtPat) => true,
                 _ => false,
             }
-        }
-    }
-
-    // An union of one variant.
-    impl UnionAsBytes for LrdimmDdr4OdtPatElement {
-        #[inline]
-        fn as_bytes(&self) -> &[u8] {
-            AsBytes::as_bytes(self)
         }
     }
 
@@ -2653,14 +2564,6 @@ pub mod memory {
         }
     }
 
-
-    // An union of one variant.
-    impl UnionAsBytes for DdrPostPackageRepairElement {
-        #[inline]
-        fn as_bytes(&self) -> &[u8] {
-            AsBytes::as_bytes(self)
-        }
-    }
 
     pub mod platform_specific_override {
         // See AMD #44065
