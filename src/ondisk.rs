@@ -2745,7 +2745,7 @@ pub mod memory {
         impl_bitfield_primitive_conversion!(SocketIds, 0b1111_1111, u8);
 
         impl SocketIds {
-            const ALL: Self = Self::from_bytes([0xff]);
+            pub const ALL: Self = Self::from_bytes([0xff]);
         }
 
         #[bitfield(bits = 8)]
