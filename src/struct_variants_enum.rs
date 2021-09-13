@@ -1,13 +1,17 @@
 #![macro_use]
 
-/// This macro expects module contents as a parameter, and then, first, defines the exact same contents.  Then it generates an enum with all the structs available in that module.
+/// This macro expects module contents as a parameter, and then, first, defines the exact same contents.  Then it generates two enums with all the items that implement EntryCompatible available in that module.
 macro_rules! collect_EntryCompatible_impl_into_enum {
     ({$($state:tt)*}{$($state_mut:tt)*}
     ) => {
+        #[non_exhaustive]
         pub enum RefTags<'a> {
+             Unknown(&'a [u8]),
              $($state)*
         }
+        #[non_exhaustive]
         pub enum MutRefTags<'a> {
+             Unknown(&'a mut [u8]),
              $($state_mut)*
         }
     };
@@ -25,8 +29,8 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
         $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!({$struct_name(&'a $struct_name), $($state)*}{$struct_name(&'a mut $struct_name), $($state_mut)*}
         $($tail)*);
     };
+    // Who could possibly want non-eager evaluation here?  Sigh.
     ({$($state:tt)*}{$($state_mut:tt)*}
-        // Who could possibly want non-eager evaluation here?  Sigh.
         impl_EntryCompatible!($struct_name:ident, $($args:tt)*);
         $($tail:tt)*
     ) => {
