@@ -22,6 +22,16 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
         }
         $($tail:tt)*
     ) => {
+        impl<'a> From<&'a $struct_name> for RefTags<'a> {
+            fn from(from: &'a $struct_name) -> RefTags<'a> {
+                RefTags::$struct_name(from)
+            }
+        }
+        impl<'a> From<&'a mut $struct_name> for MutRefTags<'a> {
+            fn from(from: &'a mut $struct_name) -> MutRefTags<'a> {
+                MutRefTags::$struct_name(from)
+            }
+        }
         $(#[$struct_meta])*
         impl EntryCompatible for $struct_name {
             $($impl_body)*
@@ -34,6 +44,16 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
         impl_EntryCompatible!($struct_name:ident, $($args:tt)*);
         $($tail:tt)*
     ) => {
+        impl<'a> From<&'a $struct_name> for RefTags<'a> {
+            fn from(from: &'a $struct_name) -> RefTags<'a> {
+                RefTags::$struct_name(from)
+            }
+        }
+        impl<'a> From<&'a mut $struct_name> for MutRefTags<'a> {
+            fn from(from: &'a mut $struct_name) -> MutRefTags<'a> {
+                MutRefTags::$struct_name(from)
+            }
+        }
         impl_EntryCompatible!($struct_name, $($args)*);
         $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!({$struct_name(&'a $struct_name), $($state)*}{$struct_name(&'a mut $struct_name), $($state_mut)*}
         $($tail)*);
