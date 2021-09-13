@@ -26,6 +26,16 @@ pub trait SequenceElementAsBytes {
     fn checked_as_bytes(&self, entry_id: EntryId) -> Option<&[u8]>;
 }
 
+// Note: Implement this on the enum.
+pub trait SequenceElementFromBytes<'a>: Sized {
+    fn checked_from_bytes(entry_id: EntryId, raw_value: &'a [u8]) -> Result<Self>;
+}
+
+// Note: Implement this on the enum.
+pub trait MutSequenceElementFromBytes<'a>: Sized {
+    fn checked_from_bytes(entry_id: EntryId, raw_value: &'a mut [u8]) -> Result<Self>;
+}
+
 /// There are (very few) Struct Entries like this: Header S0 S1 S2 S3.
 /// This trait is implemented by structs that are used as a header of a sequence.  Then, the header structs specify (in their impl) what the struct type of the sequence will be.
 pub trait HeaderWithTail {
@@ -3573,6 +3583,83 @@ pub mod memory {
 
                 // TODO: conditional overrides, actions.
             }
+
+            impl EntryCompatible for RefTags<'_> {
+                fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+                    match entry_id {
+                        EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
+                            prefix.len() >= 2
+                        },
+                        _ => false,
+                    }
+                }
+                fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<usize> {
+                    match entry_id {
+                        EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
+                            if prefix.len() >= 2 {
+                                (prefix[1] as usize).checked_add(2)
+                            } else {
+                                None
+                            }
+                        },
+                        _ => {
+                            None
+                        }
+                    }
+                }
+            }
+            impl EntryCompatible for MutRefTags<'_> {
+                fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+                    match entry_id {
+                        EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
+                            prefix.len() >= 2
+                        },
+                        _ => false,
+                    }
+                }
+                fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<usize> {
+                    match entry_id {
+                        EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
+                            if prefix.len() >= 2 {
+                                (prefix[1] as usize).checked_add(2)
+                            } else {
+                                None
+                            }
+                        },
+                        _ => {
+                            None
+                        }
+                    }
+                }
+            }
+            impl<'a> SequenceElementFromBytes<'a> for RefTags<'a> {
+                fn checked_from_bytes(entry_id: EntryId, raw_value: &'a [u8]) -> Result<Self> {
+                    if !Self::is_entry_compatible(entry_id, raw_value) {
+                        return Err(Error::EntryTypeMismatch);
+                    }
+                    let type_ = raw_value[0];
+                    // FIXME!
+                    Ok(Self::Unknown(raw_value))
+                }
+            }
+            impl<'a> MutSequenceElementFromBytes<'a> for MutRefTags<'a> {
+                fn checked_from_bytes(entry_id: EntryId, raw_value: &'a mut [u8]) -> Result<Self> {
+                    if !Self::is_entry_compatible(entry_id, raw_value) {
+                        return Err(Error::EntryTypeMismatch);
+                    }
+                    // FIXME
+                    Ok(Self::Unknown(raw_value))
+                }
+            }
+            /* We don't want Unknown to be serializable, so this is not implemented on purpose.
+            impl SequenceElementAsBytes for MutRefTags {
+                fn checked_as_bytes(&mut self, entry_id: EntryId) -> Option<&[u8]> {
+                    match &mut self {
+                        Self::Unknown(ref item) => ,
+                    }.checked_as_bytes(entry_id)
+                }
+            }
+            */
     }
 
     pub mod platform_tuning {
@@ -3737,7 +3824,7 @@ pub mod memory {
             let lvdimm = LvDimmForce1V5::new(SocketIds::ALL, ChannelIds::Any, DimmSlots::Any);
             let tag: Option<RefTags<'_>> = Some((&lvdimm).into());
             match tag {
-                Some(RefTags::LvDimmForce1V5(ref item)) => {
+                Some(RefTags::LvDimmForce1V5(ref _item)) => {
                 },
                 _ => {
                     assert!(false);

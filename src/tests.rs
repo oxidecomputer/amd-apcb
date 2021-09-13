@@ -740,7 +740,7 @@ mod tests {
 
     #[test]
     fn insert_platform_specific_overrides() -> Result<(), Error> {
-        use crate::memory::platform_specific_override::{SocketIds, ChannelIds, DimmSlots, LvDimmForce1V5, DimmSlotsSelection, SolderedDownSodimm};
+        use crate::memory::platform_specific_override::{SocketIds, ChannelIds, DimmSlots, LvDimmForce1V5, DimmSlotsSelection, SolderedDownSodimm, MutRefTags};
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
         let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
@@ -778,10 +778,19 @@ mod tests {
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
-        // FIXME: let mut platform_specific_overrides = entry.body_as_struct_sequence_mut::<PlatformSpecificOverrideElementRef>().unwrap();
-        /*for item in platform_specific_overrides.iter_mut() {
-            eprintln!("item {:?}", item);
-        }*/
+        let mut platform_specific_overrides = entry.body_as_struct_sequence_mut::<MutRefTags<'_>>().unwrap();
+        let mut platform_specific_overrides = platform_specific_overrides.iter_mut();
+        for item in platform_specific_overrides {
+            match item {
+                MutRefTags::LvDimmForce1V5(item) => {
+                },
+                MutRefTags::SolderedDownSodimm(item) => {
+                },
+                _ => {
+                    panic!("did not expect unknown elements in platform_specific_overrides");
+                }
+            }
+        }
 
         assert!(matches!(entries.next(), None));
 

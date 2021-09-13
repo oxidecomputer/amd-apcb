@@ -2,7 +2,7 @@ use core::marker::PhantomData;
 use core::mem::size_of;
 use crate::types::{Result, Error, FileSystemError};
 use crate::ondisk::ENTRY_HEADER;
-use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, EntryCompatible, HeaderWithTail};
+use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, EntryCompatible, HeaderWithTail, MutSequenceElementFromBytes};
 use num_traits::FromPrimitive;
 use crate::tokens_entry::{TokensEntryBodyItem};
 use zerocopy::{AsBytes, FromBytes};
@@ -103,39 +103,45 @@ pub struct EntryMutItem<'a> {
     pub body: EntryItemBody<&'a mut [u8]>,
 }
 
-pub struct StructSequenceEntryMutItem<'a> {
+pub struct StructSequenceEntryMutItem<'a, T> {
     buf: &'a mut [u8],
     entry_id: EntryId,
+    _data: PhantomData<&'a T>,
 }
 
-impl<'a> StructSequenceEntryMutItem<'a> {
-    pub fn iter_mut(self: &'a mut Self) -> StructSequenceEntryMutIter<'a> {
-        StructSequenceEntryMutIter {
+impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> StructSequenceEntryMutItem<'a, T> {
+    pub fn iter_mut(self: &'a mut Self) -> StructSequenceEntryMutIter<'a, T> {
+        StructSequenceEntryMutIter::<T> {
             buf: self.buf,
             entry_id: self.entry_id,
+            _data: PhantomData,
         }
     }
 }
 
-pub struct StructSequenceEntryMutIter<'a> {
+pub struct StructSequenceEntryMutIter<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> {
     buf: &'a mut [u8],
     entry_id: EntryId,
+    _data: PhantomData<T>,
 }
 
-impl<'a> StructSequenceEntryMutIter<'a> {
-    // Note: We could limit that to SequenceElementFromBytes--but right now, why would we?
-    pub fn next<T: AsBytes + FromBytes + EntryCompatible>(self: &'a mut Self) -> Result<&'a mut T> {
+// Note: T is an enum (usually a MutRefTags)
+impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> Iterator for StructSequenceEntryMutIter<'a, T> {
+    type Item = T;
+    fn next(&mut self) -> Option<T> {
         if self.buf.is_empty() {
-            Err(Error::EndOfEntry)
+            None
         } else if !T::is_entry_compatible(self.entry_id, self.buf) {
-            Err(Error::EntryTypeMismatch)
+            //Err(Error::EntryTypeMismatch) FIXME
+            None
         } else {
-            let skip_count = size_of::<T>();
+            let skip_count = T::skip_step(self.entry_id, self.buf)?; // _or_else(|| Error::EntryTypeMismatch)?;
             // Advance
             let (mut a, b) = self.buf.split_at_mut(skip_count);
-            let result = take_header_from_collection_mut::<T>(&mut a).ok_or_else(|| Error::EntryTypeMismatch)?;
+            let result = T::checked_from_bytes(self.entry_id, a).ok()?;
+            //let result = take_header_from_collection_mut::<T>(&mut a).ok_or_else(|| Error::EntryTypeMismatch)?;
             self.buf = b;
-            Ok(result)
+            Some(result)
         }
     }
 }
@@ -304,13 +310,14 @@ impl<'a> EntryMutItem<'a> {
     }
 
     /// This allows the user to iterate over a sequence of different-size structs in the same Entry.
-    pub fn body_as_struct_sequence_mut(self: &'a mut Self) -> Option<StructSequenceEntryMutItem<'a>> {
+    pub fn body_as_struct_sequence_mut<T: EntryCompatible>(self: &'a mut Self) -> Option<StructSequenceEntryMutItem<'a, T>> {
         let id = self.id();
         match &mut self.body {
             EntryItemBody::Struct(buf) => {
-                Some(StructSequenceEntryMutItem {
+                Some(StructSequenceEntryMutItem::<T> {
                      buf,
                      entry_id: id,
+                     _data: PhantomData,
                 })
             },
             _ => {
