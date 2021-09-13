@@ -3730,6 +3730,20 @@ pub mod memory {
                     == 0x80
             );
         }
+
+        #[test]
+        fn test_platform_specific_overrides() {
+            use platform_specific_override::{RefTags, LvDimmForce1V5, SocketIds, ChannelIds, DimmSlots};
+            let lvdimm = LvDimmForce1V5::new(SocketIds::ALL, ChannelIds::Any, DimmSlots::Any);
+            let tag: Option<RefTags<'_>> = Some((&lvdimm).into());
+            match tag {
+                Some(RefTags::LvDimmForce1V5(ref item)) => {
+                },
+                _ => {
+                    assert!(false);
+                },
+            }
+        }
     }
 }
 
