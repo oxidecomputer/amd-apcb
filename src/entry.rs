@@ -128,7 +128,7 @@ pub struct StructSequenceEntryMutIter<'a, T: EntryCompatible + MutSequenceElemen
 // Note: T is an enum (usually a MutRefTags)
 impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> Iterator for StructSequenceEntryMutIter<'a, T> {
     type Item = T;
-    fn next(&mut self) -> Option<T> {
+    fn next<'s>(&'s mut self) -> Option<Self::Item> {
         if self.buf.is_empty() {
             None
         } else if !T::is_entry_compatible(self.entry_id, self.buf) {
@@ -136,10 +136,10 @@ impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> Iterator for Stru
             None
         } else {
             let skip_count = T::skip_step(self.entry_id, self.buf)?; // _or_else(|| Error::EntryTypeMismatch)?;
-            // Advance
-            let (mut a, b) = self.buf.split_at_mut(skip_count);
-            let result = T::checked_from_bytes(self.entry_id, a).ok()?;
-            //let result = take_header_from_collection_mut::<T>(&mut a).ok_or_else(|| Error::EntryTypeMismatch)?;
+            let buf = core::mem::replace(&mut self.buf, &mut []);
+            let (a, b) = buf.split_at_mut(skip_count);
+            // Note: If it was statically known: let result = take_header_from_collection_mut::<T>(&mut a).ok_or_else(|| Error::EntryTypeMismatch)?;
+            let result = T::checked_from_bytes(self.entry_id, a).unwrap(); // FIXME: don't unwrap
             self.buf = b;
             Some(result)
         }
