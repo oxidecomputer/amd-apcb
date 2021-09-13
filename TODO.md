@@ -65,6 +65,8 @@
   * My own idea: Just implement Drop and have a flag you refer to.
   * Give a reference to the flag to all the iterators that would need to change it
     * If there are &mut to struct that doesn't work, now does it?
+* insert_struct_sequence_entry(EntryId::Quux).with(A {p : 1}).with(B {q: 42}).finish() (You can do pretty complex construction of structures using that pattern, debug_struct in std is a good example)
+  * https://doc.rust-lang.org/std/fmt/struct.Formatter.html#method.debug_struct
 
 # Alternate Bitfield implementations
 
