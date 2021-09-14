@@ -779,7 +779,7 @@ mod tests {
         assert!(entry.board_instance_mask() == 0xFFFF);
 
         let mut platform_specific_overrides = entry.body_as_struct_sequence_mut::<MutRefTags<'_>>().unwrap();
-        let mut platform_specific_overrides = platform_specific_overrides.iter_mut();
+        let platform_specific_overrides = platform_specific_overrides.iter_mut();
         let mut lvdimm_count = 0;
         let mut sodimm_count = 0;
         for item in platform_specific_overrides {
