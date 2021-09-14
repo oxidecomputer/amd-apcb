@@ -5,11 +5,13 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
     (@machine {$($state:tt)*}{$($state_mut:tt)*}
     ) => {
         #[non_exhaustive]
+        #[derive(Debug)]
         pub enum RefTags<'a> {
              Unknown(&'a [u8]),
              $($state)*
         }
         #[non_exhaustive]
+        #[derive(Debug)]
         pub enum MutRefTags<'a> {
              Unknown(&'a mut [u8]),
              $($state_mut)*

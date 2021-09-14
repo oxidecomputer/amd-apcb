@@ -2828,6 +2828,10 @@ pub mod memory {
                 macro_rules! impl_EntryCompatible {($struct_:ty, $type_:expr, $payload_size:expr) => (
                     const_assert!($payload_size as usize + 2usize == size_of::<$struct_>());
 
+                    impl $struct_ {
+                        const TAG: u8 = $type_;
+                    }
+
                     impl EntryCompatible for $struct_ {
                         fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
                             match entry_id {
@@ -3287,7 +3291,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
                     #[repr(C, packed)]
                     pub struct LrDimmNoCs6Cs7Routing {
                         type_: u8,
@@ -3644,10 +3648,16 @@ pub mod memory {
                     let type_ = world[0];
                     let skip_step = Self::skip_step(entry_id, world).ok_or_else(|| Error::EntryTypeMismatch)?;
                     let xbuf = replace(&mut *world, &mut []);
-                    let (raw_value, b) = xbuf.split_at(skip_step);
-                    let result = Self::Unknown(raw_value); // FIXME
+                    let (mut raw_value, b) = xbuf.split_at(skip_step);
+                    // FIXME
+                    let result = match type_ {
+                        CkeTristateMap::TAG if skip_step == size_of::<CkeTristateMap>() => Self::CkeTristateMap(take_header_from_collection::<CkeTristateMap>(&mut raw_value).unwrap()),
+                        LvDimmForce1V5::TAG if skip_step == size_of::<LvDimmForce1V5>() => Self::LvDimmForce1V5(take_header_from_collection::<LvDimmForce1V5>(&mut raw_value).unwrap()),
+                        SolderedDownSodimm::TAG if skip_step == size_of::<SolderedDownSodimm>() => Self::SolderedDownSodimm(take_header_from_collection::<SolderedDownSodimm>(&mut raw_value).unwrap()),
+                        _ => Self::Unknown(raw_value),
+                    };
+                    //let result = Self::Unknown(raw_value); // FIXME
                     (*world) = b;
-                    // FIXME!
                     Ok(result)
                 }
             }
@@ -3656,10 +3666,17 @@ pub mod memory {
                     if !Self::is_entry_compatible(entry_id, world) {
                         return Err(Error::EntryTypeMismatch);
                     }
+                    let type_ = world[0];
                     let skip_step = Self::skip_step(entry_id, world).ok_or_else(|| Error::EntryTypeMismatch)?;
                     let xbuf = replace(&mut *world, &mut []);
-                    let (raw_value, b) = xbuf.split_at_mut(skip_step);
-                    let result = Self::Unknown(raw_value); // FIXME
+                    let (mut raw_value, b) = xbuf.split_at_mut(skip_step);
+                    // FIXME
+                    let result = match type_ {
+                        CkeTristateMap::TAG if skip_step == size_of::<CkeTristateMap>() => Self::CkeTristateMap(take_header_from_collection_mut::<CkeTristateMap>(&mut raw_value).unwrap()),
+                        LvDimmForce1V5::TAG if skip_step == size_of::<LvDimmForce1V5>() => Self::LvDimmForce1V5(take_header_from_collection_mut::<LvDimmForce1V5>(&mut raw_value).unwrap()),
+                        SolderedDownSodimm::TAG if skip_step == size_of::<SolderedDownSodimm>() => Self::SolderedDownSodimm(take_header_from_collection_mut::<SolderedDownSodimm>(&mut raw_value).unwrap()),
+                        _ => Self::Unknown(raw_value),
+                    };
                     (*world) = b;
                     Ok(result)
                 }

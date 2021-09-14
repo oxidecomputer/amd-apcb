@@ -787,7 +787,7 @@ mod tests {
                 MutRefTags::SolderedDownSodimm(item) => {
                 },
                 _ => {
-                    panic!("did not expect unknown elements in platform_specific_overrides");
+                    panic!("did not expect unknown elements in platform_specific_overrides ({:?})", item);
                 }
             }
         }
