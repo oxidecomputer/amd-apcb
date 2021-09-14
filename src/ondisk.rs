@@ -1051,8 +1051,8 @@ pub trait EntryCompatible {
     fn is_entry_compatible(_entry_id: EntryId, _prefix: &[u8]) -> bool {
         false
     }
-    // Try to find enough info to be able to skip over incompatible/half-compatible structures.
-    fn skip_step(_entry_id: EntryId, _prefix: &[u8]) -> Option<usize> {
+    /// Returns (type, size).  Note that size is the entire stride necessary to skip one entire blurb.
+    fn skip_step(_entry_id: EntryId, _prefix: &[u8]) -> Option<(u16, usize)> {
         None
     }
 }
@@ -2829,7 +2829,7 @@ pub mod memory {
                     const_assert!($payload_size as usize + 2usize == size_of::<$struct_>());
 
                     impl $struct_ {
-                        const TAG: u8 = $type_;
+                        const TAG: u16 = $type_;
                     }
 
                     impl EntryCompatible for $struct_ {
@@ -2841,11 +2841,13 @@ pub mod memory {
                                 _ => false,
                             }
                         }
-                        fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<usize> {
+                        fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
                             match entry_id {
                                 EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
                                     if prefix.len() >= 2 {
-                                        (prefix[1] as usize).checked_add(2)
+                                        let type_ = prefix[0] as u16;
+                                        let size = (prefix[1] as usize).checked_add(2)?;
+                                        Some((type_, size))
                                     } else {
                                         None
                                     }
@@ -3601,11 +3603,13 @@ pub mod memory {
                         _ => false,
                     }
                 }
-                fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<usize> {
+                fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
                     match entry_id {
                         EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
                             if prefix.len() >= 2 {
-                                (prefix[1] as usize).checked_add(2)
+                                let type_ = prefix[0] as u16;
+                                let size = (prefix[1] as usize).checked_add(2)?;
+                                Some((type_, size))
                             } else {
                                 None
                             }
@@ -3625,11 +3629,13 @@ pub mod memory {
                         _ => false,
                     }
                 }
-                fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<usize> {
+                fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
                     match entry_id {
                         EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
                             if prefix.len() >= 2 {
-                                (prefix[1] as usize).checked_add(2)
+                                let type_ = prefix[0] as u16;
+                                let size = (prefix[1] as usize).checked_add(2)?;
+                                Some((type_, size))
                             } else {
                                 None
                             }
@@ -3645,8 +3651,7 @@ pub mod memory {
                     if !Self::is_entry_compatible(entry_id, world) {
                         return Err(Error::EntryTypeMismatch);
                     }
-                    let type_ = world[0]; // FIXME how to generalize this?
-                    let skip_step = Self::skip_step(entry_id, world).ok_or_else(|| Error::EntryTypeMismatch)?;
+                    let (type_, skip_step) = Self::skip_step(entry_id, world).ok_or_else(|| Error::EntryTypeMismatch)?;
                     let mut xbuf = replace(&mut *world, &mut []);
                     // FIXME
                     let result = match type_ {
@@ -3654,12 +3659,11 @@ pub mod memory {
                         LvDimmForce1V5::TAG if skip_step == size_of::<LvDimmForce1V5>() => Self::LvDimmForce1V5(take_header_from_collection::<LvDimmForce1V5>(&mut xbuf).unwrap()),
                         SolderedDownSodimm::TAG if skip_step == size_of::<SolderedDownSodimm>() => Self::SolderedDownSodimm(take_header_from_collection::<SolderedDownSodimm>(&mut xbuf).unwrap()),
                         _ => {
-                            let (mut raw_value, b) = xbuf.split_at(skip_step);
+                            let (raw_value, b) = xbuf.split_at(skip_step);
                             xbuf = b;
                             Self::Unknown(raw_value)
                         },
                     };
-                    //let result = Self::Unknown(raw_value); // FIXME
                     (*world) = xbuf;
                     Ok(result)
                 }
@@ -3669,8 +3673,7 @@ pub mod memory {
                     if !Self::is_entry_compatible(entry_id, world) {
                         return Err(Error::EntryTypeMismatch);
                     }
-                    let type_ = world[0];
-                    let skip_step = Self::skip_step(entry_id, world).ok_or_else(|| Error::EntryTypeMismatch)?;
+                    let (type_, skip_step) = Self::skip_step(entry_id, world).ok_or_else(|| Error::EntryTypeMismatch)?;
                     let mut xbuf = replace(&mut *world, &mut []);
                     // FIXME
                     let result = match type_ {
@@ -3678,7 +3681,7 @@ pub mod memory {
                         LvDimmForce1V5::TAG if skip_step == size_of::<LvDimmForce1V5>() => Self::LvDimmForce1V5(take_header_from_collection_mut::<LvDimmForce1V5>(&mut xbuf).unwrap()),
                         SolderedDownSodimm::TAG if skip_step == size_of::<SolderedDownSodimm>() => Self::SolderedDownSodimm(take_header_from_collection_mut::<SolderedDownSodimm>(&mut xbuf).unwrap()),
                         _ => {
-                            let (mut raw_value, b) = xbuf.split_at_mut(skip_step);
+                            let (raw_value, b) = xbuf.split_at_mut(skip_step);
                             xbuf = b;
                             Self::Unknown(raw_value)
                         },
@@ -3710,6 +3713,10 @@ pub mod memory {
 
                 macro_rules! impl_EntryCompatible {($struct_:ty, $type_:expr, $total_size:expr) => (
                     const_assert!($total_size as usize == size_of::<$struct_>());
+                    impl $struct_ {
+                        const TAG: u16 = $type_;
+                    }
+
                     impl EntryCompatible for $struct_ {
                         fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
                             match entry_id {
@@ -3727,27 +3734,29 @@ pub mod memory {
                                 _ => false,
                             }
                         }
-                    }
 
-                    fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<usize> {
-                        match entry_id {
-                            EntryId::Memory(MemoryEntryId::PlatformTuning) => {
-                                if prefix.len() >= 2 {
-                                    let type_lo = prefix[0];
-                                    let type_hi = prefix[1];
-                                    if type_lo == 0xef && type_hi == 0xfe { // no len available
-                                        Some(2)
-                                    } else if prefix.len() >= 3 {
-                                        (prefix[2] as usize).checked_add(2)
+                        fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
+                            match entry_id {
+                                EntryId::Memory(MemoryEntryId::PlatformTuning) => {
+                                    if prefix.len() >= 2 {
+                                        let type_lo = prefix[0];
+                                        let type_hi = prefix[1];
+                                        let type_ = ((type_hi as u16) << 8) | (type_lo as u16);
+                                        if type_ == 0xfeef { // no len available
+                                            Some((type_, 2))
+                                        } else if prefix.len() >= 3 {
+                                            let size = (prefix[2] as usize).checked_add(2)?;
+                                            Some((type_, size))
+                                        } else {
+                                            None
+                                        }
                                     } else {
                                         None
                                     }
-                                } else {
-                                     None
-                                }
-                            },
-                            _ => {
-                                return None;
+                                },
+                                _ => {
+                                    None
+                                },
                             }
                         }
                     }
