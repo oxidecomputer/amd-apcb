@@ -28,12 +28,16 @@ pub trait SequenceElementAsBytes {
 
 // Note: Implement this on the enum.
 pub trait SequenceElementFromBytes<'a>: Sized {
-    fn checked_from_bytes(entry_id: EntryId, raw_value: &'a [u8]) -> Result<Self>;
+    /// Parses one item from (*WORLD).
+    /// WORLD is a reference to a mut slice ((*WORLD) is usually much bigger than we need).  (*WORLD)'s beginning will be moved to after the parsed item.
+    fn checked_from_bytes(entry_id: EntryId, world: &mut &'a [u8]) -> Result<Self>;
 }
 
 // Note: Implement this on the enum.
 pub trait MutSequenceElementFromBytes<'a>: Sized {
-    fn checked_from_bytes(entry_id: EntryId, raw_value: &'a mut [u8]) -> Result<Self>;
+    /// Parses one item from (*WORLD).
+    /// WORLD is a reference to a mut slice ((*WORLD) is usually much bigger than we need).  (*WORLD)'s beginning will be moved to after the parsed item.
+    fn checked_from_bytes(entry_id: EntryId, world: &mut &'a mut [u8]) -> Result<Self>;
 }
 
 /// There are (very few) Struct Entries like this: Header S0 S1 S2 S3.
@@ -3633,22 +3637,31 @@ pub mod memory {
                 }
             }
             impl<'a> SequenceElementFromBytes<'a> for RefTags<'a> {
-                fn checked_from_bytes(entry_id: EntryId, raw_value: &'a [u8]) -> Result<Self> {
-                    if !Self::is_entry_compatible(entry_id, raw_value) {
+                fn checked_from_bytes(entry_id: EntryId, world: &mut &'a [u8]) -> Result<Self> {
+                    if !Self::is_entry_compatible(entry_id, world) {
                         return Err(Error::EntryTypeMismatch);
                     }
-                    let type_ = raw_value[0];
+                    let type_ = world[0];
+                    let skip_step = Self::skip_step(entry_id, world).ok_or_else(|| Error::EntryTypeMismatch)?;
+                    let xbuf = replace(&mut *world, &mut []);
+                    let (raw_value, b) = xbuf.split_at(skip_step);
+                    let result = Self::Unknown(raw_value); // FIXME
+                    (*world) = b;
                     // FIXME!
-                    Ok(Self::Unknown(raw_value))
+                    Ok(result)
                 }
             }
             impl<'a> MutSequenceElementFromBytes<'a> for MutRefTags<'a> {
-                fn checked_from_bytes(entry_id: EntryId, raw_value: &'a mut [u8]) -> Result<Self> {
-                    if !Self::is_entry_compatible(entry_id, raw_value) {
+                fn checked_from_bytes(entry_id: EntryId, world: &mut &'a mut [u8]) -> Result<Self> {
+                    if !Self::is_entry_compatible(entry_id, world) {
                         return Err(Error::EntryTypeMismatch);
                     }
-                    // FIXME
-                    Ok(Self::Unknown(raw_value))
+                    let skip_step = Self::skip_step(entry_id, world).ok_or_else(|| Error::EntryTypeMismatch)?;
+                    let xbuf = replace(&mut *world, &mut []);
+                    let (raw_value, b) = xbuf.split_at_mut(skip_step);
+                    let result = Self::Unknown(raw_value); // FIXME
+                    (*world) = b;
+                    Ok(result)
                 }
             }
             /* We don't want Unknown to be serializable, so this is not implemented on purpose.
