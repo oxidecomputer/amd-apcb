@@ -780,17 +780,23 @@ mod tests {
 
         let mut platform_specific_overrides = entry.body_as_struct_sequence_mut::<MutRefTags<'_>>().unwrap();
         let mut platform_specific_overrides = platform_specific_overrides.iter_mut();
+        let mut lvdimm_count = 0;
+        let mut sodimm_count = 0;
         for item in platform_specific_overrides {
             match item {
                 MutRefTags::LvDimmForce1V5(item) => {
+                    lvdimm_count += 1;
                 },
                 MutRefTags::SolderedDownSodimm(item) => {
+                    sodimm_count += 1;
                 },
                 _ => {
                     panic!("did not expect unknown elements in platform_specific_overrides ({:?})", item);
                 }
             }
         }
+        assert!(lvdimm_count == 1);
+        assert!(sodimm_count == 1);
 
         assert!(matches!(entries.next(), None));
 
