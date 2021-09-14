@@ -5,20 +5,7 @@
 * s|default|normal| in PriorityLevels and PriorityLevel
 * Sanity-check "new" fns that exist
 * Add "new" fn for the others, too?
-* body_as_struct_sequence; body_as_struct_array: Where is the check whether it is EntryCompatible ?
-  * Use RefTags, MutRefTags.
-  * Maybe just use body_as_struct_array or something
-  * Make "weird" struct array iterator (sequence of different types iterator)
-  * const TAG: u32
-    * Make a deserializer that matches on TAG for the enum--and checks size_of and calls from_bytes to get it, if so.
-    * Add Unknown variant--but then, no tag checking or size_of checking is possible for it.
-      * Therefore, the enums have actual knowledge about how to read stuff from the specific TLV
-        * pub(crate) fn type_length_skip(&[u8]) -> (u16, usize, usize)
-      * Then, the enum macro generates
-        * pub fn deserialize(&[u8]) -> Self
-        * But it calls type_and_length--which is NOT generated--but manually written
-      * Remove skip_step from EntryCompatible
-  * Make macro automatically generate state
+* body_as_struct_array: Where is the check whether it is EntryCompatible ?
 * Convert board_instance_mask to bitfield?!
 * IdRevApcbMapping
   * id_and_feature_mask: bit 7: 1=user controlled; 0=normal
