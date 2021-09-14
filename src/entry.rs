@@ -135,7 +135,6 @@ impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> Iterator for Stru
             //Err(Error::EntryTypeMismatch) FIXME
             None
         } else {
-            let skip_count = T::skip_step(self.entry_id, self.buf)?; // _or_else(|| Error::EntryTypeMismatch)?;
             // Note: If it was statically known: let result = take_header_from_collection_mut::<T>(&mut a).ok_or_else(|| Error::EntryTypeMismatch)?;
             T::checked_from_bytes(self.entry_id, &mut self.buf).ok() // FIXME handle error
         }
