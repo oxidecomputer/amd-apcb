@@ -2682,7 +2682,7 @@ pub mod memory {
     }
 
     pub mod platform_specific_override {
-        use super::{EntryId, MemoryEntryId, Error};
+        use super::{EntryId, Error, MemoryEntryId};
         crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum! {
                 // See AMD #44065
 
@@ -3595,71 +3595,63 @@ pub mod memory {
                 // TODO: conditional overrides, actions.
             }
 
-            impl EntryCompatible for RefTags<'_> {
-                fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
-                    match entry_id {
-                        EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
-                            prefix.len() >= 2
-                        },
-                        _ => false,
-                    }
+        impl EntryCompatible for RefTags<'_> {
+            fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+                match entry_id {
+                    EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => prefix.len() >= 2,
+                    _ => false,
                 }
-                fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
-                    match entry_id {
-                        EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
-                            if prefix.len() >= 2 {
-                                let type_ = prefix[0] as u16;
-                                let size = (prefix[1] as usize).checked_add(2)?;
-                                Some((type_, size))
-                            } else {
-                                None
-                            }
-                        },
-                        _ => {
+            }
+            fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
+                match entry_id {
+                    EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
+                        if prefix.len() >= 2 {
+                            let type_ = prefix[0] as u16;
+                            let size = (prefix[1] as usize).checked_add(2)?;
+                            Some((type_, size))
+                        } else {
                             None
                         }
                     }
+                    _ => None,
                 }
             }
-            impl EntryCompatible for MutRefTags<'_> {
-                fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
-                    match entry_id {
-                        EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
-                            prefix.len() >= 2
-                        },
-                        _ => false,
-                    }
+        }
+        impl EntryCompatible for MutRefTags<'_> {
+            fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+                match entry_id {
+                    EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => prefix.len() >= 2,
+                    _ => false,
                 }
-                fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
-                    match entry_id {
-                        EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
-                            if prefix.len() >= 2 {
-                                let type_ = prefix[0] as u16;
-                                let size = (prefix[1] as usize).checked_add(2)?;
-                                Some((type_, size))
-                            } else {
-                                None
-                            }
-                        },
-                        _ => {
+            }
+            fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
+                match entry_id {
+                    EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
+                        if prefix.len() >= 2 {
+                            let type_ = prefix[0] as u16;
+                            let size = (prefix[1] as usize).checked_add(2)?;
+                            Some((type_, size))
+                        } else {
                             None
                         }
                     }
+                    _ => None,
                 }
             }
-            /* We don't want Unknown to be serializable, so this is not implemented on purpose.
-            impl SequenceElementAsBytes for MutRefTags {
-                fn checked_as_bytes(&mut self, entry_id: EntryId) -> Option<&[u8]> {
-                    match &mut self {
-                        Self::Unknown(ref item) => ,
-                    }.checked_as_bytes(entry_id)
-                }
+        }
+        /* We don't want Unknown to be serializable, so this is not implemented on purpose.
+        impl SequenceElementAsBytes for MutRefTags {
+            fn checked_as_bytes(&mut self, entry_id: EntryId) -> Option<&[u8]> {
+                match &mut self {
+                    Self::Unknown(ref item) => ,
+                }.checked_as_bytes(entry_id)
             }
-            */
+        }
+        */
     }
 
     pub mod platform_tuning {
-        use super::{EntryId, MemoryEntryId, Error};
+        use super::{EntryId, Error, MemoryEntryId};
         crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum! {
                 use byteorder::LittleEndian;
                 use core::mem::size_of;
@@ -3755,75 +3747,68 @@ pub mod memory {
         //        }
             }
 
-            impl EntryCompatible for RefTags<'_> {
-                fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
-                    match entry_id {
-                        EntryId::Memory(MemoryEntryId::PlatformTuning) => {
-                            prefix.len() >= 2
-                        },
-                        _ => false,
-                    }
+        impl EntryCompatible for RefTags<'_> {
+            fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+                match entry_id {
+                    EntryId::Memory(MemoryEntryId::PlatformTuning) => prefix.len() >= 2,
+                    _ => false,
                 }
-                        fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
-                            match entry_id {
-                                EntryId::Memory(MemoryEntryId::PlatformTuning) => {
-                                    if prefix.len() >= 2 {
-                                        let type_lo = prefix[0];
-                                        let type_hi = prefix[1];
-                                        let type_ = ((type_hi as u16) << 8) | (type_lo as u16);
-                                        if type_ == 0xfeef { // no len available
-                                            Some((type_, 2))
-                                        } else if prefix.len() >= 3 {
-                                            let size = (prefix[2] as usize).checked_add(2)?;
-                                            Some((type_, size))
-                                        } else {
-                                            None
-                                        }
-                                    } else {
-                                        None
-                                    }
-                                },
-                                _ => {
-                                    None
-                                },
-                            }
-                        }
             }
-            impl EntryCompatible for MutRefTags<'_> {
-                fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
-                    match entry_id {
-                        EntryId::Memory(MemoryEntryId::PlatformTuning) => {
-                            prefix.len() >= 2
-                        },
-                        _ => false,
+            fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
+                match entry_id {
+                    EntryId::Memory(MemoryEntryId::PlatformTuning) => {
+                        if prefix.len() >= 2 {
+                            let type_lo = prefix[0];
+                            let type_hi = prefix[1];
+                            let type_ = ((type_hi as u16) << 8) | (type_lo as u16);
+                            if type_ == 0xfeef {
+                                // no len available
+                                Some((type_, 2))
+                            } else if prefix.len() >= 3 {
+                                let size = (prefix[2] as usize).checked_add(2)?;
+                                Some((type_, size))
+                            } else {
+                                None
+                            }
+                        } else {
+                            None
+                        }
                     }
+                    _ => None,
                 }
-                        fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
-                            match entry_id {
-                                EntryId::Memory(MemoryEntryId::PlatformTuning) => {
-                                    if prefix.len() >= 2 {
-                                        let type_lo = prefix[0];
-                                        let type_hi = prefix[1];
-                                        let type_ = ((type_hi as u16) << 8) | (type_lo as u16);
-                                        if type_ == 0xfeef { // no len available
-                                            Some((type_, 2))
-                                        } else if prefix.len() >= 3 {
-                                            let size = (prefix[2] as usize).checked_add(2)?;
-                                            Some((type_, size))
-                                        } else {
-                                            None
-                                        }
-                                    } else {
-                                        None
-                                    }
-                                },
-                                _ => {
-                                    None
-                                },
-                            }
-                        }
             }
-
+        }
+        impl EntryCompatible for MutRefTags<'_> {
+            fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+                match entry_id {
+                    EntryId::Memory(MemoryEntryId::PlatformTuning) => prefix.len() >= 2,
+                    _ => false,
+                }
+            }
+            fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
+                match entry_id {
+                    EntryId::Memory(MemoryEntryId::PlatformTuning) => {
+                        if prefix.len() >= 2 {
+                            let type_lo = prefix[0];
+                            let type_hi = prefix[1];
+                            let type_ = ((type_hi as u16) << 8) | (type_lo as u16);
+                            if type_ == 0xfeef {
+                                // no len available
+                                Some((type_, 2))
+                            } else if prefix.len() >= 3 {
+                                let size = (prefix[2] as usize).checked_add(2)?;
+                                Some((type_, size))
+                            } else {
+                                None
+                            }
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                }
+            }
+        }
     }
 
     #[cfg(test)]
@@ -3893,15 +3878,16 @@ pub mod memory {
 
         #[test]
         fn test_platform_specific_overrides() {
-            use platform_specific_override::{RefTags, LvDimmForce1V5, SocketIds, ChannelIds, DimmSlots};
+            use platform_specific_override::{
+                ChannelIds, DimmSlots, LvDimmForce1V5, RefTags, SocketIds,
+            };
             let lvdimm = LvDimmForce1V5::new(SocketIds::ALL, ChannelIds::Any, DimmSlots::Any);
             let tag: Option<RefTags<'_>> = Some((&lvdimm).into());
             match tag {
-                Some(RefTags::LvDimmForce1V5(ref _item)) => {
-                },
+                Some(RefTags::LvDimmForce1V5(ref _item)) => {}
                 _ => {
                     assert!(false);
-                },
+                }
             }
         }
     }
