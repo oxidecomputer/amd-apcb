@@ -1,7 +1,8 @@
 #![macro_use]
 
-// This provides the deserializer's type matching.
-macro_rules! collect_EntryCompatible_impl_into_enum_match {
+/// This macro expects module contents as a parameter, and then, first, defines the exact same contents.  Then it generates two enums with all the items that implement EntryCompatible available in that module.  It then implements SequenceElementFromBytes for the enum.
+macro_rules! collect_EntryCompatible_impl_into_enum {
+    // This provides the deserializer's type matching.
     (@match2 {$type_:ident}{$skip_step:ident}{$xbuf:ident}) => {
         {
             let (raw_value, b) = $xbuf.split_at($skip_step);
@@ -13,20 +14,16 @@ macro_rules! collect_EntryCompatible_impl_into_enum_match {
         if $skip_step == core::mem::size_of::<$struct_name>() && $type_ == <$struct_name>::TAG {
             (Self::$struct_name(take_header_from_collection::<$struct_name>(&mut $xbuf).ok_or_else(|| Error::EntryTypeMismatch)?), $xbuf)
         } else {
-            $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum_match!(@match2 {$type_}{$skip_step}{$xbuf}$($tail)*)
+            $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@match2 {$type_}{$skip_step}{$xbuf}$($tail)*)
         }
     };
-    ({$entry_id:ident}{$world:ident}{$($deserializer:tt)*}) => {
+    (@match1 {$entry_id:ident}{$world:ident}{$($deserializer:tt)*}) => {
         {
             let (type_, skip_step) = Self::skip_step($entry_id, $world).ok_or_else(|| Error::EntryTypeMismatch)?;
             let mut xbuf = replace(&mut *$world, &mut []);
-            $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum_match!(@match2 {type_}{skip_step}{xbuf}$($deserializer)*)
+            $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@match2 {type_}{skip_step}{xbuf}$($deserializer)*)
         }
     };
-}
-
-/// This macro expects module contents as a parameter, and then, first, defines the exact same contents.  Then it generates two enums with all the items that implement EntryCompatible available in that module.  It then implements SequenceElementFromBytes for the enum.
-macro_rules! collect_EntryCompatible_impl_into_enum {
     (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}
     ) => {
         #[non_exhaustive]
@@ -44,7 +41,7 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
 
         impl<'a> SequenceElementFromBytes<'a> for RefTags<'a> {
             fn checked_from_bytes(entry_id: EntryId, world: &mut &'a [u8]) -> Result<Self> {
-                let (result, xbuf) = $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum_match!({entry_id}{world}{$($deserializer)*});
+                let (result, xbuf) = $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@match1 {entry_id}{world}{$($deserializer)*});
                 (*world) = xbuf;
                 Ok(result)
             }
@@ -122,6 +119,3 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
 }
 
 pub(crate) use collect_EntryCompatible_impl_into_enum;
-
-// internal:
-pub(crate) use collect_EntryCompatible_impl_into_enum_match;
