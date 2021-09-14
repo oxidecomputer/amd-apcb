@@ -24,6 +24,27 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
             $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@match2 {type_}{skip_step}{xbuf}$($deserializer)*)
         }
     };
+    (@match2mut {$type_:ident}{$skip_step:ident}{$xbuf:ident}) => {
+        {
+            let (mut raw_value, mut b) = $xbuf.split_at_mut($skip_step);
+            $xbuf = b;
+            (Self::Unknown(raw_value), $xbuf)
+        }
+    };
+    (@match2mut {$type_:ident}{$skip_step:ident}{$xbuf:ident} $struct_name:ident; $($tail:tt)*) => {
+        if $skip_step == core::mem::size_of::<$struct_name>() && $type_ == <$struct_name>::TAG {
+            (Self::$struct_name(take_header_from_collection_mut::<$struct_name>(&mut $xbuf).ok_or_else(|| Error::EntryTypeMismatch)?), $xbuf)
+        } else {
+            $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@match2mut {$type_}{$skip_step}{$xbuf}$($tail)*)
+        }
+    };
+    (@match1mut {$entry_id:ident}{$world:ident}{$($deserializer:tt)*}) => {
+        {
+            let (type_, skip_step) = Self::skip_step($entry_id, $world).ok_or_else(|| Error::EntryTypeMismatch)?;
+            let mut xbuf = replace(&mut *$world, &mut []);
+            $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@match2mut {type_}{skip_step}{xbuf}$($deserializer)*)
+        }
+    };
     (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}
     ) => {
         #[non_exhaustive]
@@ -42,6 +63,13 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
         impl<'a> SequenceElementFromBytes<'a> for RefTags<'a> {
             fn checked_from_bytes(entry_id: EntryId, world: &mut &'a [u8]) -> Result<Self> {
                 let (result, xbuf) = $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@match1 {entry_id}{world}{$($deserializer)*});
+                (*world) = xbuf;
+                Ok(result)
+            }
+        }
+        impl<'a> MutSequenceElementFromBytes<'a> for MutRefTags<'a> {
+            fn checked_from_bytes(entry_id: EntryId, world: &mut &'a mut [u8]) -> Result<Self> {
+                let (result, xbuf) = $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@match1mut {entry_id}{world}{$($deserializer)*});
                 (*world) = xbuf;
                 Ok(result)
             }

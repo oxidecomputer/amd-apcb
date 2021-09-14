@@ -3647,28 +3647,6 @@ pub mod memory {
                     }
                 }
             }
-            impl<'a> MutSequenceElementFromBytes<'a> for MutRefTags<'a> {
-                fn checked_from_bytes(entry_id: EntryId, world: &mut &'a mut [u8]) -> Result<Self> {
-                    if !Self::is_entry_compatible(entry_id, world) {
-                        return Err(Error::EntryTypeMismatch);
-                    }
-                    let (type_, skip_step) = Self::skip_step(entry_id, world).ok_or_else(|| Error::EntryTypeMismatch)?;
-                    let mut xbuf = replace(&mut *world, &mut []);
-                    // FIXME
-                    let result = match type_ {
-                        CkeTristateMap::TAG if skip_step == size_of::<CkeTristateMap>() => Self::CkeTristateMap(take_header_from_collection_mut::<CkeTristateMap>(&mut xbuf).unwrap()),
-                        LvDimmForce1V5::TAG if skip_step == size_of::<LvDimmForce1V5>() => Self::LvDimmForce1V5(take_header_from_collection_mut::<LvDimmForce1V5>(&mut xbuf).unwrap()),
-                        SolderedDownSodimm::TAG if skip_step == size_of::<SolderedDownSodimm>() => Self::SolderedDownSodimm(take_header_from_collection_mut::<SolderedDownSodimm>(&mut xbuf).unwrap()),
-                        _ => {
-                            let (raw_value, b) = xbuf.split_at_mut(skip_step);
-                            xbuf = b;
-                            Self::Unknown(raw_value)
-                        },
-                    };
-                    (*world) = xbuf;
-                    Ok(result)
-                }
-            }
             /* We don't want Unknown to be serializable, so this is not implemented on purpose.
             impl SequenceElementAsBytes for MutRefTags {
                 fn checked_as_bytes(&mut self, entry_id: EntryId) -> Option<&[u8]> {
