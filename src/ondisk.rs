@@ -3645,19 +3645,22 @@ pub mod memory {
                     if !Self::is_entry_compatible(entry_id, world) {
                         return Err(Error::EntryTypeMismatch);
                     }
-                    let type_ = world[0];
+                    let type_ = world[0]; // FIXME how to generalize this?
                     let skip_step = Self::skip_step(entry_id, world).ok_or_else(|| Error::EntryTypeMismatch)?;
-                    let xbuf = replace(&mut *world, &mut []);
-                    let (mut raw_value, b) = xbuf.split_at(skip_step);
+                    let mut xbuf = replace(&mut *world, &mut []);
                     // FIXME
                     let result = match type_ {
-                        CkeTristateMap::TAG if skip_step == size_of::<CkeTristateMap>() => Self::CkeTristateMap(take_header_from_collection::<CkeTristateMap>(&mut raw_value).unwrap()),
-                        LvDimmForce1V5::TAG if skip_step == size_of::<LvDimmForce1V5>() => Self::LvDimmForce1V5(take_header_from_collection::<LvDimmForce1V5>(&mut raw_value).unwrap()),
-                        SolderedDownSodimm::TAG if skip_step == size_of::<SolderedDownSodimm>() => Self::SolderedDownSodimm(take_header_from_collection::<SolderedDownSodimm>(&mut raw_value).unwrap()),
-                        _ => Self::Unknown(raw_value),
+                        CkeTristateMap::TAG if skip_step == size_of::<CkeTristateMap>() => Self::CkeTristateMap(take_header_from_collection::<CkeTristateMap>(&mut xbuf).unwrap()),
+                        LvDimmForce1V5::TAG if skip_step == size_of::<LvDimmForce1V5>() => Self::LvDimmForce1V5(take_header_from_collection::<LvDimmForce1V5>(&mut xbuf).unwrap()),
+                        SolderedDownSodimm::TAG if skip_step == size_of::<SolderedDownSodimm>() => Self::SolderedDownSodimm(take_header_from_collection::<SolderedDownSodimm>(&mut xbuf).unwrap()),
+                        _ => {
+                            let (mut raw_value, b) = xbuf.split_at(skip_step);
+                            xbuf = b;
+                            Self::Unknown(raw_value)
+                        },
                     };
                     //let result = Self::Unknown(raw_value); // FIXME
-                    (*world) = b;
+                    (*world) = xbuf;
                     Ok(result)
                 }
             }
@@ -3668,16 +3671,19 @@ pub mod memory {
                     }
                     let type_ = world[0];
                     let skip_step = Self::skip_step(entry_id, world).ok_or_else(|| Error::EntryTypeMismatch)?;
-                    let xbuf = replace(&mut *world, &mut []);
-                    let (mut raw_value, b) = xbuf.split_at_mut(skip_step);
+                    let mut xbuf = replace(&mut *world, &mut []);
                     // FIXME
                     let result = match type_ {
-                        CkeTristateMap::TAG if skip_step == size_of::<CkeTristateMap>() => Self::CkeTristateMap(take_header_from_collection_mut::<CkeTristateMap>(&mut raw_value).unwrap()),
-                        LvDimmForce1V5::TAG if skip_step == size_of::<LvDimmForce1V5>() => Self::LvDimmForce1V5(take_header_from_collection_mut::<LvDimmForce1V5>(&mut raw_value).unwrap()),
-                        SolderedDownSodimm::TAG if skip_step == size_of::<SolderedDownSodimm>() => Self::SolderedDownSodimm(take_header_from_collection_mut::<SolderedDownSodimm>(&mut raw_value).unwrap()),
-                        _ => Self::Unknown(raw_value),
+                        CkeTristateMap::TAG if skip_step == size_of::<CkeTristateMap>() => Self::CkeTristateMap(take_header_from_collection_mut::<CkeTristateMap>(&mut xbuf).unwrap()),
+                        LvDimmForce1V5::TAG if skip_step == size_of::<LvDimmForce1V5>() => Self::LvDimmForce1V5(take_header_from_collection_mut::<LvDimmForce1V5>(&mut xbuf).unwrap()),
+                        SolderedDownSodimm::TAG if skip_step == size_of::<SolderedDownSodimm>() => Self::SolderedDownSodimm(take_header_from_collection_mut::<SolderedDownSodimm>(&mut xbuf).unwrap()),
+                        _ => {
+                            let (mut raw_value, b) = xbuf.split_at_mut(skip_step);
+                            xbuf = b;
+                            Self::Unknown(raw_value)
+                        },
                     };
-                    (*world) = b;
+                    (*world) = xbuf;
                     Ok(result)
                 }
             }
