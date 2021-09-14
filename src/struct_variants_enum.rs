@@ -26,7 +26,7 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
     };
     (@match2mut {$type_:ident}{$skip_step:ident}{$xbuf:ident}) => {
         {
-            let (mut raw_value, mut b) = $xbuf.split_at_mut($skip_step);
+            let (raw_value, mut b) = $xbuf.split_at_mut($skip_step);
             $xbuf = b;
             (Self::Unknown(raw_value), $xbuf)
         }
