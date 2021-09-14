@@ -1,8 +1,33 @@
 #![macro_use]
 
-/// This macro expects module contents as a parameter, and then, first, defines the exact same contents.  Then it generates two enums with all the items that implement EntryCompatible available in that module.
+// This provides the deserializer's type matching.
+macro_rules! collect_EntryCompatible_impl_into_enum_match {
+    (@match2 {$type_:ident}{$skip_step:ident}{$xbuf:ident}) => {
+        {
+            let (raw_value, b) = $xbuf.split_at($skip_step);
+            $xbuf = b;
+            (Self::Unknown(raw_value), $xbuf)
+        }
+    };
+    (@match2 {$type_:ident}{$skip_step:ident}{$xbuf:ident} $struct_name:ident; $($tail:tt)*) => {
+        if $skip_step == core::mem::size_of::<$struct_name>() && $type_ == <$struct_name>::TAG {
+            (Self::$struct_name(take_header_from_collection::<$struct_name>(&mut $xbuf).ok_or_else(|| Error::EntryTypeMismatch)?), $xbuf)
+        } else {
+            $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum_match!(@match2 {$type_}{$skip_step}{$xbuf}$($tail)*)
+        }
+    };
+    ({$entry_id:ident}{$world:ident}{$($deserializer:tt)*}) => {
+        {
+            let (type_, skip_step) = Self::skip_step($entry_id, $world).ok_or_else(|| Error::EntryTypeMismatch)?;
+            let mut xbuf = replace(&mut *$world, &mut []);
+            $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum_match!(@match2 {type_}{skip_step}{xbuf}$($deserializer)*)
+        }
+    };
+}
+
+/// This macro expects module contents as a parameter, and then, first, defines the exact same contents.  Then it generates two enums with all the items that implement EntryCompatible available in that module.  It then implements SequenceElementFromBytes for the enum.
 macro_rules! collect_EntryCompatible_impl_into_enum {
-    (@machine {$($state:tt)*}{$($state_mut:tt)*}
+    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}
     ) => {
         #[non_exhaustive]
         #[derive(Debug)]
@@ -16,8 +41,16 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
              Unknown(&'a mut [u8]),
              $($state_mut)*
         }
+
+        impl<'a> SequenceElementFromBytes<'a> for RefTags<'a> {
+            fn checked_from_bytes(entry_id: EntryId, world: &mut &'a [u8]) -> Result<Self> {
+                let (result, xbuf) = $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum_match!({entry_id}{world}{$($deserializer)*});
+                (*world) = xbuf;
+                Ok(result)
+            }
+        }
     };
-    (@machine {$($state:tt)*}{$($state_mut:tt)*}
+    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}
         $(#[$struct_meta:meta])*
         impl EntryCompatible for $struct_name:ident {
             $($impl_body:tt)*
@@ -38,11 +71,11 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
         impl EntryCompatible for $struct_name {
             $($impl_body)*
         }
-        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$struct_name(&'a $struct_name), $($state)*}{$struct_name(&'a mut $struct_name), $($state_mut)*}
+        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$struct_name; $($deserializer)*}{$struct_name(&'a $struct_name), $($state)*}{$struct_name(&'a mut $struct_name), $($state_mut)*}
         $($tail)*);
     };
     // Who could possibly want non-eager evaluation here?  Sigh.
-    (@machine {$($state:tt)*}{$($state_mut:tt)*}
+    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}
         impl_EntryCompatible!($struct_name:ident, $($args:tt)*);
         $($tail:tt)*
     ) => {
@@ -57,10 +90,10 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
             }
         }
         impl_EntryCompatible!($struct_name, $($args)*);
-        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$struct_name(&'a $struct_name), $($state)*}{$struct_name(&'a mut $struct_name), $($state_mut)*}
+        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$struct_name; $($deserializer)*}{$struct_name(&'a $struct_name), $($state)*}{$struct_name(&'a mut $struct_name), $($state_mut)*}
         $($tail)*);
     };
-    (@machine {$($state:tt)*}{$($state_mut:tt)*}
+    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}
         $(#[$struct_meta:meta])*
         $struct_vis:vis
         struct $struct_name:ident {
@@ -72,20 +105,23 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
         $struct_vis
         struct $struct_name { $($struct_body)* }
 
-        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$($state)*}{$($state_mut)*}
+        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$($deserializer)*}{$($state)*}{$($state_mut)*}
         $($tail)*);
     };
-    (@machine {$($state:tt)*}{$($state_mut:tt)*}
+    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}
         $head:item
         $($tail:tt)*
     ) => {
         $head
-        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$($state)*}{$($state_mut)*}
+        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$($deserializer)*}{$($state)*}{$($state_mut)*}
         $($tail)*);
     };
     ($($tts:tt)*) => {
-        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {} {} $($tts)*);
+        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {}{}{} $($tts)*);
     };
 }
 
 pub(crate) use collect_EntryCompatible_impl_into_enum;
+
+// internal:
+pub(crate) use collect_EntryCompatible_impl_into_enum_match;

@@ -1051,7 +1051,7 @@ pub trait EntryCompatible {
     fn is_entry_compatible(_entry_id: EntryId, _prefix: &[u8]) -> bool {
         false
     }
-    /// Returns (type, size).  Note that size is the entire stride necessary to skip one entire blurb.
+    /// Returns (type, size).  Note that size is the entire stride necessary to skip one entire blurb.  Note that skip_step also needs to call is_entry_compatible automatically.
     fn skip_step(_entry_id: EntryId, _prefix: &[u8]) -> Option<(u16, usize)> {
         None
     }
@@ -2682,6 +2682,7 @@ pub mod memory {
     }
 
     pub mod platform_specific_override {
+        use super::{EntryId, MemoryEntryId, Error};
         crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum! {
                 // See AMD #44065
 
@@ -3646,28 +3647,6 @@ pub mod memory {
                     }
                 }
             }
-            impl<'a> SequenceElementFromBytes<'a> for RefTags<'a> {
-                fn checked_from_bytes(entry_id: EntryId, world: &mut &'a [u8]) -> Result<Self> {
-                    if !Self::is_entry_compatible(entry_id, world) {
-                        return Err(Error::EntryTypeMismatch);
-                    }
-                    let (type_, skip_step) = Self::skip_step(entry_id, world).ok_or_else(|| Error::EntryTypeMismatch)?;
-                    let mut xbuf = replace(&mut *world, &mut []);
-                    // FIXME
-                    let result = match type_ {
-                        CkeTristateMap::TAG if skip_step == size_of::<CkeTristateMap>() => Self::CkeTristateMap(take_header_from_collection::<CkeTristateMap>(&mut xbuf).unwrap()),
-                        LvDimmForce1V5::TAG if skip_step == size_of::<LvDimmForce1V5>() => Self::LvDimmForce1V5(take_header_from_collection::<LvDimmForce1V5>(&mut xbuf).unwrap()),
-                        SolderedDownSodimm::TAG if skip_step == size_of::<SolderedDownSodimm>() => Self::SolderedDownSodimm(take_header_from_collection::<SolderedDownSodimm>(&mut xbuf).unwrap()),
-                        _ => {
-                            let (raw_value, b) = xbuf.split_at(skip_step);
-                            xbuf = b;
-                            Self::Unknown(raw_value)
-                        },
-                    };
-                    (*world) = xbuf;
-                    Ok(result)
-                }
-            }
             impl<'a> MutSequenceElementFromBytes<'a> for MutRefTags<'a> {
                 fn checked_from_bytes(entry_id: EntryId, world: &mut &'a mut [u8]) -> Result<Self> {
                     if !Self::is_entry_compatible(entry_id, world) {
@@ -3702,6 +3681,7 @@ pub mod memory {
     }
 
     pub mod platform_tuning {
+        use super::{EntryId, MemoryEntryId, Error};
         crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum! {
                 use byteorder::LittleEndian;
                 use core::mem::size_of;
@@ -3796,6 +3776,76 @@ pub mod memory {
         //            type TailArrayItemType = ();
         //        }
             }
+
+            impl EntryCompatible for RefTags<'_> {
+                fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+                    match entry_id {
+                        EntryId::Memory(MemoryEntryId::PlatformTuning) => {
+                            prefix.len() >= 2
+                        },
+                        _ => false,
+                    }
+                }
+                        fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
+                            match entry_id {
+                                EntryId::Memory(MemoryEntryId::PlatformTuning) => {
+                                    if prefix.len() >= 2 {
+                                        let type_lo = prefix[0];
+                                        let type_hi = prefix[1];
+                                        let type_ = ((type_hi as u16) << 8) | (type_lo as u16);
+                                        if type_ == 0xfeef { // no len available
+                                            Some((type_, 2))
+                                        } else if prefix.len() >= 3 {
+                                            let size = (prefix[2] as usize).checked_add(2)?;
+                                            Some((type_, size))
+                                        } else {
+                                            None
+                                        }
+                                    } else {
+                                        None
+                                    }
+                                },
+                                _ => {
+                                    None
+                                },
+                            }
+                        }
+            }
+            impl EntryCompatible for MutRefTags<'_> {
+                fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+                    match entry_id {
+                        EntryId::Memory(MemoryEntryId::PlatformTuning) => {
+                            prefix.len() >= 2
+                        },
+                        _ => false,
+                    }
+                }
+                        fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
+                            match entry_id {
+                                EntryId::Memory(MemoryEntryId::PlatformTuning) => {
+                                    if prefix.len() >= 2 {
+                                        let type_lo = prefix[0];
+                                        let type_hi = prefix[1];
+                                        let type_ = ((type_hi as u16) << 8) | (type_lo as u16);
+                                        if type_ == 0xfeef { // no len available
+                                            Some((type_, 2))
+                                        } else if prefix.len() >= 3 {
+                                            let size = (prefix[2] as usize).checked_add(2)?;
+                                            Some((type_, size))
+                                        } else {
+                                            None
+                                        }
+                                    } else {
+                                        None
+                                    }
+                                },
+                                _ => {
+                                    None
+                                },
+                            }
+                        }
+            }
+
     }
 
     #[cfg(test)]
