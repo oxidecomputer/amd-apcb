@@ -501,6 +501,10 @@ impl<'a> Apcb<'a> {
         let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
             .ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER"))?;
 
+        if header.signature != *b"APCB" {
+            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::signature"));
+        }
+
         if usize::from(header.header_size) >= size_of::<V2_HEADER>() {
         } else {
             return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::header_size"));
