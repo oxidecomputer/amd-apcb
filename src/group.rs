@@ -12,7 +12,6 @@ use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use crate::entry::{EntryItem, EntryMutItem, EntryItemBody};
 
-#[derive(Debug)]
 pub struct GroupItem<'a> {
     pub(crate) header: &'a GROUP_HEADER,
     pub(crate) buf: &'a [u8],
@@ -143,6 +142,19 @@ impl GroupItem<'_> {
             buf: self.buf,
             remaining_used_size: self.used_size,
         }
+    }
+}
+
+impl core::fmt::Debug for GroupItem<'_> {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        // Note: Elides BODY--so, technically, it's not a 1:1 representation
+        let id = self.id();
+        let signature = self.signature();
+        fmt.debug_struct("GroupItem")
+           .field("signature", &signature)
+           .field("id", &id)
+           .field("group_size", &self.header.group_size)
+           .finish()
     }
 }
 
