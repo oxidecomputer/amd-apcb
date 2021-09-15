@@ -2696,7 +2696,7 @@ pub mod memory {
 
                 #[bitfield(filled = true, bits = 8)]
                 #[repr(u8)]
-                #[derive(Clone, Copy)]
+                #[derive(Clone, Copy, PartialEq)]
                 pub struct ChannelIdsSelection {
                     pub a: bool,
                     pub b: bool,
@@ -2710,6 +2710,7 @@ pub mod memory {
 
                 impl_bitfield_primitive_conversion!(ChannelIdsSelection, 0b1111_1111, u8);
 
+                #[derive(PartialEq)]
                 pub enum ChannelIds {
                     Any, // 0xff
                     Specific(ChannelIdsSelection),
@@ -2755,7 +2756,7 @@ pub mod memory {
 
                 #[bitfield(filled = true, bits = 8)]
                 #[repr(u8)]
-                #[derive(Clone, Copy)]
+                #[derive(Clone, Copy, PartialEq)]
                 pub struct SocketIds {
                     pub socket_0: bool,
                     pub socket_1: bool,

@@ -786,9 +786,15 @@ mod tests {
             match item {
                 MutRefTags::LvDimmForce1V5(item) => {
                     lvdimm_count += 1;
+                    assert!(item.sockets().unwrap() == SocketIds::ALL);
+                    assert!(item.channels().unwrap() == ChannelIds::Any);
+                    //assert!(item.dimms().unwrap() == DimmSlots::Any);
                 },
                 MutRefTags::SolderedDownSodimm(item) => {
                     sodimm_count += 1;
+                    assert!(item.sockets().unwrap() == SocketIds::ALL);
+                    assert!(item.channels().unwrap() == ChannelIds::Any);
+                    //assert!(item.dimms().unwrap() == DimmSlots::Specific(DimmSlotsSelection::new().with_dimm_slot_2(true)));
                 },
                 _ => {
                     panic!("did not expect unknown elements in platform_specific_overrides ({:?})", item);
