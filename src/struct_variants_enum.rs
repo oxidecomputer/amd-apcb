@@ -49,25 +49,25 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
     ) => {
         #[non_exhaustive]
         #[derive(Debug)]
-        pub enum RefTags<'a> {
+        pub enum ElementRef<'a> {
              Unknown(&'a [u8]),
              $($state)*
         }
         #[non_exhaustive]
         #[derive(Debug)]
-        pub enum MutRefTags<'a> {
+        pub enum MutElementRef<'a> {
              Unknown(&'a mut [u8]),
              $($state_mut)*
         }
 
-        impl<'a> SequenceElementFromBytes<'a> for RefTags<'a> {
+        impl<'a> SequenceElementFromBytes<'a> for ElementRef<'a> {
             fn checked_from_bytes(entry_id: EntryId, world: &mut &'a [u8]) -> Result<Self> {
                 let (result, xbuf) = $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@match1 {entry_id}{world}{$($deserializer)*});
                 (*world) = xbuf;
                 Ok(result)
             }
         }
-        impl<'a> MutSequenceElementFromBytes<'a> for MutRefTags<'a> {
+        impl<'a> MutSequenceElementFromBytes<'a> for MutElementRef<'a> {
             fn checked_from_bytes(entry_id: EntryId, world: &mut &'a mut [u8]) -> Result<Self> {
                 let (result, xbuf) = $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@match1mut {entry_id}{world}{$($deserializer)*});
                 (*world) = xbuf;
@@ -82,14 +82,14 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
         }
         $($tail:tt)*
     ) => {
-        impl<'a> From<&'a $struct_name> for RefTags<'a> {
-            fn from(from: &'a $struct_name) -> RefTags<'a> {
-                RefTags::$struct_name(from)
+        impl<'a> From<&'a $struct_name> for ElementRef<'a> {
+            fn from(from: &'a $struct_name) -> Self {
+                Self::$struct_name(from)
             }
         }
-        impl<'a> From<&'a mut $struct_name> for MutRefTags<'a> {
-            fn from(from: &'a mut $struct_name) -> MutRefTags<'a> {
-                MutRefTags::$struct_name(from)
+        impl<'a> From<&'a mut $struct_name> for MutElementRef<'a> {
+            fn from(from: &'a mut $struct_name) -> Self {
+                Self::$struct_name(from)
             }
         }
         $(#[$struct_meta])*
@@ -104,14 +104,14 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
         impl_EntryCompatible!($struct_name:ident, $($args:tt)*);
         $($tail:tt)*
     ) => {
-        impl<'a> From<&'a $struct_name> for RefTags<'a> {
-            fn from(from: &'a $struct_name) -> RefTags<'a> {
-                RefTags::$struct_name(from)
+        impl<'a> From<&'a $struct_name> for ElementRef<'a> {
+            fn from(from: &'a $struct_name) -> Self {
+                Self::$struct_name(from)
             }
         }
-        impl<'a> From<&'a mut $struct_name> for MutRefTags<'a> {
-            fn from(from: &'a mut $struct_name) -> MutRefTags<'a> {
-                MutRefTags::$struct_name(from)
+        impl<'a> From<&'a mut $struct_name> for MutElementRef<'a> {
+            fn from(from: &'a mut $struct_name) -> Self {
+                Self::$struct_name(from)
             }
         }
         impl_EntryCompatible!($struct_name, $($args)*);

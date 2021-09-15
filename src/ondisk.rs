@@ -3596,7 +3596,7 @@ pub mod memory {
                 // TODO: conditional overrides, actions.
             }
 
-        impl EntryCompatible for RefTags<'_> {
+        impl EntryCompatible for ElementRef<'_> {
             fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
                 match entry_id {
                     EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => prefix.len() >= 2,
@@ -3618,7 +3618,7 @@ pub mod memory {
                 }
             }
         }
-        impl EntryCompatible for MutRefTags<'_> {
+        impl EntryCompatible for MutElementRef<'_> {
             fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
                 match entry_id {
                     EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => prefix.len() >= 2,
@@ -3641,7 +3641,7 @@ pub mod memory {
             }
         }
         /* We don't want Unknown to be serializable, so this is not implemented on purpose.
-        impl SequenceElementAsBytes for MutRefTags {
+        impl SequenceElementAsBytes for MutElementRef {
             fn checked_as_bytes(&mut self, entry_id: EntryId) -> Option<&[u8]> {
                 match &mut self {
                     Self::Unknown(ref item) => ,
@@ -3748,7 +3748,7 @@ pub mod memory {
         //        }
             }
 
-        impl EntryCompatible for RefTags<'_> {
+        impl EntryCompatible for ElementRef<'_> {
             fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
                 match entry_id {
                     EntryId::Memory(MemoryEntryId::PlatformTuning) => prefix.len() >= 2,
@@ -3779,7 +3779,7 @@ pub mod memory {
                 }
             }
         }
-        impl EntryCompatible for MutRefTags<'_> {
+        impl EntryCompatible for MutElementRef<'_> {
             fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
                 match entry_id {
                     EntryId::Memory(MemoryEntryId::PlatformTuning) => prefix.len() >= 2,
@@ -3880,12 +3880,27 @@ pub mod memory {
         #[test]
         fn test_platform_specific_overrides() {
             use platform_specific_override::{
-                ChannelIds, DimmSlots, LvDimmForce1V5, RefTags, SocketIds,
+                ChannelIds, DimmSlots, LvDimmForce1V5, ElementRef, SocketIds,
             };
             let lvdimm = LvDimmForce1V5::new(SocketIds::ALL, ChannelIds::Any, DimmSlots::Any);
-            let tag: Option<RefTags<'_>> = Some((&lvdimm).into());
+            let tag: Option<ElementRef<'_>> = Some((&lvdimm).into());
             match tag {
-                Some(RefTags::LvDimmForce1V5(ref _item)) => {}
+                Some(ElementRef::LvDimmForce1V5(ref _item)) => {}
+                _ => {
+                    assert!(false);
+                }
+            }
+        }
+
+        #[test]
+        fn test_platform_specific_overrides_mut() {
+            use platform_specific_override::{
+                ChannelIds, DimmSlots, LvDimmForce1V5, MutElementRef, SocketIds,
+            };
+            let mut lvdimm = LvDimmForce1V5::new(SocketIds::ALL, ChannelIds::Any, DimmSlots::Any);
+            let tag: Option<MutElementRef<'_>> = Some((&mut lvdimm).into());
+            match tag {
+                Some(MutElementRef::LvDimmForce1V5(ref _item)) => {}
                 _ => {
                     assert!(false);
                 }

@@ -740,7 +740,7 @@ mod tests {
 
     #[test]
     fn insert_platform_specific_overrides() -> Result<(), Error> {
-        use crate::memory::platform_specific_override::{SocketIds, ChannelIds, DimmSlots, LvDimmForce1V5, DimmSlotsSelection, SolderedDownSodimm, MutRefTags};
+        use crate::memory::platform_specific_override::{SocketIds, ChannelIds, DimmSlots, LvDimmForce1V5, DimmSlotsSelection, SolderedDownSodimm, MutElementRef};
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
         let mut apcb = Apcb::create(&mut buffer[0..], 42).unwrap();
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
@@ -778,19 +778,19 @@ mod tests {
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
-        let mut platform_specific_overrides = entry.body_as_struct_sequence_mut::<MutRefTags<'_>>().unwrap();
+        let mut platform_specific_overrides = entry.body_as_struct_sequence_mut::<MutElementRef<'_>>().unwrap();
         let platform_specific_overrides = platform_specific_overrides.iter_mut();
         let mut lvdimm_count = 0;
         let mut sodimm_count = 0;
         for item in platform_specific_overrides {
             match item {
-                MutRefTags::LvDimmForce1V5(item) => {
+                MutElementRef::LvDimmForce1V5(item) => {
                     lvdimm_count += 1;
                     assert!(item.sockets().unwrap() == SocketIds::ALL);
                     assert!(item.channels().unwrap() == ChannelIds::Any);
                     //assert!(item.dimms().unwrap() == DimmSlots::Any);
                 },
-                MutRefTags::SolderedDownSodimm(item) => {
+                MutElementRef::SolderedDownSodimm(item) => {
                     sodimm_count += 1;
                     assert!(item.sockets().unwrap() == SocketIds::ALL);
                     assert!(item.channels().unwrap() == ChannelIds::Any);
