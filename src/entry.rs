@@ -505,10 +505,13 @@ impl core::fmt::Debug for EntryItem<'_> {
         let context_format = self.context_format();
         let priority_mask = self.priority_mask();
         let board_instance_mask = self.board_instance_mask();
+        let entry_size = self.header.entry_size;
+        let header_size = size_of::<ENTRY_HEADER>();
         // Note: Elides BODY--so, technically, it's not a 1:1 representation
         fmt.debug_struct("EntryItem")
            .field("id", &id)
-           .field("entry_size", &self.header.entry_size)
+           .field("entry_size", &entry_size)
+           .field("header_size", &header_size)
            .field("instance_id", &instance_id)
            .field("context_type", &context_type)
            .field("context_format", &context_format)
