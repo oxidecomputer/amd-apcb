@@ -322,7 +322,6 @@ impl<'a> EntryMutItem<'a> {
     }
 }
 
-#[derive(Debug)]
 pub struct EntryItem<'a> {
     pub(crate) header: &'a ENTRY_HEADER,
     pub body: EntryItemBody<&'a [u8]>,
@@ -495,5 +494,29 @@ impl<'a> EntryItem<'a> {
                 None
             },
         }
+    }
+}
+
+impl core::fmt::Debug for EntryItem<'_> {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let id = self.id();
+        let instance_id = self.instance_id();
+        let context_type = self.context_type();
+        let context_format = self.context_format();
+        let priority_mask = self.priority_mask();
+        let board_instance_mask = self.board_instance_mask();
+        // Note: Elides BODY--so, technically, it's not a 1:1 representation
+        fmt.debug_struct("EntryItem")
+           .field("id", &id)
+           .field("entry_size", &self.header.entry_size)
+           .field("instance_id", &instance_id)
+           .field("context_type", &context_type)
+           .field("context_format", &context_format)
+           .field("unit_size", &self.header.unit_size)
+           .field("priority_mask", &priority_mask)
+           .field("key_size", &self.header.key_size)
+           .field("key_pos", &self.header.key_pos)
+           .field("board_instance_mask", &board_instance_mask)
+           .finish()
     }
 }
