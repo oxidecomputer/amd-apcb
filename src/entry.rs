@@ -2,7 +2,7 @@ use core::marker::PhantomData;
 use core::mem::size_of;
 use crate::types::{Result, Error, FileSystemError};
 use crate::ondisk::ENTRY_HEADER;
-use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, EntryCompatible, HeaderWithTail, MutSequenceElementFromBytes};
+use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, EntryCompatible, HeaderWithTail, MutSequenceElementFromBytes, SequenceElementFromBytes};
 use num_traits::FromPrimitive;
 use crate::tokens_entry::{TokensEntryBodyItem};
 use zerocopy::{AsBytes, FromBytes};
@@ -125,7 +125,7 @@ pub struct StructSequenceEntryMutIter<'a, T: EntryCompatible + MutSequenceElemen
     _data: PhantomData<T>,
 }
 
-// Note: T is an enum (usually a MutRefTags)
+// Note: T is an enum (usually a MutElementRef)
 impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> Iterator for StructSequenceEntryMutIter<'a, T> {
     type Item = T;
     fn next<'s>(&'s mut self) -> Option<Self::Item> {
@@ -328,6 +328,44 @@ pub struct EntryItem<'a> {
     pub body: EntryItemBody<&'a [u8]>,
 }
 
+pub struct StructSequenceEntryItem<'a, T> {
+    buf: &'a [u8],
+    entry_id: EntryId,
+    _data: PhantomData<&'a T>,
+}
+
+impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> StructSequenceEntryItem<'a, T> {
+    pub fn iter(self: &'a Self) -> StructSequenceEntryIter<'a, T> {
+        StructSequenceEntryIter::<T> {
+            buf: self.buf,
+            entry_id: self.entry_id,
+            _data: PhantomData,
+        }
+    }
+}
+
+pub struct StructSequenceEntryIter<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> {
+    buf: &'a [u8],
+    entry_id: EntryId,
+    _data: PhantomData<T>,
+}
+
+// Note: T is an enum (usually a ElemntRef)
+impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> Iterator for StructSequenceEntryIter<'a, T> {
+    type Item = T;
+    fn next<'s>(&'s mut self) -> Option<Self::Item> {
+        if self.buf.is_empty() {
+            None
+        } else if !T::is_entry_compatible(self.entry_id, self.buf) {
+            //Err(Error::EntryTypeMismatch) FIXME
+            None
+        } else {
+            // Note: If it was statically known: let result = take_header_from_collection::<T>(&mut a).ok_or_else(|| Error::EntryTypeMismatch)?;
+            T::checked_from_bytes(self.entry_id, &mut self.buf).ok() // FIXME handle error
+        }
+    }
+}
+
 pub struct StructArrayEntryItem<'a, T: Sized + FromBytes> {
     buf: &'a [u8],
     _item: PhantomData<&'a T>,
@@ -435,6 +473,23 @@ impl<'a> EntryItem<'a> {
                 } else {
                     None
                 }
+            },
+            _ => {
+                None
+            },
+        }
+    }
+
+    /// This allows the user to iterate over a sequence of different-size structs in the same Entry.
+    pub fn body_as_struct_sequence<T: EntryCompatible>(self: &'a Self) -> Option<StructSequenceEntryItem<'a, T>> {
+        let id = self.id();
+        match &self.body {
+            EntryItemBody::Struct(buf) => {
+                Some(StructSequenceEntryItem::<T> {
+                     buf,
+                     entry_id: id,
+                     _data: PhantomData,
+                })
             },
             _ => {
                 None
