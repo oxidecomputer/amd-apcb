@@ -19,7 +19,6 @@
 # Tests
 
 * Add unit test for token entries!!  mutation
-* test ddr_rates
 * Add test to insert wrong-type struct using insert_struct*entry
 * bitfield out-of-range
 * struct field out-of-range
