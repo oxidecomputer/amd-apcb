@@ -2684,917 +2684,917 @@ pub mod memory {
     pub mod platform_specific_override {
         use super::{EntryId, Error, MemoryEntryId};
         crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum! {
-                // See AMD #44065
+            // See AMD #44065
 
-                use byteorder::LittleEndian;
-                use core::mem::size_of;
-                use static_assertions::const_assert;
-                use zerocopy::{AsBytes, FromBytes, Unaligned, U16, U32};
-                use super::super::*;
-                use crate::struct_accessors::{Getter, Setter, make_accessors};
-                use crate::types::Result;
+            use byteorder::LittleEndian;
+            use core::mem::size_of;
+            use static_assertions::const_assert;
+            use zerocopy::{AsBytes, FromBytes, Unaligned, U16, U32};
+            use super::super::*;
+            use crate::struct_accessors::{Getter, Setter, make_accessors};
+            use crate::types::Result;
 
-                #[bitfield(filled = true, bits = 8)]
-                #[repr(u8)]
-                #[derive(Clone, Copy, PartialEq)]
-                pub struct ChannelIdsSelection {
-                    pub a: bool,
-                    pub b: bool,
-                    pub c: bool,
-                    pub d: bool,
-                    pub e: bool,
-                    pub f: bool,
-                    pub g: bool,
-                    pub h: bool,
-                }
+            #[bitfield(filled = true, bits = 8)]
+            #[repr(u8)]
+            #[derive(Clone, Copy, PartialEq)]
+            pub struct ChannelIdsSelection {
+                pub a: bool,
+                pub b: bool,
+                pub c: bool,
+                pub d: bool,
+                pub e: bool,
+                pub f: bool,
+                pub g: bool,
+                pub h: bool,
+            }
 
-                impl_bitfield_primitive_conversion!(ChannelIdsSelection, 0b1111_1111, u8);
+            impl_bitfield_primitive_conversion!(ChannelIdsSelection, 0b1111_1111, u8);
 
-                #[derive(PartialEq)]
-                pub enum ChannelIds {
-                    Any, // 0xff
-                    Specific(ChannelIdsSelection),
-                }
+            #[derive(PartialEq)]
+            pub enum ChannelIds {
+                Any, // 0xff
+                Specific(ChannelIdsSelection),
+            }
 
-                impl FromPrimitive for ChannelIds {
-                    #[inline]
-                    fn from_u64(raw_value: u64) -> Option<Self> {
-                        if raw_value == 0xff {
-                            Some(Self::Any)
-                        } else if raw_value < 0xff { // other valid
-                            Some(Self::Specific(ChannelIdsSelection::from_u8(raw_value as u8)?))
-                        } else {
-                            None
-                        }
-                    }
-                    #[inline]
-                    fn from_i64(raw_value: i64) -> Option<Self> {
-                        if raw_value >= 0 {
-                            Self::from_u64(raw_value as u64)
-                        } else {
-                            None
-                        }
+            impl FromPrimitive for ChannelIds {
+                #[inline]
+                fn from_u64(raw_value: u64) -> Option<Self> {
+                    if raw_value == 0xff {
+                        Some(Self::Any)
+                    } else if raw_value < 0xff { // other valid
+                        Some(Self::Specific(ChannelIdsSelection::from_u8(raw_value as u8)?))
+                    } else {
+                        None
                     }
                 }
-
-                impl ToPrimitive for ChannelIds {
-                    #[inline]
-                    fn to_i64(&self) -> Option<i64> {
-                        match self {
-                            Self::Any => Some(0xff),
-                            Self::Specific(ids) => Some(ids.to_i64()?), // Assumption: resulting value is not 0xff
-                        }
-                    }
-                    #[inline]
-                    fn to_u64(&self) -> Option<u64> {
-                        match self {
-                            Self::Any => Some(0xff),
-                            Self::Specific(ids) => Some(ids.to_u64()?), // Assumption: resulting value is not 0xff
-                        }
+                #[inline]
+                fn from_i64(raw_value: i64) -> Option<Self> {
+                    if raw_value >= 0 {
+                        Self::from_u64(raw_value as u64)
+                    } else {
+                        None
                     }
                 }
+            }
 
-                #[bitfield(filled = true, bits = 8)]
-                #[repr(u8)]
-                #[derive(Clone, Copy, PartialEq)]
-                pub struct SocketIds {
-                    pub socket_0: bool,
-                    pub socket_1: bool,
-                    pub socket_2: bool,
-                    pub socket_3: bool,
-                    pub socket_4: bool,
-                    pub socket_5: bool,
-                    pub socket_6: bool,
-                    pub socket_7: bool,
-                }
-                impl_bitfield_primitive_conversion!(SocketIds, 0b1111_1111, u8);
-
-                impl SocketIds {
-                    pub const ALL: Self = Self::from_bytes([0xff]);
-                }
-
-                #[bitfield(bits = 8)]
-                #[repr(u8)]
-                #[derive(Clone, Copy)]
-                pub struct DimmSlotsSelection {
-                    pub dimm_slot_0: bool, // @0
-                    pub dimm_slot_1: bool, // @1
-                    pub dimm_slot_2: bool, // @2
-                    pub dimm_slot_3: bool, // @3
-                    #[skip] __: B4,
-                }
-                impl_bitfield_primitive_conversion!(DimmSlotsSelection, 0b1111, u8);
-                pub enum DimmSlots {
-                    Any, // 0xff
-                    Specific(DimmSlotsSelection),
-                }
-
-                impl FromPrimitive for DimmSlots {
-                    #[inline]
-                    fn from_u64(raw_value: u64) -> Option<Self> {
-                        if raw_value == 0xff { // valid
-                            Some(Self::Any)
-                        } else if raw_value < 16 { // valid
-                            Some(Self::Specific(DimmSlotsSelection::from_u8(raw_value as u8)?))
-                        } else {
-                            None
-                        }
-                    }
-                    #[inline]
-                    fn from_i64(raw_value: i64) -> Option<Self> {
-                        if raw_value >= 0 {
-                            Self::from_u64(raw_value as u64)
-                        } else {
-                            None
-                        }
+            impl ToPrimitive for ChannelIds {
+                #[inline]
+                fn to_i64(&self) -> Option<i64> {
+                    match self {
+                        Self::Any => Some(0xff),
+                        Self::Specific(ids) => Some(ids.to_i64()?), // Assumption: resulting value is not 0xff
                     }
                 }
-
-                impl ToPrimitive for DimmSlots {
-                    #[inline]
-                    fn to_i64(&self) -> Option<i64> {
-                        match self {
-                            Self::Any => Some(0xff),
-                            Self::Specific(value) => Some(value.to_i64()?), // Assumption: not 0xff
-                        }
-                    }
-                    #[inline]
-                    fn to_u64(&self) -> Option<u64> {
-                        match self {
-                            Self::Any => Some(0xff),
-                            Self::Specific(value) => Some(value.to_u64()?), // Assumption: not 0xff
-                        }
+                #[inline]
+                fn to_u64(&self) -> Option<u64> {
+                    match self {
+                        Self::Any => Some(0xff),
+                        Self::Specific(ids) => Some(ids.to_u64()?), // Assumption: resulting value is not 0xff
                     }
                 }
+            }
 
-                macro_rules! impl_EntryCompatible {($struct_:ty, $type_:expr, $payload_size:expr) => (
-                    const_assert!($payload_size as usize + 2usize == size_of::<$struct_>());
+            #[bitfield(filled = true, bits = 8)]
+            #[repr(u8)]
+            #[derive(Clone, Copy, PartialEq)]
+            pub struct SocketIds {
+                pub socket_0: bool,
+                pub socket_1: bool,
+                pub socket_2: bool,
+                pub socket_3: bool,
+                pub socket_4: bool,
+                pub socket_5: bool,
+                pub socket_6: bool,
+                pub socket_7: bool,
+            }
+            impl_bitfield_primitive_conversion!(SocketIds, 0b1111_1111, u8);
 
-                    impl $struct_ {
-                        const TAG: u16 = $type_;
+            impl SocketIds {
+                pub const ALL: Self = Self::from_bytes([0xff]);
+            }
+
+            #[bitfield(bits = 8)]
+            #[repr(u8)]
+            #[derive(Clone, Copy)]
+            pub struct DimmSlotsSelection {
+                pub dimm_slot_0: bool, // @0
+                pub dimm_slot_1: bool, // @1
+                pub dimm_slot_2: bool, // @2
+                pub dimm_slot_3: bool, // @3
+                #[skip] __: B4,
+            }
+            impl_bitfield_primitive_conversion!(DimmSlotsSelection, 0b1111, u8);
+            pub enum DimmSlots {
+                Any, // 0xff
+                Specific(DimmSlotsSelection),
+            }
+
+            impl FromPrimitive for DimmSlots {
+                #[inline]
+                fn from_u64(raw_value: u64) -> Option<Self> {
+                    if raw_value == 0xff { // valid
+                        Some(Self::Any)
+                    } else if raw_value < 16 { // valid
+                        Some(Self::Specific(DimmSlotsSelection::from_u8(raw_value as u8)?))
+                    } else {
+                        None
                     }
+                }
+                #[inline]
+                fn from_i64(raw_value: i64) -> Option<Self> {
+                    if raw_value >= 0 {
+                        Self::from_u64(raw_value as u64)
+                    } else {
+                        None
+                    }
+                }
+            }
 
-                    impl EntryCompatible for $struct_ {
-                        fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
-                            match entry_id {
-                                EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
-                                    prefix.len() >= 2 && prefix[0] == $type_ && prefix[1] as usize + 2usize == size_of::<Self>()
-                                },
-                                _ => false,
-                            }
+            impl ToPrimitive for DimmSlots {
+                #[inline]
+                fn to_i64(&self) -> Option<i64> {
+                    match self {
+                        Self::Any => Some(0xff),
+                        Self::Specific(value) => Some(value.to_i64()?), // Assumption: not 0xff
+                    }
+                }
+                #[inline]
+                fn to_u64(&self) -> Option<u64> {
+                    match self {
+                        Self::Any => Some(0xff),
+                        Self::Specific(value) => Some(value.to_u64()?), // Assumption: not 0xff
+                    }
+                }
+            }
+
+            macro_rules! impl_EntryCompatible {($struct_:ty, $type_:expr, $payload_size:expr) => (
+                const_assert!($payload_size as usize + 2usize == size_of::<$struct_>());
+
+                impl $struct_ {
+                    const TAG: u16 = $type_;
+                }
+
+                impl EntryCompatible for $struct_ {
+                    fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+                        match entry_id {
+                            EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
+                                prefix.len() >= 2 && prefix[0] == $type_ && prefix[1] as usize + 2usize == size_of::<Self>()
+                            },
+                            _ => false,
                         }
-                        fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
-                            match entry_id {
-                                EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
-                                    if prefix.len() >= 2 {
-                                        let type_ = prefix[0] as u16;
-                                        let size = (prefix[1] as usize).checked_add(2)?;
-                                        Some((type_, size))
-                                    } else {
-                                        None
-                                    }
-                                },
-                                _ => {
+                    }
+                    fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
+                        match entry_id {
+                            EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
+                                if prefix.len() >= 2 {
+                                    let type_ = prefix[0] as u16;
+                                    let size = (prefix[1] as usize).checked_add(2)?;
+                                    Some((type_, size))
+                                } else {
                                     None
                                 }
-                            }
-                        }
-                    }
-
-                    impl SequenceElementAsBytes for $struct_ {
-                        fn checked_as_bytes(&self, entry_id: EntryId) -> Option<&[u8]> {
-                            let blob = AsBytes::as_bytes(self);
-                            if <$struct_>::is_entry_compatible(entry_id, blob) {
-                                Some(blob)
-                            } else {
+                            },
+                            _ => {
                                 None
                             }
                         }
                     }
-
-        //            impl HeaderWithTail for $struct_ {
-        //                type TailArrayItemType = ();
-        //            }
-                )}
-
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct CkeTristateMap {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
-                        /// index i = CPU package's clock enable (CKE) pin, value = memory rank's CKE pin mask
-                        pub connections: [u8; 4],
-                    }
                 }
-                impl_EntryCompatible!(CkeTristateMap, 1, 7);
-                impl Default for CkeTristateMap {
-                    fn default() -> Self {
-                        Self {
-                            type_: 1.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            connections: [0; 4], // probably invalid
+
+                impl SequenceElementAsBytes for $struct_ {
+                    fn checked_as_bytes(&self, entry_id: EntryId) -> Option<&[u8]> {
+                        let blob = AsBytes::as_bytes(self);
+                        if <$struct_>::is_entry_compatible(entry_id, blob) {
+                            Some(blob)
+                        } else {
+                            None
                         }
                     }
                 }
 
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct OdtTristateMap {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
-                        /// index i = CPU package's ODT pin (MA_ODT\[i\]), value = memory rank's ODT pin mask
-                        pub connections: [u8; 4],
-                    }
-                }
-                impl_EntryCompatible!(OdtTristateMap, 2, 7);
-                impl Default for OdtTristateMap {
-                    fn default() -> Self {
-                        Self {
-                            type_: 2.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            connections: [0; 4], // probably invalid
-                        }
-                    }
-                }
+    //            impl HeaderWithTail for $struct_ {
+    //                type TailArrayItemType = ();
+    //            }
+            )}
 
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct CsTristateMap {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
-                        /// index i = CPU package CS pin (MA_CS_L\[i\]), value = memory rank's CS pin mask
-                        pub connections: [u8; 8],
-                    }
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct CkeTristateMap {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
+                    channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
+                    dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
+                    /// index i = CPU package's clock enable (CKE) pin, value = memory rank's CKE pin mask
+                    pub connections: [u8; 4],
                 }
-                impl_EntryCompatible!(CsTristateMap, 3, 11);
-                impl Default for CsTristateMap {
-                    fn default() -> Self {
-                        Self {
-                            type_: 3.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            connections: [0; 8], // probably invalid
-                        }
-                    }
-                }
-
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct MaxDimmsPerChannel {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
-                        value: u8 : pub get Result<u8> : pub set u8,
-                    }
-                }
-                impl_EntryCompatible!(MaxDimmsPerChannel, 4, 4);
-                impl Default for MaxDimmsPerChannel {
-                    fn default() -> Self {
-                        Self {
-                            type_: 4.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            value: 2,
-                        }
-                    }
-                }
-
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct MemclkMap {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "all"
-                        /// See BKDG.  Example: index i = M\[B,A\]_CLK_H/L\[i\]; value = mask of which CS are connected (CS0 = 1 << 0, CS1 = 1 << 1, CS2 = 1 << 2, CS3 = 1 << 3).
-                        pub connections: [u8; 8], // index: memory clock pin; value: mask for connected CS pins on DIMM
-                    }
-                }
-                impl_EntryCompatible!(MemclkMap, 7, 11);
-                impl Default for MemclkMap {
-                    fn default() -> Self {
-                        Self {
-                            type_: 7.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            connections: [0; 8], // all disabled
-                        }
-                    }
-                }
-                impl MemclkMap {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, connections: [u8; 8]) -> Self {
-                        Self {
-                            sockets: sockets.to_u8().unwrap(),
-                            channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
-                            connections,
-                            ..Self::default()
-                        }
-                    }
-                }
-
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct MaxChannelsPerSocket {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds>,  // Note: must always be "all"
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "all" here
-                        value: u8 : pub get Result<u8> : pub set u8,
-                    }
-                }
-                impl_EntryCompatible!(MaxChannelsPerSocket, 8, 4);
-                impl Default for MaxChannelsPerSocket {
-                    fn default() -> Self {
-                        Self {
-                            type_: 8.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            value: 2,
-                        }
-                    }
-                }
-                impl MaxChannelsPerSocket {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, value: u8) -> Self {
-                        Self {
-                            sockets: sockets.to_u8().unwrap(),
-                            channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
-                            value,
-                            ..Self::default()
-                        }
-                    }
-                }
-
-                #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
-                pub enum TimingMode {
-                    Auto = 0,
-                    Limit = 1,
-                    Specific = 2,
-                }
-
-                #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
-                pub enum MemBusSpeedType { // in MHz
-                    Ddr400 = 200,
-                    Ddr533 = 266,
-                    Ddr667 = 333,
-                    Ddr800 = 400,
-                    Ddr1066 = 533,
-                    Ddr1333 = 667,
-                    Ddr1600 = 800,
-                    Ddr1866 = 933,
-                    Ddr2100 = 1050,
-                    Ddr2133 = 1067,
-                    Ddr2400 = 1200,
-                    Ddr2667 = 1333,
-                    Ddr2800 = 1400,
-                    Ddr2933 = 1467,
-                    Ddr3066 = 1533,
-                    Ddr3200 = 1600,
-                    Ddr3333 = 1667,
-                    Ddr3466 = 1733,
-                    Ddr3600 = 1800,
-                    Ddr3733 = 1867,
-                    Ddr3866 = 1933,
-                    Ddr4000 = 2000,
-                    Ddr4200 = 2100,
-                    Ddr4267 = 2133,
-                    Ddr4333 = 2167,
-                    Ddr4400 = 2200,
-                }
-
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct MemBusSpeed {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "all"
-                        timing_mode: U32<LittleEndian> : pub get Result<TimingMode> : pub set TimingMode,
-                        bus_speed: U32<LittleEndian> : pub get Result<MemBusSpeedType> : pub set MemBusSpeedType,
-                    }
-                }
-                impl_EntryCompatible!(MemBusSpeed, 9, 11);
-                impl Default for MemBusSpeed {
-                    fn default() -> Self {
-                        Self {
-                            type_: 9.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            timing_mode: TimingMode::Auto.to_u32().unwrap().into(),
-                            bus_speed: MemBusSpeedType::Ddr1600.to_u32().unwrap().into(), // User probably wants to change this
-                        }
-                    }
-                }
-                impl MemBusSpeed {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, timing_mode: u32, bus_speed: u32) -> Self {
-                        Self {
-                            sockets: sockets.to_u8().unwrap(),
-                            channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
-                            timing_mode: timing_mode.into(),
-                            bus_speed: bus_speed.into(),
-                            ..Self::default()
-                        }
-                    }
-                }
-
-                make_accessors! {
-                    /// Max. Chip Selects per channel
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct MaxCsPerChannel {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "all"
-                        value: u8,
-                    }
-                }
-                impl_EntryCompatible!(MaxCsPerChannel, 10, 4);
-                impl Default for MaxCsPerChannel {
-                    fn default() -> Self {
-                        Self {
-                            type_: 10.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            value: 0, // probably invalid
-                        }
-                    }
-                }
-                impl MaxCsPerChannel {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, value: u8) -> Self {
-                        Self {
-                            sockets: sockets.to_u8().unwrap(),
-                            channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
-                            value,
-                            ..Self::default()
-                        }
-                    }
-                }
-
-                #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
-                pub enum MemTechnologyType {
-                    Ddr2 = 0,
-                    Ddr3 = 1,
-                    Gddr5 = 2,
-                    Ddr4 = 3,
-                    Lpddr3 = 4,
-                    Lpddr4 = 5,
-                    Hbm = 6,
-                    Gddr6 = 7,
-                    Ddr5 = 8,
-                    Lpddr5 = 9,
-                }
-
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct MemTechnology {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds>, // Note: must always be "all" here
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "all" here
-                        technology_type: U32<LittleEndian> : pub get Result<MemTechnologyType> : pub set MemTechnologyType,
-                    }
-                }
-                impl_EntryCompatible!(MemTechnology, 11, 7);
-                impl Default for MemTechnology {
-                    fn default() -> Self {
-                        Self {
-                            type_: 11.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            technology_type: 0.into(), // probably invalid
-                        }
-                    }
-                }
-                impl MemTechnology {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, technology_type: u32) -> Self {
-                        Self {
-                            sockets: sockets.to_u8().unwrap(),
-                            channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
-                            technology_type: technology_type.into(),
-                            ..Self::default()
-                        }
-                    }
-                }
-
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct WriteLevellingSeedDelay {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
-                        seed: [u8; 8],
-                        ecc_seed: u8,
-                    }
-                }
-                impl_EntryCompatible!(WriteLevellingSeedDelay, 12, 12);
-                impl Default for WriteLevellingSeedDelay {
-                    fn default() -> Self {
-                        Self {
-                            type_: 12.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            seed: [0.into(); 8], // probably invalid
-                            ecc_seed: 0.into(), // probably invalid
-                        }
-                    }
-                }
-
-                make_accessors! {
-                    /// See <https://www.amd.com/system/files/TechDocs/43170_14h_Mod_00h-0Fh_BKDG.pdf> section 2.9.3.7.2.1
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct RxEnSeed {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
-                        seed: [U16<LittleEndian>; 8],
-                        ecc_seed: U16<LittleEndian>,
-                    }
-                }
-                impl_EntryCompatible!(RxEnSeed, 13, 21);
-                impl Default for RxEnSeed {
-                    fn default() -> Self {
-                        Self {
-                            type_: 13.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            seed: [0.into(); 8], // probably invalid
-                            ecc_seed: 0.into(), // probably invalid
-                        }
-                    }
-                }
-                impl RxEnSeed {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, seed: [u16; 8], ecc_seed: u16) -> Self {
-                        Self {
-                            sockets: sockets.to_u8().unwrap(),
-                            channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
-                            seed: [seed[0].into(), seed[1].into(), seed[2].into(), seed[3].into(), seed[4].into(), seed[5].into(), seed[6].into(), seed[7].into()],
-                            ecc_seed: ecc_seed.into(),
-                            ..Self::default()
-                        }
-                    }
-                }
-
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct LrDimmNoCs6Cs7Routing {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
-                        value: u8, // Note: always 1
-                    }
-                }
-                impl_EntryCompatible!(LrDimmNoCs6Cs7Routing, 14, 4);
-                impl Default for LrDimmNoCs6Cs7Routing {
-                    fn default() -> Self {
-                        Self {
-                            type_: 14.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            value: 1,
-                        }
-                    }
-                }
-                impl LrDimmNoCs6Cs7Routing {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots) -> Self {
-                        Self {
-                            sockets: sockets.to_u8().unwrap(),
-                            channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
-                            ..Self::default()
-                        }
-                    }
-                }
-
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct SolderedDownSodimm {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
-                        value: u8, // Note: always 1
-                    }
-                }
-                impl_EntryCompatible!(SolderedDownSodimm, 15, 4);
-                impl Default for SolderedDownSodimm {
-                    fn default() -> Self {
-                        Self {
-                            type_: 15.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            value: 1,
-                        }
-                    }
-                }
-                impl SolderedDownSodimm {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots) -> Self {
-                        Self {
-                            sockets: sockets.to_u8().unwrap(),
-                            channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
-                            ..Self::default()
-                        }
-                    }
-                }
-
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct LvDimmForce1V5 {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds>, // Note: always "all"
-                        channels: u8 : pub get Result<ChannelIds>, // Note: always "all"
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
-                        value: u8, // Note: always 1
-                    }
-                }
-                impl_EntryCompatible!(LvDimmForce1V5, 16, 4);
-                impl Default for LvDimmForce1V5 {
-                    fn default() -> Self {
-                        Self {
-                            type_: 16.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            value: 1,
-                        }
-                    }
-                }
-                impl LvDimmForce1V5 {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots) -> Self {
-                        Self {
-                            sockets: sockets.to_u8().unwrap(),
-                            channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
-                            ..Self::default()
-                        }
-                    }
-                }
-
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct MinimumRwDataEyeWidth {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
-                        min_read_data_eye_width: u8 : pub get Result<u8> : pub set u8,
-                        min_write_data_eye_width: u8 : pub get Result<u8> : pub set u8,
-                    }
-                }
-                impl_EntryCompatible!(MinimumRwDataEyeWidth, 17, 5);
-                impl Default for MinimumRwDataEyeWidth {
-                    fn default() -> Self {
-                        Self {
-                            type_: 17.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            min_read_data_eye_width: 0, // probably invalid
-                            min_write_data_eye_width: 0, // probably invalid
-                        }
-                    }
-                }
-                impl MinimumRwDataEyeWidth {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, min_read_data_eye_width: u8, min_write_data_eye_width: u8) -> Self {
-                        Self {
-                            sockets: sockets.to_u8().unwrap(),
-                            channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
-                            min_read_data_eye_width,
-                            min_write_data_eye_width,
-                            ..Self::default()
-                        }
-                    }
-                }
-
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct CpuFamilyFilter {
-                        type_: u8,
-                        payload_size: u8,
-                        cpu_family_revision: U32<LittleEndian> : pub get Result<u32> : pub set u32,
-                    }
-                }
-                impl_EntryCompatible!(CpuFamilyFilter, 18, 4);
-                impl Default for CpuFamilyFilter {
-                    fn default() -> Self {
-                        Self {
-                            type_: 18.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            cpu_family_revision: 0.into(), // probably invalid
-                        }
-                    }
-                }
-                impl CpuFamilyFilter {
-                    pub fn new(cpu_family_revision: u32) -> Self {
-                        Self {
-                            cpu_family_revision: cpu_family_revision.into(),
-                            ..Self::default()
-                        }
-                    }
-                }
-
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct SolderedDownDimmsPerChannel {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
-                        value: u8 : pub get Result<u8> : pub set u8,
-                    }
-                }
-                impl_EntryCompatible!(SolderedDownDimmsPerChannel, 19, 4);
-                impl Default for SolderedDownDimmsPerChannel {
-                    fn default() -> Self {
-                        Self {
-                            type_: 19.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            value: 0, // probably invalid
-                        }
-                    }
-                }
-                impl SolderedDownDimmsPerChannel {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, value: u8) -> Self {
-                        Self {
-                            sockets: sockets.to_u8().unwrap(),
-                            channels: channels.to_u8().unwrap(),
-                            value,
-                            ..Self::default()
-                        }
-                    }
-                }
-
-                #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
-                pub enum MemPowerPolicyType {
-                    Performance = 0,
-                    BatteryLife = 1,
-                    Auto = 2,
-                }
-
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct MemPowerPolicy {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds>, // Note: always "all"
-                        channels: u8 : pub get Result<ChannelIds>, // Note: always "all"
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
-                        value: u8 : pub get Result<MemPowerPolicyType> : pub set MemPowerPolicyType,
-                    }
-                }
-                impl_EntryCompatible!(MemPowerPolicy, 20, 4);
-                impl Default for MemPowerPolicy {
-                    fn default() -> Self {
-                        Self {
-                            type_: 20.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            value: 0, // probably invalid
-                        }
-                    }
-                }
-                impl MemPowerPolicy {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, value: u8) -> Self {
-                        Self {
-                            sockets: sockets.to_u8().unwrap(),
-                            channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
-                            value,
-                            ..Self::default()
-                        }
-                    }
-                }
-
-                #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
-                pub enum MotherboardLayerCount {
-                    L4 = 0,
-                    L6 = 1,
-                }
-
-                make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                    #[repr(C, packed)]
-                    pub struct MotherboardLayers {
-                        type_: u8,
-                        payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds>, // Note: always "all"
-                        channels: u8 : pub get Result<ChannelIds>, // Note: always "all"
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
-                        value: u8 : pub get Result<MotherboardLayerCount> : pub set MotherboardLayerCount,
-                    }
-                }
-                impl_EntryCompatible!(MotherboardLayers, 21, 4);
-                impl Default for MotherboardLayers {
-                    fn default() -> Self {
-                        Self {
-                            type_: 21.into(),
-                            payload_size: (size_of::<Self>() - 2) as u8,
-                            sockets: SocketIds::ALL.to_u8().unwrap(),
-                            channels: ChannelIds::Any.to_u8().unwrap(),
-                            dimms: DimmSlots::Any.to_u8().unwrap(),
-                            value: 0, // probably invalid
-                        }
-                    }
-                }
-                impl MotherboardLayers {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, value: u8) -> Self {
-                        Self {
-                            sockets: sockets.to_u8().unwrap(),
-                            channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
-                            value,
-                            ..Self::default()
-                        }
-                    }
-                }
-
-                // TODO: conditional overrides, actions.
             }
+            impl_EntryCompatible!(CkeTristateMap, 1, 7);
+            impl Default for CkeTristateMap {
+                fn default() -> Self {
+                    Self {
+                        type_: 1.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        connections: [0; 4], // probably invalid
+                    }
+                }
+            }
+
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct OdtTristateMap {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
+                    channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
+                    dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
+                    /// index i = CPU package's ODT pin (MA_ODT\[i\]), value = memory rank's ODT pin mask
+                    pub connections: [u8; 4],
+                }
+            }
+            impl_EntryCompatible!(OdtTristateMap, 2, 7);
+            impl Default for OdtTristateMap {
+                fn default() -> Self {
+                    Self {
+                        type_: 2.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        connections: [0; 4], // probably invalid
+                    }
+                }
+            }
+
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct CsTristateMap {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
+                    channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
+                    dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
+                    /// index i = CPU package CS pin (MA_CS_L\[i\]), value = memory rank's CS pin mask
+                    pub connections: [u8; 8],
+                }
+            }
+            impl_EntryCompatible!(CsTristateMap, 3, 11);
+            impl Default for CsTristateMap {
+                fn default() -> Self {
+                    Self {
+                        type_: 3.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        connections: [0; 8], // probably invalid
+                    }
+                }
+            }
+
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct MaxDimmsPerChannel {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
+                    channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
+                    dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
+                    value: u8 : pub get Result<u8> : pub set u8,
+                }
+            }
+            impl_EntryCompatible!(MaxDimmsPerChannel, 4, 4);
+            impl Default for MaxDimmsPerChannel {
+                fn default() -> Self {
+                    Self {
+                        type_: 4.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        value: 2,
+                    }
+                }
+            }
+
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct MemclkMap {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
+                    channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
+                    dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "all"
+                    /// See BKDG.  Example: index i = M\[B,A\]_CLK_H/L\[i\]; value = mask of which CS are connected (CS0 = 1 << 0, CS1 = 1 << 1, CS2 = 1 << 2, CS3 = 1 << 3).
+                    pub connections: [u8; 8], // index: memory clock pin; value: mask for connected CS pins on DIMM
+                }
+            }
+            impl_EntryCompatible!(MemclkMap, 7, 11);
+            impl Default for MemclkMap {
+                fn default() -> Self {
+                    Self {
+                        type_: 7.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        connections: [0; 8], // all disabled
+                    }
+                }
+            }
+            impl MemclkMap {
+                pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, connections: [u8; 8]) -> Self {
+                    Self {
+                        sockets: sockets.to_u8().unwrap(),
+                        channels: channels.to_u8().unwrap(),
+                        dimms: dimms.to_u8().unwrap(),
+                        connections,
+                        ..Self::default()
+                    }
+                }
+            }
+
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct MaxChannelsPerSocket {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
+                    channels: u8 : pub get Result<ChannelIds>,  // Note: must always be "all"
+                    dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "all" here
+                    value: u8 : pub get Result<u8> : pub set u8,
+                }
+            }
+            impl_EntryCompatible!(MaxChannelsPerSocket, 8, 4);
+            impl Default for MaxChannelsPerSocket {
+                fn default() -> Self {
+                    Self {
+                        type_: 8.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        value: 2,
+                    }
+                }
+            }
+            impl MaxChannelsPerSocket {
+                pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, value: u8) -> Self {
+                    Self {
+                        sockets: sockets.to_u8().unwrap(),
+                        channels: channels.to_u8().unwrap(),
+                        dimms: dimms.to_u8().unwrap(),
+                        value,
+                        ..Self::default()
+                    }
+                }
+            }
+
+            #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+            pub enum TimingMode {
+                Auto = 0,
+                Limit = 1,
+                Specific = 2,
+            }
+
+            #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+            pub enum MemBusSpeedType { // in MHz
+                Ddr400 = 200,
+                Ddr533 = 266,
+                Ddr667 = 333,
+                Ddr800 = 400,
+                Ddr1066 = 533,
+                Ddr1333 = 667,
+                Ddr1600 = 800,
+                Ddr1866 = 933,
+                Ddr2100 = 1050,
+                Ddr2133 = 1067,
+                Ddr2400 = 1200,
+                Ddr2667 = 1333,
+                Ddr2800 = 1400,
+                Ddr2933 = 1467,
+                Ddr3066 = 1533,
+                Ddr3200 = 1600,
+                Ddr3333 = 1667,
+                Ddr3466 = 1733,
+                Ddr3600 = 1800,
+                Ddr3733 = 1867,
+                Ddr3866 = 1933,
+                Ddr4000 = 2000,
+                Ddr4200 = 2100,
+                Ddr4267 = 2133,
+                Ddr4333 = 2167,
+                Ddr4400 = 2200,
+            }
+
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct MemBusSpeed {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
+                    channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
+                    dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "all"
+                    timing_mode: U32<LittleEndian> : pub get Result<TimingMode> : pub set TimingMode,
+                    bus_speed: U32<LittleEndian> : pub get Result<MemBusSpeedType> : pub set MemBusSpeedType,
+                }
+            }
+            impl_EntryCompatible!(MemBusSpeed, 9, 11);
+            impl Default for MemBusSpeed {
+                fn default() -> Self {
+                    Self {
+                        type_: 9.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        timing_mode: TimingMode::Auto.to_u32().unwrap().into(),
+                        bus_speed: MemBusSpeedType::Ddr1600.to_u32().unwrap().into(), // User probably wants to change this
+                    }
+                }
+            }
+            impl MemBusSpeed {
+                pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, timing_mode: u32, bus_speed: u32) -> Self {
+                    Self {
+                        sockets: sockets.to_u8().unwrap(),
+                        channels: channels.to_u8().unwrap(),
+                        dimms: dimms.to_u8().unwrap(),
+                        timing_mode: timing_mode.into(),
+                        bus_speed: bus_speed.into(),
+                        ..Self::default()
+                    }
+                }
+            }
+
+            make_accessors! {
+                /// Max. Chip Selects per channel
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct MaxCsPerChannel {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
+                    channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
+                    dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "all"
+                    value: u8,
+                }
+            }
+            impl_EntryCompatible!(MaxCsPerChannel, 10, 4);
+            impl Default for MaxCsPerChannel {
+                fn default() -> Self {
+                    Self {
+                        type_: 10.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        value: 0, // probably invalid
+                    }
+                }
+            }
+            impl MaxCsPerChannel {
+                pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, value: u8) -> Self {
+                    Self {
+                        sockets: sockets.to_u8().unwrap(),
+                        channels: channels.to_u8().unwrap(),
+                        dimms: dimms.to_u8().unwrap(),
+                        value,
+                        ..Self::default()
+                    }
+                }
+            }
+
+            #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+            pub enum MemTechnologyType {
+                Ddr2 = 0,
+                Ddr3 = 1,
+                Gddr5 = 2,
+                Ddr4 = 3,
+                Lpddr3 = 4,
+                Lpddr4 = 5,
+                Hbm = 6,
+                Gddr6 = 7,
+                Ddr5 = 8,
+                Lpddr5 = 9,
+            }
+
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct MemTechnology {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
+                    channels: u8 : pub get Result<ChannelIds>, // Note: must always be "all" here
+                    dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "all" here
+                    technology_type: U32<LittleEndian> : pub get Result<MemTechnologyType> : pub set MemTechnologyType,
+                }
+            }
+            impl_EntryCompatible!(MemTechnology, 11, 7);
+            impl Default for MemTechnology {
+                fn default() -> Self {
+                    Self {
+                        type_: 11.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        technology_type: 0.into(), // probably invalid
+                    }
+                }
+            }
+            impl MemTechnology {
+                pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, technology_type: u32) -> Self {
+                    Self {
+                        sockets: sockets.to_u8().unwrap(),
+                        channels: channels.to_u8().unwrap(),
+                        dimms: dimms.to_u8().unwrap(),
+                        technology_type: technology_type.into(),
+                        ..Self::default()
+                    }
+                }
+            }
+
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct WriteLevellingSeedDelay {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
+                    channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
+                    dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
+                    seed: [u8; 8],
+                    ecc_seed: u8,
+                }
+            }
+            impl_EntryCompatible!(WriteLevellingSeedDelay, 12, 12);
+            impl Default for WriteLevellingSeedDelay {
+                fn default() -> Self {
+                    Self {
+                        type_: 12.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        seed: [0.into(); 8], // probably invalid
+                        ecc_seed: 0.into(), // probably invalid
+                    }
+                }
+            }
+
+            make_accessors! {
+                /// See <https://www.amd.com/system/files/TechDocs/43170_14h_Mod_00h-0Fh_BKDG.pdf> section 2.9.3.7.2.1
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct RxEnSeed {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
+                    channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
+                    dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
+                    seed: [U16<LittleEndian>; 8],
+                    ecc_seed: U16<LittleEndian>,
+                }
+            }
+            impl_EntryCompatible!(RxEnSeed, 13, 21);
+            impl Default for RxEnSeed {
+                fn default() -> Self {
+                    Self {
+                        type_: 13.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        seed: [0.into(); 8], // probably invalid
+                        ecc_seed: 0.into(), // probably invalid
+                    }
+                }
+            }
+            impl RxEnSeed {
+                pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, seed: [u16; 8], ecc_seed: u16) -> Self {
+                    Self {
+                        sockets: sockets.to_u8().unwrap(),
+                        channels: channels.to_u8().unwrap(),
+                        dimms: dimms.to_u8().unwrap(),
+                        seed: [seed[0].into(), seed[1].into(), seed[2].into(), seed[3].into(), seed[4].into(), seed[5].into(), seed[6].into(), seed[7].into()],
+                        ecc_seed: ecc_seed.into(),
+                        ..Self::default()
+                    }
+                }
+            }
+
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct LrDimmNoCs6Cs7Routing {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
+                    channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
+                    dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
+                    value: u8, // Note: always 1
+                }
+            }
+            impl_EntryCompatible!(LrDimmNoCs6Cs7Routing, 14, 4);
+            impl Default for LrDimmNoCs6Cs7Routing {
+                fn default() -> Self {
+                    Self {
+                        type_: 14.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        value: 1,
+                    }
+                }
+            }
+            impl LrDimmNoCs6Cs7Routing {
+                pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots) -> Self {
+                    Self {
+                        sockets: sockets.to_u8().unwrap(),
+                        channels: channels.to_u8().unwrap(),
+                        dimms: dimms.to_u8().unwrap(),
+                        ..Self::default()
+                    }
+                }
+            }
+
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct SolderedDownSodimm {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
+                    channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
+                    dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
+                    value: u8, // Note: always 1
+                }
+            }
+            impl_EntryCompatible!(SolderedDownSodimm, 15, 4);
+            impl Default for SolderedDownSodimm {
+                fn default() -> Self {
+                    Self {
+                        type_: 15.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        value: 1,
+                    }
+                }
+            }
+            impl SolderedDownSodimm {
+                pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots) -> Self {
+                    Self {
+                        sockets: sockets.to_u8().unwrap(),
+                        channels: channels.to_u8().unwrap(),
+                        dimms: dimms.to_u8().unwrap(),
+                        ..Self::default()
+                    }
+                }
+            }
+
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct LvDimmForce1V5 {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds>, // Note: always "all"
+                    channels: u8 : pub get Result<ChannelIds>, // Note: always "all"
+                    dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
+                    value: u8, // Note: always 1
+                }
+            }
+            impl_EntryCompatible!(LvDimmForce1V5, 16, 4);
+            impl Default for LvDimmForce1V5 {
+                fn default() -> Self {
+                    Self {
+                        type_: 16.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        value: 1,
+                    }
+                }
+            }
+            impl LvDimmForce1V5 {
+                pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots) -> Self {
+                    Self {
+                        sockets: sockets.to_u8().unwrap(),
+                        channels: channels.to_u8().unwrap(),
+                        dimms: dimms.to_u8().unwrap(),
+                        ..Self::default()
+                    }
+                }
+            }
+
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct MinimumRwDataEyeWidth {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
+                    channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
+                    dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
+                    min_read_data_eye_width: u8 : pub get Result<u8> : pub set u8,
+                    min_write_data_eye_width: u8 : pub get Result<u8> : pub set u8,
+                }
+            }
+            impl_EntryCompatible!(MinimumRwDataEyeWidth, 17, 5);
+            impl Default for MinimumRwDataEyeWidth {
+                fn default() -> Self {
+                    Self {
+                        type_: 17.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        min_read_data_eye_width: 0, // probably invalid
+                        min_write_data_eye_width: 0, // probably invalid
+                    }
+                }
+            }
+            impl MinimumRwDataEyeWidth {
+                pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, min_read_data_eye_width: u8, min_write_data_eye_width: u8) -> Self {
+                    Self {
+                        sockets: sockets.to_u8().unwrap(),
+                        channels: channels.to_u8().unwrap(),
+                        dimms: dimms.to_u8().unwrap(),
+                        min_read_data_eye_width,
+                        min_write_data_eye_width,
+                        ..Self::default()
+                    }
+                }
+            }
+
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct CpuFamilyFilter {
+                    type_: u8,
+                    payload_size: u8,
+                    cpu_family_revision: U32<LittleEndian> : pub get Result<u32> : pub set u32,
+                }
+            }
+            impl_EntryCompatible!(CpuFamilyFilter, 18, 4);
+            impl Default for CpuFamilyFilter {
+                fn default() -> Self {
+                    Self {
+                        type_: 18.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        cpu_family_revision: 0.into(), // probably invalid
+                    }
+                }
+            }
+            impl CpuFamilyFilter {
+                pub fn new(cpu_family_revision: u32) -> Self {
+                    Self {
+                        cpu_family_revision: cpu_family_revision.into(),
+                        ..Self::default()
+                    }
+                }
+            }
+
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct SolderedDownDimmsPerChannel {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
+                    channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
+                    dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
+                    value: u8 : pub get Result<u8> : pub set u8,
+                }
+            }
+            impl_EntryCompatible!(SolderedDownDimmsPerChannel, 19, 4);
+            impl Default for SolderedDownDimmsPerChannel {
+                fn default() -> Self {
+                    Self {
+                        type_: 19.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        value: 0, // probably invalid
+                    }
+                }
+            }
+            impl SolderedDownDimmsPerChannel {
+                pub fn new(sockets: SocketIds, channels: ChannelIds, value: u8) -> Self {
+                    Self {
+                        sockets: sockets.to_u8().unwrap(),
+                        channels: channels.to_u8().unwrap(),
+                        value,
+                        ..Self::default()
+                    }
+                }
+            }
+
+            #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+            pub enum MemPowerPolicyType {
+                Performance = 0,
+                BatteryLife = 1,
+                Auto = 2,
+            }
+
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct MemPowerPolicy {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds>, // Note: always "all"
+                    channels: u8 : pub get Result<ChannelIds>, // Note: always "all"
+                    dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
+                    value: u8 : pub get Result<MemPowerPolicyType> : pub set MemPowerPolicyType,
+                }
+            }
+            impl_EntryCompatible!(MemPowerPolicy, 20, 4);
+            impl Default for MemPowerPolicy {
+                fn default() -> Self {
+                    Self {
+                        type_: 20.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        value: 0, // probably invalid
+                    }
+                }
+            }
+            impl MemPowerPolicy {
+                pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, value: u8) -> Self {
+                    Self {
+                        sockets: sockets.to_u8().unwrap(),
+                        channels: channels.to_u8().unwrap(),
+                        dimms: dimms.to_u8().unwrap(),
+                        value,
+                        ..Self::default()
+                    }
+                }
+            }
+
+            #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+            pub enum MotherboardLayerCount {
+                L4 = 0,
+                L6 = 1,
+            }
+
+            make_accessors! {
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[repr(C, packed)]
+                pub struct MotherboardLayers {
+                    type_: u8,
+                    payload_size: u8,
+                    sockets: u8 : pub get Result<SocketIds>, // Note: always "all"
+                    channels: u8 : pub get Result<ChannelIds>, // Note: always "all"
+                    dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
+                    value: u8 : pub get Result<MotherboardLayerCount> : pub set MotherboardLayerCount,
+                }
+            }
+            impl_EntryCompatible!(MotherboardLayers, 21, 4);
+            impl Default for MotherboardLayers {
+                fn default() -> Self {
+                    Self {
+                        type_: 21.into(),
+                        payload_size: (size_of::<Self>() - 2) as u8,
+                        sockets: SocketIds::ALL.to_u8().unwrap(),
+                        channels: ChannelIds::Any.to_u8().unwrap(),
+                        dimms: DimmSlots::Any.to_u8().unwrap(),
+                        value: 0, // probably invalid
+                    }
+                }
+            }
+            impl MotherboardLayers {
+                pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, value: u8) -> Self {
+                    Self {
+                        sockets: sockets.to_u8().unwrap(),
+                        channels: channels.to_u8().unwrap(),
+                        dimms: dimms.to_u8().unwrap(),
+                        value,
+                        ..Self::default()
+                    }
+                }
+            }
+
+            // TODO: conditional overrides, actions.
+        }
 
         impl EntryCompatible for ElementRef<'_> {
             fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
@@ -3606,7 +3606,8 @@ pub mod memory {
             fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
                 match entry_id {
                     EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
-                        if prefix.len() >= 1 && prefix[0] == 0 { // work around AMD padding all the Entrys with 0s
+                        if prefix.len() >= 1 && prefix[0] == 0 {
+                            // work around AMD padding all the Entrys with 0s
                             return Some((0, 1));
                         }
                         if prefix.len() >= 2 {
@@ -3631,7 +3632,8 @@ pub mod memory {
             fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
                 match entry_id {
                     EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
-                        if prefix.len() >= 1 && prefix[0] == 0 { // work around AMD padding all the Entrys with 0s
+                        if prefix.len() >= 1 && prefix[0] == 0 {
+                            // work around AMD padding all the Entrys with 0s
                             return Some((0, 1));
                         }
                         if prefix.len() >= 2 {
@@ -3660,99 +3662,99 @@ pub mod memory {
     pub mod platform_tuning {
         use super::{EntryId, Error, MemoryEntryId};
         crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum! {
-                use byteorder::LittleEndian;
-                use core::mem::size_of;
-                use static_assertions::const_assert;
-                use zerocopy::{AsBytes, FromBytes, Unaligned, U16};
-                use super::super::*;
-                //use crate::struct_accessors::{Getter, Setter, make_accessors};
-                //use crate::types::Result;
+            use byteorder::LittleEndian;
+            use core::mem::size_of;
+            use static_assertions::const_assert;
+            use zerocopy::{AsBytes, FromBytes, Unaligned, U16};
+            use super::super::*;
+            //use crate::struct_accessors::{Getter, Setter, make_accessors};
+            //use crate::types::Result;
 
-                macro_rules! impl_EntryCompatible {($struct_:ty, $type_:expr, $total_size:expr) => (
-                    const_assert!($total_size as usize == size_of::<$struct_>());
-                    impl $struct_ {
-                        const TAG: u16 = $type_;
+            macro_rules! impl_EntryCompatible {($struct_:ty, $type_:expr, $total_size:expr) => (
+                const_assert!($total_size as usize == size_of::<$struct_>());
+                impl $struct_ {
+                    const TAG: u16 = $type_;
+                }
+
+                impl EntryCompatible for $struct_ {
+                    fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+                        match entry_id {
+                            EntryId::Memory(MemoryEntryId::PlatformTuning) => {
+                                const TYPE_: u16 = $type_;
+                                const TYPE_LO: u8 = (TYPE_ & 0xff) as u8;
+                                const TYPE_HI: u8 = (TYPE_ >> 8) as u8;
+                                if prefix.len() >= 2 && prefix[0] == TYPE_LO && prefix[1] == TYPE_HI {
+                                    const SHOULD_HAVE_LEN_FIELD: bool = TYPE_ != 0xfeef;
+                                    !SHOULD_HAVE_LEN_FIELD || (prefix.len() >= 3 && prefix[2] == $total_size)
+                                } else {
+                                    false
+                                }
+                            },
+                            _ => false,
+                        }
                     }
 
-                    impl EntryCompatible for $struct_ {
-                        fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
-                            match entry_id {
-                                EntryId::Memory(MemoryEntryId::PlatformTuning) => {
-                                    const TYPE_: u16 = $type_;
-                                    const TYPE_LO: u8 = (TYPE_ & 0xff) as u8;
-                                    const TYPE_HI: u8 = (TYPE_ >> 8) as u8;
-                                    if prefix.len() >= 2 && prefix[0] == TYPE_LO && prefix[1] == TYPE_HI {
-                                        const SHOULD_HAVE_LEN_FIELD: bool = TYPE_ != 0xfeef;
-                                        !SHOULD_HAVE_LEN_FIELD || (prefix.len() >= 3 && prefix[2] == $total_size)
-                                    } else {
-                                        false
-                                    }
-                                },
-                                _ => false,
-                            }
-                        }
-
-                        fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
-                            match entry_id {
-                                EntryId::Memory(MemoryEntryId::PlatformTuning) => {
-                                    if prefix.len() >= 2 {
-                                        let type_lo = prefix[0];
-                                        let type_hi = prefix[1];
-                                        let type_ = ((type_hi as u16) << 8) | (type_lo as u16);
-                                        if type_ == 0xfeef { // no len available
-                                            Some((type_, 2))
-                                        } else if prefix.len() >= 3 {
-                                            let size = (prefix[2] as usize).checked_add(2)?;
-                                            Some((type_, size))
-                                        } else {
-                                            None
-                                        }
+                    fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
+                        match entry_id {
+                            EntryId::Memory(MemoryEntryId::PlatformTuning) => {
+                                if prefix.len() >= 2 {
+                                    let type_lo = prefix[0];
+                                    let type_hi = prefix[1];
+                                    let type_ = ((type_hi as u16) << 8) | (type_lo as u16);
+                                    if type_ == 0xfeef { // no len available
+                                        Some((type_, 2))
+                                    } else if prefix.len() >= 3 {
+                                        let size = (prefix[2] as usize).checked_add(2)?;
+                                        Some((type_, size))
                                     } else {
                                         None
                                     }
-                                },
-                                _ => {
+                                } else {
                                     None
-                                },
-                            }
-                        }
-                    }
-
-                    impl SequenceElementAsBytes for $struct_ {
-                        fn checked_as_bytes(&self, entry_id: EntryId) -> Option<&[u8]> {
-                            let blob = AsBytes::as_bytes(self);
-                            if <$struct_>::is_entry_compatible(entry_id, blob) {
-                                Some(blob)
-                            } else {
+                                }
+                            },
+                            _ => {
                                 None
-                            }
-                        }
-                    }
-
-        //            impl HeaderWithTail for $struct_ {
-        //                type TailArrayItemType = ();
-        //            }
-                )}
-
-                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
-                #[repr(C, packed)]
-                pub struct Terminator {
-                    type_: U16<LittleEndian>,
-                }
-                impl_EntryCompatible!(Terminator, 0xfeef, 2);
-
-                impl Default for Terminator {
-                    fn default() -> Self {
-                        Self {
-                            type_: 0xfeef.into(),
+                            },
                         }
                     }
                 }
 
-        //        impl HeaderWithTail for PlatformTuningElementRef<'_> {
-        //            type TailArrayItemType = ();
-        //        }
+                impl SequenceElementAsBytes for $struct_ {
+                    fn checked_as_bytes(&self, entry_id: EntryId) -> Option<&[u8]> {
+                        let blob = AsBytes::as_bytes(self);
+                        if <$struct_>::is_entry_compatible(entry_id, blob) {
+                            Some(blob)
+                        } else {
+                            None
+                        }
+                    }
+                }
+
+    //            impl HeaderWithTail for $struct_ {
+    //                type TailArrayItemType = ();
+    //            }
+            )}
+
+            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+            #[repr(C, packed)]
+            pub struct Terminator {
+                type_: U16<LittleEndian>,
             }
+            impl_EntryCompatible!(Terminator, 0xfeef, 2);
+
+            impl Default for Terminator {
+                fn default() -> Self {
+                    Self {
+                        type_: 0xfeef.into(),
+                    }
+                }
+            }
+
+    //        impl HeaderWithTail for PlatformTuningElementRef<'_> {
+    //            type TailArrayItemType = ();
+    //        }
+        }
 
         impl EntryCompatible for ElementRef<'_> {
             fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
@@ -3764,7 +3766,8 @@ pub mod memory {
             fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
                 match entry_id {
                     EntryId::Memory(MemoryEntryId::PlatformTuning) => {
-                        if prefix.len() >= 1 && prefix[0] == 0 { // work around AMD padding all the Entrys with 0s
+                        if prefix.len() >= 1 && prefix[0] == 0 {
+                            // work around AMD padding all the Entrys with 0s
                             return Some((0, 1));
                         }
                         if prefix.len() >= 2 {
@@ -3798,7 +3801,8 @@ pub mod memory {
             fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
                 match entry_id {
                     EntryId::Memory(MemoryEntryId::PlatformTuning) => {
-                        if prefix.len() >= 1 && prefix[0] == 0 { // work around AMD padding all the Entrys with 0s
+                        if prefix.len() >= 1 && prefix[0] == 0 {
+                            // work around AMD padding all the Entrys with 0s
                             return Some((0, 1));
                         }
                         if prefix.len() >= 2 {
@@ -3892,7 +3896,7 @@ pub mod memory {
         #[test]
         fn test_platform_specific_overrides() {
             use platform_specific_override::{
-                ChannelIds, DimmSlots, LvDimmForce1V5, ElementRef, SocketIds,
+                ChannelIds, DimmSlots, ElementRef, LvDimmForce1V5, SocketIds,
             };
             let lvdimm = LvDimmForce1V5::new(SocketIds::ALL, ChannelIds::Any, DimmSlots::Any);
             let tag: Option<ElementRef<'_>> = Some((&lvdimm).into());
