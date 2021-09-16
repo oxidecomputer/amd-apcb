@@ -879,7 +879,9 @@ mod tests {
 
         assert!(item.dimm_slots_per_channel() == 2);
         assert!(item.ddr_rates().unwrap() == DdrRates::new().with_ddr3200(true));
+        assert!(item.ddr_rates().unwrap() != DdrRates::new());
         assert!(item.dimm0_ranks().unwrap() == Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true));
+        assert!(item.dimm0_ranks().unwrap() != Ddr4DimmRanks::new());
         assert!(item.dimm1_ranks().unwrap() == Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true));
         assert!(item.address_command_control() == 0x2a2d2d);
         assert!(matches!(items.next(), None));
