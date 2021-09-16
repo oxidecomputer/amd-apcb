@@ -855,7 +855,7 @@ mod tests {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
         let mut apcb = Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default()).unwrap();
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
-        use crate::memory::{DdrRates, Ddr4DimmRanks, CadBusCkeDriveStrength, CadBusCsOdtDriveStrength, CadBusAddressCommandDriveStrength, CadBusClkDriveStrength, RdimmDdr4Voltages, RdimmDdr4CadBusElement};
+        use crate::memory::{DdrRates, Ddr4DimmRanks, RdimmDdr4Voltages, RdimmDdr4CadBusElement};
         let element = RdimmDdr4CadBusElement::new(2, DdrRates::new().with_ddr3200(true), Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true), Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true), 0x2a2d2d).unwrap();
         apcb.insert_struct_array_as_entry(EntryId::Memory(MemoryEntryId::PsRdimmDdr4CadBus), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &[element])?;
         Apcb::update_checksum(&mut buffer[0..]).unwrap();
