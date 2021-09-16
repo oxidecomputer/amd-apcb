@@ -214,6 +214,8 @@ impl<'a> Iterator for ApcbIter<'a> {
 }
 
 impl<'a> Apcb<'a> {
+    const NAPLES_VERSION: u16 = 0x20;
+    const ROME_VERSION: u16 = 0x30;
     pub fn groups(&self) -> ApcbIter<'_> {
         ApcbIter {
             buf: self.beginning_of_groups,
@@ -527,9 +529,11 @@ impl<'a> Apcb<'a> {
         } else {
             return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::header_size"));
         }
-        if header.version.get() == 0x30 {
+        let version = header.version.get();
+        if version == Self::ROME_VERSION {
+        } else if version == Self::NAPLES_VERSION {
         } else {
-//            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::version"));
+            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::version"));
         }
 
         if header.checksum_byte != checksum_byte {
