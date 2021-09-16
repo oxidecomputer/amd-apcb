@@ -20,11 +20,11 @@ use num_traits::ToPrimitive;
 use zerocopy::AsBytes;
 use crate::token_accessors::{Tokens, TokensMut};
 
-pub struct ApcbLoadingOptions {
+pub struct ApcbIoOptions {
     pub check_checksum: bool,
 }
 
-impl Default for ApcbLoadingOptions {
+impl Default for ApcbIoOptions {
     fn default() -> Self {
         Self {
             check_checksum: true,
@@ -531,8 +531,8 @@ impl<'a> Apcb<'a> {
         Ok((0x100u16 - u16::from(checksum_byte)) as u8) // Note: This can overflow
     }
 
-    /// Note: for OPTIONS, try ApcbLoadingOptions::default()
-    pub fn load(backing_store: &'a mut [u8], options: &ApcbLoadingOptions) -> Result<Self> {
+    /// Note: for OPTIONS, try ApcbIoOptions::default()
+    pub fn load(backing_store: &'a mut [u8], options: &ApcbIoOptions) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
         let checksum_byte = if options.check_checksum { Self::calculate_checksum(backing_store)? } else { 0 };
         let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
@@ -643,7 +643,7 @@ impl<'a> Apcb<'a> {
         }
         Ok(())
     }
-    pub fn create(backing_store: &'a mut [u8], initial_unique_apcb_instance: u32, options: &ApcbLoadingOptions) -> Result<Self> {
+    pub fn create(backing_store: &'a mut [u8], initial_unique_apcb_instance: u32, options: &ApcbIoOptions) -> Result<Self> {
         for i in 0..backing_store.len() {
             backing_store[i] = 0xFF;
         }
