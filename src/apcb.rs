@@ -500,14 +500,17 @@ impl<'a> Apcb<'a> {
 
     pub(crate) fn calculate_checksum(backing_store: &'_ [u8]) -> Result<u8> {
         let stored_checksum_byte: u8;
-        let apcb_size: u32;
+        let apcb_size: usize;
         {
             let mut backing_store = backing_store;
             let header = take_header_from_collection::<V2_HEADER>(&mut backing_store).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER"))?;
             stored_checksum_byte = header.checksum_byte;
-            apcb_size = header.apcb_size.get();
+            apcb_size = header.apcb_size.get() as usize;
         }
         let mut checksum_byte = 0u8;
+        if backing_store.len() < apcb_size {
+            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::apcb_size"));
+        }
         for c in &backing_store[..apcb_size as usize] {
             checksum_byte = checksum_byte.wrapping_add(*c);
         }
@@ -535,10 +538,10 @@ impl<'a> Apcb<'a> {
         } else {
             return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::version"));
         }
-
         if header.checksum_byte != checksum_byte {
             return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::checksum_byte"));
         }
+        let apcb_size = header.apcb_size.get();
 
         let v3_header_ext = if usize::from(header.header_size)
             == size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>()
@@ -575,7 +578,7 @@ impl<'a> Apcb<'a> {
             None
         };
 
-        let used_size = header.apcb_size.get().checked_sub(u32::from(header.header_size.get())).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::header_size"))? as usize;
+        let used_size = apcb_size.checked_sub(u32::from(header.header_size.get())).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::header_size"))? as usize;
         if used_size <= backing_store.len() {
         } else {
             return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::header_size"));
