@@ -25,7 +25,6 @@
 * struct field out-of-range
 * bitfield in-range
 * struct field in-range
-* checksum tests
 
 # (Future) Compatibility
 
