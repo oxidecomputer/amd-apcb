@@ -889,4 +889,49 @@ mod tests {
         assert!(matches!(groups.next(), None));
         Ok(())
     }
+
+    #[test]
+    fn insert_data_bus_element() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut apcb = Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default()).unwrap();
+        apcb.insert_group(GroupId::Memory, *b"MEMG")?;
+        use crate::memory::{DdrRates, Ddr4DimmRanks, Ddr4DataBusElement, RttNom, RttPark, RttWr};
+        let element = Ddr4DataBusElement::new(2, DdrRates::new().with_ddr3200(true), Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true), Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true), RttNom::RttOff, RttWr::RttOff, RttPark::Rtt48Ohm, 91, 23).unwrap();
+        apcb.insert_struct_array_as_entry(EntryId::Memory(MemoryEntryId::PsRdimmDdr4DataBus), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &[element])?;
+        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
+        let mut groups = apcb.groups_mut();
+
+        let mut group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        assert!(group.id() == GroupId::Memory);
+        assert!(group.signature() ==*b"MEMG");
+
+        let mut entries = group.entries_mut();
+
+        let mut entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        assert!(entry.id() == EntryId::Memory(MemoryEntryId::PsRdimmDdr4DataBus));
+        assert!(entry.instance_id() == 0);
+        assert!(entry.board_instance_mask() == 0xFFFF);
+
+        let mut items = entry.body_as_struct_array_mut::<Ddr4DataBusElement>().unwrap();
+        let mut items = items.iter_mut();
+        let item = items.next().ok_or_else(|| Error::EntryNotFound)?;
+
+        assert!(item.dimm_slots_per_channel() == 2);
+        assert!(item.ddr_rates().unwrap() == DdrRates::new().with_ddr3200(true));
+        assert!(item.dimm0_ranks().unwrap() == Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true));
+        assert!(item.dimm1_ranks().unwrap() == Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true));
+        assert!(item.rtt_nom().unwrap() == RttNom::RttOff);
+        assert!(item.rtt_wr().unwrap() == RttWr::RttOff);
+        assert!(item.rtt_park().unwrap() == RttPark::Rtt48Ohm);
+        assert!(item.pmu_phy_vref() == 91);
+        assert!(item.vref_dq() == 23);
+
+        assert!(matches!(items.next(), None));
+
+        assert!(matches!(entries.next(), None));
+
+        assert!(matches!(groups.next(), None));
+        Ok(())
+    }
 }

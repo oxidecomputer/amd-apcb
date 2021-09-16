@@ -1957,7 +1957,7 @@ pub mod memory {
         Rtt80Ohm = 6,
         Rtt34Ohm = 7,
     }
-    type RttPark = RttNom;
+    pub type RttPark = RttNom;
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     pub enum RttWr {
         RttOff = 0,
@@ -2013,6 +2013,23 @@ pub mod memory {
                 pmu_phy_vref: 91.into(),
                 vref_dq: 23.into(),
             }
+        }
+    }
+
+    impl Ddr4DataBusElement {
+        pub fn new(dimm_slots_per_channel: u32, ddr_rates: DdrRates, dimm0_ranks: Ddr4DimmRanks, dimm1_ranks: Ddr4DimmRanks, rtt_nom: RttNom, rtt_wr: RttWr, rtt_park: RttPark, pmu_phy_vref: u32, vref_dq: u32) -> Result<Self> {
+            Ok(Self {
+                dimm_slots_per_channel: dimm_slots_per_channel.into(),
+                ddr_rates: ddr_rates.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
+                dimm0_ranks: dimm0_ranks.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
+                dimm1_ranks: dimm1_ranks.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
+                rtt_nom: rtt_nom.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
+                rtt_wr: rtt_wr.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
+                rtt_park: rtt_park.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
+                pmu_phy_vref: pmu_phy_vref.into(),
+                vref_dq: vref_dq.into(),
+                .. Self::default()
+            })
         }
     }
 
