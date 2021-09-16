@@ -834,7 +834,7 @@ mod tests {
     #[test]
     fn checksum_invalid() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
-        let mut apcb = Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default()).unwrap();
+        let mut _apcb = Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default()).unwrap();
         // Break checksum
         buffer[16] = buffer[16].wrapping_add(1);
         match Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()) {
