@@ -309,11 +309,15 @@ impl<'a> EntryMutItem<'a> {
         let id = self.id();
         match &mut self.body {
             EntryItemBody::Struct(buf) => {
-                Some(StructSequenceEntryMutItem::<T> {
-                     buf,
-                     entry_id: id,
-                     _data: PhantomData,
-                })
+                if T::is_entry_compatible(id, buf) {
+                    Some(StructSequenceEntryMutItem::<T> {
+                         buf,
+                         entry_id: id,
+                         _data: PhantomData,
+                    })
+                } else {
+                    None
+                }
             },
             _ => {
                 None
@@ -334,12 +338,17 @@ pub struct StructSequenceEntryItem<'a, T> {
 }
 
 impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> StructSequenceEntryItem<'a, T> {
-    pub fn iter(self: &'a Self) -> StructSequenceEntryIter<'a, T> {
+    pub fn iter(self: &'a Self) -> Result<StructSequenceEntryIter<'a, T>> {
         StructSequenceEntryIter::<T> {
             buf: self.buf,
             entry_id: self.entry_id,
             _data: PhantomData,
-        }
+        }.validate()?;
+        Ok(StructSequenceEntryIter::<T> {
+            buf: self.buf,
+            entry_id: self.entry_id,
+            _data: PhantomData,
+        })
     }
 }
 
@@ -350,18 +359,31 @@ pub struct StructSequenceEntryIter<'a, T: EntryCompatible + SequenceElementFromB
 }
 
 // Note: T is an enum (usually a ElemntRef)
+impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> StructSequenceEntryIter<'a, T> {
+    fn next1<'s>(&'s mut self) -> Result<T> {
+        if self.buf.is_empty() {
+            Err(Error::EntryTypeMismatch)
+        } else if T::is_entry_compatible(self.entry_id, self.buf) {
+            // Note: If it was statically known: let result = take_header_from_collection::<T>(&mut a).ok_or_else(|| Error::EntryTypeMismatch)?;
+            T::checked_from_bytes(self.entry_id, &mut self.buf)
+        } else {
+            Err(Error::EntryTypeMismatch)
+        }
+    }
+    pub(crate) fn validate(mut self) -> Result<()> {
+        while !self.buf.is_empty() {
+            self.next1()?;
+        }
+        Ok(())
+    }
+}
+
+// Note: T is an enum (usually a ElemntRef)
 impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> Iterator for StructSequenceEntryIter<'a, T> {
     type Item = T;
     fn next<'s>(&'s mut self) -> Option<Self::Item> {
-        if self.buf.is_empty() {
-            None
-        } else if !T::is_entry_compatible(self.entry_id, self.buf) {
-            //Err(Error::EntryTypeMismatch) FIXME
-            None
-        } else {
-            // Note: If it was statically known: let result = take_header_from_collection::<T>(&mut a).ok_or_else(|| Error::EntryTypeMismatch)?;
-            T::checked_from_bytes(self.entry_id, &mut self.buf).ok() // FIXME handle error
-        }
+        // Note: Proper error check is done on creation of the iter in StructSequenceEntryItem.
+        self.next1().ok()
     }
 }
 
@@ -484,11 +506,15 @@ impl<'a> EntryItem<'a> {
         let id = self.id();
         match &self.body {
             EntryItemBody::Struct(buf) => {
-                Some(StructSequenceEntryItem::<T> {
-                     buf,
-                     entry_id: id,
-                     _data: PhantomData,
-                })
+                if T::is_entry_compatible(id, buf) {
+                    Some(StructSequenceEntryItem::<T> {
+                         buf,
+                         entry_id: id,
+                         _data: PhantomData,
+                    })
+                } else {
+                    None
+                }
             },
             _ => {
                 None
@@ -520,6 +546,7 @@ impl core::fmt::Debug for EntryItem<'_> {
            .field("key_size", &self.header.key_size)
            .field("key_pos", &self.header.key_pos)
            .field("board_instance_mask", &board_instance_mask)
+           .field("body", &self.body)
            .finish()
     }
 }
