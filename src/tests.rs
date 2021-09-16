@@ -3,7 +3,7 @@ mod tests {
     use core::default::Default;
     use crate::Apcb;
     use crate::ApcbIoOptions;
-    use crate::Error;
+    use crate::{Error, FileSystemError};
     use crate::ondisk::{PriorityLevels, ContextType, CcxEntryId, DfEntryId, PspEntryId, MemoryEntryId, TokenEntryId, EntryId, GroupId, memory::ConsoleOutControl, memory::DimmInfoSmbusElement, psp::BoardIdGettingMethodEeprom, psp::IdRevApcbMapping, memory::ExtVoltageControl, BaudRate, psp::RevAndFeatureValue};
     use crate::EntryItemBody;
     use crate::types::PriorityLevel;
@@ -831,4 +831,22 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn checksum_invalid() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut apcb = Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default()).unwrap();
+        // Break checksum
+        buffer[16] = buffer[16].wrapping_add(1);
+        match Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()) {
+            Ok(_) => {
+                panic!("should not be reached");
+            },
+            Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::checksum_byte")) => {
+                Ok(())
+            },
+            _ => {
+                panic!("should not be reached");
+            },
+        }
+    }
 }

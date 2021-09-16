@@ -20,6 +20,7 @@ pub use apcb::Apcb;
 pub use apcb::ApcbIoOptions;
 pub use types::Result;
 pub use types::Error;
+pub use types::FileSystemError;
 pub use entry::EntryItemBody;
 pub use ondisk::df;
 pub use ondisk::memory;
