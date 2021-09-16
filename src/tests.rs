@@ -873,8 +873,16 @@ mod tests {
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == 0xFFFF);
 
-        let items = entry.body_as_struct_array_mut::<RdimmDdr4CadBusElement>().unwrap();
-        // TODO
+        let mut items = entry.body_as_struct_array_mut::<RdimmDdr4CadBusElement>().unwrap();
+        let mut items = items.iter_mut();
+        let item = items.next().ok_or_else(|| Error::EntryNotFound)?;
+
+        assert!(item.dimm_slots_per_channel() == 2);
+        assert!(item.ddr_rates().unwrap() == DdrRates::new().with_ddr3200(true));
+        assert!(item.dimm0_ranks().unwrap() == Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true));
+        assert!(item.dimm1_ranks().unwrap() == Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true));
+        assert!(item.address_command_control() == 0x2a2d2d);
+        assert!(matches!(items.next(), None));
 
         assert!(matches!(entries.next(), None));
 

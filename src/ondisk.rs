@@ -1546,7 +1546,7 @@ pub mod memory {
 
     #[bitfield(bits = 32)]
     #[repr(u32)]
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, PartialEq)]
     pub struct Ddr4DimmRanks {
         pub unpopulated: bool,
         pub single_rank: bool,
@@ -1560,7 +1560,7 @@ pub mod memory {
 
     #[bitfield(bits = 32)]
     #[repr(u32)]
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, PartialEq)]
     pub struct LrdimmDdr4DimmRanks {
         pub unpopulated: bool,
         pub lr: bool,
@@ -1586,7 +1586,7 @@ pub mod memory {
 
     #[bitfield(bits = 32)]
     #[repr(u32)]
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, PartialEq)]
     pub struct DdrRates {
         // Note: Bit index is (x/2)//66 of ddrx
         #[skip]
