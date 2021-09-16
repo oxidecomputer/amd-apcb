@@ -496,8 +496,26 @@ impl<'a> Apcb<'a> {
         })
     }
 
+    pub(crate) fn calculate_checksum(backing_store: &'_ [u8]) -> Result<u8> {
+        let stored_checksum_byte: u8;
+        let apcb_size: u32;
+        {
+            let mut backing_store = backing_store;
+            let header = take_header_from_collection::<V2_HEADER>(&mut backing_store).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER"))?;
+            stored_checksum_byte = header.checksum_byte;
+            apcb_size = header.apcb_size.get();
+        }
+        let mut checksum_byte = 0u8;
+        for c in &backing_store[..apcb_size as usize] {
+            checksum_byte = checksum_byte.wrapping_add(*c);
+        }
+        // Correct for stored_checksum_byte
+        checksum_byte = checksum_byte.wrapping_sub(stored_checksum_byte);
+        Ok((0x100u16 - u16::from(checksum_byte)) as u8) // Note: This can overflow
+    }
     pub fn load(backing_store: &'a mut [u8]) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
+        let checksum_byte = Self::calculate_checksum(backing_store)?;
         let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
             .ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER"))?;
 
@@ -512,6 +530,10 @@ impl<'a> Apcb<'a> {
         if header.version.get() == 0x30 {
         } else {
 //            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::version"));
+        }
+
+        if header.checksum_byte != checksum_byte {
+            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::checksum_byte"));
         }
 
         let v3_header_ext = if usize::from(header.header_size)
