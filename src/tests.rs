@@ -849,4 +849,36 @@ mod tests {
             },
         }
     }
+
+    #[test]
+    fn insert_cad_bus_element() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut apcb = Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default()).unwrap();
+        apcb.insert_group(GroupId::Memory, *b"MEMG")?;
+        use crate::memory::{DdrRates, Ddr4DimmRanks, CadBusCkeDriveStrength, CadBusCsOdtDriveStrength, CadBusAddressCommandDriveStrength, CadBusClkDriveStrength, RdimmDdr4Voltages, RdimmDdr4CadBusElement};
+        let element = RdimmDdr4CadBusElement::new(2, DdrRates::new().with_ddr3200(true), RdimmDdr4Voltages::new().with_v_1_2(true), Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true), Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true), 0, 0, 0x2a2d2d, CadBusCkeDriveStrength::Strength30Ohm, CadBusCsOdtDriveStrength::Strength30Ohm, CadBusAddressCommandDriveStrength::Strength30Ohm, CadBusClkDriveStrength::Strength30Ohm).unwrap();
+        apcb.insert_struct_array_as_entry(EntryId::Memory(MemoryEntryId::PsRdimmDdr4CadBus), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Default), &[element])?;
+        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        let mut apcb = Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
+        let mut groups = apcb.groups_mut();
+
+        let mut group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        assert!(group.id() == GroupId::Memory);
+        assert!(group.signature() ==*b"MEMG");
+
+        let mut entries = group.entries_mut();
+
+        let mut entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        assert!(entry.id() == EntryId::Memory(MemoryEntryId::PsRdimmDdr4CadBus));
+        assert!(entry.instance_id() == 0);
+        assert!(entry.board_instance_mask() == 0xFFFF);
+
+        let items = entry.body_as_struct_array_mut::<RdimmDdr4CadBusElement>().unwrap();
+        // TODO
+
+        assert!(matches!(entries.next(), None));
+
+        assert!(matches!(groups.next(), None));
+        Ok(())
+    }
 }

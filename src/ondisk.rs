@@ -1580,9 +1580,9 @@ pub mod memory {
         Strength20Ohm = 31,
     }
 
-    type CadBusAddressCommandDriveStrength = CadBusClkDriveStrength;
-    type CadBusCkeDriveStrength = CadBusClkDriveStrength;
-    type CadBusCsOdtDriveStrength = CadBusClkDriveStrength;
+    pub type CadBusAddressCommandDriveStrength = CadBusClkDriveStrength;
+    pub type CadBusCkeDriveStrength = CadBusClkDriveStrength;
+    pub type CadBusCsOdtDriveStrength = CadBusClkDriveStrength;
 
     #[bitfield(bits = 32)]
     #[repr(u32)]
@@ -1771,6 +1771,30 @@ pub mod memory {
                 cs_odt_drive_strength: 7,
                 address_command_drive_strength: 7,
                 clk_drive_strength: 7,
+            }
+        }
+    }
+
+    impl RdimmDdr4CadBusElement {
+        pub fn new(dimm_slots_per_channel: u32, ddr_rates: DdrRates, vdd_io: RdimmDdr4Voltages, dimm0_ranks: Ddr4DimmRanks, dimm1_ranks: Ddr4DimmRanks, gear_down_mode: u16, slow_mode: u16, address_command_control: u32, cke_drive_strength: CadBusCkeDriveStrength, cs_odt_drive_strength: CadBusCsOdtDriveStrength, address_command_drive_strength: CadBusAddressCommandDriveStrength, clk_drive_strength: CadBusClkDriveStrength) -> Result<Self> {
+            if address_command_control < 0x100_0000 {
+                Ok(RdimmDdr4CadBusElement {
+                    dimm_slots_per_channel: dimm_slots_per_channel.into(),
+                    ddr_rates: ddr_rates.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
+                    vdd_io: vdd_io.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
+                    dimm0_ranks: dimm0_ranks.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
+                    dimm1_ranks: dimm1_ranks.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
+                    gear_down_mode: gear_down_mode.into(),
+                    slow_mode: slow_mode.into(),
+                    address_command_control: address_command_control.into(),
+                    cke_drive_strength: cke_drive_strength.to_u8().ok_or_else(|| Error::EntryTypeMismatch)?,
+                    cs_odt_drive_strength: cs_odt_drive_strength.to_u8().ok_or_else(|| Error::EntryTypeMismatch)?,
+                    address_command_drive_strength: address_command_drive_strength.to_u8().ok_or_else(|| Error::EntryTypeMismatch)?,
+                    clk_drive_strength: clk_drive_strength.to_u8().ok_or_else(|| Error::EntryTypeMismatch)?,
+                    .. Self::default()
+                })
+            } else {
+                Err(Error::EntryTypeMismatch)
             }
         }
     }
