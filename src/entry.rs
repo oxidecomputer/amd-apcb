@@ -110,12 +110,17 @@ pub struct StructSequenceEntryMutItem<'a, T> {
 }
 
 impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> StructSequenceEntryMutItem<'a, T> {
-    pub fn iter_mut(self: &'a mut Self) -> StructSequenceEntryMutIter<'a, T> {
+    pub fn iter_mut(self: &'a mut Self) -> Result<StructSequenceEntryMutIter<'a, T>> {
         StructSequenceEntryMutIter::<T> {
             buf: self.buf,
             entry_id: self.entry_id,
             _data: PhantomData,
-        }
+        }.validate()?;
+        Ok(StructSequenceEntryMutIter::<T> {
+            buf: self.buf,
+            entry_id: self.entry_id,
+            _data: PhantomData,
+        })
     }
 }
 
@@ -138,6 +143,12 @@ impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> Iterator for Stru
             // Note: If it was statically known: let result = take_header_from_collection_mut::<T>(&mut a).ok_or_else(|| Error::EntryTypeMismatch)?;
             T::checked_from_bytes(self.entry_id, &mut self.buf).ok() // FIXME handle error
         }
+    }
+    pub(crate) fn validate(mut self) -> Result<()> {
+        while !self.buf.is_empty() {
+            self.next1()?;
+        }
+        Ok(())
     }
 }
 
