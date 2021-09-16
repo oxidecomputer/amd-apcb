@@ -20,6 +20,18 @@ use num_traits::ToPrimitive;
 use zerocopy::AsBytes;
 use crate::token_accessors::{Tokens, TokensMut};
 
+pub struct ApcbLoadingOptions {
+    pub check_checksum: bool,
+}
+
+impl Default for ApcbLoadingOptions {
+    fn default() -> Self {
+        Self {
+            check_checksum: true,
+        }
+    }
+}
+
 pub struct Apcb<'a> {
     header: &'a mut V2_HEADER,
     v3_header_ext: Option<V3_HEADER_EXT>,
@@ -518,9 +530,11 @@ impl<'a> Apcb<'a> {
         checksum_byte = checksum_byte.wrapping_sub(stored_checksum_byte);
         Ok((0x100u16 - u16::from(checksum_byte)) as u8) // Note: This can overflow
     }
-    pub fn load(backing_store: &'a mut [u8]) -> Result<Self> {
+
+    /// Note: for OPTIONS, try ApcbLoadingOptions::default()
+    pub fn load(backing_store: &'a mut [u8], options: &ApcbLoadingOptions) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
-        let checksum_byte = Self::calculate_checksum(backing_store)?;
+        let checksum_byte = if options.check_checksum { Self::calculate_checksum(backing_store)? } else { 0 };
         let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
             .ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER"))?;
 
@@ -538,8 +552,10 @@ impl<'a> Apcb<'a> {
         } else {
             return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::version"));
         }
-        if header.checksum_byte != checksum_byte {
-            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::checksum_byte"));
+        if options.check_checksum {
+            if header.checksum_byte != checksum_byte {
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::checksum_byte"));
+            }
         }
         let apcb_size = header.apcb_size.get();
 
@@ -627,7 +643,7 @@ impl<'a> Apcb<'a> {
         }
         Ok(())
     }
-    pub fn create(backing_store: &'a mut [u8], unique_apcb_instance: u32) -> Result<Self> {
+    pub fn create(backing_store: &'a mut [u8], initial_unique_apcb_instance: u32, options: &ApcbLoadingOptions) -> Result<Self> {
         for i in 0..backing_store.len() {
             backing_store[i] = 0xFF;
         }
@@ -636,7 +652,7 @@ impl<'a> Apcb<'a> {
             let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
                     .ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER"))?;
             *header = Default::default();
-            header.unique_apcb_instance.set(unique_apcb_instance);
+            header.unique_apcb_instance.set(initial_unique_apcb_instance);
 
             let v3_header_ext = take_header_from_collection_mut::<V3_HEADER_EXT>(&mut backing_store)
                     .ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V3_HEADER_EXT"))?;
@@ -648,7 +664,7 @@ impl<'a> Apcb<'a> {
             header.apcb_size = (header.header_size.get() as u32).into();
         }
         Self::update_checksum(backing_store)?;
-        Self::load(backing_store)
+        Self::load(backing_store, options)
     }
     /// Note: Each modification in the APCB causes the value of unique_apcb_instance to change.
     pub fn unique_apcb_instance(&self) -> u32 {
