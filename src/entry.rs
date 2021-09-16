@@ -111,11 +111,11 @@ pub struct StructSequenceEntryMutItem<'a, T> {
 
 impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> StructSequenceEntryMutItem<'a, T> {
     pub fn iter_mut(self: &'a mut Self) -> Result<StructSequenceEntryMutIter<'a, T>> {
-        StructSequenceEntryMutIter::<T> {
-            buf: self.buf,
+        /* FIXME StructSequenceEntryMutIter::<T> {
+            buf: &mut *self.buf,
             entry_id: self.entry_id,
             _data: PhantomData,
-        }.validate()?;
+        }.validate()?; */
         Ok(StructSequenceEntryMutIter::<T> {
             buf: self.buf,
             entry_id: self.entry_id,
@@ -130,18 +130,15 @@ pub struct StructSequenceEntryMutIter<'a, T: EntryCompatible + MutSequenceElemen
     _data: PhantomData<T>,
 }
 
-// Note: T is an enum (usually a MutElementRef)
-impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> Iterator for StructSequenceEntryMutIter<'a, T> {
-    type Item = T;
-    fn next<'s>(&'s mut self) -> Option<Self::Item> {
+impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> StructSequenceEntryMutIter<'a, T> {
+    fn next1<'s>(&'s mut self) -> Result<T> {
         if self.buf.is_empty() {
-            None
-        } else if !T::is_entry_compatible(self.entry_id, self.buf) {
-            //Err(Error::EntryTypeMismatch) FIXME
-            None
-        } else {
+            Err(Error::EntryTypeMismatch)
+        } else if T::is_entry_compatible(self.entry_id, self.buf) {
             // Note: If it was statically known: let result = take_header_from_collection_mut::<T>(&mut a).ok_or_else(|| Error::EntryTypeMismatch)?;
-            T::checked_from_bytes(self.entry_id, &mut self.buf).ok() // FIXME handle error
+            T::checked_from_bytes(self.entry_id, &mut self.buf)
+        } else {
+            Err(Error::EntryTypeMismatch)
         }
     }
     pub(crate) fn validate(mut self) -> Result<()> {
@@ -149,6 +146,19 @@ impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> Iterator for Stru
             self.next1()?;
         }
         Ok(())
+    }
+}
+
+// Note: T is an enum (usually a MutElementRef)
+impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> Iterator for StructSequenceEntryMutIter<'a, T> {
+    type Item = T;
+    fn next<'s>(&'s mut self) -> Option<Self::Item> {
+        // Note: Further error checking is done in validate()
+        if self.buf.is_empty() {
+            None
+        } else {
+            self.next1().ok()
+        }
     }
 }
 
