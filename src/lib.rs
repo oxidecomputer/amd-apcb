@@ -17,6 +17,7 @@ mod struct_accessors;
 mod struct_variants_enum;
 mod token_accessors;
 pub use apcb::Apcb;
+pub use apcb::ApcbLoadingOptions;
 pub use types::Result;
 pub use types::Error;
 pub use entry::EntryItemBody;
