@@ -618,28 +618,20 @@ impl<'a> Apcb<'a> {
     /// User is expected to call this once after modifying anything in the apcb (including insertions and deletions).
     /// We update both the checksum and the unique_apcb_instance.
     pub fn update_checksum(backing_store: &'_ mut [u8]) -> Result<()> {
-        let apcb_size: u32;
         {
             let mut backing_store = &mut *backing_store;
             let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
                     .ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER"))?;
-            header.checksum_byte = 0;
+            header.checksum_byte = 0; // make calculate_checksum's job easier
             // Use the chance to also update unique_apcb_instance (assumption: user calls update_checksum only when there was an actual change).
             header.unique_apcb_instance.set(header.unique_apcb_instance.get().wrapping_add(1));
-            apcb_size = header.apcb_size.get();
         }
-        let mut checksum_byte = 0u8;
-        {
-            let backing_store = &mut *backing_store;
-            for c in &backing_store[..apcb_size as usize] {
-                checksum_byte = checksum_byte.wrapping_add(*c);
-            }
-        }
+        let checksum_byte = Self::calculate_checksum(backing_store)?;
         {
             let mut backing_store = &mut *backing_store;
             let header = take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
                     .ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER"))?;
-            header.checksum_byte = (0x100u16 - u16::from(checksum_byte)) as u8; // Note: This can overflow
+            header.checksum_byte = checksum_byte;
         }
         Ok(())
     }
