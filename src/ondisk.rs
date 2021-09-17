@@ -1706,7 +1706,9 @@ pub mod memory {
                 Self::NoSlot => Some(0xf0),
                 Self::DontCare => Some(0xff),
                 Self::Specific(dimms) => {
-                    Some(dimms.to_i64()?.into()) // Assumption: Not 0xf0 and not 0xff
+                    let value = dimms.to_i64()?;
+                    assert!(value != 0xf0 && value != 0xff);
+                    Some(value.into())
                 }
             }
         }
@@ -2776,14 +2778,22 @@ pub mod memory {
                 fn to_i64(&self) -> Option<i64> {
                     match self {
                         Self::Any => Some(0xff),
-                        Self::Specific(ids) => Some(ids.to_i64()?), // Assumption: resulting value is not 0xff
+                        Self::Specific(ids) => {
+                            let value = ids.to_i64()?;
+                            assert!(value != 0xff);
+                            Some(value)
+                        },
                     }
                 }
                 #[inline]
                 fn to_u64(&self) -> Option<u64> {
                     match self {
                         Self::Any => Some(0xff),
-                        Self::Specific(ids) => Some(ids.to_u64()?), // Assumption: resulting value is not 0xff
+                        Self::Specific(ids) => {
+                            let value = ids.to_u64()?;
+                            assert!(value != 0xff);
+                            Some(value)
+                        },
                     }
                 }
             }
@@ -2849,14 +2859,22 @@ pub mod memory {
                 fn to_i64(&self) -> Option<i64> {
                     match self {
                         Self::Any => Some(0xff),
-                        Self::Specific(value) => Some(value.to_i64()?), // Assumption: not 0xff
+                        Self::Specific(value) => {
+                            let value = value.to_i64()?;;
+                            assert!(value != 0xff);
+                            Some(value)
+                        },
                     }
                 }
                 #[inline]
                 fn to_u64(&self) -> Option<u64> {
                     match self {
                         Self::Any => Some(0xff),
-                        Self::Specific(value) => Some(value.to_u64()?), // Assumption: not 0xff
+                        Self::Specific(value) => {
+                            let value = value.to_u64()?;
+                            assert!(value != 0xff);
+                            Some(value)
+                        },
                     }
                 }
             }
