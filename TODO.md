@@ -3,7 +3,6 @@
 * s|default|normal| in PriorityLevels and PriorityLevel
 * Sanity-check "new" fns that exist
 * Add "new" fn for the others, too?
-* body_as_struct_array: Where is the check whether it is EntryCompatible ?
 * Convert board_instance_mask to bitfield?!
 * IdRevApcbMapping
   * id_and_feature_mask: bit 7: 1=user controlled; 0=normal
