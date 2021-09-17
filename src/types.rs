@@ -31,5 +31,5 @@ pub enum PriorityLevel {
     Medium,
     EventLogging,
     Low,
-    Default,
+    Normal, // the default
 }

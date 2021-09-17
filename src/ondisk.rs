@@ -903,7 +903,7 @@ pub struct PriorityLevels {
     pub medium: bool,
     pub event_logging: bool,
     pub low: bool,
-    pub default: bool,
+    pub normal: bool,
     #[skip]
     __: B2,
 }
@@ -969,8 +969,8 @@ impl PriorityLevels {
             PriorityLevel::Low => {
                 result.set_low(true);
             }
-            PriorityLevel::Default => {
-                result.set_default(true);
+            PriorityLevel::Normal => {
+                result.set_normal(true);
             }
         }
         result
