@@ -1,6 +1,5 @@
 # Features
 
-* Maybe remove DimmInfoSmbusElement::not_present()
 * Sanity-check "new" fns that exist
 * Add "new" fn for the others, too?
 * Convert board_instance_mask to bitfield?!
