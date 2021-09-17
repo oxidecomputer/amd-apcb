@@ -21,7 +21,6 @@
 # Tests
 
 * Add unit test for token entries!!  mutation
-* Add test to insert wrong-type struct using insert_struct*entry
 * bitfield out-of-range
 * struct field out-of-range
 * bitfield in-range
