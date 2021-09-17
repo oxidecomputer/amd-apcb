@@ -14,6 +14,7 @@ use core::convert::TryInto;
 use core::default::Default;
 use core::mem::{size_of};
 use crate::group::{GroupItem, GroupMutItem};
+use pre::pre;
 use static_assertions::const_assert;
 use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
@@ -310,6 +311,7 @@ impl<'a> Apcb<'a> {
         }
         self.group_mut(group_id).ok_or_else(|| Error::GroupNotFound)
     }
+    #[pre]
     fn internal_insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: usize, priority_mask: PriorityLevels, payload_initializer: &mut dyn FnMut(&mut [u8]) -> ()) -> Result<()> {
         let group_id = entry_id.group_id();
         let mut group = self.group_mut(group_id).ok_or_else(|| Error::GroupNotFound)?;
@@ -328,13 +330,16 @@ impl<'a> Apcb<'a> {
         let mut group = self.resize_group_by(group_id, entry_allocation.into())?;
         let mut entries = group.entries_mut();
         // Note: On some errors, group.used_size will be reduced by insert_entry again!
-        match entries.insert_entry(entry_id, instance_id, board_instance_mask, entry_allocation, context_type, payload_size, payload_initializer, priority_mask) {
+        match
+        #[assure("Caller already grew the group by `payload_size + size_of::<ENTRY_HEADER>()`", reason = "See above")]
+        entries.insert_entry(entry_id, instance_id, board_instance_mask, entry_allocation, context_type, payload_size, payload_initializer, priority_mask) {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }
     }
 
     // Security--and it would be nicer if the person using this would instead contribute a struct layout so we can use it normally
+    #[pre]
     pub(crate) fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, priority_mask: PriorityLevels, payload: &[u8]) -> Result<()> {
         let payload_size = payload.len();
         self.internal_insert_entry(entry_id, instance_id, board_instance_mask, context_type, payload_size, priority_mask, &mut |body: &mut [u8]| {
@@ -407,6 +412,7 @@ impl<'a> Apcb<'a> {
     }
 
     /// Note: INSTANCE_ID is sometimes != 0.
+    #[pre]
     pub fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         let group_id = entry_id.group_id();
         // Make sure that the entry exists before resizing the group
@@ -431,6 +437,7 @@ impl<'a> Apcb<'a> {
         const_assert!(TOKEN_SIZE % (ENTRY_ALIGNMENT as u16) == 0);
         let mut group = self.resize_group_by(group_id, TOKEN_SIZE.into())?;
         // Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  group.insert_token has special logic in order to survive that.
+        #[assure("Caller already grew the group by `size_of::<TOKEN_ENTRY>()`", reason = "See a few lines above here")]
         group.insert_token(entry_id, instance_id, board_instance_mask, token_id, token_value)
     }
     pub fn delete_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32) -> Result<()> {

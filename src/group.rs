@@ -10,6 +10,7 @@ use core::convert::TryInto;
 use core::mem::{size_of};
 use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
+use pre::pre;
 use crate::entry::{EntryItem, EntryMutItem, EntryItemBody};
 
 pub struct GroupItem<'a> {
@@ -248,7 +249,7 @@ impl<'a> GroupMutIter<'a> {
         }
     }
     /// Inserts the given entry data at the right spot.
-    /// Precondition: Caller already increased the group size by entry_allocation.
+    #[pre("Caller already grew the group by `payload_size + size_of::<ENTRY_HEADER>()`")]
     pub(crate) fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload_size: usize, payload_initializer: &mut dyn FnMut(&mut [u8]) -> (), priority_mask: PriorityLevels) -> Result<()> {
         let group_id = entry_id.group_id();
         let entry_id = entry_id.type_id();
@@ -324,8 +325,7 @@ impl<'a> GroupMutItem<'a> {
         return Ok(entry_size as u32);
     }
     /// Resizes the given entry by SIZE_DIFF.
-    /// Precondition: If SIZE_DIFF > 0, caller needs to have expanded the group by SIZE_DIFF already.
-    /// Precondition: If SIZE_DIFF < 0, caller needs to call resize_entry_by BEFORE resizing the group.
+    #[pre("If `size_diff > 0`, caller needs to have expanded the group by `size_diff` already.  If `size_diff < 0`, caller needs to call `resize_entry_by` BEFORE resizing the group.")]
     pub(crate) fn resize_entry_by(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, size_diff: i64) -> Result<EntryMutItem<'_>> {
         let mut old_used_size = self.used_size;
 
@@ -354,18 +354,22 @@ impl<'a> GroupMutItem<'a> {
         Ok(entry)
     }
     /// Inserts the given token.
-    /// Precondition: Caller already resized the group.
+    #[pre("Caller already grew the group by `size_of::<TOKEN_ENTRY>()`")]
     pub(crate) fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
         let token_size = size_of::<TOKEN_ENTRY>();
         // Note: Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  This is bad when iterating over the group members until the end--it will iterate over garbage.
         // Therefore, mask the new area out for the iterator--and reinstate it only after resize_entry_by (which has been adapted specially) is finished with Ok.
+        #[assure("If `size_diff > 0`, caller needs to have expanded the group by `size_diff` already.  If `size_diff < 0`, caller needs to call `resize_entry_by` BEFORE resizing the group.", reason = "Our caller ensured that, and we have a precondition to make him")]
         let mut entry = self.resize_entry_by(entry_id, instance_id, board_instance_mask, (token_size as i64).into())?;
+        #[assure("Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`", reason = "See right before here")]
+        #[assure("Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`", reason = "See our caller (and our own precondition)")]
         entry.insert_token(token_id, token_value)
     }
 
     /// Deletes the given token.
     /// Returns the number of bytes that were deleted.
     /// Postcondition: Caller will resize the given group
+    #[pre]
     pub(crate) fn delete_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32) -> Result<i64> {
         let token_size = size_of::<TOKEN_ENTRY>();
         // Note: Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  This is bad when iterating over the group members until the end--it will iterate over garbage.
@@ -374,6 +378,7 @@ impl<'a> GroupMutItem<'a> {
         entry.delete_token(token_id)?;
         let mut token_size_diff: i64 = token_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
         token_size_diff = -token_size_diff;
+        #[assure("If `size_diff > 0`, caller needs to have expanded the group by `size_diff` already.  If `size_diff < 0`, caller needs to call `resize_entry_by` BEFORE resizing the group.", reason = "Our caller will do that, after calling us")]
         self.resize_entry_by(entry_id, instance_id, board_instance_mask, token_size_diff)?;
         Ok(token_size_diff)
     }

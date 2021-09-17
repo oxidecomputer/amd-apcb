@@ -2,6 +2,7 @@
 use crate::types::{Result, Error, FileSystemError};
 use crate::ondisk::{TOKEN_ENTRY, TokenEntryId, take_header_from_collection, take_header_from_collection_mut};
 use num_traits::FromPrimitive;
+use pre::pre;
 use core::mem::size_of;
 
 #[derive(Debug)]
@@ -140,7 +141,8 @@ impl<'a> TokensEntryIterMut<'a> {
     }
 
     /// Inserts the given entry data at the right spot.
-    /// Precondition: Caller already increased the group size by entry_size.
+    #[pre("Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`")]
+    #[pre("Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`")]
     pub(crate) fn insert_token(&mut self, token_id: u32, token_value: u32) -> Result<TokensEntryItemMut<'a>> {
         let token_size = size_of::<TOKEN_ENTRY>();
 
@@ -325,8 +327,13 @@ impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
         None
     }
 
+    #[pre("Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`")]
+    #[pre("Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`")]
     pub(crate) fn insert_token(&mut self, token_id: u32, token_value: u32) -> Result<()> {
-        match self.iter_mut().insert_token(token_id, token_value) {
+        let mut iter = self.iter_mut();
+        match #[assure("Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`", reason = "See our own precondition")]
+              #[assure("Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`", reason = "See our own precondition")]
+              iter.insert_token(token_id, token_value) {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }
