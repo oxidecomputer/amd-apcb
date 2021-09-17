@@ -355,6 +355,10 @@ impl<'a> Apcb<'a> {
             let blob = item.checked_as_bytes(entry_id).ok_or_else(|| Error::EntryTypeMismatch)?;
             payload_size = payload_size.checked_add(blob.len()).ok_or_else(|| Error::ArithmeticOverflow)?;
         }
+        let off = payload_size % ENTRY_ALIGNMENT;
+        let padding_size: usize = if off == 0 { 0 } else { ENTRY_ALIGNMENT - off };
+        // Be bug-compatible with AMD and fill up
+        payload_size = payload_size.checked_add(padding_size).ok_or_else(|| Error::ArithmeticOverflow)?;
         self.internal_insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, payload_size, priority_mask, &mut |body: &mut [u8]| {
             let mut body = body;
             for item in payload {
@@ -362,6 +366,10 @@ impl<'a> Apcb<'a> {
                 let (a, rest) = body.split_at_mut(source.len());
                 a.copy_from_slice(source);
                 body = rest;
+            }
+            // Be bug-compatible with AMD and fill up
+            for i in 0..padding_size {
+                body[i] = 0;
             }
         })
     }
@@ -377,6 +385,10 @@ impl<'a> Apcb<'a> {
             }
             payload_size = payload_size.checked_add(blob.len()).ok_or_else(|| Error::ArithmeticOverflow)?;
         }
+        let off = payload_size % ENTRY_ALIGNMENT;
+        let padding_size: usize = if off == 0 { 0 } else { ENTRY_ALIGNMENT - off };
+        // Be bug-compatible with AMD and fill up
+        payload_size = payload_size.checked_add(padding_size).ok_or_else(|| Error::ArithmeticOverflow)?;
         self.internal_insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, payload_size, priority_mask, &mut |body: &mut [u8]| {
             let mut body = body;
             for item in payload {
@@ -384,6 +396,10 @@ impl<'a> Apcb<'a> {
                 let (a, rest) = body.split_at_mut(source.len());
                 a.copy_from_slice(source);
                 body = rest;
+            }
+            // Be bug-compatible with AMD and fill up
+            for i in 0..padding_size {
+                body[i] = 0;
             }
         })
     }
@@ -393,8 +409,12 @@ impl<'a> Apcb<'a> {
     pub fn insert_struct_entry<H: EntryCompatible + AsBytes + HeaderWithTail>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, header: &H, tail: &[H::TailArrayItemType]) -> Result<()> {
         let blob = header.as_bytes();
         if H::is_entry_compatible(entry_id, blob) {
-            let tail_size = size_of::<H>().checked_add(size_of::<H::TailArrayItemType>().checked_mul(tail.len()).ok_or_else(|| Error::ArithmeticOverflow)?).ok_or_else(|| Error::ArithmeticOverflow)?;
-            self.internal_insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, tail_size, priority_mask, &mut |body: &mut [u8]| {
+            let mut payload_size = size_of::<H>().checked_add(size_of::<H::TailArrayItemType>().checked_mul(tail.len()).ok_or_else(|| Error::ArithmeticOverflow)?).ok_or_else(|| Error::ArithmeticOverflow)?;
+            let off = payload_size % ENTRY_ALIGNMENT;
+            let padding_size: usize = if off == 0 { 0 } else { ENTRY_ALIGNMENT - off };
+            // Be bug-compatible with AMD and fill up
+            payload_size = payload_size.checked_add(padding_size).ok_or_else(|| Error::ArithmeticOverflow)?;
+            self.internal_insert_entry(entry_id, instance_id, board_instance_mask, ContextType::Struct, payload_size, priority_mask, &mut |body: &mut [u8]| {
                 let mut body = body;
                 let (a, rest) = body.split_at_mut(blob.len());
                 a.copy_from_slice(blob);
@@ -404,6 +424,10 @@ impl<'a> Apcb<'a> {
                     let (a, rest) = body.split_at_mut(source.len());
                     a.copy_from_slice(source);
                     body = rest;
+                }
+                // Be bug-compatible with AMD and fill up
+                for i in 0..padding_size {
+                    body[i] = 0;
                 }
             })
         } else {
