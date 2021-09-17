@@ -63,6 +63,19 @@ impl Getter<Result<bool>> for BU8 {
     }
 }
 
+#[derive(Debug, PartialEq, FromBytes, AsBytes, Clone, Copy)]
+#[repr(C, packed)]
+pub(crate) struct BLU16(pub(crate) U16<LittleEndian>);
+impl Getter<Result<bool>> for BLU16 {
+    fn get1(self) -> Result<bool> {
+        match self.0.get() {
+            0 => Ok(false),
+            1 => Ok(true),
+            _ => Err(Error::EntryTypeMismatch),
+        }
+    }
+}
+
 pub(crate) trait Setter<T> {
     fn set1(&mut self, value: T);
 }
@@ -91,6 +104,14 @@ impl Setter<bool> for BU8 {
         *self = BU8(match value {
             false => 0,
             true => 1,
+        })
+    }
+}
+impl Setter<bool> for BLU16 {
+    fn set1(&mut self, value: bool) {
+        *self = Self(match value {
+            false => 0.into(),
+            true => 1.into(),
         })
     }
 }

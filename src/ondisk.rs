@@ -1167,7 +1167,7 @@ pub mod df {
 
 pub mod memory {
     use super::*;
-    use crate::struct_accessors::{make_accessors, Getter, Setter, BU8};
+    use crate::struct_accessors::{make_accessors, Getter, Setter, BU8, BLU16};
     use crate::types::Result;
 
     make_accessors! {
@@ -1739,9 +1739,9 @@ pub mod memory {
             dimm0_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
             dimm1_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
 
-            gear_down_mode: U16<LittleEndian> : pub get u16 : pub set u16,
+            gear_down_mode: BLU16 : pub get Result<bool> : pub set bool,
             _reserved: U16<LittleEndian>,
-            slow_mode: U16<LittleEndian> : pub get u16 : pub set u16,
+            slow_mode: BLU16 : pub get Result<bool> : pub set bool, // (probably) 2T is slow, 1T is fast
             _reserved_2: U16<LittleEndian>,
             address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
 
@@ -1761,9 +1761,9 @@ pub mod memory {
                 dimm0_ranks: 6.into(), // maybe invalid
                 dimm1_ranks: 1.into(), // maybe invalid
 
-                gear_down_mode: 0.into(),
+                gear_down_mode: BLU16(0.into()),
                 _reserved: 0.into(),
-                slow_mode: 0.into(),
+                slow_mode: BLU16(0.into()),
                 _reserved_2: 0.into(),
                 address_command_control: 0x272727.into(), // maybe invalid
 
