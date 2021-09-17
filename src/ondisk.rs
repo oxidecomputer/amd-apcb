@@ -122,7 +122,7 @@ pub fn take_body_from_collection<'a>(
 
 #[derive(FromBytes, AsBytes, Unaligned)]
 #[repr(C, packed)]
-pub struct V2_HEADER {
+pub(crate) struct V2_HEADER {
     pub signature: [u8; 4],
     pub header_size: U16<LittleEndian>, // == sizeof(V2_HEADER); but 128 for V3
     pub version: U16<LittleEndian>,     // == 0x30
