@@ -1,6 +1,5 @@
 # Features
 
-* gear_down_mode, slow_mode
 * "Assumption" -> assert ?
 * s|default|normal| in PriorityLevels and PriorityLevel
 * Sanity-check "new" fns that exist
