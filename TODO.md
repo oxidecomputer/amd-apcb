@@ -27,8 +27,6 @@
 
 # (Future) Compatibility
 
-* Allow/implement insert_headered_struct_array_entry with padding?!  Check what AMD says here
-* insert_struct_sequence_as_entry, insert_struct_array_as_entry: Automatically pad with 0es until size is aligned (to be bug-compatible with AMD)
 * Also make_accessors! the ENTRY_HEADER, GROUP_HEADER, V2_HEADER and so on
 * Maybe remove PartialEq from structs
 
