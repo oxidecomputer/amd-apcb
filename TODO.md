@@ -1,6 +1,5 @@
 # Features
 
-* s|default|normal| in PriorityLevels and PriorityLevel
 * Sanity-check "new" fns that exist
 * Add "new" fn for the others, too?
 * Convert board_instance_mask to bitfield?!
