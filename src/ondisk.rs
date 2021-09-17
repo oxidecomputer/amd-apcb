@@ -1267,18 +1267,6 @@ pub mod memory {
     }
 
     impl DimmInfoSmbusElement {
-        pub fn not_present() -> Self {
-            Self {
-                dimm_slot_present: BU8(0),
-                socket_id: 0,
-                channel_id: 0,
-                dimm_id: 0,
-                dimm_smbus_address: 0,
-                i2c_mux_address: 0,
-                mux_control_address: 0,
-                mux_channel: 0,
-            }
-        }
         pub fn new_slot(
             socket_id: u8,
             channel_id: u8,
