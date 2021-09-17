@@ -150,7 +150,7 @@ impl Default for V2_HEADER {
 
 #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
 #[repr(C, packed)]
-pub struct V3_HEADER_EXT {
+pub(crate) struct V3_HEADER_EXT {
     pub signature: [u8; 4],        // "ECB2"
     reserved_1: U16<LittleEndian>, // 0
     reserved_2: U16<LittleEndian>, // 0x10
