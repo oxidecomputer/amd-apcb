@@ -2860,7 +2860,7 @@ pub mod memory {
                     match self {
                         Self::Any => Some(0xff),
                         Self::Specific(value) => {
-                            let value = value.to_i64()?;;
+                            let value = value.to_i64()?;
                             assert!(value != 0xff);
                             Some(value)
                         },
