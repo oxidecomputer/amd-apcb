@@ -14,7 +14,12 @@
   * ref_dq
   * a lot of platform_specific_override::* enums
     * Cs
-* rustdoc
+
+# Bugs
+
+* Check delete_entry (postcondition!)
+* Check delete_token (postcondition!)
+  * Range end index of out range for delete_entry
 
 # Tests
 
@@ -28,9 +33,9 @@
 # (Future) Compatibility
 
 * Allow/implement insert_headered_struct_array_entry with padding?!  Check what AMD says here
+* insert_struct_sequence_as_entry, insert_struct_array_as_entry: Automatically pad with 0es until size is aligned (to be bug-compatible with AMD)
 * Also make_accessors! the ENTRY_HEADER, GROUP_HEADER, V2_HEADER and so on
 * Maybe remove PartialEq from structs
-* Maybe remove "EventControl" id
 
 # Security
 
@@ -64,6 +69,7 @@
 * insert_struct_sequence_entry(EntryId::Quux).with(A {p : 1}).with(B {q: 42}).finish() (You can do pretty complex construction of structures using that pattern, debug_struct in std is a good example)
   * https://doc.rust-lang.org/std/fmt/struct.Formatter.html#method.debug_struct
 * Move skip_step from EntryCompatible to SequenceElementFromBytes (right now, the latter is only implemented by the enum macro; but skip_step would also be implemented by the enum--but outside the macro.  That's too complicated)
+* Maybe remove "EventControl" id
 
 # Alternate Bitfield implementations
 
