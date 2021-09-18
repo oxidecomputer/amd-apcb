@@ -27,7 +27,6 @@
 
 # (Future) Compatibility
 
-* Also make_accessors! the ENTRY_HEADER, GROUP_HEADER, V2_HEADER and so on
 * Maybe remove PartialEq from structs
 
 # Security
