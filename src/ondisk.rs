@@ -980,19 +980,18 @@ impl PriorityLevels {
 make_accessors! {
     #[derive(FromBytes, AsBytes, Unaligned, Debug)]
     #[repr(C, packed)]
-    pub struct ENTRY_HEADER {
-        // FIXME: de-pub those
-        pub group_id: U16<LittleEndian>, // should be equal to the group's group_id
-        pub entry_id: U16<LittleEndian>,  // meaning depends on context_type
-        pub entry_size: U16<LittleEndian>, // including header
-        pub instance_id: U16<LittleEndian>,
-        pub context_type: u8,   // see ContextType enum
-        pub context_format: u8, // see ContextFormat enum
-        pub unit_size: u8,      // in Byte.  Applicable when ContextType == 2.  value should be 8
-        pub priority_mask: u8 : pub get Result<PriorityLevels> : pub set PriorityLevels,
-        pub key_size: u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
-        pub key_pos: u8,  // Sorting key position of the unit specified of UnitSize
-        pub board_instance_mask: U16<LittleEndian>, // Board-specific Apcb instance mask
+    pub(crate) struct ENTRY_HEADER {
+        pub(crate) group_id: U16<LittleEndian>, // should be equal to the group's group_id
+        pub(crate) entry_id: U16<LittleEndian>,  // meaning depends on context_type
+        pub(crate) entry_size: U16<LittleEndian>, // including header
+        pub(crate) instance_id: U16<LittleEndian>,
+        pub(crate) context_type: u8,   // see ContextType enum
+        pub(crate) context_format: u8, // see ContextFormat enum
+        pub(crate) unit_size: u8,      // in Byte.  Applicable when ContextType == 2.  value should be 8
+        pub(crate) priority_mask: u8 : pub get Result<PriorityLevels> : pub set PriorityLevels,
+        pub(crate) key_size: u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
+        pub(crate) key_pos: u8,  // Sorting key position of the unit specified of UnitSize
+        pub(crate) board_instance_mask: U16<LittleEndian>, // Board-specific Apcb instance mask
     }
 }
 
