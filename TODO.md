@@ -1,5 +1,7 @@
 # Features
 
+* StructSequenceEntryMutItem: Also validate()
+* GroupMutIter: Also validate()
 * Sanity-check "new" fns that exist
 * Add "new" fn for the others, too?
 * Convert board_instance_mask to bitfield?!
