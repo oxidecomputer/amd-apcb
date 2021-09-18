@@ -858,13 +858,13 @@ impl EntryId {
 
 #[derive(FromBytes, AsBytes, Unaligned, Debug)]
 #[repr(C, packed)]
-pub struct GROUP_HEADER {
-    pub signature: [u8; 4],
-    pub group_id: U16<LittleEndian>,
-    pub header_size: U16<LittleEndian>, // == sizeof(GROUP_HEADER)
-    pub version: U16<LittleEndian>,     // == 0 << 4 | 1
+pub(crate) struct GROUP_HEADER {
+    pub(crate) signature: [u8; 4],
+    pub(crate) group_id: U16<LittleEndian>,
+    pub(crate) header_size: U16<LittleEndian>, // == sizeof(GROUP_HEADER)
+    pub(crate) version: U16<LittleEndian>,     // == 0 << 4 | 1
     _reserved: U16<LittleEndian>,
-    pub group_size: U32<LittleEndian>, // including header!
+    pub(crate) group_size: U32<LittleEndian>, // including header!
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, Copy, Clone)]
