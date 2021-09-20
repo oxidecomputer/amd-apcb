@@ -22,6 +22,4 @@ pub use types::Result;
 pub use types::Error;
 pub use types::FileSystemError;
 pub use entry::EntryItemBody;
-pub use ondisk::df;
-pub use ondisk::memory;
-pub use ondisk::psp;
+pub use ondisk::*;
