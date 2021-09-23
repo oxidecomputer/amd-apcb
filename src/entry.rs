@@ -110,25 +110,25 @@ pub struct StructSequenceEntryMutItem<'a, T> {
     _data: PhantomData<&'a T>,
 }
 
+pub struct StructSequenceEntryMutIter<'a, T> {
+    buf: &'a mut [u8],
+    entry_id: EntryId,
+    _data: PhantomData<T>,
+}
+
 impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> StructSequenceEntryMutItem<'a, T> {
     pub fn iter_mut(self: &'a mut Self) -> Result<StructSequenceEntryMutIter<'a, T>> {
-        /* FIXME StructSequenceEntryMutIter::<T> {
+        StructSequenceEntryMutIter::<T> {
             buf: &mut *self.buf,
             entry_id: self.entry_id,
             _data: PhantomData,
-        }.validate()?; */
+        }.validate()?;
         Ok(StructSequenceEntryMutIter::<T> {
             buf: self.buf,
             entry_id: self.entry_id,
             _data: PhantomData,
         })
     }
-}
-
-pub struct StructSequenceEntryMutIter<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> {
-    buf: &'a mut [u8],
-    entry_id: EntryId,
-    _data: PhantomData<T>,
 }
 
 impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> StructSequenceEntryMutIter<'a, T> {
@@ -142,9 +142,18 @@ impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> StructSequenceEnt
             Err(Error::EntryTypeMismatch)
         }
     }
+}
+
+impl<'a, 'b, T: EntryCompatible + MutSequenceElementFromBytes<'b>> StructSequenceEntryMutIter<'a, T> {
     pub(crate) fn validate(mut self) -> Result<()> {
         while !self.buf.is_empty() {
-            self.next1()?;
+            if T::is_entry_compatible(self.entry_id, self.buf) {
+                let (_type, size) = T::skip_step(self.entry_id, self.buf).ok_or_else(|| Error::EntryTypeMismatch)?;
+                let (_, buf) = self.buf.split_at_mut(size);
+                self.buf = buf;
+            } else {
+                return Err(Error::EntryTypeMismatch);
+            }
         }
         Ok(())
     }
