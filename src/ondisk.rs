@@ -1934,7 +1934,8 @@ pub mod memory {
         }
     }
 
-    // Those are all divisors of 240, except for the 34
+    // Those are all divisors of 240
+    // See <https://github.com/LongJohnCoder/ddr-doc/blob/gh-pages/jedec/JESD79-4.pdf> Table 3
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     pub enum RttNom {
         RttOff = 0,
@@ -1946,6 +1947,7 @@ pub mod memory {
         Rtt80Ohm = 6,
         Rtt34Ohm = 7,
     }
+    // See <https://github.com/LongJohnCoder/ddr-doc/blob/gh-pages/jedec/JESD79-4.pdf> Table 11
     pub type RttPark = RttNom;
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     pub enum RttWr {
