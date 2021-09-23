@@ -1977,6 +1977,7 @@ pub mod memory {
             odt_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for on-die termination
             pmu_phy_vref: U32<LittleEndian> : pub get u32 : pub set u32,
             // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
+            // See <https://github.com/LongJohnCoder/ddr-doc/blob/gh-pages/jedec/JESD79-4.pdf> Table 15
             vref_dq: U32<LittleEndian> : pub get u32 : pub set u32, // MR6 vref calibration value; 23|30|32
         }
     }
