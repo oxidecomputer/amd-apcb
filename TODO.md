@@ -22,7 +22,6 @@
 
 * Add unit test for token entries!!  mutation
 * bitfield out-of-range
-* struct field out-of-range
 * bitfield in-range
 * struct field in-range
 
