@@ -3961,6 +3961,24 @@ pub mod memory {
                 }
             }
         }
+
+        #[test]
+        fn test_getters_with_invalid_data() {
+            let mut data = [2u8; size_of::<AblConsoleOutControl>()];
+            let mut buf = &mut data[..];
+            let header = take_header_from_collection_mut::<AblConsoleOutControl>(&mut buf).unwrap();
+            match header.enable_console_logging() {
+                Err(Error::EntryTypeMismatch) => {
+                },
+                _ => {
+                    panic!("Should not be reached");
+                },
+            }
+            header.set_enable_console_logging(true);
+            assert!(header.enable_console_logging().unwrap());
+            header.set_enable_console_logging(false);
+            assert!(!header.enable_console_logging().unwrap());
+        }
     }
 }
 
