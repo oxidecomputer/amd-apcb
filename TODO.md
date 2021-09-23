@@ -7,7 +7,7 @@
 * IdRevApcbMapping
   * id_and_feature_mask: bit 7: 1=user controlled; 0=normal
 * OdtPatElement: Availability of dimm0_rank, dimm1_rank should be conditional.
-* Enums for stuff with a "|" or "one of" comment.
+* Enums for stuff with a "|" comment.
   * ref_dq
   * a lot of platform_specific_override::* enums
     * Cs
