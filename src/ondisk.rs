@@ -1524,8 +1524,7 @@ pub mod memory {
             result
         }
         pub fn new_disabled() -> Self {
-            let result = Self::default();
-            result
+            Self::default()
         }
     }
 
