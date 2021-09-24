@@ -4182,8 +4182,8 @@ pub mod psp {
             }
         }
         fn from_i64(value: i64) -> Option<Self> {
-            if value >= 0 && value < 0x100 {
-                let value: u64 = value.try_into().unwrap();
+            if value >= 0 {
+                let value: u64 = value.try_into().ok()?;
                 Self::from_u64(value)
             } else {
                 None
