@@ -1115,10 +1115,7 @@ pub mod df {
 
     impl EntryCompatible for SlinkConfig {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
-            match entry_id {
-                EntryId::Df(DfEntryId::SlinkConfig) => true,
-                _ => false,
-            }
+            matches!(entry_id, EntryId::Df(DfEntryId::SlinkConfig))
         }
     }
 
