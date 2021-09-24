@@ -162,7 +162,7 @@ impl<'a, 'b, T: EntryCompatible + MutSequenceElementFromBytes<'b>> StructSequenc
 // Note: T is an enum (usually a MutElementRef)
 impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> Iterator for StructSequenceEntryMutIter<'a, T> {
     type Item = T;
-    fn next<'s>(&'s mut self) -> Option<Self::Item> {
+    fn next(&'_ mut self) -> Option<Self::Item> {
         // Note: Further error checking is done in validate()
         if self.buf.is_empty() {
             None
@@ -416,7 +416,7 @@ impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> StructSequenceEntryI
 // Note: T is an enum (usually a ElemntRef)
 impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> Iterator for StructSequenceEntryIter<'a, T> {
     type Item = T;
-    fn next<'s>(&'s mut self) -> Option<Self::Item> {
+    fn next(&'_ mut self) -> Option<Self::Item> {
         // Note: Proper error check is done on creation of the iter in StructSequenceEntryItem.
         self.next1().ok()
     }
