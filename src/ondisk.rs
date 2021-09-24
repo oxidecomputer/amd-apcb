@@ -9,6 +9,7 @@ use crate::types::Error;
 use crate::types::PriorityLevel;
 use crate::types::Result;
 use byteorder::LittleEndian;
+use core::cmp::Ordering;
 use core::convert::TryInto;
 use core::mem::{replace, size_of};
 use modular_bitfield::prelude::*;
@@ -2896,12 +2897,10 @@ pub mod memory {
             impl FromPrimitive for ChannelIds {
                 #[inline]
                 fn from_u64(raw_value: u64) -> Option<Self> {
-                    if raw_value == 0xff {
-                        Some(Self::Any)
-                    } else if raw_value < 0xff { // other valid
-                        Some(Self::Specific(ChannelIdsSelection::from_u8(raw_value as u8)?))
-                    } else {
-                        None
+                    match raw_value.cmp(&0xff) {
+                        Ordering::Equal => Some(Self::Any),
+                        Ordering::Less => Some(Self::Specific(ChannelIdsSelection::from_u8(raw_value as u8)?)),
+                        _ => None,
                     }
                 }
                 #[inline]
