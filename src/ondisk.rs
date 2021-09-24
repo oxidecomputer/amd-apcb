@@ -2470,10 +2470,8 @@ pub mod memory {
     }
     impl ErrorOutControlBeepCode {
         pub fn error_type(&self) -> Result<ErrorOutControlBeepCodeErrorType> {
-            Ok(
-                ErrorOutControlBeepCodeErrorType::from_u16((self.error_type.get() & 0xF000) >> 12)
-                    .ok_or(Error::EntryTypeMismatch)?
-            )
+            ErrorOutControlBeepCodeErrorType::from_u16((self.error_type.get() & 0xF000) >> 12)
+                .ok_or(Error::EntryTypeMismatch)
         }
         pub fn set_error_type(&mut self, value: ErrorOutControlBeepCodeErrorType) {
             self.error_type
