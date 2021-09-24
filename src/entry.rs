@@ -136,7 +136,7 @@ impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> StructSequenceEnt
         if self.buf.is_empty() {
             Err(Error::EntryTypeMismatch)
         } else if T::is_entry_compatible(self.entry_id, self.buf) {
-            // Note: If it was statically known: let result = take_header_from_collection_mut::<T>(&mut a).ok_or_else(|| Error::EntryTypeMismatch)?;
+            // Note: If it was statically known: let result = take_header_from_collection_mut::<T>(&mut a).ok_or(Error::EntryTypeMismatch)?;
             T::checked_from_bytes(self.entry_id, &mut self.buf)
         } else {
             Err(Error::EntryTypeMismatch)
@@ -148,7 +148,7 @@ impl<'a, 'b, T: EntryCompatible + MutSequenceElementFromBytes<'b>> StructSequenc
     pub(crate) fn validate(mut self) -> Result<()> {
         while !self.buf.is_empty() {
             if T::is_entry_compatible(self.entry_id, self.buf) {
-                let (_type, size) = T::skip_step(self.entry_id, self.buf).ok_or_else(|| Error::EntryTypeMismatch)?;
+                let (_type, size) = T::skip_step(self.entry_id, self.buf).ok_or(Error::EntryTypeMismatch)?;
                 let (_, buf) = self.buf.split_at_mut(size);
                 self.buf = buf;
             } else {
@@ -399,7 +399,7 @@ impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> StructSequenceEntryI
         if self.buf.is_empty() {
             Err(Error::EntryTypeMismatch)
         } else if T::is_entry_compatible(self.entry_id, self.buf) {
-            // Note: If it was statically known: let result = take_header_from_collection::<T>(&mut a).ok_or_else(|| Error::EntryTypeMismatch)?;
+            // Note: If it was statically known: let result = take_header_from_collection::<T>(&mut a).ok_or(Error::EntryTypeMismatch)?;
             T::checked_from_bytes(self.entry_id, &mut self.buf)
         } else {
             Err(Error::EntryTypeMismatch)
@@ -486,8 +486,8 @@ impl<'a> EntryItem<'a> {
     }
 
     pub(crate) fn validate(&self) -> Result<()> {
-        ContextType::from_u8(self.header.context_type).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_type"))?;
-        ContextFormat::from_u8(self.header.context_format).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_format"))?;
+        ContextType::from_u8(self.header.context_type).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_type"))?;
+        ContextFormat::from_u8(self.header.context_format).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_format"))?;
         self.body.validate()?;
         Ok(())
     }
