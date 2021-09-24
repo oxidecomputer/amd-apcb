@@ -1101,9 +1101,7 @@ pub mod df {
     impl SlinkRegion {
         // Not sure why AMD still uses those--but it does use them, so whatever.
         pub fn dummy(socket: u8) -> SlinkRegion {
-            let mut result = Self::default();
-            result.socket = socket;
-            result
+            SlinkRegion { socket: socket, ..Self::default() }
         }
     }
 
@@ -2477,7 +2475,7 @@ pub mod memory {
         pub fn error_type(&self) -> Result<ErrorOutControlBeepCodeErrorType> {
             Ok(
                 ErrorOutControlBeepCodeErrorType::from_u16((self.error_type.get() & 0xF000) >> 12)
-                    .ok_or(Error::EntryTypeMismatch)?,
+                    .ok_or(Error::EntryTypeMismatch)?
             )
         }
         pub fn set_error_type(&mut self, value: ErrorOutControlBeepCodeErrorType) {
