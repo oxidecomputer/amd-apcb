@@ -250,7 +250,7 @@ impl<'a> GroupMutIter<'a> {
     }
     /// Inserts the given entry data at the right spot.
     #[pre("Caller already grew the group by `payload_size + size_of::<ENTRY_HEADER>()`")]
-    pub(crate) fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload_size: usize, payload_initializer: &mut dyn FnMut(&mut [u8]) -> (), priority_mask: PriorityLevels) -> Result<()> {
+    pub(crate) fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload_size: usize, payload_initializer: &mut dyn FnMut(&mut [u8]), priority_mask: PriorityLevels) -> Result<()> {
         let group_id = entry_id.group_id();
         let entry_id = entry_id.type_id();
 
