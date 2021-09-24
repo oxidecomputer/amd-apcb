@@ -117,7 +117,7 @@ pub struct StructSequenceEntryMutIter<'a, T> {
 }
 
 impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> StructSequenceEntryMutItem<'a, T> {
-    pub fn iter_mut(self: &'a mut Self) -> Result<StructSequenceEntryMutIter<'a, T>> {
+    pub fn iter_mut(&'a mut self) -> Result<StructSequenceEntryMutIter<'a, T>> {
         StructSequenceEntryMutIter::<T> {
             buf: &mut *self.buf,
             entry_id: self.entry_id,
@@ -340,7 +340,7 @@ impl<'a> EntryMutItem<'a> {
     }
 
     /// This allows the user to iterate over a sequence of different-size structs in the same Entry.
-    pub fn body_as_struct_sequence_mut<T: EntryCompatible>(self: &'a mut Self) -> Option<StructSequenceEntryMutItem<'a, T>> {
+    pub fn body_as_struct_sequence_mut<T: EntryCompatible>(&'a mut self) -> Option<StructSequenceEntryMutItem<'a, T>> {
         let id = self.id();
         match &mut self.body {
             EntryItemBody::Struct(buf) => {
