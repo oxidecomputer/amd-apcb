@@ -4526,8 +4526,8 @@ pub enum CbsMemAddrCmdParityRetryDdr4 {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum CcxSevAsidCount {
-    Count253 = 0,
-    Count509 = 1,
+    _253 = 0,
+    _509 = 1,
     Auto = 3,
 }
 
