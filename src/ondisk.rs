@@ -1101,7 +1101,7 @@ pub mod df {
     impl SlinkRegion {
         // Not sure why AMD still uses those--but it does use them, so whatever.
         pub fn dummy(socket: u8) -> SlinkRegion {
-            SlinkRegion { socket: socket, ..Self::default() }
+            SlinkRegion { socket, ..Self::default() }
         }
     }
 
