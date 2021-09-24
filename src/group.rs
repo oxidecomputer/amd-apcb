@@ -258,7 +258,7 @@ impl<'a> GroupMutIter<'a> {
         self.remaining_used_size = self.remaining_used_size.checked_sub(entry_allocation as usize).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::entry_size"))?;
         self.move_insertion_point_before(group_id.to_u16().unwrap(), entry_id, instance_id, board_instance_mask)?;
 
-        let mut buf = &mut self.buf[..]; // already done: offset
+        let mut buf = &mut *self.buf; // already done: offset
         // Move the entries from after the insertion point to the right (in order to make room before for our new entry).
         buf.copy_within(0..self.remaining_used_size, entry_allocation as usize);
 
