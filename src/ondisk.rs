@@ -4487,15 +4487,15 @@ pub mod psp {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum BaudRate {
-    B2400 = 0,
-    B3600 = 1,
-    B4800 = 2,
-    B7200 = 3,
-    B9600 = 4,
-    B19200 = 5,
-    B38400 = 6,
-    B57600 = 7,
-    B115200 = 8,
+    _2400Baud = 0,
+    _3600Baud = 1,
+    _4800Baud = 2,
+    _7200Baud = 3,
+    _9600Baud = 4,
+    _19200Baud = 5,
+    _38400Baud = 6,
+    _57600Baud = 7,
+    _115200Baud = 8,
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]

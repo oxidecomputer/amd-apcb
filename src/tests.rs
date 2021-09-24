@@ -499,12 +499,12 @@ mod tests {
 
         assert!(matches!(groups.next(), None));
         let tokens = apcb.tokens(0, 1).unwrap();
-        assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::B4800);
+        assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::_4800Baud);
 
         let mut tokens = apcb.tokens_mut(0, 1, PriorityLevels::from_level(PriorityLevel::Normal)).unwrap();
-        assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::B4800);
-        tokens.set_abl_serial_baud_rate(BaudRate::B9600).unwrap();
-        assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::B9600);
+        assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::_4800Baud);
+        tokens.set_abl_serial_baud_rate(BaudRate::_9600Baud).unwrap();
+        assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::_9600Baud);
         Ok(())
     }
 
