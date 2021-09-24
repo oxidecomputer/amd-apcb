@@ -3793,7 +3793,7 @@ pub mod memory {
             fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
                 match entry_id {
                     EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
-                        if prefix.len() >= 1 && prefix[0] == 0 {
+                        if !prefix.is_empty() && prefix[0] == 0 {
                             // work around AMD padding all the Entrys with 0s
                             return Some((0, 1));
                         }
@@ -3819,7 +3819,7 @@ pub mod memory {
             fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
                 match entry_id {
                     EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => {
-                        if prefix.len() >= 1 && prefix[0] == 0 {
+                        if !prefix.is_empty() && prefix[0] == 0 {
                             // work around AMD padding all the Entrys with 0s
                             return Some((0, 1));
                         }
@@ -3953,7 +3953,7 @@ pub mod memory {
             fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
                 match entry_id {
                     EntryId::Memory(MemoryEntryId::PlatformTuning) => {
-                        if prefix.len() >= 1 && prefix[0] == 0 {
+                        if !prefix.is_empty() && prefix[0] == 0 {
                             // work around AMD padding all the Entrys with 0s
                             return Some((0, 1));
                         }
@@ -3988,7 +3988,7 @@ pub mod memory {
             fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
                 match entry_id {
                     EntryId::Memory(MemoryEntryId::PlatformTuning) => {
-                        if prefix.len() >= 1 && prefix[0] == 0 {
+                        if !prefix.is_empty() && prefix[0] == 0 {
                             // work around AMD padding all the Entrys with 0s
                             return Some((0, 1));
                         }
