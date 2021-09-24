@@ -267,7 +267,7 @@ impl<'a> GroupMutIter<'a> {
         *header = ENTRY_HEADER::default();
         header.group_id.set(group_id.to_u16().unwrap());
         header.entry_id.set(entry_id);
-        header.entry_size.set(entry_allocation); // FIXME: Verify
+        header.entry_size.set(entry_allocation);
         header.instance_id.set(instance_id);
         header.context_type = context_type as u8;
         header.context_format = ContextFormat::Raw as u8;
