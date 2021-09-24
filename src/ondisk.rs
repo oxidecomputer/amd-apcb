@@ -88,7 +88,7 @@ pub fn take_body_from_collection_mut<'a>(
 /// Given *BUF (a collection of multiple items), retrieves the first of the items and returns it after advancing *BUF to the next item.
 /// If the item cannot be parsed, returns None and does not advance.
 pub fn take_header_from_collection<'a, T: Sized + FromBytes>(buf: &mut &'a [u8]) -> Option<&'a T> {
-    let xbuf = replace(&mut *buf, &mut []);
+    let xbuf = replace(&mut *buf, &[]);
     match LayoutVerified::<_, T>::new_from_prefix(xbuf) {
         Some((item, xbuf)) => {
             *buf = xbuf;
@@ -106,7 +106,7 @@ pub fn take_body_from_collection<'a>(
     size: usize,
     alignment: usize,
 ) -> Option<&'a [u8]> {
-    let xbuf = replace(&mut *buf, &mut []);
+    let xbuf = replace(&mut *buf, &[]);
     if xbuf.len() >= size {
         let (item, xbuf) = xbuf.split_at(size);
         if size % alignment != 0 && xbuf.len() >= alignment - (size % alignment) {
