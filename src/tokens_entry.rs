@@ -81,7 +81,7 @@ impl<'a> TokensEntryIterMut<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(entry_id: TokenEntryId, buf: &mut &'b mut [u8]) -> Result<TokensEntryItemMut<'b>> {
-        if buf.len() == 0 {
+        if buf.is_empty() {
             return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"));
         }
         let token = match take_header_from_collection_mut::<TOKEN_ENTRY>(&mut *buf) {
@@ -100,7 +100,7 @@ impl<'a> TokensEntryIterMut<'a> {
     pub(crate) fn move_insertion_point_before(&mut self, token_id: u32) -> Result<()> {
         loop {
             let mut buf = &mut self.buf[..self.remaining_used_size];
-            if buf.len() == 0 {
+            if buf.is_empty() {
                 break;
             }
             match Self::next_item(self.entry_id, &mut buf) {
@@ -122,7 +122,7 @@ impl<'a> TokensEntryIterMut<'a> {
     pub(crate) fn move_point_to(&mut self, token_id: u32) -> Result<()> {
         loop {
             let mut buf = &mut self.buf[..self.remaining_used_size];
-            if buf.len() == 0 {
+            if buf.is_empty() {
                 return Err(Error::TokenNotFound);
             }
             match Self::next_item(self.entry_id, &mut buf) {
@@ -229,7 +229,7 @@ impl<'a> TokensEntryIter<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(entry_id: TokenEntryId, buf: &mut &'b [u8]) -> Result<TokensEntryItem<'b>> {
-        if buf.len() == 0 {
+        if buf.is_empty() {
             return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"));
         }
         let header = match take_header_from_collection::<TOKEN_ENTRY>(&mut *buf) {

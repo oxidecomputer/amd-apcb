@@ -47,7 +47,7 @@ impl<'a> GroupIter<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(buf: &mut &'b [u8]) -> Result<EntryItem<'b>> {
-        if buf.len() == 0 {
+        if buf.is_empty() {
             return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"));
         }
         let header = match take_header_from_collection::<ENTRY_HEADER>(&mut *buf) {
@@ -170,7 +170,7 @@ impl<'a> GroupMutIter<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(buf: &mut &'b mut [u8]) -> Result<EntryMutItem<'b>> {
-        if buf.len() == 0 {
+        if buf.is_empty() {
             return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"));
         }
         let header = match take_header_from_collection_mut::<ENTRY_HEADER>(&mut *buf) {
@@ -202,7 +202,7 @@ impl<'a> GroupMutIter<'a> {
     pub(crate) fn move_insertion_point_before(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
         loop {
             let mut buf = &mut self.buf[..self.remaining_used_size];
-            if buf.len() == 0 {
+            if buf.is_empty() {
                 break;
             }
             match Self::next_item(&mut buf) {
@@ -226,7 +226,7 @@ impl<'a> GroupMutIter<'a> {
         let mut offset = 0usize;
         loop {
             let mut buf = &mut self.buf[..self.remaining_used_size];
-            if buf.len() == 0 {
+            if buf.is_empty() {
                 return Err(Error::EntryNotFound);
             }
             match Self::next_item(&mut buf) {

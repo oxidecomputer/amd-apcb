@@ -54,7 +54,7 @@ impl<'a> ApcbIterMut<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(buf: &mut &'b mut [u8]) -> Result<GroupMutItem<'b>> {
-        if buf.len() == 0 {
+        if buf.is_empty() {
             return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER"));
         }
         let header = match take_header_from_collection_mut::<GROUP_HEADER>(&mut *buf) {
@@ -87,7 +87,7 @@ impl<'a> ApcbIterMut<'a> {
         let mut offset = 0usize;
         loop {
             let mut buf = &mut self.buf[..remaining_used_size];
-            if buf.len() == 0 {
+            if buf.is_empty() {
                 break;
             }
             let group = ApcbIterMut::next_item(&mut buf)?;
@@ -147,7 +147,7 @@ impl<'a> ApcbIter<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
     /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
     fn next_item<'b>(buf: &mut &'b [u8]) -> Result<GroupItem<'b>> {
-        if buf.len() == 0 {
+        if buf.is_empty() {
             return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER"));
         }
         let header = match take_header_from_collection::<GROUP_HEADER>(&mut *buf) {
