@@ -252,8 +252,8 @@ impl FromPrimitive for GroupId {
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 && value < 0x1_0000 {
-            let value: u64 = value.try_into().unwrap();
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
             Self::from_u64(value)
         } else {
             None
@@ -292,8 +292,8 @@ impl FromPrimitive for PspEntryId {
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 && value < 0x1_0000 {
-            let value: u64 = value.try_into().unwrap();
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
             Self::from_u64(value)
         } else {
             None
@@ -328,8 +328,8 @@ impl FromPrimitive for CcxEntryId {
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 && value < 0x1_0000 {
-            let value: u64 = value.try_into().unwrap();
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
             Self::from_u64(value)
         } else {
             None
@@ -373,8 +373,8 @@ impl FromPrimitive for DfEntryId {
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 && value < 0x1_0000 {
-            let value: u64 = value.try_into().unwrap();
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
             Self::from_u64(value)
         } else {
             None
@@ -559,8 +559,8 @@ impl FromPrimitive for MemoryEntryId {
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 && value < 0x1_0000 {
-            let value: u64 = value.try_into().unwrap();
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
             Self::from_u64(value)
         } else {
             None
@@ -595,8 +595,8 @@ impl FromPrimitive for GnbEntryId {
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 && value < 0x1_0000 {
-            let value: u64 = value.try_into().unwrap();
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
             Self::from_u64(value)
         } else {
             None
@@ -631,8 +631,8 @@ impl FromPrimitive for FchEntryId {
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 && value < 0x1_0000 {
-            let value: u64 = value.try_into().unwrap();
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
             Self::from_u64(value)
         } else {
             None
@@ -667,8 +667,8 @@ impl FromPrimitive for CbsEntryId {
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 && value < 0x1_0000 {
-            let value: u64 = value.try_into().unwrap();
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
             Self::from_u64(value)
         } else {
             None
@@ -703,8 +703,8 @@ impl FromPrimitive for OemEntryId {
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 && value < 0x1_0000 {
-            let value: u64 = value.try_into().unwrap();
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
             Self::from_u64(value)
         } else {
             None
@@ -740,8 +740,8 @@ impl FromPrimitive for RawEntryId {
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 && value < 0x1_0000 {
-            let value: u64 = value.try_into().unwrap();
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
             Self::from_u64(value)
         } else {
             None
@@ -788,8 +788,8 @@ impl FromPrimitive for TokenEntryId {
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 && value < 0x1_0000 {
-            let value: u64 = value.try_into().unwrap();
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
             Self::from_u64(value)
         } else {
             None
@@ -4709,8 +4709,8 @@ impl FromPrimitive for DxioPhyParamVga {
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 && value < 0x1_0000_0000 {
-            let value: u64 = value.try_into().unwrap();
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
             Self::from_u64(value)
         } else {
             None
@@ -4752,8 +4752,8 @@ impl FromPrimitive for DxioPhyParamPole {
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 && value < 0x1_0000_0000 {
-            let value: u64 = value.try_into().unwrap();
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
             Self::from_u64(value)
         } else {
             None
@@ -4795,8 +4795,8 @@ impl FromPrimitive for DxioPhyParamDc {
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 && value < 0x1_0000_0000 {
-            let value: u64 = value.try_into().unwrap();
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
             Self::from_u64(value)
         } else {
             None
@@ -4901,8 +4901,8 @@ impl FromPrimitive for CbsMemPowerDownDelay {
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 && value < 0x1_0000 {
-            let value: u64 = value.try_into().unwrap();
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
             Self::from_u64(value)
         } else {
             None
