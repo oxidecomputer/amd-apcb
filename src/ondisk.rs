@@ -4276,10 +4276,7 @@ pub mod psp {
     impl EntryCompatible for BoardIdGettingMethodCustom {
         fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
             if prefix.len() >= 2 && prefix[0] == 0xF && prefix[1] == 0 {
-                match entry_id {
-                    EntryId::Psp(PspEntryId::BoardIdGettingMethod) => true,
-                    _ => false,
-                }
+                matches!(entry_id, EntryId::Psp(PspEntryId::BoardIdGettingMethod))
             } else {
                 false
             }
@@ -4324,10 +4321,7 @@ pub mod psp {
     impl EntryCompatible for BoardIdGettingMethodGpio {
         fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
             if prefix.len() >= 2 && prefix[0] == 3 && prefix[1] == 0 {
-                match entry_id {
-                    EntryId::Psp(PspEntryId::BoardIdGettingMethod) => true,
-                    _ => false,
-                }
+                matches!(entry_id, EntryId::Psp(PspEntryId::BoardIdGettingMethod))
             } else {
                 false
             }
@@ -4380,10 +4374,7 @@ pub mod psp {
     impl EntryCompatible for BoardIdGettingMethodEeprom {
         fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
             if prefix.len() >= 2 && prefix[0] == 2 && prefix[1] == 0 {
-                match entry_id {
-                    EntryId::Psp(PspEntryId::BoardIdGettingMethod) => true,
-                    _ => false,
-                }
+                matches!(entry_id, EntryId::Psp(PspEntryId::BoardIdGettingMethod))
             } else {
                 false
             }
@@ -4446,10 +4437,7 @@ pub mod psp {
     impl EntryCompatible for BoardIdGettingMethodSmbus {
         fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
             if prefix.len() >= 2 && prefix[0] == 1 && prefix[1] == 0 {
-                match entry_id {
-                    EntryId::Psp(PspEntryId::BoardIdGettingMethod) => true,
-                    _ => false,
-                }
+                matches!(entry_id, EntryId::Psp(PspEntryId::BoardIdGettingMethod))
             } else {
                 false
             }
