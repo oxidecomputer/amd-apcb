@@ -2292,7 +2292,7 @@ pub mod memory {
         pub struct MaxFreqElement {
             dimm_slots_per_channel: u8 : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
             _reserved: u8,
-            conditions: [U16<LittleEndian>; 4], // number of dimm on a channel, number of single-rank dimm, number of dual-rank dimm, number of quad-rank dimm // FIXME make accessible
+            conditions: [U16<LittleEndian>; 4], // number of dimm on a channel, number of single-rank dimm, number of dual-rank dimm, number of quad-rank dimm
             speeds: [U16<LittleEndian>; 3], // speed limit with voltage 1.5 V, 1.35 V, 1.25 V // FIXME make accessible
        }
     }
@@ -4289,7 +4289,7 @@ pub mod psp {
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodGpio {
             access_method: U16<LittleEndian>, // 3 for BoardIdGettingMethodGpio
-            pub bit_locations: [Gpio; 4], // for the board id FIXME Make accessible
+            pub bit_locations: [Gpio; 4], // for the board id
         }
     }
 
