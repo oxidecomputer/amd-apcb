@@ -1409,10 +1409,7 @@ pub mod memory {
 
     impl EntryCompatible for ConsoleOutControl {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
-            match entry_id {
-                EntryId::Memory(MemoryEntryId::ConsoleOutControl) => true,
-                _ => false,
-            }
+            matches!(entry_id, EntryId::Memory(MemoryEntryId::ConsoleOutControl))
         }
     }
 
