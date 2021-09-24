@@ -2802,10 +2802,7 @@ pub mod memory {
             }
         }
         pub fn set_device_width(&mut self, value: Option<u8>) {
-            self.set_xdevice_width(match value {
-                None => 0x1f,
-                Some(x) => x,
-            })
+            self.set_xdevice_width(value.unwrap_or(0x1f));
         }
     }
 
