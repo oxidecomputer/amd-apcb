@@ -578,8 +578,7 @@ impl<'a> Apcb<'a> {
             return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::header_size"));
         }
         let version = header.version.get();
-        if version == Self::ROME_VERSION {
-        } else if version == Self::NAPLES_VERSION {
+        if version == Self::ROME_VERSION || version == Self::NAPLES_VERSION {
         } else {
             return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER::version"));
         }
