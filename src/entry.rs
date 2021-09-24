@@ -373,7 +373,7 @@ pub struct StructSequenceEntryItem<'a, T> {
 }
 
 impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> StructSequenceEntryItem<'a, T> {
-    pub fn iter(self: &'a Self) -> Result<StructSequenceEntryIter<'a, T>> {
+    pub fn iter(&'a self) -> Result<StructSequenceEntryIter<'a, T>> {
         StructSequenceEntryIter::<T> {
             buf: self.buf,
             entry_id: self.entry_id,
@@ -537,7 +537,7 @@ impl<'a> EntryItem<'a> {
     }
 
     /// This allows the user to iterate over a sequence of different-size structs in the same Entry.
-    pub fn body_as_struct_sequence<T: EntryCompatible>(self: &'a Self) -> Option<StructSequenceEntryItem<'a, T>> {
+    pub fn body_as_struct_sequence<T: EntryCompatible>(&'a self) -> Option<StructSequenceEntryItem<'a, T>> {
         let id = self.id();
         match &self.body {
             EntryItemBody::Struct(buf) => {
