@@ -3443,8 +3443,8 @@ pub mod memory {
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
                         dimms: DimmSlots::Any.to_u8().unwrap(),
-                        seed: [0.into(); 8], // probably invalid
-                        ecc_seed: 0.into(), // probably invalid
+                        seed: [0; 8], // probably invalid
+                        ecc_seed: 0, // probably invalid
                     }
                 }
             }
