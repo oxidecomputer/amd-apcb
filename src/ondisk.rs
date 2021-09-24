@@ -3785,10 +3785,8 @@ pub mod memory {
 
         impl EntryCompatible for ElementRef<'_> {
             fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
-                match entry_id {
-                    EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => true, // also supports empty chunks, so not prefix.len() >= 2,
-                    _ => false,
-                }
+                // Also supports empty chunks, so don't check prefix.
+                matches!(entry_id, EntryId::Memory(MemoryEntryId::PlatformSpecificOverride))
             }
             fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
                 match entry_id {
@@ -3811,10 +3809,8 @@ pub mod memory {
         }
         impl EntryCompatible for MutElementRef<'_> {
             fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
-                match entry_id {
-                    EntryId::Memory(MemoryEntryId::PlatformSpecificOverride) => true, // also supports empty chunks, so not prefix.len() >= 2,
-                    _ => false,
-                }
+                // Also supports empty chunks, so don't check prefix.
+                matches!(entry_id, EntryId::Memory(MemoryEntryId::PlatformSpecificOverride))
             }
             fn skip_step(entry_id: EntryId, prefix: &[u8]) -> Option<(u16, usize)> {
                 match entry_id {
