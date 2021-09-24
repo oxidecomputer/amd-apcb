@@ -3093,7 +3093,7 @@ pub mod memory {
             impl Default for CkeTristateMap {
                 fn default() -> Self {
                     Self {
-                        type_: 1.into(),
+                        type_: 1,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3120,7 +3120,7 @@ pub mod memory {
             impl Default for OdtTristateMap {
                 fn default() -> Self {
                     Self {
-                        type_: 2.into(),
+                        type_: 2,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3147,7 +3147,7 @@ pub mod memory {
             impl Default for CsTristateMap {
                 fn default() -> Self {
                     Self {
-                        type_: 3.into(),
+                        type_: 3,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3173,7 +3173,7 @@ pub mod memory {
             impl Default for MaxDimmsPerChannel {
                 fn default() -> Self {
                     Self {
-                        type_: 4.into(),
+                        type_: 4,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3200,7 +3200,7 @@ pub mod memory {
             impl Default for MemclkMap {
                 fn default() -> Self {
                     Self {
-                        type_: 7.into(),
+                        type_: 7,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3237,7 +3237,7 @@ pub mod memory {
             impl Default for MaxChannelsPerSocket {
                 fn default() -> Self {
                     Self {
-                        type_: 8.into(),
+                        type_: 8,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3312,7 +3312,7 @@ pub mod memory {
             impl Default for MemBusSpeed {
                 fn default() -> Self {
                     Self {
-                        type_: 9.into(),
+                        type_: 9,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3352,7 +3352,7 @@ pub mod memory {
             impl Default for MaxCsPerChannel {
                 fn default() -> Self {
                     Self {
-                        type_: 10.into(),
+                        type_: 10,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3403,7 +3403,7 @@ pub mod memory {
             impl Default for MemTechnology {
                 fn default() -> Self {
                     Self {
-                        type_: 11.into(),
+                        type_: 11,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3441,7 +3441,7 @@ pub mod memory {
             impl Default for WriteLevellingSeedDelay {
                 fn default() -> Self {
                     Self {
-                        type_: 12.into(),
+                        type_: 12,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3470,7 +3470,7 @@ pub mod memory {
             impl Default for RxEnSeed {
                 fn default() -> Self {
                     Self {
-                        type_: 13.into(),
+                        type_: 13,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3509,7 +3509,7 @@ pub mod memory {
             impl Default for LrDimmNoCs6Cs7Routing {
                 fn default() -> Self {
                     Self {
-                        type_: 14.into(),
+                        type_: 14,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3545,7 +3545,7 @@ pub mod memory {
             impl Default for SolderedDownSodimm {
                 fn default() -> Self {
                     Self {
-                        type_: 15.into(),
+                        type_: 15,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3581,7 +3581,7 @@ pub mod memory {
             impl Default for LvDimmForce1V5 {
                 fn default() -> Self {
                     Self {
-                        type_: 16.into(),
+                        type_: 16,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3618,7 +3618,7 @@ pub mod memory {
             impl Default for MinimumRwDataEyeWidth {
                 fn default() -> Self {
                     Self {
-                        type_: 17.into(),
+                        type_: 17,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3654,7 +3654,7 @@ pub mod memory {
             impl Default for CpuFamilyFilter {
                 fn default() -> Self {
                     Self {
-                        type_: 18.into(),
+                        type_: 18,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         cpu_family_revision: 0.into(), // probably invalid
                     }
@@ -3685,7 +3685,7 @@ pub mod memory {
             impl Default for SolderedDownDimmsPerChannel {
                 fn default() -> Self {
                     Self {
-                        type_: 19.into(),
+                        type_: 19,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3728,7 +3728,7 @@ pub mod memory {
             impl Default for MemPowerPolicy {
                 fn default() -> Self {
                     Self {
-                        type_: 20.into(),
+                        type_: 20,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
@@ -3771,7 +3771,7 @@ pub mod memory {
             impl Default for MotherboardLayers {
                 fn default() -> Self {
                     Self {
-                        type_: 21.into(),
+                        type_: 21,
                         payload_size: (size_of::<Self>() - 2) as u8,
                         sockets: SocketIds::ALL.to_u8().unwrap(),
                         channels: ChannelIds::Any.to_u8().unwrap(),
