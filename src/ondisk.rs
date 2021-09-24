@@ -1065,10 +1065,10 @@ pub mod df {
 
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     pub enum SlinkRegionInterleavingSize {
-        B256 = 0,
-        B512 = 1,
-        B1024 = 2,
-        B2048 = 3,
+        _256B = 0,
+        _512B = 1,
+        _1024B = 2,
+        _2048B = 3,
         Auto = 7,
     }
 
@@ -1092,7 +1092,7 @@ pub mod df {
                 alignment: 0,
                 socket: 0,
                 phys_nbio_map: 0,
-                interleaving: SlinkRegionInterleavingSize::B256 as u8,
+                interleaving: SlinkRegionInterleavingSize::_256B as u8,
                 _reserved: [0; 4],
             }
         }
