@@ -1692,7 +1692,7 @@ pub mod memory {
                 Self::Specific(dimms) => {
                     let value = dimms.to_i64()?;
                     assert!(value != 0xf0 && value != 0xff);
-                    Some(value.into())
+                    Some(value)
                 }
             }
         }
