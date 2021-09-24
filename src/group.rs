@@ -284,7 +284,7 @@ impl<'a> GroupMutIter<'a> {
 
         // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
         header.board_instance_mask.set(board_instance_mask);
-        let body = take_body_from_collection_mut(&mut buf, payload_size.into(), ENTRY_ALIGNMENT).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
+        let body = take_body_from_collection_mut(&mut buf, payload_size, ENTRY_ALIGNMENT).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
         payload_initializer(body);
         self.remaining_used_size = self.remaining_used_size.checked_add(entry_allocation as usize).ok_or(Error::OutOfSpace)?;
         Ok(())
