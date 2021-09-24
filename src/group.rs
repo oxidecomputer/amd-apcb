@@ -322,7 +322,7 @@ impl<'a> GroupMutItem<'a> {
         let (offset, entry_size) = entries.move_point_to(entry_id, instance_id, board_instance_mask)?;
         let buf = &mut self.buf[offset..];
         buf.copy_within(entry_size..self.used_size, offset);
-        return Ok(entry_size as u32);
+        Ok(entry_size as u32)
     }
     /// Resizes the given entry by SIZE_DIFF.
     #[pre("If `size_diff > 0`, caller needs to have expanded the group by `size_diff` already.  If `size_diff < 0`, caller needs to call `resize_entry_by` BEFORE resizing the group.")]
