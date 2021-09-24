@@ -1958,6 +1958,163 @@ pub mod memory {
         Rtt80Ohm = 4,
     }
 
+    #[derive(FromPrimitive, ToPrimitive, Clone, Copy)]
+    pub enum VrefDqRange1 {
+        _60_00P = 0b00_0000,
+        _60_65P = 0b00_0001,
+        _61_30P = 0b00_0010,
+        _61_95P = 0b00_0011,
+        _62_60P = 0b00_0100,
+        _63_25P = 0b00_0101,
+        _63_90P = 0b00_0110,
+        _64_55P = 0b00_0111,
+        _65_20P = 0b00_1000,
+        _65_85P = 0b00_1001,
+        _66_50P = 0b00_1010,
+        _67_15P = 0b00_1011,
+        _67_80P = 0b00_1100,
+        _68_45P = 0b00_1101,
+        _69_10P = 0b00_1110,
+        _69_75P = 0b00_1111,
+        _70_40P = 0b01_0000,
+        _71_05P = 0b01_0001,
+        _71_70P = 0b01_0010,
+        _72_35P = 0b01_0011,
+        _73_00P = 0b01_0100,
+        _73_65P = 0b01_0101,
+        _74_30P = 0b01_0110,
+        _74_95P = 0b01_0111,
+        _75_60P = 0b01_1000,
+        _76_25P = 0b01_1001,
+        _76_90P = 0b01_1010,
+        _77_55P = 0b01_1011,
+        _78_20P = 0b01_1100,
+        _78_85P = 0b01_1101,
+        _79_50P = 0b01_1110,
+        _80_15P = 0b01_1111,
+        _80_80P = 0b10_0000,
+        _81_45P = 0b10_0001,
+        _82_10P = 0b10_0010,
+        _82_75P = 0b10_0011,
+        _83_40P = 0b10_0100,
+        _84_05P = 0b10_0101,
+        _84_70P = 0b10_0110,
+        _85_35P = 0b10_0111,
+        _86_00P = 0b10_1000,
+        _86_65P = 0b10_1001,
+        _87_30P = 0b10_1010,
+        _87_95P = 0b10_1011,
+        _88_60P = 0b10_1100,
+        _89_25P = 0b10_1101,
+        _89_90P = 0b10_1110,
+        _90_55P = 0b10_1111,
+        _91_20P = 0b11_0000,
+        _91_85P = 0b11_0001,
+        _92_50P = 0b11_0010,
+    }
+
+    #[derive(FromPrimitive, ToPrimitive, Clone, Copy)]
+    pub enum VrefDqRange2 {
+        _45_00P = 0b00_0000,
+        _45_65P = 0b00_0001,
+        _46_30P = 0b00_0010,
+        _46_95P = 0b00_0011,
+        _47_60P = 0b00_0100,
+        _48_25P = 0b00_0101,
+        _48_90P = 0b00_0110,
+        _49_55P = 0b00_0111,
+        _50_20P = 0b00_1000,
+        _50_85P = 0b00_1001,
+        _51_50P = 0b00_1010,
+        _52_15P = 0b00_1011,
+        _52_80P = 0b00_1100,
+        _53_45P = 0b00_1101,
+        _54_10P = 0b00_1110,
+        _54_75P = 0b00_1111,
+        _55_40P = 0b01_0000,
+        _56_05P = 0b01_0001,
+        _56_70P = 0b01_0010,
+        _57_35P = 0b01_0011,
+        _58_00P = 0b01_0100,
+        _58_65P = 0b01_0101,
+        _59_30P = 0b01_0110,
+        _59_95P = 0b01_0111,
+        _60_60P = 0b01_1000,
+        _61_25P = 0b01_1001,
+        _61_90P = 0b01_1010,
+        _62_55P = 0b01_1011,
+        _63_20P = 0b01_1100,
+        _63_85P = 0b01_1101,
+        _64_50P = 0b01_1110,
+        _65_15P = 0b01_1111,
+        _65_80P = 0b10_0000,
+        _66_45P = 0b10_0001,
+        _67_10P = 0b10_0010,
+        _67_75P = 0b10_0011,
+        _68_40P = 0b10_0100,
+        _69_05P = 0b10_0101,
+        _69_70P = 0b10_0110,
+        _70_35P = 0b10_0111,
+        _71_00P = 0b10_1000,
+        _71_65P = 0b10_1001,
+        _72_30P = 0b10_1010,
+        _72_95P = 0b10_1011,
+        _73_60P = 0b10_1100,
+        _74_25P = 0b10_1101,
+        _74_90P = 0b10_1110,
+        _75_55P = 0b10_1111,
+        _76_20P = 0b11_0000,
+        _76_85P = 0b11_0001,
+        _77_50P = 0b11_0010,
+    }
+
+    /// VrefDq can be set to either Range1 (between 60% and 92.5% of VDDQ) or Range2 (between 45% and 77.5% of VDDQ).
+    /// Range1 is intended for module-based systems, while Range2 is intended for point-to-point-based systems.
+    /// In each range, Vref can be adjusted in steps of 0.65% VDDQ.
+    pub enum VrefDq {
+        Range1(VrefDqRange1),
+        Range2(VrefDqRange2),
+    }
+
+    impl VrefDq {
+        const RANGE_MASK: i64 = 1 << 6;
+    }
+
+    impl ToPrimitive for VrefDq {
+        fn to_i64(&self) -> Option<i64> {
+            // Assumption: x.to_i64() is disjunct from Self::RANGE_MASK.
+            Some(match self {
+                Self::Range1(x) => x.to_i64()?,
+                Self::Range2(x) => x.to_i64()? | Self::RANGE_MASK,
+            })
+        }
+        fn to_u64(&self) -> Option<u64> {
+            Some(self.to_i64()? as u64)
+        }
+    }
+
+    impl FromPrimitive for VrefDq {
+        fn from_u64(value: u64) -> Option<Self> {
+            let range = value & (Self::RANGE_MASK as u64) != 0;
+            let val = (value & 0x3f) as u8;
+            if value & !(0x3f | (Self::RANGE_MASK as u64)) != 0 { // garbage bits
+                return None;
+            }
+            match range {
+                false => Some(VrefDq::Range1(VrefDqRange1::from_u8(val)?)),
+                true => Some(VrefDq::Range2(VrefDqRange2::from_u8(val)?)),
+            }
+        }
+        fn from_i64(value: i64) -> Option<Self> {
+            if value >= 0 {
+                let value: u64 = value.try_into().unwrap();
+                Self::from_u64(value)
+            } else {
+                None
+            }
+        }
+    }
+
     // See <https://www.micron.com/-/media/client/global/documents/products/data-sheet/dram/ddr4/8gb_auto_ddr4_dram.pdf>
     // Usually an array of those is used
     // Note: This structure is not used for soldered-down DRAM!
@@ -1980,7 +2137,7 @@ pub mod memory {
             pmu_phy_vref: U32<LittleEndian> : pub get u32 : pub set u32,
             // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
             // See <https://github.com/LongJohnCoder/ddr-doc/blob/gh-pages/jedec/JESD79-4.pdf> Table 15
-            vref_dq: U32<LittleEndian> : pub get u32 : pub set u32, // MR6 vref calibration value; 23|30|32
+            pub(crate) vref_dq: U32<LittleEndian> : pub get Result<VrefDq> : pub set VrefDq, // MR6 vref calibration value; 23|30|32
         }
     }
 
@@ -2009,7 +2166,7 @@ pub mod memory {
     }
 
     impl Ddr4DataBusElement {
-        pub fn new(dimm_slots_per_channel: u32, ddr_rates: DdrRates, dimm0_ranks: Ddr4DimmRanks, dimm1_ranks: Ddr4DimmRanks, rtt_nom: RttNom, rtt_wr: RttWr, rtt_park: RttPark, pmu_phy_vref: u32, vref_dq: u32) -> Result<Self> {
+        pub fn new(dimm_slots_per_channel: u32, ddr_rates: DdrRates, dimm0_ranks: Ddr4DimmRanks, dimm1_ranks: Ddr4DimmRanks, rtt_nom: RttNom, rtt_wr: RttWr, rtt_park: RttPark, pmu_phy_vref: u32, vref_dq: VrefDq) -> Result<Self> {
             Ok(Self {
                 dimm_slots_per_channel: dimm_slots_per_channel.into(),
                 ddr_rates: ddr_rates.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
@@ -2019,7 +2176,7 @@ pub mod memory {
                 rtt_wr: rtt_wr.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
                 rtt_park: rtt_park.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
                 pmu_phy_vref: pmu_phy_vref.into(),
-                vref_dq: vref_dq.into(),
+                vref_dq: vref_dq.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
                 .. Self::default()
             })
         }
