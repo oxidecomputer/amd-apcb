@@ -20,7 +20,7 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
     (@match1 {$entry_id:ident}{$world:ident}{$($deserializer:tt)*}) => {
         {
             let (type_, skip_step) = Self::skip_step($entry_id, $world).ok_or_else(|| Error::EntryTypeMismatch)?;
-            let mut xbuf = replace(&mut *$world, &mut []);
+            let mut xbuf = replace(&mut *$world, &[]);
             $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@match2 {type_}{skip_step}{xbuf}$($deserializer)*)
         }
     };
