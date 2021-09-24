@@ -132,7 +132,7 @@ impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> StructSequenceEnt
 }
 
 impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> StructSequenceEntryMutIter<'a, T> {
-    fn next1<'s>(&'s mut self) -> Result<T> {
+    fn next1(&'_ mut self) -> Result<T> {
         if self.buf.is_empty() {
             Err(Error::EntryTypeMismatch)
         } else if T::is_entry_compatible(self.entry_id, self.buf) {
@@ -395,7 +395,7 @@ pub struct StructSequenceEntryIter<'a, T: EntryCompatible + SequenceElementFromB
 
 // Note: T is an enum (usually a ElemntRef)
 impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> StructSequenceEntryIter<'a, T> {
-    fn next1<'s>(&'s mut self) -> Result<T> {
+    fn next1(&'_ mut self) -> Result<T> {
         if self.buf.is_empty() {
             Err(Error::EntryTypeMismatch)
         } else if T::is_entry_compatible(self.entry_id, self.buf) {
