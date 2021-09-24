@@ -36,18 +36,18 @@ impl<'a> Getter<&'a [u8]> for &'a [u8] {
 }
 impl<T: FromPrimitive> Getter<Result<T>> for u8 {
     fn get1(self) -> Result<T> {
-        T::from_u8(self).ok_or_else(|| Error::EntryTypeMismatch)
+        T::from_u8(self).ok_or(Error::EntryTypeMismatch)
     }
 }
 impl<T: FromPrimitive> Getter<Result<T>> for U32<LittleEndian> {
     fn get1(self) -> Result<T> {
-        T::from_u32(self.get()).ok_or_else(|| Error::EntryTypeMismatch)
+        T::from_u32(self.get()).ok_or(Error::EntryTypeMismatch)
     }
 }
 // For Token
 impl<T: FromPrimitive> Getter<Result<T>> for u32 {
     fn get1(self) -> Result<T> {
-        T::from_u32(self).ok_or_else(|| Error::EntryTypeMismatch)
+        T::from_u32(self).ok_or(Error::EntryTypeMismatch)
     }
 }
 #[derive(Debug, PartialEq, FromBytes, AsBytes, Clone, Copy)]

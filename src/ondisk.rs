@@ -1769,9 +1769,9 @@ pub mod memory {
             if address_command_control < 0x100_0000 {
                 Ok(RdimmDdr4CadBusElement {
                     dimm_slots_per_channel: dimm_slots_per_channel.into(),
-                    ddr_rates: ddr_rates.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
-                    dimm0_ranks: dimm0_ranks.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
-                    dimm1_ranks: dimm1_ranks.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
+                    ddr_rates: ddr_rates.to_u32().ok_or(Error::EntryTypeMismatch)?.into(),
+                    dimm0_ranks: dimm0_ranks.to_u32().ok_or(Error::EntryTypeMismatch)?.into(),
+                    dimm1_ranks: dimm1_ranks.to_u32().ok_or(Error::EntryTypeMismatch)?.into(),
                     address_command_control: address_command_control.into(),
                     .. Self::default()
                 })
@@ -2169,14 +2169,14 @@ pub mod memory {
         pub fn new(dimm_slots_per_channel: u32, ddr_rates: DdrRates, dimm0_ranks: Ddr4DimmRanks, dimm1_ranks: Ddr4DimmRanks, rtt_nom: RttNom, rtt_wr: RttWr, rtt_park: RttPark, pmu_phy_vref: u32, vref_dq: VrefDq) -> Result<Self> {
             Ok(Self {
                 dimm_slots_per_channel: dimm_slots_per_channel.into(),
-                ddr_rates: ddr_rates.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
-                dimm0_ranks: dimm0_ranks.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
-                dimm1_ranks: dimm1_ranks.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
-                rtt_nom: rtt_nom.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
-                rtt_wr: rtt_wr.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
-                rtt_park: rtt_park.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
+                ddr_rates: ddr_rates.to_u32().ok_or(Error::EntryTypeMismatch)?.into(),
+                dimm0_ranks: dimm0_ranks.to_u32().ok_or(Error::EntryTypeMismatch)?.into(),
+                dimm1_ranks: dimm1_ranks.to_u32().ok_or(Error::EntryTypeMismatch)?.into(),
+                rtt_nom: rtt_nom.to_u32().ok_or(Error::EntryTypeMismatch)?.into(),
+                rtt_wr: rtt_wr.to_u32().ok_or(Error::EntryTypeMismatch)?.into(),
+                rtt_park: rtt_park.to_u32().ok_or(Error::EntryTypeMismatch)?.into(),
                 pmu_phy_vref: pmu_phy_vref.into(),
-                vref_dq: vref_dq.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?.into(),
+                vref_dq: vref_dq.to_u32().ok_or(Error::EntryTypeMismatch)?.into(),
                 .. Self::default()
             })
         }
@@ -2327,7 +2327,7 @@ pub mod memory {
             self.conditions[3].set(value);
         }
         pub fn speed(&self) -> Result<DdrSpeed> {
-            DdrSpeed::from_u16(self.speeds[0].get()).ok_or_else(|| Error::EntryTypeMismatch)
+            DdrSpeed::from_u16(self.speeds[0].get()).ok_or(Error::EntryTypeMismatch)
         }
         pub fn set_speed(&mut self, value: DdrSpeed) {
             self.speeds[0].set(value.to_u16().unwrap())
@@ -2477,7 +2477,7 @@ pub mod memory {
         pub fn error_type(&self) -> Result<ErrorOutControlBeepCodeErrorType> {
             Ok(
                 ErrorOutControlBeepCodeErrorType::from_u16((self.error_type.get() & 0xF000) >> 12)
-                    .ok_or_else(|| Error::EntryTypeMismatch)?,
+                    .ok_or(Error::EntryTypeMismatch)?,
             )
         }
         pub fn set_error_type(&mut self, value: ErrorOutControlBeepCodeErrorType) {
@@ -2672,7 +2672,7 @@ pub mod memory {
     impl Ddr4OdtPatElement {
         pub fn dimm0_rank(&self) -> Result<Ddr4DimmRanks> {
             Ddr4DimmRanks::from_u32(self.dimm_rank_bitmap.get() & 15)
-                .ok_or_else(|| Error::EntryTypeMismatch)
+                .ok_or(Error::EntryTypeMismatch)
         }
         pub fn set_dimm0_rank(&mut self, value: Ddr4DimmRanks) {
             let value = value.to_u32().unwrap();
@@ -2681,7 +2681,7 @@ pub mod memory {
         }
         pub fn dimm1_rank(&self) -> Result<Ddr4DimmRanks> {
             Ddr4DimmRanks::from_u32((self.dimm_rank_bitmap.get() >> 4) & 15)
-                .ok_or_else(|| Error::EntryTypeMismatch)
+                .ok_or(Error::EntryTypeMismatch)
         }
         pub fn set_dimm1_rank(&mut self, value: Ddr4DimmRanks) {
             let value = value.to_u32().unwrap();
@@ -2728,7 +2728,7 @@ pub mod memory {
     impl LrdimmDdr4OdtPatElement {
         pub fn dimm0_rank(&self) -> Result<LrdimmDdr4DimmRanks> {
             LrdimmDdr4DimmRanks::from_u32(self.dimm_rank_bitmap.get() & 15)
-                .ok_or_else(|| Error::EntryTypeMismatch)
+                .ok_or(Error::EntryTypeMismatch)
         }
         pub fn set_dimm0_rank(&mut self, value: LrdimmDdr4DimmRanks) {
             let value = value.to_u32().unwrap();
@@ -2737,7 +2737,7 @@ pub mod memory {
         }
         pub fn dimm1_rank(&self) -> Result<LrdimmDdr4DimmRanks> {
             LrdimmDdr4DimmRanks::from_u32((self.dimm_rank_bitmap.get() >> 4) & 15)
-                .ok_or_else(|| Error::EntryTypeMismatch)
+                .ok_or(Error::EntryTypeMismatch)
         }
         pub fn set_dimm1_rank(&mut self, value: LrdimmDdr4DimmRanks) {
             let value = value.to_u32().unwrap();
@@ -4243,7 +4243,7 @@ pub mod psp {
                 id_and_feature_value,
                 rev_and_feature_value: rev_and_feature_value
                     .to_u8()
-                    .ok_or_else(|| Error::EntryTypeMismatch)?,
+                    .ok_or(Error::EntryTypeMismatch)?,
                 board_instance_index,
             })
         }

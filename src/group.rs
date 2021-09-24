@@ -56,12 +56,12 @@ impl<'a> GroupIter<'a> {
                 return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"));
             }
         };
-        GroupId::from_u16(header.group_id.get()).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::group_id"))?;
-        ContextFormat::from_u8(header.context_format).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_format"))?;
-        let context_type = ContextType::from_u8(header.context_type).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_type"))?;
+        GroupId::from_u16(header.group_id.get()).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::group_id"))?;
+        ContextFormat::from_u8(header.context_format).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_format"))?;
+        let context_type = ContextType::from_u8(header.context_type).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_type"))?;
         let entry_size = header.entry_size.get() as usize;
 
-        let payload_size = entry_size.checked_sub(size_of::<ENTRY_HEADER>()).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
+        let payload_size = entry_size.checked_sub(size_of::<ENTRY_HEADER>()).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
         let body = match take_body_from_collection(&mut *buf, payload_size, ENTRY_ALIGNMENT) {
             Some(item) => item,
             None => {
@@ -179,10 +179,10 @@ impl<'a> GroupMutIter<'a> {
                 return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"));
             }
         };
-        let context_type = ContextType::from_u8(header.context_type).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_type"))?;
+        let context_type = ContextType::from_u8(header.context_type).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_type"))?;
         let entry_size = header.entry_size.get() as usize;
 
-        let payload_size = entry_size.checked_sub(size_of::<ENTRY_HEADER>()).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
+        let payload_size = entry_size.checked_sub(size_of::<ENTRY_HEADER>()).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
         let body = match take_body_from_collection_mut(&mut *buf, payload_size, ENTRY_ALIGNMENT) {
             Some(item) => item,
             None => {
@@ -234,9 +234,9 @@ impl<'a> GroupMutIter<'a> {
                     let entry_size = e.header.entry_size.get();
                     if (e.id(), e.instance_id(), e.board_instance_mask()) != (entry_id, instance_id, board_instance_mask) {
                         self.next().unwrap();
-                        offset = offset.checked_add(entry_size.into()).ok_or_else(|| Error::ArithmeticOverflow)?;
+                        offset = offset.checked_add(entry_size.into()).ok_or(Error::ArithmeticOverflow)?;
                         while offset % ENTRY_ALIGNMENT != 0 {
-                            offset = offset.checked_add(1).ok_or_else(|| Error::ArithmeticOverflow)?;
+                            offset = offset.checked_add(1).ok_or(Error::ArithmeticOverflow)?;
                         }
                     } else {
                         return Ok((offset, entry_size.into()));
@@ -255,7 +255,7 @@ impl<'a> GroupMutIter<'a> {
         let entry_id = entry_id.type_id();
 
         // Make sure that move_insertion_point_before does not notice the new uninitialized entry
-        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_allocation as usize).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::entry_size"))?;
+        self.remaining_used_size = self.remaining_used_size.checked_sub(entry_allocation as usize).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::entry_size"))?;
         self.move_insertion_point_before(group_id.to_u16().unwrap(), entry_id, instance_id, board_instance_mask)?;
 
         let mut buf = &mut self.buf[..]; // already done: offset
@@ -263,7 +263,7 @@ impl<'a> GroupMutIter<'a> {
         buf.copy_within(0..self.remaining_used_size, entry_allocation as usize);
 
         //let mut buf = &mut self.buf[..(self.remaining_used_size + entry_allocation as usize)];
-        let header = take_header_from_collection_mut::<ENTRY_HEADER>(&mut buf).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
+        let header = take_header_from_collection_mut::<ENTRY_HEADER>(&mut buf).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
         *header = ENTRY_HEADER::default();
         header.group_id.set(group_id.to_u16().unwrap());
         header.entry_id.set(entry_id);
@@ -284,9 +284,9 @@ impl<'a> GroupMutIter<'a> {
 
         // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
         header.board_instance_mask.set(board_instance_mask);
-        let body = take_body_from_collection_mut(&mut buf, payload_size.into(), ENTRY_ALIGNMENT).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
+        let body = take_body_from_collection_mut(&mut buf, payload_size.into(), ENTRY_ALIGNMENT).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
         payload_initializer(body);
-        self.remaining_used_size = self.remaining_used_size.checked_add(entry_allocation as usize).ok_or_else(|| Error::OutOfSpace)?;
+        self.remaining_used_size = self.remaining_used_size.checked_add(entry_allocation as usize).ok_or(Error::OutOfSpace)?;
         Ok(())
     }
 }
@@ -332,25 +332,25 @@ impl<'a> GroupMutItem<'a> {
         let mut entries = self.entries_mut();
         let (offset, entry_size) = entries.move_point_to(entry_id, instance_id, board_instance_mask)?;
         let entry_size: u16 = entry_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
 
         if size_diff > 0 {
             let size_diff: usize = size_diff.try_into().map_err(|_| Error::ArithmeticOverflow)?;
-            old_used_size = old_used_size.checked_sub(size_diff).ok_or_else(|| Error::ArithmeticOverflow)?
+            old_used_size = old_used_size.checked_sub(size_diff).ok_or(Error::ArithmeticOverflow)?
         }
         let old_entry_size = entry_size;
         let new_entry_size: u16 = if size_diff > 0 {
             let size_diff = size_diff as u64;
-            old_entry_size.checked_add(size_diff.try_into().map_err(|_| Error::ArithmeticOverflow)?).ok_or_else(|| Error::OutOfSpace)?
+            old_entry_size.checked_add(size_diff.try_into().map_err(|_| Error::ArithmeticOverflow)?).ok_or(Error::OutOfSpace)?
         } else {
             let size_diff = (-size_diff) as u64;
-            old_entry_size.checked_sub(size_diff.try_into().map_err(|_| Error::ArithmeticOverflow)?).ok_or_else(|| Error::OutOfSpace)?
+            old_entry_size.checked_sub(size_diff.try_into().map_err(|_| Error::ArithmeticOverflow)?).ok_or(Error::OutOfSpace)?
         };
 
         entry.header.entry_size.set(new_entry_size);
         let buf = &mut self.buf[offset..];
         buf.copy_within(old_entry_size as usize..old_used_size, new_entry_size as usize);
-        let entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
+        let entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or(Error::EntryNotFound)?;
         Ok(entry)
     }
     /// Inserts the given token.
@@ -374,7 +374,7 @@ impl<'a> GroupMutItem<'a> {
         let token_size = size_of::<TOKEN_ENTRY>();
         // Note: Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  This is bad when iterating over the group members until the end--it will iterate over garbage.
         // Therefore, mask the new area out for the iterator--and reinstate it only after resize_entry_by (which has been adapted specially) is finished with Ok.
-        let mut entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
+        let mut entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or(Error::EntryNotFound)?;
         entry.delete_token(token_id)?;
         let mut token_size_diff: i64 = token_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
         token_size_diff = -token_size_diff;
