@@ -32,7 +32,7 @@ impl<BufferType> TokensEntryBodyItem<BufferType> {
         }
         Ok(Self {
             unit_size,
-            entry_id: TokenEntryId::from_u16(entry_id).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::entry_id"))?,
+            entry_id: TokenEntryId::from_u16(entry_id).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::entry_id"))?,
             buf,
             used_size,
         })
@@ -147,12 +147,12 @@ impl<'a> TokensEntryIterMut<'a> {
         let token_size = size_of::<TOKEN_ENTRY>();
 
         // Make sure that move_insertion_point_before does not notice the new uninitialized token
-        self.remaining_used_size = self.remaining_used_size.checked_sub(token_size as usize).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"))?;
+        self.remaining_used_size = self.remaining_used_size.checked_sub(token_size as usize).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"))?;
         self.move_insertion_point_before(token_id)?;
         // Move the entries from after the insertion point to the right (in order to make room before for our new entry).
         self.buf.copy_within(0..self.remaining_used_size, token_size as usize);
 
-        self.remaining_used_size = self.remaining_used_size.checked_add(token_size as usize).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"))?;
+        self.remaining_used_size = self.remaining_used_size.checked_add(token_size as usize).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"))?;
         let token = match take_header_from_collection_mut::<TOKEN_ENTRY>(&mut self.buf) {
             Some(item) => item,
             None => {
@@ -179,7 +179,7 @@ impl<'a> TokensEntryIterMut<'a> {
         let token_size = size_of::<TOKEN_ENTRY>();
         // Move the tokens behind this one to the left
         self.buf.copy_within(token_size..self.remaining_used_size, 0);
-        self.remaining_used_size = self.remaining_used_size.checked_sub(token_size as usize).ok_or_else(|| Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"))?;
+        self.remaining_used_size = self.remaining_used_size.checked_sub(token_size as usize).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"))?;
         Ok(())
     }
 }
