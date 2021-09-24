@@ -3751,8 +3751,8 @@ pub mod memory {
 
             #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
             pub enum MotherboardLayerCount {
-                L4 = 0,
-                L6 = 1,
+                _4 = 0,
+                _6 = 1,
             }
 
             make_accessors! {
