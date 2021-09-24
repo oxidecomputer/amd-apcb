@@ -915,7 +915,7 @@ mod tests {
         let mut apcb = Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default()).unwrap();
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         use crate::memory::{DdrRates, Ddr4DimmRanks, Ddr4DataBusElement, RttNom, RttPark, RttWr, VrefDq, VrefDqRange1};
-        let element = Ddr4DataBusElement::new(2, DdrRates::new().with_ddr3200(true), Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true), Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true), RttNom::RttOff, RttWr::RttOff, RttPark::Rtt48Ohm, 91, VrefDq::Range1(VrefDqRange1::_74_95P)).unwrap();
+        let element = Ddr4DataBusElement::new(2, DdrRates::new().with_ddr3200(true), Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true), Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true), RttNom::Off, RttWr::Off, RttPark::_48Ohm, 91, VrefDq::Range1(VrefDqRange1::_74_95P)).unwrap();
         apcb.insert_struct_array_as_entry(EntryId::Memory(MemoryEntryId::PsRdimmDdr4DataBus), 0, 0xFFFF, PriorityLevels::from_level(PriorityLevel::Normal), &[element])?;
         Apcb::update_checksum(&mut buffer[0..]).unwrap();
         let mut apcb = Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
@@ -940,9 +940,9 @@ mod tests {
         assert!(item.ddr_rates().unwrap() == DdrRates::new().with_ddr3200(true));
         assert!(item.dimm0_ranks().unwrap() == Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true));
         assert!(item.dimm1_ranks().unwrap() == Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true));
-        assert!(item.rtt_nom().unwrap() == RttNom::RttOff);
-        assert!(item.rtt_wr().unwrap() == RttWr::RttOff);
-        assert!(item.rtt_park().unwrap() == RttPark::Rtt48Ohm);
+        assert!(item.rtt_nom().unwrap() == RttNom::Off);
+        assert!(item.rtt_wr().unwrap() == RttWr::Off);
+        assert!(item.rtt_park().unwrap() == RttPark::_48Ohm);
         assert!(item.pmu_phy_vref() == 91);
         assert!(item.vref_dq.get() == 23);
 

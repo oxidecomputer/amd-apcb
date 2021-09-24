@@ -1559,12 +1559,12 @@ pub mod memory {
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     pub enum CadBusClkDriveStrength {
         Auto = 0xFF,
-        Strength120Ohm = 0,
-        Strength60Ohm = 1,
-        Strength40Ohm = 3,
-        Strength30Ohm = 7,
-        Strength24Ohm = 15,
-        Strength20Ohm = 31,
+        _120Ohm = 0,
+        _60Ohm = 1,
+        _40Ohm = 3,
+        _30Ohm = 7,
+        _24Ohm = 15,
+        _20Ohm = 31,
     }
 
     pub type CadBusAddressCommandDriveStrength = CadBusClkDriveStrength;
@@ -1938,24 +1938,24 @@ pub mod memory {
     // See <https://github.com/LongJohnCoder/ddr-doc/blob/gh-pages/jedec/JESD79-4.pdf> Table 3
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     pub enum RttNom {
-        RttOff = 0,
-        Rtt60Ohm = 1,
-        Rtt120Ohm = 2,
-        Rtt40Ohm = 3,
-        Rtt240Ohm = 4,
-        Rtt48Ohm = 5,
-        Rtt80Ohm = 6,
-        Rtt34Ohm = 7,
+        Off = 0,
+        _60Ohm = 1,
+        _120Ohm = 2,
+        _40Ohm = 3,
+        _240Ohm = 4,
+        _48Ohm = 5,
+        _80Ohm = 6,
+        _34Ohm = 7,
     }
     // See <https://github.com/LongJohnCoder/ddr-doc/blob/gh-pages/jedec/JESD79-4.pdf> Table 11
     pub type RttPark = RttNom;
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     pub enum RttWr {
-        RttOff = 0,
-        Rtt120Ohm = 1,
-        Rtt240Ohm = 2,
-        RttFloating = 3,
-        Rtt80Ohm = 4,
+        Off = 0,
+        _120Ohm = 1,
+        _240Ohm = 2,
+        Floating = 3,
+        _80Ohm = 4,
     }
 
     #[derive(FromPrimitive, ToPrimitive, Clone, Copy)]
