@@ -296,7 +296,10 @@ impl<'a> Apcb<'a> {
             let group = groups.next().ok_or(Error::GroupNotFound)?;
             group.header.group_size.set(new_group_size);
             let buf = &mut self.beginning_of_groups[offset..];
-            buf.copy_within((old_group_size as usize)..old_used_size, new_group_size as usize);
+            if old_group_size as usize > old_used_size {
+                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "GROUP_HEADER::group_size"));
+            }
+            buf.copy_within((old_group_size as usize)..(old_used_size - offset), new_group_size as usize);
             self.used_size = new_used_size;
         } else if size_diff < 0 {
             let old_group_size: u32 = old_group_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
