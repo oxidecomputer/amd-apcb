@@ -11,12 +11,6 @@
   * a lot of platform_specific_override::* enums
     * Cs
 
-# Bugs
-
-* Check delete_entry (postcondition!)
-* Check delete_token (postcondition!)
-  * Range end index of out range for delete_entry
-
 # Tests
 
 * Add unit test for token entries!!  mutation
