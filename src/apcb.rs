@@ -315,11 +315,12 @@ impl<'a> Apcb<'a> {
         }
         self.group_mut(group_id).ok_or(Error::GroupNotFound)
     }
+    /// Note: board_instance_mask needs to be exact.
     #[pre]
     fn internal_insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: usize, priority_mask: PriorityLevels, payload_initializer: &mut dyn FnMut(&mut [u8])) -> Result<()> {
         let group_id = entry_id.group_id();
         let mut group = self.group_mut(group_id).ok_or(Error::GroupNotFound)?;
-        match group.entry_mut(entry_id, instance_id, board_instance_mask) {
+        match group.entry_exact_mut(entry_id, instance_id, board_instance_mask) {
             None => {
             },
             _ => {

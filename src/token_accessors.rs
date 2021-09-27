@@ -75,7 +75,7 @@ macro_rules! make_token_accessors {(
                 -> Result<$field_user_ty>
             {
                 let group = self.apcb.group(GroupId::Token).ok_or_else(|| Error::GroupNotFound)?;
-                let entry = group.entry(EntryId::Token($field_entry_id), self.instance_id, self.board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
+                let entry = group.entry_exact(EntryId::Token($field_entry_id), self.instance_id, self.board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
                 match &entry.body {
                     EntryItemBody::<_>::Tokens(ref a) => {
                         let token = a.token($field_key).ok_or_else(|| Error::TokenNotFound)?;
@@ -96,7 +96,7 @@ macro_rules! make_token_accessors {(
                 -> Result<$field_user_ty>
             {
                 let group = self.apcb.group(GroupId::Token).ok_or_else(|| Error::GroupNotFound)?;
-                let entry = group.entry(EntryId::Token($field_entry_id), self.instance_id, self.board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
+                let entry = group.entry_exact(EntryId::Token($field_entry_id), self.instance_id, self.board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
                 match &entry.body {
                     EntryItemBody::<_>::Tokens(ref a) => {
                         let token = a.token($field_key).ok_or_else(|| Error::TokenNotFound)?;
@@ -133,7 +133,7 @@ macro_rules! make_token_accessors {(
                           },
                           Err(Error::TokenUniqueKeyViolation) => {
                               let mut group = self.apcb.group_mut(GroupId::Token).unwrap();
-                              let mut entry = group.entry_mut(entry_id, self.instance_id, self.board_instance_mask).unwrap();
+                              let mut entry = group.entry_exact_mut(entry_id, self.instance_id, self.board_instance_mask).unwrap();
                               match &mut entry.body {
                                   EntryItemBody::<_>::Tokens(ref mut a) => {
                                       let mut token = a.token_mut(token_id).unwrap();

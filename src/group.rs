@@ -128,7 +128,7 @@ impl GroupItem<'_> {
     }
 
     /// This finds the entry with the given ID, INSTANCE_ID and compatible BOARD_INSTANCE_MASK, if any.  If you have a board_id, BOARD_INSTANCE_MASK = 1 << board_id
-    pub fn entry(&self, id: EntryId, instance_id: u16, board_instance_mask: u16) -> Option<EntryItem<'_>> {
+    pub fn entry_compatible(&self, id: EntryId, instance_id: u16, board_instance_mask: u16) -> Option<EntryItem<'_>> {
         for entry in self.entries() {
             if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() & board_instance_mask != 0 {
                 return Some(entry);
@@ -326,7 +326,7 @@ impl<'a> GroupMutItem<'a> {
     }
 
     /// This finds the entry with the given ID, INSTANCE_ID and compatible BOARD_INSTANCE_MASK, if any.  If you have a board_id, BOARD_INSTANCE_MASK = 1 << board_id
-    pub fn entry_mut(&mut self, id: EntryId, instance_id: u16, board_instance_mask: u16) -> Option<EntryMutItem<'_>> {
+    pub fn entry_compatible_mut(&mut self, id: EntryId, instance_id: u16, board_instance_mask: u16) -> Option<EntryMutItem<'_>> {
         for entry in self.entries_mut() {
             if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() & board_instance_mask != 0 {
                 return Some(entry);
@@ -334,7 +334,18 @@ impl<'a> GroupMutItem<'a> {
         }
         None
     }
+
     /// Note: BOARD_INSTANCE_MASK needs to be exact.
+    /// This finds the entry with the given ID, INSTANCE_ID and exact BOARD_INSTANCE_MASK, if any.  If you have a board_id, BOARD_INSTANCE_MASK = 1 << board_id
+    pub fn entry_exact_mut(&mut self, id: EntryId, instance_id: u16, board_instance_mask: u16) -> Option<EntryMutItem<'_>> {
+        for entry in self.entries_mut() {
+            if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() == board_instance_mask {
+                return Some(entry);
+            }
+        }
+        None
+    }
+
     pub(crate) fn delete_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16) -> Result<u32> {
         let mut entries = self.entries_mut();
         let (offset, entry_size) = entries.move_point_to(entry_id, instance_id, board_instance_mask, 0)?;
@@ -367,13 +378,12 @@ impl<'a> GroupMutItem<'a> {
         entry.header.entry_size.set(new_entry_size);
         let buf = &mut self.buf[offset..];
         buf.copy_within(old_entry_size as usize..(old_used_size - offset), new_entry_size as usize);
-        // not exact enough: let entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or(Error::EntryNotFound)?;
-        for entry in self.entries_mut() {
-            if entry.id() == entry_id && entry.instance_id() == instance_id && entry.board_instance_mask() == board_instance_mask {
-                return Ok(entry);
-            }
+        match self.entry_exact_mut(entry_id, instance_id, board_instance_mask) {
+            Some(e) => Ok(e),
+            None => {
+                panic!("Entry (entry_id = {:?}, instance_id = {:?}, board_instance_mask = {:?}) was found by move_point to, but not by manual iteration after resizing.", entry_id, instance_id, board_instance_mask);
+            },
         }
-        panic!("Entry (entry_id = {:?}, instance_id = {:?}, board_instance_mask = {:?}) was found by move_point to, but not by manual iteration after resizing.", entry_id, instance_id, board_instance_mask);
     }
     /// Inserts the given token.
     #[pre("Caller already grew the group by `size_of::<TOKEN_ENTRY>()`")]
@@ -396,7 +406,7 @@ impl<'a> GroupMutItem<'a> {
         let token_size = size_of::<TOKEN_ENTRY>();
         // Note: Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  This is bad when iterating over the group members until the end--it will iterate over garbage.
         // Therefore, mask the new area out for the iterator--and reinstate it only after resize_entry_by (which has been adapted specially) is finished with Ok.
-        let mut entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or(Error::EntryNotFound)?;
+        let mut entry = self.entry_exact_mut(entry_id, instance_id, board_instance_mask).ok_or(Error::EntryNotFound)?;
         entry.delete_token(token_id)?;
         let mut token_size_diff: i64 = token_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
         token_size_diff = -token_size_diff;
