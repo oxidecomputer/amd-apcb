@@ -464,8 +464,16 @@ impl<'a> Apcb<'a> {
         const_assert!(TOKEN_SIZE % (ENTRY_ALIGNMENT as u16) == 0);
         let mut group = self.resize_group_by(group_id, TOKEN_SIZE.into())?;
         // Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  group.insert_token has special logic in order to survive that.
+        match
         #[assure("Caller already grew the group by `size_of::<TOKEN_ENTRY>()`", reason = "See a few lines above here")]
-        group.insert_token(entry_id, instance_id, board_instance_mask, token_id, token_value)
+        group.insert_token(entry_id, instance_id, board_instance_mask, token_id, token_value) {
+            Err(Error::EntryNotFound) => {
+                panic!("Internal error: Entry (entry_id = {:?}, instance_id = {:?}, board_instance_mask = {:?}) was found before resizing group but is not found after resizing group", entry_id, instance_id, board_instance_mask);
+            },
+            x => {
+                x
+            },
+        }
     }
     pub fn delete_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32) -> Result<()> {
         let group_id = entry_id.group_id();
