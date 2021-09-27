@@ -5,7 +5,7 @@ use crate::ondisk::GroupId;
 use crate::ondisk::ENTRY_ALIGNMENT;
 use crate::ondisk::ENTRY_HEADER;
 use crate::ondisk::TOKEN_ENTRY;
-pub use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
+pub use crate::ondisk::{PriorityLevels, BoardInstances, ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut};
 use core::convert::TryInto;
 use core::mem::{size_of};
 use num_traits::FromPrimitive;
@@ -128,9 +128,9 @@ impl GroupItem<'_> {
     }
 
     /// This finds the entry with the given ID, INSTANCE_ID and compatible BOARD_INSTANCE_MASK, if any.  If you have a board_id, BOARD_INSTANCE_MASK = 1 << board_id
-    pub fn entry_compatible(&self, id: EntryId, instance_id: u16, board_instance_mask: u16) -> Option<EntryItem<'_>> {
+    pub fn entry_compatible(&self, id: EntryId, instance_id: u16, board_instance_mask: BoardInstances) -> Option<EntryItem<'_>> {
         for entry in self.entries() {
-            if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() & board_instance_mask != 0 {
+            if entry.id() == id && entry.instance_id() == instance_id && u16::from(entry.board_instance_mask()) & u16::from(board_instance_mask) != 0 {
                 return Some(entry);
             }
         }
@@ -138,7 +138,7 @@ impl GroupItem<'_> {
     }
 
     /// This finds the entry with the given ID, INSTANCE_ID and exact BOARD_INSTANCE_MASK, if any.
-    pub fn entry_exact(&self, id: EntryId, instance_id: u16, board_instance_mask: u16) -> Option<EntryItem<'_>> {
+    pub fn entry_exact(&self, id: EntryId, instance_id: u16, board_instance_mask: BoardInstances) -> Option<EntryItem<'_>> {
         for entry in self.entries() {
             if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() == board_instance_mask {
                 return Some(entry);
@@ -209,7 +209,7 @@ impl<'a> GroupMutIter<'a> {
     }
 
     /// Find the place BEFORE which the entry (GROUP_ID, ENTRY_ID, INSTANCE_ID, BOARD_INSTANCE_MASK) is supposed to go.
-    pub(crate) fn move_insertion_point_before(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: u16) -> Result<()> {
+    pub(crate) fn move_insertion_point_before(&mut self, group_id: u16, type_id: u16, instance_id: u16, board_instance_mask: BoardInstances) -> Result<()> {
         loop {
             let mut buf = &mut self.buf[..self.remaining_used_size];
             if buf.is_empty() {
@@ -217,7 +217,7 @@ impl<'a> GroupMutIter<'a> {
             }
             match Self::next_item(&mut buf) {
                 Ok(e) => {
-                    if (e.group_id(), e.type_id(), e.instance_id(), e.board_instance_mask()) < (group_id, type_id, instance_id, board_instance_mask) {
+                    if (e.group_id(), e.type_id(), e.instance_id(), u16::from(e.board_instance_mask())) < (group_id, type_id, instance_id, u16::from(board_instance_mask)) {
                         self.next().unwrap();
                     } else {
                         break;
@@ -232,9 +232,8 @@ impl<'a> GroupMutIter<'a> {
     }
     /// Find the place BEFORE which the entry (GROUP_ID, ENTRY_ID, INSTANCE_ID, BOARD_INSTANCE_MASK) is.
     /// Returns how much it moved the point, and the size of the entry.
-    pub(crate) fn move_point_to(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, size_diff: i64) -> Result<(usize, usize)> {
+    pub(crate) fn move_point_to(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: BoardInstances, size_diff: i64) -> Result<(usize, usize)> {
         let mut offset = 0usize;
-        eprintln!("move_point_to: entry_id: {:?}, instance_id: {:?}, board_instance_mask: {:?}, buf: {:?}", entry_id, instance_id, board_instance_mask, &self.buf[..self.remaining_used_size-(size_diff as usize)]);
         loop {
             let remaining_used_size = self.remaining_used_size - if size_diff > 0 {
                 // Make it not see the new, uninitialized, entry.
@@ -267,7 +266,7 @@ impl<'a> GroupMutIter<'a> {
     }
     /// Inserts the given entry data at the right spot.
     #[pre("Caller already grew the group by `payload_size + size_of::<ENTRY_HEADER>()`")]
-    pub(crate) fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, entry_allocation: u16, context_type: ContextType, payload_size: usize, payload_initializer: &mut dyn FnMut(&mut [u8]), priority_mask: PriorityLevels) -> Result<()> {
+    pub(crate) fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: BoardInstances, entry_allocation: u16, context_type: ContextType, payload_size: usize, payload_initializer: &mut dyn FnMut(&mut [u8]), priority_mask: PriorityLevels) -> Result<()> {
         let group_id = entry_id.group_id();
         let entry_id = entry_id.type_id();
 
@@ -300,7 +299,7 @@ impl<'a> GroupMutIter<'a> {
         header.set_priority_mask(priority_mask);
 
         // Note: The following is settable by the user via EntryMutItem set-accessors: context_type, context_format, unit_size, priority_mask, key_size, key_pos
-        header.board_instance_mask.set(board_instance_mask);
+        header.board_instance_mask.set(u16::from(board_instance_mask));
         let body = take_body_from_collection_mut(&mut buf, payload_size, ENTRY_ALIGNMENT).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER"))?;
         payload_initializer(body);
         self.remaining_used_size = self.remaining_used_size.checked_add(entry_allocation as usize).ok_or(Error::OutOfSpace)?;
@@ -326,9 +325,9 @@ impl<'a> GroupMutItem<'a> {
     }
 
     /// This finds the entry with the given ID, INSTANCE_ID and compatible BOARD_INSTANCE_MASK, if any.  If you have a board_id, BOARD_INSTANCE_MASK = 1 << board_id
-    pub fn entry_compatible_mut(&mut self, id: EntryId, instance_id: u16, board_instance_mask: u16) -> Option<EntryMutItem<'_>> {
+    pub fn entry_compatible_mut(&mut self, id: EntryId, instance_id: u16, board_instance_mask: BoardInstances) -> Option<EntryMutItem<'_>> {
         for entry in self.entries_mut() {
-            if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() & board_instance_mask != 0 {
+            if entry.id() == id && entry.instance_id() == instance_id && u16::from(entry.board_instance_mask()) & u16::from(board_instance_mask) != 0 {
                 return Some(entry);
             }
         }
@@ -337,7 +336,7 @@ impl<'a> GroupMutItem<'a> {
 
     /// Note: BOARD_INSTANCE_MASK needs to be exact.
     /// This finds the entry with the given ID, INSTANCE_ID and exact BOARD_INSTANCE_MASK, if any.  If you have a board_id, BOARD_INSTANCE_MASK = 1 << board_id
-    pub fn entry_exact_mut(&mut self, id: EntryId, instance_id: u16, board_instance_mask: u16) -> Option<EntryMutItem<'_>> {
+    pub fn entry_exact_mut(&mut self, id: EntryId, instance_id: u16, board_instance_mask: BoardInstances) -> Option<EntryMutItem<'_>> {
         for entry in self.entries_mut() {
             if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() == board_instance_mask {
                 return Some(entry);
@@ -346,7 +345,7 @@ impl<'a> GroupMutItem<'a> {
         None
     }
 
-    pub(crate) fn delete_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16) -> Result<u32> {
+    pub(crate) fn delete_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: BoardInstances) -> Result<u32> {
         let mut entries = self.entries_mut();
         let (offset, entry_size) = entries.move_point_to(entry_id, instance_id, board_instance_mask, 0)?;
         let buf = &mut self.buf[offset..];
@@ -355,7 +354,7 @@ impl<'a> GroupMutItem<'a> {
     }
     /// Resizes the given entry by SIZE_DIFF.
     #[pre("If `size_diff > 0`, caller needs to have expanded the group by `size_diff` already.  If `size_diff < 0`, caller needs to call `resize_entry_by` BEFORE resizing the group.")]
-    pub(crate) fn resize_entry_by(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, size_diff: i64) -> Result<EntryMutItem<'_>> {
+    pub(crate) fn resize_entry_by(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: BoardInstances, size_diff: i64) -> Result<EntryMutItem<'_>> {
         let mut old_used_size = self.used_size;
         let mut entries = self.entries_mut();
         let (offset, entry_size) = entries.move_point_to(entry_id, instance_id, board_instance_mask, size_diff)?;
@@ -387,7 +386,7 @@ impl<'a> GroupMutItem<'a> {
     }
     /// Inserts the given token.
     #[pre("Caller already grew the group by `size_of::<TOKEN_ENTRY>()`")]
-    pub(crate) fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
+    pub(crate) fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: BoardInstances, token_id: u32, token_value: u32) -> Result<()> {
         let token_size = size_of::<TOKEN_ENTRY>();
         // Note: Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  This is bad when iterating over the group members until the end--it will iterate over garbage.
         // Therefore, mask the new area out for the iterator--and reinstate it only after resize_entry_by (which has been adapted specially) is finished with Ok.
@@ -402,7 +401,7 @@ impl<'a> GroupMutItem<'a> {
     /// Returns the number of bytes that were deleted.
     /// Postcondition: Caller will resize the given group
     #[pre]
-    pub(crate) fn delete_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32) -> Result<i64> {
+    pub(crate) fn delete_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: BoardInstances, token_id: u32) -> Result<i64> {
         let token_size = size_of::<TOKEN_ENTRY>();
         // Note: Now, GroupMutItem.buf includes space for the token, claimed by no entry so far.  This is bad when iterating over the group members until the end--it will iterate over garbage.
         // Therefore, mask the new area out for the iterator--and reinstate it only after resize_entry_by (which has been adapted specially) is finished with Ok.

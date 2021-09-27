@@ -2,6 +2,7 @@
 
 use crate::apcb::Apcb;
 use crate::ondisk::GroupId;
+use crate::ondisk::BoardInstances;
 use crate::ondisk::PriorityLevels;
 use crate::types::Error;
 use crate::types::Result;
@@ -9,13 +10,13 @@ use crate::types::Result;
 pub struct TokensMut<'a> {
     pub(crate) apcb: &'a mut Apcb<'a>,
     pub(crate) instance_id: u16,
-    pub(crate) board_instance_mask: u16,
+    pub(crate) board_instance_mask: BoardInstances,
     pub(crate) priority_mask: PriorityLevels,
 }
 pub struct Tokens<'a> {
     pub(crate) apcb: &'a Apcb<'a>,
     pub(crate) instance_id: u16,
-    pub(crate) board_instance_mask: u16,
+    pub(crate) board_instance_mask: BoardInstances,
     //pub(crate) priority_mask: PriorityLevels,
 }
 
@@ -23,7 +24,7 @@ impl<'a> TokensMut<'a> {
     pub(crate) fn new(
         apcb: &'a mut Apcb<'a>,
         instance_id: u16,
-        board_instance_mask: u16,
+        board_instance_mask: BoardInstances,
         priority_mask: PriorityLevels,
     ) -> Result<Self> {
         match apcb.insert_group(GroupId::Token, *b"TOKN") {
@@ -46,7 +47,7 @@ impl<'a> Tokens<'a> {
     pub(crate) fn new(
         apcb: &'a Apcb<'a>,
         instance_id: u16,
-        board_instance_mask: u16,
+        board_instance_mask: BoardInstances,
     ) -> Result<Self> {
         Ok(Self {
             apcb,

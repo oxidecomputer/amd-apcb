@@ -978,6 +978,79 @@ impl PriorityLevels {
     }
 }
 
+#[bitfield(bits = 16)]
+#[repr(u16)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct BoardInstances {
+    pub instance_0: bool,
+    pub instance_1: bool,
+    pub instance_2: bool,
+    pub instance_3: bool,
+    pub instance_4: bool,
+    pub instance_5: bool,
+    pub instance_6: bool,
+    pub instance_7: bool,
+    pub instance_8: bool,
+    pub instance_9: bool,
+    pub instance_10: bool,
+    pub instance_11: bool,
+    pub instance_12: bool,
+    pub instance_13: bool,
+    pub instance_14: bool,
+    pub instance_15: bool,
+}
+pub type BoardInstance = u8;
+
+impl BoardInstances {
+    pub fn all() -> Self {
+        let mut result = Self::new();
+        result.set_instance_0(true);
+        result.set_instance_1(true);
+        result.set_instance_2(true);
+        result.set_instance_3(true);
+        result.set_instance_4(true);
+        result.set_instance_5(true);
+        result.set_instance_6(true);
+        result.set_instance_7(true);
+        result.set_instance_8(true);
+        result.set_instance_9(true);
+        result.set_instance_10(true);
+        result.set_instance_11(true);
+        result.set_instance_12(true);
+        result.set_instance_13(true);
+        result.set_instance_14(true);
+        result.set_instance_15(true);
+        result
+    }
+    pub fn from_instance(instance: BoardInstance) -> Result<Self> {
+        let mut result = Self::new();
+        match instance {
+            0 => result.set_instance_0(true),
+            1 => result.set_instance_1(true),
+            2 => result.set_instance_2(true),
+            3 => result.set_instance_3(true),
+            4 => result.set_instance_4(true),
+            5 => result.set_instance_5(true),
+            6 => result.set_instance_6(true),
+            7 => result.set_instance_7(true),
+            8 => result.set_instance_8(true),
+            9 => result.set_instance_9(true),
+            10 => result.set_instance_10(true),
+            11 => result.set_instance_11(true),
+            12 => result.set_instance_12(true),
+            13 => result.set_instance_13(true),
+            14 => result.set_instance_14(true),
+            15 => result.set_instance_15(true),
+            _ => {
+                return Err(Error::EntryTypeMismatch);
+            },
+        }
+        Ok(result)
+    }
+}
+
+impl_bitfield_primitive_conversion!(BoardInstances, 0xffff, u16);
+
 make_accessors! {
     #[derive(FromBytes, AsBytes, Unaligned, Debug)]
     #[repr(C, packed)]

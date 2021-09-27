@@ -7,7 +7,7 @@ use crate::ondisk::TOKEN_ENTRY;
 use crate::ondisk::V2_HEADER;
 use crate::ondisk::V3_HEADER_EXT;
 use crate::ondisk::ENTRY_ALIGNMENT;
-pub use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, EntryCompatible};
+pub use crate::ondisk::{BoardInstances, PriorityLevels, ContextFormat, ContextType, EntryId, EntryCompatible};
 use crate::ondisk::{take_header_from_collection, take_header_from_collection_mut, take_body_from_collection, take_body_from_collection_mut, HeaderWithTail, SequenceElementAsBytes};
 use crate::entry::EntryItemBody;
 use core::convert::TryInto;
@@ -259,7 +259,7 @@ impl<'a> Apcb<'a> {
         None
     }
     /// Note: BOARD_INSTANCE_MASK needs to be exact.
-    pub fn delete_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16) -> Result<()> {
+    pub fn delete_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: BoardInstances) -> Result<()> {
         let group_id = entry_id.group_id();
         let mut group = self.group_mut(group_id).ok_or(Error::GroupNotFound)?;
         let size_diff = group.delete_entry(entry_id, instance_id, board_instance_mask)?;
@@ -317,7 +317,7 @@ impl<'a> Apcb<'a> {
     }
     /// Note: board_instance_mask needs to be exact.
     #[pre]
-    fn internal_insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, payload_size: usize, priority_mask: PriorityLevels, payload_initializer: &mut dyn FnMut(&mut [u8])) -> Result<()> {
+    fn internal_insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: BoardInstances, context_type: ContextType, payload_size: usize, priority_mask: PriorityLevels, payload_initializer: &mut dyn FnMut(&mut [u8])) -> Result<()> {
         let group_id = entry_id.group_id();
         let mut group = self.group_mut(group_id).ok_or(Error::GroupNotFound)?;
         match group.entry_exact_mut(entry_id, instance_id, board_instance_mask) {
@@ -345,7 +345,7 @@ impl<'a> Apcb<'a> {
 
     // Security--and it would be nicer if the person using this would instead contribute a struct layout so we can use it normally
     #[pre]
-    pub(crate) fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, context_type: ContextType, priority_mask: PriorityLevels, payload: &[u8]) -> Result<()> {
+    pub(crate) fn insert_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: BoardInstances, context_type: ContextType, priority_mask: PriorityLevels, payload: &[u8]) -> Result<()> {
         let payload_size = payload.len();
         self.internal_insert_entry(entry_id, instance_id, board_instance_mask, context_type, payload_size, priority_mask, &mut |body: &mut [u8]| {
             body.copy_from_slice(payload);
@@ -354,7 +354,7 @@ impl<'a> Apcb<'a> {
 
     /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.  Usually that's for platform_specific_override or platform_tuning structs.
     /// Note: Currently, INSTANCE_ID is always supposed to be 0.
-    pub fn insert_struct_sequence_as_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &[&dyn SequenceElementAsBytes]) -> Result<()> {
+    pub fn insert_struct_sequence_as_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: BoardInstances, priority_mask: PriorityLevels, payload: &[&dyn SequenceElementAsBytes]) -> Result<()> {
         let mut payload_size: usize = 0;
         for item in payload {
             let blob = item.checked_as_bytes(entry_id).ok_or(Error::EntryTypeMismatch)?;
@@ -381,7 +381,7 @@ impl<'a> Apcb<'a> {
 
     /// Inserts a new entry (see insert_entry), puts PAYLOAD into it.  T can be a enum of struct refs (PlatformSpecificElementRef, PlatformTuningElementRef) or just one struct.
     /// Note: Currently, INSTANCE_ID is always supposed to be 0.
-    pub fn insert_struct_array_as_entry<T: EntryCompatible + AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, payload: &[T]) -> Result<()> {
+    pub fn insert_struct_array_as_entry<T: EntryCompatible + AsBytes>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: BoardInstances, priority_mask: PriorityLevels, payload: &[T]) -> Result<()> {
         let mut payload_size: usize = 0;
         for item in payload {
             let blob = item.as_bytes();
@@ -411,7 +411,7 @@ impl<'a> Apcb<'a> {
 
     /// Inserts a new entry (see insert_entry), puts HEADER and then TAIL into it.  TAIL is allowed to be &[], and often has to be.
     /// Note: Currently, INSTANCE_ID is always supposed to be 0.
-    pub fn insert_struct_entry<H: EntryCompatible + AsBytes + HeaderWithTail>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels, header: &H, tail: &[H::TailArrayItemType]) -> Result<()> {
+    pub fn insert_struct_entry<H: EntryCompatible + AsBytes + HeaderWithTail>(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: BoardInstances, priority_mask: PriorityLevels, header: &H, tail: &[H::TailArrayItemType]) -> Result<()> {
         let blob = header.as_bytes();
         if H::is_entry_compatible(entry_id, blob) {
             let mut payload_size = size_of::<H>().checked_add(size_of::<H::TailArrayItemType>().checked_mul(tail.len()).ok_or(Error::ArithmeticOverflow)?).ok_or(Error::ArithmeticOverflow)?;
@@ -442,7 +442,7 @@ impl<'a> Apcb<'a> {
 
     /// Note: INSTANCE_ID is sometimes != 0.
     #[pre]
-    pub fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32, token_value: u32) -> Result<()> {
+    pub fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: BoardInstances, token_id: u32, token_value: u32) -> Result<()> {
         let group_id = entry_id.group_id();
         // Make sure that the entry exists before resizing the group
         let group = self.group(group_id).ok_or(Error::GroupNotFound)?;
@@ -477,7 +477,7 @@ impl<'a> Apcb<'a> {
             },
         }
     }
-    pub fn delete_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, token_id: u32) -> Result<()> {
+    pub fn delete_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: BoardInstances, token_id: u32) -> Result<()> {
         let group_id = entry_id.group_id();
         // Make sure that the entry exists before resizing the group
         let mut group = self.group_mut(group_id).ok_or(Error::GroupNotFound)?;
@@ -707,11 +707,11 @@ impl<'a> Apcb<'a> {
     }
     /// Constructs a attribute accessor proxy for the given combination of (INSTANCE_ID, BOARD_INSTANCE_MASK).  ENTRY_ID is inferred on access.  PRIORITY_MASK is used if the entry needs to be created.
     /// The proxy takes care of creating the group, entry and token as necessary.  It does not delete stuff.
-    pub fn tokens_mut(&'a mut self, instance_id: u16, board_instance_mask: u16, priority_mask: PriorityLevels) -> Result<TokensMut<'a>> {
+    pub fn tokens_mut(&'a mut self, instance_id: u16, board_instance_mask: BoardInstances, priority_mask: PriorityLevels) -> Result<TokensMut<'a>> {
         TokensMut::new(self, instance_id, board_instance_mask, priority_mask)
     }
     /// Constructs a attribute accessor proxy for the given combination of (INSTANCE_ID, BOARD_INSTANCE_MASK).  ENTRY_ID is inferred on access.
-    pub fn tokens(&'a self, instance_id: u16, board_instance_mask: u16) -> Result<Tokens<'a>> {
+    pub fn tokens(&'a self, instance_id: u16, board_instance_mask: BoardInstances) -> Result<Tokens<'a>> {
         Tokens::new(self, instance_id, board_instance_mask)
     }
 }

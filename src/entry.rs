@@ -2,7 +2,7 @@ use core::marker::PhantomData;
 use core::mem::size_of;
 use crate::types::{Result, Error, FileSystemError};
 use crate::ondisk::ENTRY_HEADER;
-use crate::ondisk::{PriorityLevels, ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, EntryCompatible, HeaderWithTail, MutSequenceElementFromBytes, SequenceElementFromBytes};
+use crate::ondisk::{BoardInstances, PriorityLevels, ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, EntryCompatible, HeaderWithTail, MutSequenceElementFromBytes, SequenceElementFromBytes};
 use pre::pre;
 use num_traits::FromPrimitive;
 use crate::tokens_entry::{TokensEntryBodyItem};
@@ -236,8 +236,8 @@ impl<'a> EntryMutItem<'a> {
     pub fn key_pos(&self) -> u8 {
         self.header.key_pos
     }
-    pub fn board_instance_mask(&self) -> u16 {
-        self.header.board_instance_mask.get()
+    pub fn board_instance_mask(&self) -> BoardInstances {
+        BoardInstances::from(self.header.board_instance_mask.get())
     }
 
     /* Not seen in the wild anymore.
@@ -481,8 +481,8 @@ impl<'a> EntryItem<'a> {
     pub fn key_pos(&self) -> u8 {
         self.header.key_pos
     }
-    pub fn board_instance_mask(&self) -> u16 {
-        self.header.board_instance_mask.get()
+    pub fn board_instance_mask(&self) -> BoardInstances {
+        BoardInstances::from(self.header.board_instance_mask.get())
     }
 
     pub(crate) fn validate(&self) -> Result<()> {
