@@ -509,6 +509,29 @@ mod tests {
     }
 
     #[test]
+    fn insert_tokens_wrong() -> Result<(), Error> {
+        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut apcb = Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default()).unwrap();
+        apcb.insert_group(GroupId::Df, *b"DFG ")?;
+        apcb.insert_group(GroupId::Memory, *b"MEMG")?;
+        apcb.insert_group(GroupId::Token, *b"TOKN")?;
+        apcb.insert_entry(EntryId::Df(DfEntryId::SlinkConfig), 0, BoardInstances::all(), ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Low), &[1u8; 48])?;
+        apcb.insert_entry(EntryId::Df(DfEntryId::XgmiPhyOverride), 0, BoardInstances::all(), ContextType::Struct, PriorityLevels::from_level(PriorityLevel::Normal), &[2u8; 1])?;
+
+        // Insert empty "Token Entry"
+        apcb.insert_entry(EntryId::Token(TokenEntryId::Byte), 0, BoardInstances::from_instance(0).unwrap(), ContextType::Tokens, PriorityLevels::from_level(PriorityLevel::Normal), &[])?;
+
+        // pub(crate) fn insert_token(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: BoardInstances, token_id: u32, token_value: u32) -> Result<()> {
+        match apcb.insert_token(EntryId::Token(TokenEntryId::Byte), 0, BoardInstances::all(), 0xae46_cea4, 2) {
+            Err(Error::EntryNotFound) => Ok(()),
+            Err(e) => Err(e),
+            _ => {
+                panic!("should not succeed");
+            }
+        }
+    }
+
+    #[test]
     fn insert_tokens_easy() -> Result<(), Error> {
         let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
         let mut apcb = Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default()).unwrap();
