@@ -3,7 +3,6 @@
 * GroupMutIter: Also validate()
 * Sanity-check "new" fns that exist
 * Add "new" fn for the others, too?
-* Convert board_instance_mask to bitfield?!
 * IdRevApcbMapping
   * id_and_feature_mask: bit 7: 1=user controlled; 0=normal
 * OdtPatElement: Availability of dimm0_rank, dimm1_rank should be conditional.
