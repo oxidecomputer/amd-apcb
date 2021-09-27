@@ -137,6 +137,16 @@ impl GroupItem<'_> {
         None
     }
 
+    /// This finds the entry with the given ID, INSTANCE_ID and exact BOARD_INSTANCE_MASK, if any.
+    pub fn entry_exact(&self, id: EntryId, instance_id: u16, board_instance_mask: u16) -> Option<EntryItem<'_>> {
+        for entry in self.entries() {
+            if entry.id() == id && entry.instance_id() == instance_id && entry.board_instance_mask() == board_instance_mask {
+                return Some(entry);
+            }
+        }
+        None
+    }
+
     pub fn entries(&self) -> GroupIter<'_> {
         GroupIter {
             header: self.header,
@@ -220,12 +230,19 @@ impl<'a> GroupMutIter<'a> {
         }
         Ok(())
     }
-    /// Find the place BEFORE which the entry (GROUP_ID, ID, INSTANCE_ID, BOARD_INSTANCE_MASK) is.
+    /// Find the place BEFORE which the entry (GROUP_ID, ENTRY_ID, INSTANCE_ID, BOARD_INSTANCE_MASK) is.
     /// Returns how much it moved the point, and the size of the entry.
-    pub(crate) fn move_point_to(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16) -> Result<(usize, usize)> {
+    pub(crate) fn move_point_to(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, size_diff: i64) -> Result<(usize, usize)> {
         let mut offset = 0usize;
+        eprintln!("move_point_to: entry_id: {:?}, instance_id: {:?}, board_instance_mask: {:?}, buf: {:?}", entry_id, instance_id, board_instance_mask, &self.buf[..self.remaining_used_size-(size_diff as usize)]);
         loop {
-            let mut buf = &mut self.buf[..self.remaining_used_size];
+            let remaining_used_size = self.remaining_used_size - if size_diff > 0 {
+                // Make it not see the new, uninitialized, entry.
+                size_diff as usize
+            } else {
+                0
+            };
+            let mut buf = &mut self.buf[..remaining_used_size];
             if buf.is_empty() {
                 return Err(Error::EntryNotFound);
             }
@@ -317,9 +334,10 @@ impl<'a> GroupMutItem<'a> {
         }
         None
     }
+    /// Note: BOARD_INSTANCE_MASK needs to be exact.
     pub(crate) fn delete_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16) -> Result<u32> {
         let mut entries = self.entries_mut();
-        let (offset, entry_size) = entries.move_point_to(entry_id, instance_id, board_instance_mask)?;
+        let (offset, entry_size) = entries.move_point_to(entry_id, instance_id, board_instance_mask, 0)?;
         let buf = &mut self.buf[offset..];
         buf.copy_within(entry_size..self.used_size, offset);
         Ok(entry_size as u32)
@@ -328,9 +346,8 @@ impl<'a> GroupMutItem<'a> {
     #[pre("If `size_diff > 0`, caller needs to have expanded the group by `size_diff` already.  If `size_diff < 0`, caller needs to call `resize_entry_by` BEFORE resizing the group.")]
     pub(crate) fn resize_entry_by(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16, size_diff: i64) -> Result<EntryMutItem<'_>> {
         let mut old_used_size = self.used_size;
-
         let mut entries = self.entries_mut();
-        let (offset, entry_size) = entries.move_point_to(entry_id, instance_id, board_instance_mask)?;
+        let (offset, entry_size) = entries.move_point_to(entry_id, instance_id, board_instance_mask, size_diff)?;
         let entry_size: u16 = entry_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
         let entry = entries.next().ok_or(Error::EntryNotFound)?;
 
@@ -349,9 +366,14 @@ impl<'a> GroupMutItem<'a> {
 
         entry.header.entry_size.set(new_entry_size);
         let buf = &mut self.buf[offset..];
-        buf.copy_within(old_entry_size as usize..old_used_size, new_entry_size as usize);
-        let entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or(Error::EntryNotFound)?;
-        Ok(entry)
+        buf.copy_within(old_entry_size as usize..(old_used_size - offset), new_entry_size as usize);
+        // not exact enough: let entry = self.entry_mut(entry_id, instance_id, board_instance_mask).ok_or(Error::EntryNotFound)?;
+        for entry in self.entries_mut() {
+            if entry.id() == entry_id && entry.instance_id() == instance_id && entry.board_instance_mask() == board_instance_mask {
+                return Ok(entry);
+            }
+        }
+        panic!("Entry (entry_id = {:?}, instance_id = {:?}, board_instance_mask = {:?}) was found by move_point to, but not by manual iteration after resizing.", entry_id, instance_id, board_instance_mask);
     }
     /// Inserts the given token.
     #[pre("Caller already grew the group by `size_of::<TOKEN_ENTRY>()`")]

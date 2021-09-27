@@ -258,6 +258,7 @@ impl<'a> Apcb<'a> {
         }
         None
     }
+    /// Note: BOARD_INSTANCE_MASK needs to be exact.
     pub fn delete_entry(&mut self, entry_id: EntryId, instance_id: u16, board_instance_mask: u16) -> Result<()> {
         let group_id = entry_id.group_id();
         let mut group = self.group_mut(group_id).ok_or(Error::GroupNotFound)?;
@@ -444,7 +445,7 @@ impl<'a> Apcb<'a> {
         let group_id = entry_id.group_id();
         // Make sure that the entry exists before resizing the group
         let group = self.group(group_id).ok_or(Error::GroupNotFound)?;
-        let entry = group.entry(entry_id, instance_id, board_instance_mask).ok_or(Error::EntryNotFound)?;
+        let entry = group.entry_exact(entry_id, instance_id, board_instance_mask).ok_or(Error::EntryNotFound)?;
         match &entry.body {
             EntryItemBody::<_>::Tokens(a) => {
                 match a.token(token_id) {
