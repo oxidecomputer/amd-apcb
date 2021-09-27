@@ -5070,8 +5070,10 @@ make_token_accessors! {
     cbs_mem_write_crc_error_max_replay_ddr4(TokenEntryId::Byte, default 8, id 0x74a0_8bec) : pub get u8 : pub set u8,
     cbs_mem_controller_write_crc_enable_ddr4(TokenEntryId::Bool, default 0, id 0x9445_1a4b) : pub get bool : pub set bool,
 
-    mem_rcd_parity(TokenEntryId::Bool, default 1, id 0x647d_7662) : pub get bool : pub set bool,
-    mem_uncorrected_ecc_retry_ddr4(TokenEntryId::Bool, default 1, id 0xbff0_0125) : pub get bool : pub set bool,
+    // Byte just like AMD
+    mem_rcd_parity(TokenEntryId::Byte, default 1, id 0x647d_7662) : pub get bool : pub set bool,
+    // Byte just like AMD
+    mem_uncorrected_ecc_retry_ddr4(TokenEntryId::Byte, default 1, id 0xbff0_0125) : pub get bool : pub set bool,
     mem_urg_ref_limit(TokenEntryId::Byte, default 6, id 0x1333_32df) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first)
     mem_sub_urg_ref_lower_bound(TokenEntryId::Byte, default 4, id 0xe756_2ab6) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first)
     mem_controller_pmu_train_ffe_ddr4(TokenEntryId::Byte, default 0xff, id 0x0d46_186d) : pub get MemControllerPmuTrainFfeDdr4 : pub set MemControllerPmuTrainFfeDdr4, // FIXME: is it bool ?
@@ -5079,7 +5081,8 @@ make_token_accessors! {
     mem_tsme_enable(TokenEntryId::Bool, default 1, id 0xd1fa_6660) : pub get bool : pub set bool, // See Transparent Secure Memory Encryption in PPR
     mem_training_hdt_control(TokenEntryId::Byte, default 200, id 0xaf6d_3a6f) : pub get MemTrainingHdtControl : pub set MemTrainingHdtControl, // TODO: Before using default, fix default.  It's possibly not correct.
     mem_mbist_data_eye_type(TokenEntryId::Byte, default 3, id 0x4e2e_dc1b) : pub get MemMbistDataEyeType : pub set MemMbistDataEyeType,
-    mem_mbist_data_eye_silent_execution(TokenEntryId::Bool, default 0, id 0x3f74_c7e7) : pub get bool : pub set bool,
+    // Byte just like AMD
+    mem_mbist_data_eye_silent_execution(TokenEntryId::Byte, default 0, id 0x3f74_c7e7) : pub get bool : pub set bool,
     mem_heal_bist_enable(TokenEntryId::Byte, default 0, id 0xfba2_3a28) : pub get MemHealBistEnable : pub set MemHealBistEnable,
     MemSelfHealBistEnable(TokenEntryId::Byte, default 0, id 0x2c23_924c), // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
     mem_self_heal_bist_timeout(TokenEntryId::DWord, default 1000, id 0xbe75_97d4) : pub get u32 : pub set u32, // in ms; // TODO: Before using default, fix default.  It's possibly not correct.
