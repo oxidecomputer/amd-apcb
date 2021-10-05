@@ -1,6 +1,9 @@
 #![macro_use]
 
-/// This macro expects module contents as a parameter, and then, first, defines the exact same contents.  Then it generates two enums with all the items that implement EntryCompatible available in that module.  It then implements SequenceElementFromBytes for the enum.
+/// This macro expects module contents as a parameter, and then, first, defines
+/// the exact same contents.  Then it generates two enums with all the items
+/// that implement EntryCompatible available in that module.  It then implements
+/// SequenceElementFromBytes for the enum.
 macro_rules! collect_EntryCompatible_impl_into_enum {
     // This provides the deserializer's type matching.
     (@match2 {$type_:ident}{$skip_step:ident}{$xbuf:ident}) => {

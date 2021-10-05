@@ -1,10 +1,10 @@
 #![macro_use]
 
-use byteorder::LittleEndian;
-use num_traits::{FromPrimitive, ToPrimitive};
-use zerocopy::{FromBytes, AsBytes, U16, U32, U64};
 use crate::types::Error;
 use crate::types::Result;
+use byteorder::LittleEndian;
+use num_traits::{FromPrimitive, ToPrimitive};
+use zerocopy::{AsBytes, FromBytes, U16, U32, U64};
 
 pub(crate) trait Getter<T> {
     fn get1(self) -> T;
@@ -89,7 +89,8 @@ impl<T: ToPrimitive> Setter<T> for U32<LittleEndian> {
         self.set(value.to_u32().unwrap())
     }
 }
-impl<T: ToPrimitive> Setter<T> for U16<LittleEndian> { // maybe never happens
+impl<T: ToPrimitive> Setter<T> for U16<LittleEndian> {
+    // maybe never happens
     fn set1(&mut self, value: T) {
         self.set(value.to_u16().unwrap())
     }
@@ -116,10 +117,15 @@ impl Setter<bool> for BLU16 {
     }
 }
 
-/// This macro expects a struct as a parameter (attributes are fine) and then, first, defines the exact same struct.
-/// Afterwards, it automatically impl getters (and setters) for the fields where there was "get" (and "set") specified.  The getters and setters so generated are hardcoded as calling self.field.get1 and self.field.set1, respectively.  These are usually provided by a Getter and Getter trait impl (for example the ones in the same file this macro is in)
-/// Note: If you want to add a docstring, put it before the struct inside the macro parameter at the usage site, not before the macro call.
-/// Field syntax:   NAME: TYPE[: pub get TYPE [:pub set TYPE]]
+/// This macro expects a struct as a parameter (attributes are fine) and then,
+/// first, defines the exact same struct. Afterwards, it automatically impl
+/// getters (and setters) for the fields where there was "get" (and "set")
+/// specified.  The getters and setters so generated are hardcoded as calling
+/// self.field.get1 and self.field.set1, respectively.  These are usually
+/// provided by a Getter and Getter trait impl (for example the ones in the same
+/// file this macro is in) Note: If you want to add a docstring, put it before
+/// the struct inside the macro parameter at the usage site, not before the
+/// macro call. Field syntax:   NAME: TYPE[: pub get TYPE [:pub set TYPE]]
 macro_rules! make_accessors {(
     $(#[$struct_meta:meta])*
     $struct_vis:vis
@@ -163,6 +169,5 @@ macro_rules! make_accessors {(
         )?)*
     }
 )}
-
 
 pub(crate) use make_accessors;

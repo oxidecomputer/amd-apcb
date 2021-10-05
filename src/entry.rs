@@ -1,11 +1,16 @@
+use crate::ondisk::ENTRY_HEADER;
+use crate::ondisk::{
+    take_header_from_collection, take_header_from_collection_mut,
+    BoardInstances, ContextFormat, ContextType, EntryCompatible, EntryId,
+    HeaderWithTail, MutSequenceElementFromBytes, PriorityLevels,
+    SequenceElementFromBytes,
+};
+use crate::tokens_entry::TokensEntryBodyItem;
+use crate::types::{Error, FileSystemError, Result};
 use core::marker::PhantomData;
 use core::mem::size_of;
-use crate::types::{Result, Error, FileSystemError};
-use crate::ondisk::ENTRY_HEADER;
-use crate::ondisk::{BoardInstances, PriorityLevels, ContextFormat, ContextType, EntryId, take_header_from_collection, take_header_from_collection_mut, EntryCompatible, HeaderWithTail, MutSequenceElementFromBytes, SequenceElementFromBytes};
-use pre::pre;
 use num_traits::FromPrimitive;
-use crate::tokens_entry::{TokensEntryBodyItem};
+use pre::pre;
 use zerocopy::{AsBytes, FromBytes};
 
 /* Note: high-level interface is:
@@ -22,77 +27,91 @@ use zerocopy::{AsBytes, FromBytes};
 pub enum EntryItemBody<BufferType> {
     Struct(BufferType),
     Tokens(TokensEntryBodyItem<BufferType>),
-    Parameters(BufferType), // not seen in the wild anymore
-    /* Not seen in the wild anymore.
-        /// If the value is a Parameter, returns its time point
-        pub fn parameter_time_point(&self) -> u8 {
-            assert!(self.context_type() == ContextType::Parameter);
-            self.body[0]
-        }
+    Parameters(BufferType), /* not seen in the wild anymore */
+                            /* Not seen in the wild anymore.
+                                /// If the value is a Parameter, returns its time point
+                                pub fn parameter_time_point(&self) -> u8 {
+                                    assert!(self.context_type() == ContextType::Parameter);
+                                    self.body[0]
+                                }
 
-        /// If the value is a Parameter, returns its token
-        pub fn parameter_token(&self) -> u16 {
-            assert!(self.context_type() == ContextType::Parameter);
-            let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
-            value & 0x1FFF
-        }
+                                /// If the value is a Parameter, returns its token
+                                pub fn parameter_token(&self) -> u16 {
+                                    assert!(self.context_type() == ContextType::Parameter);
+                                    let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
+                                    value & 0x1FFF
+                                }
 
-        // If the value is a Parameter, returns its size
-        pub fn parameter_size(&self) -> u16 {
-            assert!(self.context_type() == ContextType::Parameter);
-            let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
-            (value >> 13) + 1
-        }
-    */
+                                // If the value is a Parameter, returns its size
+                                pub fn parameter_size(&self) -> u16 {
+                                    assert!(self.context_type() == ContextType::Parameter);
+                                    let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
+                                    (value >> 13) + 1
+                                }
+                            */
 }
 
 impl<'a> EntryItemBody<&'a mut [u8]> {
-    pub(crate) fn from_slice(unit_size: u8, entry_id: u16, context_type: ContextType, b: &'a mut [u8]) -> Result<EntryItemBody<&'a mut [u8]>> {
+    pub(crate) fn from_slice(
+        unit_size: u8,
+        entry_id: u16,
+        context_type: ContextType,
+        b: &'a mut [u8],
+    ) -> Result<EntryItemBody<&'a mut [u8]>> {
         Ok(match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
-                     return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::unit_size"));
+                    return Err(Error::FileSystem(
+                        FileSystemError::InconsistentHeader,
+                        "ENTRY_HEADER::unit_size",
+                    ));
                 }
                 Self::Struct(b)
-            },
+            }
             ContextType::Tokens => {
                 let used_size = b.len();
-                Self::Tokens(TokensEntryBodyItem::<&'_ mut [u8]>::new(unit_size, entry_id, b, used_size)?)
-            },
-            ContextType::Parameters => {
-                Self::Parameters(b)
-            },
+                Self::Tokens(TokensEntryBodyItem::<&'_ mut [u8]>::new(
+                    unit_size, entry_id, b, used_size,
+                )?)
+            }
+            ContextType::Parameters => Self::Parameters(b),
         })
     }
 }
 
 impl<'a> EntryItemBody<&'a [u8]> {
-    pub(crate) fn from_slice(unit_size: u8, entry_id: u16, context_type: ContextType, b: &'a [u8]) -> Result<EntryItemBody<&'a [u8]>> {
+    pub(crate) fn from_slice(
+        unit_size: u8,
+        entry_id: u16,
+        context_type: ContextType,
+        b: &'a [u8],
+    ) -> Result<EntryItemBody<&'a [u8]>> {
         Ok(match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
-                     return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::unit_size"));
+                    return Err(Error::FileSystem(
+                        FileSystemError::InconsistentHeader,
+                        "ENTRY_HEADER::unit_size",
+                    ));
                 }
                 Self::Struct(b)
-            },
+            }
             ContextType::Tokens => {
                 let used_size = b.len();
-                Self::Tokens(TokensEntryBodyItem::<&'_ [u8]>::new(unit_size, entry_id, b, used_size)?)
-            },
-            ContextType::Parameters => {
-                Self::Parameters(b)
-            },
+                Self::Tokens(TokensEntryBodyItem::<&'_ [u8]>::new(
+                    unit_size, entry_id, b, used_size,
+                )?)
+            }
+            ContextType::Parameters => Self::Parameters(b),
         })
     }
     pub(crate) fn validate(&self) -> Result<()> {
         match self {
             EntryItemBody::Tokens(tokens) => {
                 tokens.iter().validate()?;
-            },
-            EntryItemBody::Struct(_) => {
-            },
-            EntryItemBody::Parameters(_) => {
-            },
+            }
+            EntryItemBody::Struct(_) => {}
+            EntryItemBody::Parameters(_) => {}
         }
         Ok(())
     }
@@ -116,13 +135,16 @@ pub struct StructSequenceEntryMutIter<'a, T> {
     _data: PhantomData<T>,
 }
 
-impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> StructSequenceEntryMutItem<'a, T> {
+impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>>
+    StructSequenceEntryMutItem<'a, T>
+{
     pub fn iter_mut(&'a mut self) -> Result<StructSequenceEntryMutIter<'a, T>> {
         StructSequenceEntryMutIter::<T> {
             buf: &mut *self.buf,
             entry_id: self.entry_id,
             _data: PhantomData,
-        }.validate()?;
+        }
+        .validate()?;
         Ok(StructSequenceEntryMutIter::<T> {
             buf: self.buf,
             entry_id: self.entry_id,
@@ -131,12 +153,16 @@ impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> StructSequenceEnt
     }
 }
 
-impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> StructSequenceEntryMutIter<'a, T> {
+impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>>
+    StructSequenceEntryMutIter<'a, T>
+{
     fn next1(&'_ mut self) -> Result<T> {
         if self.buf.is_empty() {
             Err(Error::EntryTypeMismatch)
         } else if T::is_entry_compatible(self.entry_id, self.buf) {
-            // Note: If it was statically known: let result = take_header_from_collection_mut::<T>(&mut a).ok_or(Error::EntryTypeMismatch)?;
+            // Note: If it was statically known: let result =
+            // take_header_from_collection_mut::<T>(&mut
+            // a).ok_or(Error::EntryTypeMismatch)?;
             T::checked_from_bytes(self.entry_id, &mut self.buf)
         } else {
             Err(Error::EntryTypeMismatch)
@@ -144,11 +170,14 @@ impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> StructSequenceEnt
     }
 }
 
-impl<'a, 'b, T: EntryCompatible + MutSequenceElementFromBytes<'b>> StructSequenceEntryMutIter<'a, T> {
+impl<'a, 'b, T: EntryCompatible + MutSequenceElementFromBytes<'b>>
+    StructSequenceEntryMutIter<'a, T>
+{
     pub(crate) fn validate(mut self) -> Result<()> {
         while !self.buf.is_empty() {
             if T::is_entry_compatible(self.entry_id, self.buf) {
-                let (_type, size) = T::skip_step(self.entry_id, self.buf).ok_or(Error::EntryTypeMismatch)?;
+                let (_type, size) = T::skip_step(self.entry_id, self.buf)
+                    .ok_or(Error::EntryTypeMismatch)?;
                 let (_, buf) = self.buf.split_at_mut(size);
                 self.buf = buf;
             } else {
@@ -160,7 +189,9 @@ impl<'a, 'b, T: EntryCompatible + MutSequenceElementFromBytes<'b>> StructSequenc
 }
 
 // Note: T is an enum (usually a MutElementRef)
-impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> Iterator for StructSequenceEntryMutIter<'a, T> {
+impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> Iterator
+    for StructSequenceEntryMutIter<'a, T>
+{
     type Item = T;
     fn next(&'_ mut self) -> Option<Self::Item> {
         // Note: Further error checking is done in validate()
@@ -191,13 +222,17 @@ pub struct StructArrayEntryMutIter<'a, T: Sized + FromBytes + AsBytes> {
     _item: PhantomData<&'a T>,
 }
 
-impl<'a, T: 'a + Sized + FromBytes + AsBytes> Iterator for StructArrayEntryMutIter<'a, T> {
+impl<'a, T: 'a + Sized + FromBytes + AsBytes> Iterator
+    for StructArrayEntryMutIter<'a, T>
+{
     type Item = &'a mut T;
     fn next(&mut self) -> Option<&'a mut T> {
         if self.buf.is_empty() {
             None
         } else {
-            // The "?" instead of '.unwrap()" here is solely to support BoardIdGettingMethod (the latter introduces useless padding at the end)
+            // The "?" instead of '.unwrap()" here is solely to support
+            // BoardIdGettingMethod (the latter introduces useless padding at
+            // the end)
             Some(take_header_from_collection_mut::<T>(&mut self.buf)?)
         }
     }
@@ -222,14 +257,16 @@ impl<'a> EntryMutItem<'a> {
     pub fn context_format(&self) -> ContextFormat {
         ContextFormat::from_u8(self.header.context_format).unwrap()
     }
-    /// Note: Applicable iff context_type() == 2.  Usual value then: 8.  If inapplicable, value is 0.
+    /// Note: Applicable iff context_type() == 2.  Usual value then: 8.  If
+    /// inapplicable, value is 0.
     pub fn unit_size(&self) -> u8 {
         self.header.unit_size
     }
     pub fn priority_mask(&self) -> Result<PriorityLevels> {
         self.header.priority_mask()
     }
-    /// Note: Applicable iff context_format() != ContextFormat::Raw. Result <= unit_size.
+    /// Note: Applicable iff context_format() != ContextFormat::Raw. Result <=
+    /// unit_size.
     pub fn key_size(&self) -> u8 {
         self.header.key_size
     }
@@ -266,56 +303,77 @@ impl<'a> EntryMutItem<'a> {
         self.header.set_priority_mask(value);
     }
 
-    // Note: Because entry_id, instance_id, group_id and board_instance_mask are sort keys, these cannot be mutated.
+    // Note: Because entry_id, instance_id, group_id and board_instance_mask are
+    // sort keys, these cannot be mutated.
 
-    #[pre("Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`")]
-    #[pre("Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`")]
-    pub(crate) fn insert_token(&mut self, token_id: u32, token_value: u32) -> Result<()> {
+    #[pre(
+        "Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`"
+    )]
+    #[pre(
+        "Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`"
+    )]
+    pub(crate) fn insert_token(
+        &mut self,
+        token_id: u32,
+        token_value: u32,
+    ) -> Result<()> {
         match &mut self.body {
-            EntryItemBody::<_>::Tokens(a) => {
-                #[assure("Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`", reason = "It's our caller's responsibility and our precondition")]
-                #[assure("Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`", reason = "It's our caller's responsibility and our precondition")]
+            EntryItemBody::<_>::Tokens(a) =>
+            {
+                #[assure(
+                    "Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`",
+                    reason = "It's our caller's responsibility and our precondition"
+                )]
+                #[assure(
+                    "Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`",
+                    reason = "It's our caller's responsibility and our precondition"
+                )]
                 a.insert_token(token_id, token_value)
-            },
-            _ => {
-                Err(Error::EntryTypeMismatch)
-            },
+            }
+            _ => Err(Error::EntryTypeMismatch),
         }
     }
 
     pub(crate) fn delete_token(&mut self, token_id: u32) -> Result<()> {
         match &mut self.body {
-            EntryItemBody::<_>::Tokens(a) => {
-                a.delete_token(token_id)
-            },
-            _ => {
-                Err(Error::EntryTypeMismatch)
-            },
+            EntryItemBody::<_>::Tokens(a) => a.delete_token(token_id),
+            _ => Err(Error::EntryTypeMismatch),
         }
     }
 
-    pub fn body_as_struct_mut<H: EntryCompatible + Sized + FromBytes + AsBytes + HeaderWithTail>(&mut self) -> Option<(&'_ mut H, StructArrayEntryMutItem<'_, H::TailArrayItemType>)> {
+    pub fn body_as_struct_mut<
+        H: EntryCompatible + Sized + FromBytes + AsBytes + HeaderWithTail,
+    >(
+        &mut self,
+    ) -> Option<(&'_ mut H, StructArrayEntryMutItem<'_, H::TailArrayItemType>)>
+    {
         let id = self.id();
         match &mut self.body {
             EntryItemBody::Struct(buf) => {
                 if H::is_entry_compatible(id, buf) {
                     let mut buf = &mut buf[..];
-                    let header = take_header_from_collection_mut::<H>(&mut buf)?;
-                    Some((header, StructArrayEntryMutItem {
-                        buf,
-                        _item: PhantomData,
-                    }))
+                    let header =
+                        take_header_from_collection_mut::<H>(&mut buf)?;
+                    Some((
+                        header,
+                        StructArrayEntryMutItem {
+                            buf,
+                            _item: PhantomData,
+                        },
+                    ))
                 } else {
                     None
                 }
-            },
-            _ => {
-                None
-            },
+            }
+            _ => None,
         }
     }
 
-    pub fn body_as_struct_array_mut<T: EntryCompatible + Sized + FromBytes + AsBytes>(&mut self) -> Option<StructArrayEntryMutItem<'_, T>> {
+    pub fn body_as_struct_array_mut<
+        T: EntryCompatible + Sized + FromBytes + AsBytes,
+    >(
+        &mut self,
+    ) -> Option<StructArrayEntryMutItem<'_, T>> {
         let id = self.id();
         match &mut self.body {
             EntryItemBody::Struct(buf) => {
@@ -332,31 +390,30 @@ impl<'a> EntryMutItem<'a> {
                 } else {
                     None
                 }
-            },
-            _ => {
-                None
-            },
+            }
+            _ => None,
         }
     }
 
-    /// This allows the user to iterate over a sequence of different-size structs in the same Entry.
-    pub fn body_as_struct_sequence_mut<T: EntryCompatible>(&'a mut self) -> Option<StructSequenceEntryMutItem<'a, T>> {
+    /// This allows the user to iterate over a sequence of different-size
+    /// structs in the same Entry.
+    pub fn body_as_struct_sequence_mut<T: EntryCompatible>(
+        &'a mut self,
+    ) -> Option<StructSequenceEntryMutItem<'a, T>> {
         let id = self.id();
         match &mut self.body {
             EntryItemBody::Struct(buf) => {
                 if T::is_entry_compatible(id, buf) {
                     Some(StructSequenceEntryMutItem::<T> {
-                         buf,
-                         entry_id: id,
-                         _data: PhantomData,
+                        buf,
+                        entry_id: id,
+                        _data: PhantomData,
                     })
                 } else {
                     None
                 }
-            },
-            _ => {
-                None
-            },
+            }
+            _ => None,
         }
     }
 }
@@ -372,13 +429,16 @@ pub struct StructSequenceEntryItem<'a, T> {
     _data: PhantomData<&'a T>,
 }
 
-impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> StructSequenceEntryItem<'a, T> {
+impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>>
+    StructSequenceEntryItem<'a, T>
+{
     pub fn iter(&'a self) -> Result<StructSequenceEntryIter<'a, T>> {
         StructSequenceEntryIter::<T> {
             buf: self.buf,
             entry_id: self.entry_id,
             _data: PhantomData,
-        }.validate()?;
+        }
+        .validate()?;
         Ok(StructSequenceEntryIter::<T> {
             buf: self.buf,
             entry_id: self.entry_id,
@@ -387,19 +447,26 @@ impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> StructSequenceEntryI
     }
 }
 
-pub struct StructSequenceEntryIter<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> {
+pub struct StructSequenceEntryIter<
+    'a,
+    T: EntryCompatible + SequenceElementFromBytes<'a>,
+> {
     buf: &'a [u8],
     entry_id: EntryId,
     _data: PhantomData<T>,
 }
 
 // Note: T is an enum (usually a ElemntRef)
-impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> StructSequenceEntryIter<'a, T> {
+impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>>
+    StructSequenceEntryIter<'a, T>
+{
     fn next1(&'_ mut self) -> Result<T> {
         if self.buf.is_empty() {
             Err(Error::EntryTypeMismatch)
         } else if T::is_entry_compatible(self.entry_id, self.buf) {
-            // Note: If it was statically known: let result = take_header_from_collection::<T>(&mut a).ok_or(Error::EntryTypeMismatch)?;
+            // Note: If it was statically known: let result =
+            // take_header_from_collection::<T>(&mut
+            // a).ok_or(Error::EntryTypeMismatch)?;
             T::checked_from_bytes(self.entry_id, &mut self.buf)
         } else {
             Err(Error::EntryTypeMismatch)
@@ -414,10 +481,13 @@ impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> StructSequenceEntryI
 }
 
 // Note: T is an enum (usually a ElemntRef)
-impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> Iterator for StructSequenceEntryIter<'a, T> {
+impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> Iterator
+    for StructSequenceEntryIter<'a, T>
+{
     type Item = T;
     fn next(&'_ mut self) -> Option<Self::Item> {
-        // Note: Proper error check is done on creation of the iter in StructSequenceEntryItem.
+        // Note: Proper error check is done on creation of the iter in
+        // StructSequenceEntryItem.
         self.next1().ok()
     }
 }
@@ -447,14 +517,17 @@ impl<'a, T: 'a + Sized + FromBytes> Iterator for StructArrayEntryIter<'a, T> {
         if self.buf.is_empty() {
             None
         } else {
-            // The "?" instead of '.unwrap()" here is solely to support BoardIdGettingMethod (the latter introduces useless padding at the end)
+            // The "?" instead of '.unwrap()" here is solely to support
+            // BoardIdGettingMethod (the latter introduces useless padding at
+            // the end)
             Some(take_header_from_collection::<T>(&mut self.buf)?)
         }
     }
 }
 
 impl<'a> EntryItem<'a> {
-    // pub fn group_id(&self) -> u16  ; suppressed--replaced by an assert on read.
+    // pub fn group_id(&self) -> u16  ; suppressed--replaced by an assert on
+    // read.
     pub fn id(&self) -> EntryId {
         EntryId::decode(self.header.group_id.get(), self.header.entry_id.get())
     }
@@ -467,14 +540,16 @@ impl<'a> EntryItem<'a> {
     pub fn context_format(&self) -> ContextFormat {
         ContextFormat::from_u8(self.header.context_format).unwrap()
     }
-    /// Note: Applicable iff context_type() == 2.  Usual value then: 8.  If inapplicable, value is 0.
+    /// Note: Applicable iff context_type() == 2.  Usual value then: 8.  If
+    /// inapplicable, value is 0.
     pub fn unit_size(&self) -> u8 {
         self.header.unit_size
     }
     pub fn priority_mask(&self) -> u8 {
         self.header.priority_mask
     }
-    /// Note: Applicable iff context_format() != ContextFormat::Raw. Result <= unit_size.
+    /// Note: Applicable iff context_format() != ContextFormat::Raw. Result <=
+    /// unit_size.
     pub fn key_size(&self) -> u8 {
         self.header.key_size
     }
@@ -486,34 +561,51 @@ impl<'a> EntryItem<'a> {
     }
 
     pub(crate) fn validate(&self) -> Result<()> {
-        ContextType::from_u8(self.header.context_type).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_type"))?;
-        ContextFormat::from_u8(self.header.context_format).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::context_format"))?;
+        ContextType::from_u8(self.header.context_type).ok_or(
+            Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "ENTRY_HEADER::context_type",
+            ),
+        )?;
+        ContextFormat::from_u8(self.header.context_format).ok_or(
+            Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "ENTRY_HEADER::context_format",
+            ),
+        )?;
         self.body.validate()?;
         Ok(())
     }
 
-    pub fn body_as_struct<H: EntryCompatible + Sized + FromBytes + HeaderWithTail>(&self) -> Option<(&'a H, StructArrayEntryItem<'a, H::TailArrayItemType>)> {
+    pub fn body_as_struct<
+        H: EntryCompatible + Sized + FromBytes + HeaderWithTail,
+    >(
+        &self,
+    ) -> Option<(&'a H, StructArrayEntryItem<'a, H::TailArrayItemType>)> {
         let id = self.id();
         match &self.body {
             EntryItemBody::Struct(buf) => {
                 if H::is_entry_compatible(id, buf) {
                     let mut buf = &buf[..];
                     let header = take_header_from_collection::<H>(&mut buf)?;
-                    Some((header, StructArrayEntryItem {
-                        buf,
-                        _item: PhantomData,
-                    }))
+                    Some((
+                        header,
+                        StructArrayEntryItem {
+                            buf,
+                            _item: PhantomData,
+                        },
+                    ))
                 } else {
                     None
                 }
-            },
-            _ => {
-                None
-            },
+            }
+            _ => None,
         }
     }
 
-    pub fn body_as_struct_array<T: EntryCompatible + Sized + FromBytes>(&self) -> Option<StructArrayEntryItem<'a, T>> {
+    pub fn body_as_struct_array<T: EntryCompatible + Sized + FromBytes>(
+        &self,
+    ) -> Option<StructArrayEntryItem<'a, T>> {
         match &self.body {
             EntryItemBody::Struct(buf) => {
                 if T::is_entry_compatible(self.id(), buf) {
@@ -529,31 +621,30 @@ impl<'a> EntryItem<'a> {
                 } else {
                     None
                 }
-            },
-            _ => {
-                None
-            },
+            }
+            _ => None,
         }
     }
 
-    /// This allows the user to iterate over a sequence of different-size structs in the same Entry.
-    pub fn body_as_struct_sequence<T: EntryCompatible>(&'a self) -> Option<StructSequenceEntryItem<'a, T>> {
+    /// This allows the user to iterate over a sequence of different-size
+    /// structs in the same Entry.
+    pub fn body_as_struct_sequence<T: EntryCompatible>(
+        &'a self,
+    ) -> Option<StructSequenceEntryItem<'a, T>> {
         let id = self.id();
         match &self.body {
             EntryItemBody::Struct(buf) => {
                 if T::is_entry_compatible(id, buf) {
                     Some(StructSequenceEntryItem::<T> {
-                         buf,
-                         entry_id: id,
-                         _data: PhantomData,
+                        buf,
+                        entry_id: id,
+                        _data: PhantomData,
                     })
                 } else {
                     None
                 }
-            },
-            _ => {
-                None
-            },
+            }
+            _ => None,
         }
     }
 }
@@ -570,18 +661,18 @@ impl core::fmt::Debug for EntryItem<'_> {
         let header_size = size_of::<ENTRY_HEADER>();
         // Note: Elides BODY--so, technically, it's not a 1:1 representation
         fmt.debug_struct("EntryItem")
-           .field("id", &id)
-           .field("entry_size", &entry_size)
-           .field("header_size", &header_size)
-           .field("instance_id", &instance_id)
-           .field("context_type", &context_type)
-           .field("context_format", &context_format)
-           .field("unit_size", &self.header.unit_size)
-           .field("priority_mask", &priority_mask)
-           .field("key_size", &self.header.key_size)
-           .field("key_pos", &self.header.key_pos)
-           .field("board_instance_mask", &board_instance_mask)
-           .field("body", &self.body)
-           .finish()
+            .field("id", &id)
+            .field("entry_size", &entry_size)
+            .field("header_size", &header_size)
+            .field("instance_id", &instance_id)
+            .field("context_type", &context_type)
+            .field("context_format", &context_format)
+            .field("unit_size", &self.header.unit_size)
+            .field("priority_mask", &priority_mask)
+            .field("key_size", &self.header.key_size)
+            .field("key_pos", &self.header.key_pos)
+            .field("board_instance_mask", &board_instance_mask)
+            .field("body", &self.body)
+            .finish()
     }
 }

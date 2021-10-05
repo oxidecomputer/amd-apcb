@@ -6,21 +6,21 @@
 #[macro_use]
 extern crate memoffset;
 
-mod types;
 mod apcb;
-mod tokens_entry;
 mod entry;
 mod group;
 mod ondisk;
-mod tests;
 mod struct_accessors;
 mod struct_variants_enum;
+mod tests;
 mod token_accessors;
+mod tokens_entry;
+mod types;
 pub use apcb::Apcb;
 pub use apcb::ApcbIoOptions;
-pub use types::Result;
+pub use entry::EntryItemBody;
+pub use ondisk::*;
 pub use types::Error;
 pub use types::FileSystemError;
 pub use types::PriorityLevel;
-pub use entry::EntryItemBody;
-pub use ondisk::*;
+pub use types::Result;

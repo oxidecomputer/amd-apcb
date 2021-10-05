@@ -1,9 +1,11 @@
-
-use crate::types::{Result, Error, FileSystemError};
-use crate::ondisk::{TOKEN_ENTRY, TokenEntryId, take_header_from_collection, take_header_from_collection_mut};
+use crate::ondisk::{
+    take_header_from_collection, take_header_from_collection_mut, TokenEntryId,
+    TOKEN_ENTRY,
+};
+use crate::types::{Error, FileSystemError, Result};
+use core::mem::size_of;
 use num_traits::FromPrimitive;
 use pre::pre;
-use core::mem::size_of;
 
 #[derive(Debug)]
 pub struct TokensEntryBodyItem<BufferType> {
@@ -26,13 +28,26 @@ pub struct TokensEntryIterMut<'a> {
 }
 
 impl<BufferType> TokensEntryBodyItem<BufferType> {
-    pub(crate) fn new(unit_size: u8, entry_id: u16, buf: BufferType, used_size: usize) -> Result<Self> {
+    pub(crate) fn new(
+        unit_size: u8,
+        entry_id: u16,
+        buf: BufferType,
+        used_size: usize,
+    ) -> Result<Self> {
         if unit_size != 8 {
-            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::unit_size"));
+            return Err(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "ENTRY_HEADER::unit_size",
+            ));
         }
         Ok(Self {
             unit_size,
-            entry_id: TokenEntryId::from_u16(entry_id).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "ENTRY_HEADER::entry_id"))?,
+            entry_id: TokenEntryId::from_u16(entry_id).ok_or(
+                Error::FileSystem(
+                    FileSystemError::InconsistentHeader,
+                    "ENTRY_HEADER::entry_id",
+                ),
+            )?,
             buf,
             used_size,
         })
@@ -50,25 +65,29 @@ impl<'a> TokensEntryItemMut<'a> {
         self.token.key.get()
     }
     pub fn value(&self) -> u32 {
-        self.token.value.get() & match self.entry_id {
-            TokenEntryId::Bool => 0x1,
-            TokenEntryId::Byte => 0xFF,
-            TokenEntryId::Word => 0xFFFF,
-            TokenEntryId::DWord => 0xFFFF_FFFF,
-            TokenEntryId::Unknown(_) => 0xFFFF_FFFF,
-        }
+        self.token.value.get()
+            & match self.entry_id {
+                TokenEntryId::Bool => 0x1,
+                TokenEntryId::Byte => 0xFF,
+                TokenEntryId::Word => 0xFFFF,
+                TokenEntryId::DWord => 0xFFFF_FFFF,
+                TokenEntryId::Unknown(_) => 0xFFFF_FFFF,
+            }
     }
 
     // Since the id is a sort key, it cannot be mutated.
 
     pub fn set_value(&mut self, value: u32) -> Result<()> {
-        if value == (value & match self.entry_id {
-            TokenEntryId::Bool => 0x1,
-            TokenEntryId::Byte => 0xFF,
-            TokenEntryId::Word => 0xFFFF,
-            TokenEntryId::DWord => 0xFFFF_FFFF,
-            TokenEntryId::Unknown(_) => 0xFFFF_FFFF,
-        }) {
+        if value
+            == (value
+                & match self.entry_id {
+                    TokenEntryId::Bool => 0x1,
+                    TokenEntryId::Byte => 0xFF,
+                    TokenEntryId::Word => 0xFFFF,
+                    TokenEntryId::DWord => 0xFFFF_FFFF,
+                    TokenEntryId::Unknown(_) => 0xFFFF_FFFF,
+                })
+        {
             self.token.value.set(value);
             Ok(())
         } else {
@@ -78,26 +97,37 @@ impl<'a> TokensEntryItemMut<'a> {
 }
 
 impl<'a> TokensEntryIterMut<'a> {
-    /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
-    /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'b>(entry_id: TokenEntryId, buf: &mut &'b mut [u8]) -> Result<TokensEntryItemMut<'b>> {
+    /// It's useful to have some way of NOT mutating self.buf.  This is what
+    /// this function does. Note: The caller needs to manually decrease
+    /// remaining_used_size for each call if desired.
+    fn next_item<'b>(
+        entry_id: TokenEntryId,
+        buf: &mut &'b mut [u8],
+    ) -> Result<TokensEntryItemMut<'b>> {
         if buf.is_empty() {
-            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"));
+            return Err(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "TOKEN_ENTRY",
+            ));
         }
-        let token = match take_header_from_collection_mut::<TOKEN_ENTRY>(&mut *buf) {
-            Some(item) => item,
-            None => {
-                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"));
-            }
-        };
-        Ok(TokensEntryItemMut {
-            entry_id,
-            token,
-        })
+        let token =
+            match take_header_from_collection_mut::<TOKEN_ENTRY>(&mut *buf) {
+                Some(item) => item,
+                None => {
+                    return Err(Error::FileSystem(
+                        FileSystemError::InconsistentHeader,
+                        "TOKEN_ENTRY",
+                    ));
+                }
+            };
+        Ok(TokensEntryItemMut { entry_id, token })
     }
 
     /// Find the place BEFORE which the entry TOKEN_ID is supposed to go.
-    pub(crate) fn move_insertion_point_before(&mut self, token_id: u32) -> Result<()> {
+    pub(crate) fn move_insertion_point_before(
+        &mut self,
+        token_id: u32,
+    ) -> Result<()> {
         loop {
             let mut buf = &mut self.buf[..self.remaining_used_size];
             if buf.is_empty() {
@@ -110,10 +140,10 @@ impl<'a> TokensEntryIterMut<'a> {
                     } else {
                         break;
                     }
-                },
+                }
                 Err(e) => {
                     return Err(e);
-                },
+                }
             }
         }
         Ok(())
@@ -132,33 +162,61 @@ impl<'a> TokensEntryIterMut<'a> {
                     } else {
                         return Ok(());
                     }
-                },
+                }
                 Err(e) => {
                     return Err(e);
-                },
+                }
             }
         }
     }
 
     /// Inserts the given entry data at the right spot.
-    #[pre("Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`")]
-    #[pre("Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`")]
-    pub(crate) fn insert_token(&mut self, token_id: u32, token_value: u32) -> Result<TokensEntryItemMut<'a>> {
+    #[pre(
+        "Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`"
+    )]
+    #[pre(
+        "Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`"
+    )]
+    pub(crate) fn insert_token(
+        &mut self,
+        token_id: u32,
+        token_value: u32,
+    ) -> Result<TokensEntryItemMut<'a>> {
         let token_size = size_of::<TOKEN_ENTRY>();
 
-        // Make sure that move_insertion_point_before does not notice the new uninitialized token
-        self.remaining_used_size = self.remaining_used_size.checked_sub(token_size as usize).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"))?;
+        // Make sure that move_insertion_point_before does not notice the new
+        // uninitialized token
+        self.remaining_used_size = self
+            .remaining_used_size
+            .checked_sub(token_size as usize)
+            .ok_or(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "TOKEN_ENTRY",
+            ))?;
         self.move_insertion_point_before(token_id)?;
-        // Move the entries from after the insertion point to the right (in order to make room before for our new entry).
-        self.buf.copy_within(0..self.remaining_used_size, token_size as usize);
+        // Move the entries from after the insertion point to the right (in
+        // order to make room before for our new entry).
+        self.buf
+            .copy_within(0..self.remaining_used_size, token_size as usize);
 
-        self.remaining_used_size = self.remaining_used_size.checked_add(token_size as usize).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"))?;
-        let token = match take_header_from_collection_mut::<TOKEN_ENTRY>(&mut self.buf) {
-            Some(item) => item,
-            None => {
-                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"));
-            }
-        };
+        self.remaining_used_size = self
+            .remaining_used_size
+            .checked_add(token_size as usize)
+            .ok_or(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "TOKEN_ENTRY",
+            ))?;
+        let token =
+            match take_header_from_collection_mut::<TOKEN_ENTRY>(&mut self.buf)
+            {
+                Some(item) => item,
+                None => {
+                    return Err(Error::FileSystem(
+                        FileSystemError::InconsistentHeader,
+                        "TOKEN_ENTRY",
+                    ));
+                }
+            };
 
         token.key.set(token_id);
         token.value.set(0); // always valid
@@ -178,8 +236,15 @@ impl<'a> TokensEntryIterMut<'a> {
         self.move_point_to(token_id)?;
         let token_size = size_of::<TOKEN_ENTRY>();
         // Move the tokens behind this one to the left
-        self.buf.copy_within(token_size..self.remaining_used_size, 0);
-        self.remaining_used_size = self.remaining_used_size.checked_sub(token_size as usize).ok_or(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"))?;
+        self.buf
+            .copy_within(token_size..self.remaining_used_size, 0);
+        self.remaining_used_size = self
+            .remaining_used_size
+            .checked_sub(token_size as usize)
+            .ok_or(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "TOKEN_ENTRY",
+            ))?;
         Ok(())
     }
 }
@@ -196,10 +261,8 @@ impl<'a> Iterator for TokensEntryIterMut<'a> {
                 assert!(self.remaining_used_size >= 8);
                 self.remaining_used_size -= 8;
                 Some(e)
-            },
-            Err(_) => {
-                None
-            },
+            }
+            Err(_) => None,
         }
     }
 }
@@ -215,27 +278,39 @@ impl<'a> TokensEntryItem<'a> {
         self.entry.key.get()
     }
     pub fn value(&self) -> u32 {
-        self.entry.value.get() & match self.entry_id {
-            TokenEntryId::Bool => 0x1,
-            TokenEntryId::Byte => 0xFF,
-            TokenEntryId::Word => 0xFFFF,
-            TokenEntryId::DWord => 0xFFFF_FFFF,
-            TokenEntryId::Unknown(_) => 0xFFFF_FFFF,
-        }
+        self.entry.value.get()
+            & match self.entry_id {
+                TokenEntryId::Bool => 0x1,
+                TokenEntryId::Byte => 0xFF,
+                TokenEntryId::Word => 0xFFFF,
+                TokenEntryId::DWord => 0xFFFF_FFFF,
+                TokenEntryId::Unknown(_) => 0xFFFF_FFFF,
+            }
     }
 }
 
 impl<'a> TokensEntryIter<'a> {
-    /// It's useful to have some way of NOT mutating self.buf.  This is what this function does.
-    /// Note: The caller needs to manually decrease remaining_used_size for each call if desired.
-    fn next_item<'b>(entry_id: TokenEntryId, buf: &mut &'b [u8]) -> Result<TokensEntryItem<'b>> {
+    /// It's useful to have some way of NOT mutating self.buf.  This is what
+    /// this function does. Note: The caller needs to manually decrease
+    /// remaining_used_size for each call if desired.
+    fn next_item<'b>(
+        entry_id: TokenEntryId,
+        buf: &mut &'b [u8],
+    ) -> Result<TokensEntryItem<'b>> {
         if buf.is_empty() {
-            return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"));
+            return Err(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "TOKEN_ENTRY",
+            ));
         }
-        let header = match take_header_from_collection::<TOKEN_ENTRY>(&mut *buf) {
+        let header = match take_header_from_collection::<TOKEN_ENTRY>(&mut *buf)
+        {
             Some(item) => item,
             None => {
-                return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"));
+                return Err(Error::FileSystem(
+                    FileSystemError::InconsistentHeader,
+                    "TOKEN_ENTRY",
+                ));
             }
         };
         Ok(TokensEntryItem {
@@ -251,25 +326,25 @@ impl<'a> TokensEntryIter<'a> {
             Ok(e) => {
                 if self.remaining_used_size >= 8 {
                 } else {
-                    return Err(Error::FileSystem(FileSystemError::InconsistentHeader, "TOKEN_ENTRY"));
+                    return Err(Error::FileSystem(
+                        FileSystemError::InconsistentHeader,
+                        "TOKEN_ENTRY",
+                    ));
                 }
                 self.remaining_used_size -= 8;
                 Ok(e)
-            },
-            Err(e) => {
-                Err(e)
-            },
+            }
+            Err(e) => Err(e),
         }
     }
     /// Validates the entries (recursively).  Also consumes iterator.
     pub(crate) fn validate(mut self) -> Result<()> {
         while self.remaining_used_size > 0 {
             match self.next1() {
-                Ok(_) => {
-                },
+                Ok(_) => {}
                 Err(e) => {
                     return Err(e);
-                },
+                }
             }
         }
         Ok(())
@@ -284,12 +359,8 @@ impl<'a> Iterator for TokensEntryIter<'a> {
             return None;
         }
         match self.next1() {
-            Ok(e) => {
-                Some(e)
-            },
-            Err(_) => {
-                None
-            },
+            Ok(e) => Some(e),
+            Err(_) => None,
         }
     }
 }
@@ -318,7 +389,10 @@ impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
         }
         None
     }
-    pub fn token_mut(&mut self, token_id: u32) -> Option<TokensEntryItemMut<'_>> {
+    pub fn token_mut(
+        &mut self,
+        token_id: u32,
+    ) -> Option<TokensEntryItemMut<'_>> {
         for entry in self.iter_mut() {
             if entry.id() == token_id {
                 return Some(entry);
@@ -327,13 +401,28 @@ impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
         None
     }
 
-    #[pre("Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`")]
-    #[pre("Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`")]
-    pub(crate) fn insert_token(&mut self, token_id: u32, token_value: u32) -> Result<()> {
+    #[pre(
+        "Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`"
+    )]
+    #[pre(
+        "Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`"
+    )]
+    pub(crate) fn insert_token(
+        &mut self,
+        token_id: u32,
+        token_value: u32,
+    ) -> Result<()> {
         let mut iter = self.iter_mut();
-        match #[assure("Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`", reason = "See our own precondition")]
-              #[assure("Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`", reason = "See our own precondition")]
-              iter.insert_token(token_id, token_value) {
+        match #[assure(
+            "Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`",
+            reason = "See our own precondition"
+        )]
+        #[assure(
+            "Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`",
+            reason = "See our own precondition"
+        )]
+        iter.insert_token(token_id, token_value)
+        {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }
