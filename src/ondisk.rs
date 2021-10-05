@@ -5125,7 +5125,7 @@ make_token_accessors! {
     mem_user_timing_mode(TokenEntryId::DWord, default 0xff, id 0xfc56_0d7d) : pub get MemUserTimingMode : pub set MemUserTimingMode,
     mem_ignore_spd_checksum(TokenEntryId::Bool, default 0, id 0x7d36_9dbc) : pub get bool : pub set bool,
     mem_spd_read_optimization_ddr4(TokenEntryId::Bool, default 1, id 0x6816_f949) : pub get bool : pub set bool,
-    cbs_mem_spd_read_optimization_ddr4(TokenEntryId::Bool, default 0, id 0x8d3a_b10e) : pub get bool : pub set bool, // TODO: Before using default, fix default.  It's possibly not correct.
+    cbs_mem_spd_read_optimization_ddr4(TokenEntryId::Bool, default 1, id 0x8d3a_b10e) : pub get bool : pub set bool,
     mem_enable_power_down(TokenEntryId::Bool, default 1, id 0xbbb1_85a2) : pub get bool : pub set bool,
     mem_self_refresh_exit_staggering(TokenEntryId::Byte, default 0, id 0xbc52_e5f7) : pub get MemSelfRefreshExitStaggering : pub set MemSelfRefreshExitStaggering,
     cbs_mem_power_down_delay(TokenEntryId::Word, default 0xff, id 0x1ebe_755a) : pub get CbsMemPowerDownDelay : pub set CbsMemPowerDownDelay,
@@ -5158,7 +5158,7 @@ make_token_accessors! {
     mem_mbist_data_eye_silent_execution(TokenEntryId::Byte, default 0, id 0x3f74_c7e7) : pub get bool : pub set bool,
     mem_heal_bist_enable(TokenEntryId::Byte, default 0, id 0xfba2_3a28) : pub get MemHealBistEnable : pub set MemHealBistEnable,
     MemSelfHealBistEnable(TokenEntryId::Byte, default 0, id 0x2c23_924c), // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
-    mem_self_heal_bist_timeout(TokenEntryId::DWord, default 1000, id 0xbe75_97d4) : pub get u32 : pub set u32, // in ms; // TODO: Before using default, fix default.  It's possibly not correct.
+    mem_self_heal_bist_timeout(TokenEntryId::DWord, default 1_0000, id 0xbe75_97d4) : pub get u32 : pub set u32, // in ms
     MemPmuBistTestSelect(TokenEntryId::Byte, default 0, id 0x7034_fbfb), // TODO: Before using default, fix default.  It's possibly not correct.; note: range 1...7
     mem_heal_test_select(TokenEntryId::Byte, default 0, id 0x5908_2cf2) : pub get MemHealTestSelect : pub set MemHealTestSelect,
     mem_heal_ppr_type(TokenEntryId::Byte, default 0, id 0x5418_1a61) : pub get MemHealPprType : pub set MemHealPprType,
@@ -5172,7 +5172,7 @@ make_token_accessors! {
 
     ccx_sev_asid_count(TokenEntryId::Byte, default 1, id 0x5587_6720) : pub get CcxSevAsidCount : pub set CcxSevAsidCount,
     ccx_min_sev_asid(TokenEntryId::DWord, default 1, id 0xa7c3_3753) : pub get u32 : pub set u32,
-    ccx_ppin_opt_in(TokenEntryId::Bool, default 0, id 0x6a67_00fd) : pub get bool : pub set bool, // TODO: Before using default, fix default.  It's possibly not correct.
+    ccx_ppin_opt_in(TokenEntryId::Bool, default 0, id 0x6a67_00fd) : pub get bool : pub set bool,
 
     // Fch
 
