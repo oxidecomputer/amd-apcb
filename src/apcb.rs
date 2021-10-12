@@ -1024,6 +1024,28 @@ impl<'a> Apcb<'a> {
                 FileSystemError::InconsistentHeader,
                 "V2_HEADER",
             ))?;
+            if header.signature != *b"APCB" {
+                return Err(Error::FileSystem(
+                    FileSystemError::InconsistentHeader,
+                    "V2_HEADER::signature",
+                ));
+            }
+
+            if usize::from(header.header_size) >= size_of::<V2_HEADER>() {
+            } else {
+                return Err(Error::FileSystem(
+                    FileSystemError::InconsistentHeader,
+                    "V2_HEADER::header_size",
+                ));
+            }
+            let version = header.version.get();
+            if version == Self::ROME_VERSION || version == Self::NAPLES_VERSION {
+            } else {
+                return Err(Error::FileSystem(
+                    FileSystemError::InconsistentHeader,
+                    "V2_HEADER::version",
+                ));
+            }
             header.checksum_byte = 0; // make calculate_checksum's job easier
                                       // Use the chance to also update unique_apcb_instance (assumption:
                                       // user calls update_checksum only when there was an actual change).
