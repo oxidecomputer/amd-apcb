@@ -279,6 +279,8 @@ impl<'a> Iterator for ApcbIter<'a> {
 impl<'a> Apcb<'a> {
     const NAPLES_VERSION: u16 = 0x20;
     const ROME_VERSION: u16 = 0x30;
+    pub const MAX_SIZE: usize = 0x2000;
+
     pub fn groups(&self) -> ApcbIter<'_> {
         ApcbIter {
             buf: self.beginning_of_groups,
