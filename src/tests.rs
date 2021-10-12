@@ -17,13 +17,13 @@ mod tests {
     #[test]
     #[should_panic]
     fn load_garbage_image() {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
     }
 
     #[test]
     fn create_empty_image() {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -48,7 +48,7 @@ mod tests {
 
     #[test]
     fn create_image_with_one_group() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -64,7 +64,7 @@ mod tests {
 
     #[test]
     fn create_image_with_two_groups() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -83,7 +83,7 @@ mod tests {
 
     #[test]
     fn create_image_with_two_groups_delete_first_group() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -103,7 +103,7 @@ mod tests {
 
     #[test]
     fn create_image_with_two_groups_delete_second_group() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -124,7 +124,7 @@ mod tests {
     #[test]
     fn create_image_with_two_groups_delete_unknown_group() -> Result<(), Error>
     {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -152,7 +152,7 @@ mod tests {
 
     #[test]
     fn create_image_with_group_delete_group() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -170,7 +170,7 @@ mod tests {
 
     #[test]
     fn delete_entries() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -229,7 +229,7 @@ mod tests {
 
     #[test]
     fn insert_entries() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -291,7 +291,7 @@ mod tests {
 
     #[test]
     fn insert_struct_entries() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -365,7 +365,7 @@ mod tests {
 
     #[test]
     fn insert_incompatible_struct_entries() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -396,7 +396,7 @@ mod tests {
 
     #[test]
     fn insert_headered_struct_array_entries() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -488,7 +488,7 @@ mod tests {
 
     #[test]
     fn insert_struct_array_entries() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -614,7 +614,7 @@ mod tests {
 
     #[test]
     fn insert_wrong_struct_array_entries() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -666,7 +666,7 @@ mod tests {
 
     #[test]
     fn insert_tokens() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -789,7 +789,7 @@ mod tests {
 
     #[test]
     fn insert_tokens_wrong() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -843,7 +843,7 @@ mod tests {
 
     #[test]
     fn insert_tokens_easy() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -957,7 +957,7 @@ mod tests {
 
     #[test]
     fn insert_tokens_group_not_found() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -984,7 +984,7 @@ mod tests {
 
     #[test]
     fn insert_two_tokens() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -1115,7 +1115,7 @@ mod tests {
 
     #[test]
     fn delete_tokens() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -1252,7 +1252,7 @@ mod tests {
             ChannelIds, DimmSlots, DimmSlotsSelection, LvDimmForce1V5,
             MutElementRef, SocketIds, SolderedDownSodimm,
         };
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -1361,7 +1361,7 @@ mod tests {
 
     #[test]
     fn checksum_invalid() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut _apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -1383,7 +1383,7 @@ mod tests {
 
     #[test]
     fn insert_cad_bus_element() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
@@ -1461,7 +1461,7 @@ mod tests {
 
     #[test]
     fn insert_data_bus_element() -> Result<(), Error> {
-        let mut buffer: [u8; 8 * 1024] = [0xFF; 8 * 1024];
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
