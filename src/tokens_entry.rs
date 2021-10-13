@@ -7,12 +7,13 @@ use crate::ondisk::{
     WordToken,
     DwordToken,
 };
-use crate::types::{Error, FileSystemError, Result};
+use crate::types::{Error, FileSystemError, Ptr, Result};
 use core::mem::size_of;
 use num_traits::FromPrimitive;
 use pre::pre;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct TokensEntryBodyItem<BufferType> {
     unit_size: u8,
     entry_id: TokenEntryId,
@@ -272,14 +273,16 @@ impl<'a> Iterator for TokensEntryIterMut<'a> {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct TokensEntryItem<'a> {
     entry_id: TokenEntryId,
-    entry: &'a TOKEN_ENTRY,
+    #[serde(borrow)]
+    pub(crate) entry: Ptr<'a, TOKEN_ENTRY>,
 }
 
 impl<'a> core::fmt::Debug for TokensEntryItem<'a> {
     fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let entry = self.entry;
+        let entry = &*self.entry;
         let key = entry.key.get();
         let mut ds = fmt.debug_struct("TokensEntryItem_TOKEN_ENTRY");
         ds.field("entry_id", &self.entry_id);
@@ -352,6 +355,8 @@ impl<'a> TokensEntryIter<'a> {
                 ));
             }
         };
+        #[cfg(feature = "std")]
+        let header = std::borrow::Cow::Borrowed(header);
         Ok(TokensEntryItem {
             entry_id,
             entry: header,
@@ -472,11 +477,11 @@ impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
     }
 }
 
-impl<'a> TokensEntryBodyItem<&'a [u8]> {
+impl<'a> TokensEntryBodyItem<Ptr<'a, [u8]>> {
     pub fn iter(&self) -> TokensEntryIter<'_> {
         TokensEntryIter {
             entry_id: self.entry_id,
-            buf: self.buf,
+            buf: &self.buf,
             remaining_used_size: self.used_size,
         }
     }

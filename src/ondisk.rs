@@ -2,6 +2,7 @@
 // coordination with the AMD PSP team.  Even then, you probably shouldn't.
 
 //#![feature(trace_macros)] trace_macros!(true);
+#![allow(non_snake_case)]
 
 use core::clone::Clone;
 use crate::struct_accessors::{make_accessors, Getter, Setter};
@@ -13,7 +14,7 @@ pub use crate::naples::{ParameterTokenConfig, ParameterTimePoint};
 use byteorder::{LittleEndian, ReadBytesExt};
 use core::cmp::Ordering;
 use core::convert::TryInto;
-use core::mem::{take, size_of};
+use core::mem::{size_of, take};
 use core::num::NonZeroU8;
 use modular_bitfield::prelude::*;
 use num_derive::FromPrimitive;
@@ -22,11 +23,16 @@ use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use paste::paste;
 use strum_macros::EnumString;
+use serde::de::Deserialize as DeserializeTrait;
+use serde::{Deserialize, Serialize};
 use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32, U64};
 
 /// Work around Rust issue# 51443, in case it ever will be phased out.
 /// (zerocopy 0.5.0 has a as_bytes_mut with a Self-where--which is not supposed
 /// to be used anymore)
+pub trait ElementAsBytes {
+    fn element_as_bytes(&self) -> &[u8];
+}
 pub trait SequenceElementAsBytes {
     /// Checks whether we are compatible with ENTRY_ID.  If so, return our
     /// zerocopy.as_bytes representation.  Otherwise, return None.
@@ -62,7 +68,7 @@ pub trait MutSequenceElementFromBytes<'a>: Sized {
 /// sequence.  Then, the header structs specify (in their impl) what the struct
 /// type of the sequence will be.
 pub trait HeaderWithTail {
-    type TailArrayItemType: AsBytes + FromBytes;
+    type TailArrayItemType<'de>: AsBytes + FromBytes + DeserializeTrait<'de>;
 }
 
 /// Given *BUF (a collection of multiple items), retrieves the first of the
@@ -149,9 +155,13 @@ pub fn take_body_from_collection<'a>(
     }
 }
 
-#[derive(FromBytes, AsBytes, Unaligned)]
+type LU16 = U16<LittleEndian>;
+//type LU32 = U32<LittleEndian>;
+//type LU64 = U64<LittleEndian>;
+
+#[derive(FromBytes, AsBytes, Unaligned, Serialize, Deserialize, Debug)]
 #[repr(C, packed)]
-pub(crate) struct V2_HEADER {
+pub struct V2_HEADER {
     pub signature: [u8; 4],
     pub header_size: U16<LittleEndian>, // == sizeof(V2_HEADER); but 128 for V3
     pub version: U16<LittleEndian>,     // == 0x30
@@ -161,7 +171,19 @@ pub(crate) struct V2_HEADER {
     reserved1: [u8; 3],                // 0
     reserved2: [U32<LittleEndian>; 3], // 0
 }
-
+/*
+pub impl Serialize for V2_HEADER {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("V2_HEADER", 8)
+        state.serialize_field("signature", self.signature);
+        state.serialize_field("header_size", self.header_size)
+        (i*self.signature);
+    }
+}
+*/
 impl Default for V2_HEADER {
     fn default() -> Self {
         Self {
@@ -185,9 +207,9 @@ impl Default for V2_HEADER {
 // ENTRY_HEADER].
 // The sizes have since diverged. Now it doesn't make much sense to have
 // them any more, except for bug compatibility.
-#[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
+#[derive(FromBytes, AsBytes, Unaligned, Clone, Copy, Serialize, Deserialize)]
 #[repr(C, packed)]
-pub(crate) struct V3_HEADER_EXT {
+pub struct V3_HEADER_EXT {
     pub signature: [u8; 4],        // "ECB2"
     reserved_1: U16<LittleEndian>, // 0
     reserved_2: U16<LittleEndian>, // 0x10 // GROUP_HEADER::header_size
@@ -391,7 +413,7 @@ impl FromPrimitive for CcxEntryId {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum DfEntryId {
     DefaultParameters, // Naples
     Parameters, // Naples
@@ -838,7 +860,7 @@ impl FromPrimitive for RawEntryId {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum TokenEntryId {
     Bool,
     Byte,
@@ -952,7 +974,9 @@ impl EntryId {
     }
 }
 
-#[derive(FromBytes, AsBytes, Unaligned, Debug)]
+#[derive(
+    FromBytes, AsBytes, Unaligned, Clone, Debug, Serialize, Deserialize,
+)]
 #[repr(C, packed)]
 pub(crate) struct GROUP_HEADER {
     pub(crate) signature: [u8; 4],
@@ -963,14 +987,36 @@ pub(crate) struct GROUP_HEADER {
     pub(crate) group_size: U32<LittleEndian>, // including header!
 }
 
-#[derive(Debug, PartialEq, FromPrimitive, Copy, Clone)]
+#[derive(
+    FromPrimitive,
+    ToPrimitive,
+    Debug,
+    PartialEq,
+    Copy,
+    Clone,
+    Serialize,
+    Deserialize,
+)]
+#[non_exhaustive]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum ContextFormat {
     Raw = 0,
     SortAscending = 1,  // (sort by unit size)
     SortDescending = 2, // don't use
 }
 
-#[derive(Debug, PartialEq, FromPrimitive, Copy, Clone)]
+#[derive(
+    FromPrimitive,
+    ToPrimitive,
+    Debug,
+    PartialEq,
+    Copy,
+    Clone,
+    Serialize,
+    Deserialize,
+)]
+#[non_exhaustive]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum ContextType {
     Struct = 0,
     Parameters = 1,
@@ -990,18 +1036,64 @@ impl Default for GROUP_HEADER {
     }
 }
 
-#[bitfield(bits = 8)]
-#[repr(u8)]
-#[derive(Copy, Clone)]
-pub struct PriorityLevels {
-    pub hard_force: bool,
-    pub high: bool,
-    pub medium: bool,
-    pub event_logging: bool,
-    pub low: bool,
-    pub normal: bool,
-    #[skip]
-    __: B2,
+macro_rules! make_bitfield_serde {(
+        $(#[$struct_meta:meta])*
+        $struct_vis:vis
+        struct $StructName:ident {
+                $(
+                        $(#[$field_meta:meta])*
+                        $field_vis:vis
+                        $field_name:ident : $field_ty:ty $(: $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
+                ),* $(,)?
+        }
+) => {
+    $(#[$struct_meta])*
+    $struct_vis
+    struct $StructName {
+        $(
+            $(#[$field_meta])*
+            $field_vis
+            $field_name : $field_ty,
+        )*
+    }
+
+    paste::paste! {
+        #[derive(serde::Deserialize, serde::Serialize)]
+        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+        //#[serde(remote = "" $StructName)]
+        pub(crate) struct [<Serde $StructName>] {
+            $(
+                $(
+                    $getter_vis
+                    //pub(crate)
+                    $field_name : <$field_ty as Specifier>::InOut, // $field_user_ty
+                )?
+            )*
+        }
+    }
+}}
+
+make_bitfield_serde! {
+    #[bitfield(bits = 8)]
+    #[repr(u8)]
+    #[derive(Copy, Clone)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+    pub struct PriorityLevels {
+        pub hard_force: bool : pub get bool : pub set bool,
+        pub high: bool : pub get bool : pub set bool,
+        pub medium: bool : pub get bool : pub set bool,
+        pub event_logging: bool : pub get bool : pub set bool,
+        pub low: bool : pub get bool : pub set bool,
+        pub normal: bool : pub get bool : pub set bool,
+        #[skip]
+        __: B2,
+    }
+}
+
+impl Default for PriorityLevels {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 macro_rules! impl_bitfield_primitive_conversion {
@@ -1147,28 +1239,21 @@ impl BoardInstances {
 
 impl_bitfield_primitive_conversion!(BoardInstances, 0xffff, u16);
 
-#[derive(FromBytes, AsBytes, Unaligned, Debug)]
-#[repr(C, packed)]
-pub(crate) struct ENTRY_HEADER {
-    pub(crate) group_id: U16<LittleEndian>, // should be equal to the group's group_id
-    pub(crate) entry_id: U16<LittleEndian>,  // meaning depends on context_type
-    pub(crate) entry_size: U16<LittleEndian>, // including header
-    pub(crate) instance_id: U16<LittleEndian>,
-    pub(crate) context_type: u8,   // see ContextType enum
-    pub(crate) context_format: u8, // see ContextFormat enum
-    pub(crate) unit_size: u8,      // in Byte.  Applicable when ContextType == 2.  value should be 8
-    pub(crate) priority_mask: u8, // : pub get PriorityLevels : pub set PriorityLevels,
-    pub(crate) key_size: u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
-    pub(crate) key_pos: u8,  // Sorting key position of the unit specified of UnitSize
-    pub(crate) board_instance_mask: U16<LittleEndian>, // Board-specific Apcb instance mask
-}
-
-impl ENTRY_HEADER {
-    pub fn priority_mask(&self) -> Result<PriorityLevels> {
-        self.priority_mask.get1()
-    }
-    pub fn set_priority_mask(&mut self, value: PriorityLevels) {
-        self.priority_mask.set1(value)
+make_accessors! {
+    #[derive(FromBytes, AsBytes, Unaligned, Clone, Debug)]
+    #[repr(C, packed)]
+    pub(crate) struct ENTRY_HEADER {
+        pub(crate) group_id: LU16 : pub get u16: pub set u16, // should be equal to the group's group_id
+        pub(crate) entry_id: LU16 : pub get u16: pub set u16, // meaning depends on context_type
+        pub(crate) entry_size: LU16 : pub get u16: pub set u16, // including header
+        pub(crate) instance_id: LU16 : pub get u16: pub set u16,
+        pub(crate) context_type: u8 : pub get ContextType : pub set ContextType,  // see ContextType enum
+        pub(crate) context_format: u8 : pub get ContextFormat: pub set ContextFormat, // see ContextFormat enum
+        pub(crate) unit_size: u8 : pub get u8: pub set u8, // in Byte.  Applicable when ContextType == 2.  value should be 8
+        pub(crate) priority_mask: u8 : pub get PriorityLevels : pub set PriorityLevels,
+        pub(crate) key_size: u8 : pub get u8: pub set u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
+        pub(crate) key_pos: u8 : pub get u8: pub set u8, // Sorting key position of the unit specified of UnitSize
+        pub(crate) board_instance_mask: LU16 : pub get u16: pub set u16, // Board-specific Apcb instance mask
     }
 }
 
@@ -1192,7 +1277,7 @@ impl Default for ENTRY_HEADER {
 
 pub const ENTRY_ALIGNMENT: usize = 4;
 
-#[derive(FromBytes, AsBytes)]
+#[derive(FromBytes, AsBytes, Serialize, Deserialize, Clone)]
 #[repr(C, packed)]
 pub struct TOKEN_ENTRY {
     pub key: U32<LittleEndian>,
@@ -1348,7 +1433,7 @@ pub struct Parameters {
 }
 
 impl HeaderWithTail for Parameters {
-    type TailArrayItemType = u8;
+    type TailArrayItemType<'de> = u8;
 }
 
 impl EntryCompatible for Parameters {
@@ -1378,7 +1463,18 @@ pub mod df {
     use crate::struct_accessors::{make_accessors, Getter, Setter};
     use crate::types::Result;
 
-    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[derive(
+        Debug,
+        PartialEq,
+        FromPrimitive,
+        ToPrimitive,
+        Copy,
+        Clone,
+        Serialize,
+        Deserialize,
+    )]
+    #[non_exhaustive]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub enum SlinkRegionInterleavingSize {
         _256B = 0,
         _512B = 1,
@@ -1388,7 +1484,8 @@ pub mod df {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct SlinkRegion {
             size: U64<LittleEndian> : pub get u64 : pub set u64,
@@ -1399,7 +1496,6 @@ pub mod df {
             _reserved: [u8; 4],
         }
     }
-
     impl Default for SlinkRegion {
         fn default() -> Self {
             Self {
@@ -1424,7 +1520,8 @@ pub mod df {
     }
 
     // Rome only; even there, it's almost all 0s
-    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
     #[repr(C, packed)]
     pub struct SlinkConfig {
         pub regions: [SlinkRegion; 4],
@@ -1437,7 +1534,7 @@ pub mod df {
     }
 
     impl HeaderWithTail for SlinkConfig {
-        type TailArrayItemType = ();
+        type TailArrayItemType<'de> = ();
     }
 
     impl SlinkConfig {
@@ -1483,7 +1580,8 @@ pub mod memory {
     use crate::types::Result;
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct DimmInfoSmbusElement {
             dimm_slot_present: BU8 : pub get bool, // if false, it's soldered-down and not a slot
@@ -1639,7 +1737,8 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct AblConsoleOutControl {
             enable_console_logging: BU8 : pub get bool : pub set bool,
@@ -1656,7 +1755,6 @@ pub mod memory {
             abl_console_port: U32<LittleEndian> : pub get u32 : pub set u32,
         }
     }
-
     impl Default for AblConsoleOutControl {
         fn default() -> Self {
             Self {
@@ -1686,14 +1784,14 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct AblBreakpointControl {
             enable_breakpoint: BU8 : pub get bool : pub set bool,
             break_on_all_dies: BU8 : pub get bool : pub set bool,
         }
     }
-
     impl Default for AblBreakpointControl {
         fn default() -> Self {
             Self {
@@ -1712,7 +1810,8 @@ pub mod memory {
         }
     }
 
-    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
     #[repr(C, packed)]
     pub struct ConsoleOutControl {
         pub abl_console_out_control: AblConsoleOutControl,
@@ -1740,7 +1839,7 @@ pub mod memory {
     }
 
     impl HeaderWithTail for ConsoleOutControl {
-        type TailArrayItemType = ();
+        type TailArrayItemType<'de> = ();
     }
 
     impl ConsoleOutControl {
@@ -1756,7 +1855,17 @@ pub mod memory {
         }
     }
 
-    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[derive(
+        Debug,
+        PartialEq,
+        FromPrimitive,
+        ToPrimitive,
+        Copy,
+        Clone,
+        Serialize,
+        Deserialize,
+    )]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub enum PortType {
         PcieHt0 = 0,
         PcieHt1 = 2,
@@ -1765,7 +1874,17 @@ pub mod memory {
         FchMmio = 7,
     }
 
-    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[derive(
+        Debug,
+        PartialEq,
+        FromPrimitive,
+        ToPrimitive,
+        Copy,
+        Clone,
+        Serialize,
+        Deserialize,
+    )]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub enum PortSize {
         _8Bit = 1,
         _16Bit = 2,
@@ -1773,7 +1892,8 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct ExtVoltageControl {
             enabled: BU8 : pub get bool : pub set bool,
@@ -1799,7 +1919,7 @@ pub mod memory {
     }
 
     impl HeaderWithTail for ExtVoltageControl {
-        type TailArrayItemType = ();
+        type TailArrayItemType<'de> = ();
     }
 
     impl Default for ExtVoltageControl {
@@ -1847,7 +1967,8 @@ pub mod memory {
     }
 
     #[bitfield(bits = 4)]
-    #[derive(Clone, Copy, PartialEq, BitfieldSpecifier)]
+    #[derive(Clone, Copy, PartialEq, BitfieldSpecifier, Serialize, Deserialize)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub struct Ddr4DimmRanks {
         pub unpopulated: bool,
         pub single_rank: bool,
@@ -1880,7 +2001,8 @@ pub mod memory {
     impl_bitfield_primitive_conversion!(Ddr4DimmRanks, 0b1111, u32);
 
     #[bitfield(bits = 4)]
-    #[derive(Clone, Copy, PartialEq, BitfieldSpecifier)]
+    #[derive(Clone, Copy, PartialEq, BitfieldSpecifier, Serialize, Deserialize)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub struct LrdimmDdr4DimmRanks {
         pub unpopulated: bool,
         pub lr: bool,
@@ -1910,7 +2032,17 @@ pub mod memory {
 
     impl_bitfield_primitive_conversion!(LrdimmDdr4DimmRanks, 0b11, u32);
 
-    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[derive(
+        Clone,
+        Copy,
+        PartialEq,
+        FromPrimitive,
+        ToPrimitive,
+        Serialize,
+        Deserialize,
+    )]
+    #[non_exhaustive]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub enum CadBusClkDriveStrength {
         Auto = 0xFF,
         _120Ohm = 0,
@@ -1927,7 +2059,8 @@ pub mod memory {
 
     #[bitfield(bits = 32)]
     #[repr(u32)]
-    #[derive(Clone, Copy, PartialEq)]
+    #[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub struct DdrRates {
         // Note: Bit index is (x/2)//66 of ddrx
         #[skip]
@@ -2008,7 +2141,8 @@ pub mod memory {
 
     #[bitfield(bits = 32)]
     #[repr(u32)]
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, Serialize, Deserialize)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub struct DimmsPerChannelSelector {
         pub one_dimm: bool,
         pub two_dimms: bool,
@@ -2027,7 +2161,8 @@ pub mod memory {
         }
     }
 
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, Serialize, Deserialize)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub enum DimmsPerChannel {
         NoSlot,   // 0xf0
         DontCare, // 0xff
@@ -2082,7 +2217,8 @@ pub mod memory {
 
     #[bitfield(bits = 32)]
     #[repr(u32)]
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, Serialize, Deserialize)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub struct RdimmDdr4Voltages {
         pub v_1_2: bool,
         #[skip]
@@ -2099,7 +2235,8 @@ pub mod memory {
     // Usually an array of those is used
     make_accessors! {
         /// Control/Address Bus Element
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct RdimmDdr4CadBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
@@ -2192,7 +2329,8 @@ pub mod memory {
 
     #[bitfield(bits = 32)]
     #[repr(u32)]
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, Serialize, Deserialize)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub struct UdimmDdr4Voltages {
         pub v_1_5: bool,
         pub v_1_35: bool,
@@ -2211,7 +2349,8 @@ pub mod memory {
     // Usually an array of those is used
     make_accessors! {
         /// Control/Address Bus Element
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct UdimmDdr4CadBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
@@ -2278,7 +2417,8 @@ pub mod memory {
 
     #[bitfield(bits = 32)]
     #[repr(u32)]
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, Serialize, Deserialize)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub struct LrdimmDdr4Voltages {
         pub v_1_2: bool,
         // all = 7
@@ -2295,7 +2435,8 @@ pub mod memory {
     // Usually an array of those is used
     make_accessors! {
         /// Control/Address Bus Element
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4CadBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
@@ -2383,7 +2524,17 @@ pub mod memory {
 
     // Those are all divisors of 240
     // See <https://github.com/LongJohnCoder/ddr-doc/blob/gh-pages/jedec/JESD79-4.pdf> Table 3
-    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[derive(
+        Debug,
+        PartialEq,
+        FromPrimitive,
+        ToPrimitive,
+        Copy,
+        Clone,
+        Serialize,
+        Deserialize,
+    )]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub enum RttNom {
         Off = 0,
         _60Ohm = 1,
@@ -2396,7 +2547,17 @@ pub mod memory {
     }
     // See <https://github.com/LongJohnCoder/ddr-doc/blob/gh-pages/jedec/JESD79-4.pdf> Table 11
     pub type RttPark = RttNom;
-    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[derive(
+        Debug,
+        PartialEq,
+        FromPrimitive,
+        ToPrimitive,
+        Copy,
+        Clone,
+        Serialize,
+        Deserialize,
+    )]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub enum RttWr {
         Off = 0,
         _120Ohm = 1,
@@ -2405,7 +2566,10 @@ pub mod memory {
         _80Ohm = 4,
     }
 
-    #[derive(FromPrimitive, ToPrimitive, Clone, Copy)]
+    #[derive(
+        FromPrimitive, ToPrimitive, Clone, Copy, Serialize, Deserialize,
+    )]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub enum VrefDqRange1 {
         _60_00P = 0b00_0000,
         _60_65P = 0b00_0001,
@@ -2460,7 +2624,10 @@ pub mod memory {
         _92_50P = 0b11_0010,
     }
 
-    #[derive(FromPrimitive, ToPrimitive, Clone, Copy)]
+    #[derive(
+        FromPrimitive, ToPrimitive, Clone, Copy, Serialize, Deserialize,
+    )]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub enum VrefDqRange2 {
         _45_00P = 0b00_0000,
         _45_65P = 0b00_0001,
@@ -2519,6 +2686,8 @@ pub mod memory {
     /// Range2 (between 45% and 77.5% of VDDQ). Range1 is intended for
     /// module-based systems, while Range2 is intended for point-to-point-based
     /// systems. In each range, Vref can be adjusted in steps of 0.65% VDDQ.
+    #[derive(Serialize, Deserialize)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub enum VrefDq {
         Range1(VrefDqRange1),
         Range2(VrefDqRange2),
@@ -2568,7 +2737,8 @@ pub mod memory {
     // Usually an array of those is used
     // Note: This structure is not used for soldered-down DRAM!
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct Ddr4DataBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
@@ -2674,7 +2844,8 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4DataBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
@@ -2815,14 +2986,15 @@ pub mod memory {
     // Usually an array of those is used
     // Note: This structure is not used for LR DRAM
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct MaxFreqElement {
             dimm_slots_per_channel: u8 : pub get DimmsPerChannel : pub set DimmsPerChannel,
             _reserved: u8,
             conditions: [U16<LittleEndian>; 4], // number of dimm on a channel, number of single-rank dimm, number of dual-rank dimm, number of quad-rank dimm
             speeds: [U16<LittleEndian>; 3], // speed limit with voltage 1.5 V, 1.35 V, 1.25 V // FIXME make accessible
-       }
+        }
     }
     impl MaxFreqElement {
         pub fn dimm_count(&self) -> Result<u16> {
@@ -2921,7 +3093,8 @@ pub mod memory {
 
     // Usually an array of those is used
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct LrMaxFreqElement {
             dimm_slots_per_channel: u8 : pub get u8 : pub set u8,
@@ -2981,7 +3154,8 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Clone, Copy)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Clone, Copy,
+    Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct Gpio {
             pin: u8 : pub get u8 : pub set u8, // in FCH
@@ -3001,8 +3175,9 @@ pub mod memory {
     }
 
     #[bitfield(bits = 32)]
-    #[derive(PartialEq, Debug, Copy, Clone)]
+    #[derive(PartialEq, Debug, Copy, Clone, Serialize, Deserialize)]
     #[repr(u32)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub struct ErrorOutControlBeepCodePeakAttr {
         pub peak_count: B5,
         /// PULSE_WIDTH: in units of 0.1 s
@@ -3028,7 +3203,8 @@ pub mod memory {
         Smu = 9,
     }
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct ErrorOutControlBeepCode {
             error_type: U16<LittleEndian>,
@@ -3068,7 +3244,8 @@ pub mod memory {
 
     macro_rules! define_ErrorOutControl {($struct_name:ident, $padding_before_gpio:expr, $padding_after_gpio: expr) => (
         make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy,
+Clone, Serialize, Deserialize)]
             #[repr(C, packed)]
             pub struct $struct_name {
                 enable_error_reporting: BU8 : pub get bool : pub set bool,
@@ -3156,7 +3333,7 @@ pub mod memory {
         }
 
         impl HeaderWithTail for $struct_name {
-            type TailArrayItemType = ();
+            type TailArrayItemType<'de> = ();
         }
 
         impl Default for $struct_name {
@@ -3240,7 +3417,8 @@ pub mod memory {
 
     #[bitfield(bits = 32)]
     #[repr(u32)]
-    #[derive(Clone, Copy, BitfieldSpecifier)]
+    #[derive(Clone, Copy, BitfieldSpecifier, Serialize, Deserialize)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub struct Ddr4OdtPatDimmRankBitmaps {
         #[bits = 4]
         pub dimm0: Ddr4DimmRanks, // @0
@@ -3259,12 +3437,12 @@ pub mod memory {
             self.clone()
         }
     }
-
     type OdtPatPattern = B4; // TODO: Meaning
 
     #[bitfield(bits = 32)]
     #[repr(u32)]
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, Serialize, Deserialize)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub struct OdtPatPatterns {
         pub reading_pattern: OdtPatPattern, // @bit 0
         #[skip] __: B4, // @bit 4
@@ -3282,7 +3460,8 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct Ddr4OdtPatElement {
             dimm_rank_bitmaps: U32<LittleEndian> : pub get Ddr4OdtPatDimmRankBitmaps : pub set Ddr4OdtPatDimmRankBitmaps,
@@ -3331,7 +3510,8 @@ pub mod memory {
 
     #[bitfield(bits = 32)]
     #[repr(u32)]
-    #[derive(Clone, Copy, BitfieldSpecifier)]
+    #[derive(Clone, Copy, BitfieldSpecifier, Serialize, Deserialize)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub struct LrdimmDdr4OdtPatDimmRankBitmaps {
         pub dimm0: LrdimmDdr4DimmRanks, // @bit 0
         pub dimm1: LrdimmDdr4DimmRanks, // @bit 4
@@ -3341,7 +3521,8 @@ pub mod memory {
     impl_bitfield_primitive_conversion!(LrdimmDdr4OdtPatDimmRankBitmaps, 0b0011_0011_0011, u32);
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4OdtPatElement {
             dimm_rank_bitmaps: U32<LittleEndian> : pub get LrdimmDdr4OdtPatDimmRankBitmaps : pub set LrdimmDdr4OdtPatDimmRankBitmaps,
@@ -3444,7 +3625,8 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, Debug, Copy, Clone, Serialize,
+Deserialize)]
         #[repr(C, packed)]
         pub struct DdrPostPackageRepairElement {
             body: [u8; 8], // no: pub get DdrPostPackageRepairBody : pub set DdrPostPackageRepairBody,
@@ -3507,7 +3689,8 @@ pub mod memory {
 
                 #[bitfield(filled = true, bits = 8)]
                 #[repr(u8)]
-                #[derive(Clone, Copy, PartialEq)]
+                #[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
+                #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
                 pub struct ChannelIdsSelection {
                     pub a: bool,
                     pub b: bool,
@@ -3528,7 +3711,8 @@ pub mod memory {
                     }
                 }
 
-                #[derive(PartialEq)]
+                #[derive(PartialEq, Serialize, Deserialize)]
+                #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
                 pub enum ChannelIds {
                     Any, // 0xff
                     Specific(ChannelIdsSelection),
@@ -3580,7 +3764,8 @@ pub mod memory {
 
                 #[bitfield(filled = true, bits = 8)]
                 #[repr(u8)]
-                #[derive(Clone, Copy, PartialEq)]
+                #[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
+                #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
                 pub struct SocketIds {
                     pub socket_0: bool,
                     pub socket_1: bool,
@@ -3592,7 +3777,6 @@ pub mod memory {
                     pub socket_7: bool,
                 }
                 impl_bitfield_primitive_conversion!(SocketIds, 0b1111_1111, u8);
-
                 impl SocketIds {
                     pub const ALL: Self = Self::from_bytes([0xff]);
                     pub fn builder() -> Self {
@@ -3605,7 +3789,8 @@ pub mod memory {
 
                 #[bitfield(bits = 8)]
                 #[repr(u8)]
-                #[derive(Clone, Copy)]
+                #[derive(Clone, Copy, Serialize, Deserialize)]
+                #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
                 pub struct DimmSlotsSelection {
                     pub dimm_slot_0: bool, // @0
                     pub dimm_slot_1: bool, // @1
@@ -3622,6 +3807,8 @@ pub mod memory {
                         self.clone()
                     }
                 }
+                #[derive(Clone, Copy, Serialize, Deserialize)]
+                #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
                 pub enum DimmSlots {
                     Any, // 0xff
                     Specific(DimmSlotsSelection),
@@ -3717,14 +3904,20 @@ pub mod memory {
                             }
                         }
                     }
+                    impl ElementAsBytes for $struct_ {
+                        fn element_as_bytes(&self) -> &[u8] {
+                            AsBytes::as_bytes(self)
+                        }
+                    }
 
-        //            impl HeaderWithTail for $struct_ {
-        //                type TailArrayItemType = ();
-        //            }
+                //            impl HeaderWithTail for $struct_ {
+                //                type TailArrayItemType = ();
+                //            }
                 )}
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+        Serialize, Deserialize, Clone)]
                     #[repr(C, packed)]
                     pub struct CkeTristateMap {
                         type_: u8,
@@ -3732,7 +3925,7 @@ pub mod memory {
                         sockets: u8 : pub get SocketIds : pub set SocketIds,
                         channels: u8 : pub get ChannelIds : pub set ChannelIds,
                         dimms: u8 : pub get DimmSlots : pub set DimmSlots,
-                        /// index i = CPU package's clock enable (CKE) pin, value = memory rank's CKE pin
+                        /// index i = CPU package's clock enable (CKE) pin, value = memory rank's CKE pin mask
                         pub connections: [u8; 4],
                     }
                 }
@@ -3762,7 +3955,8 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct OdtTristateMap {
                         type_: u8,
@@ -3800,7 +3994,8 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct CsTristateMap {
                         type_: u8,
@@ -3838,7 +4033,8 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct MaxDimmsPerChannel {
                         type_: u8,
@@ -3875,7 +4071,8 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct MemclkMap {
                         type_: u8,
@@ -3912,7 +4109,8 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct MaxChannelsPerSocket {
                         type_: u8,
@@ -3948,14 +4146,16 @@ pub mod memory {
                     }
                 }
 
-                #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+                #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone, Serialize, Deserialize)]
+                #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
                 pub enum TimingMode {
                     Auto = 0,
                     Limit = 1,
                     Specific = 2,
                 }
 
-                #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+                #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone, Serialize, Deserialize)]
+                #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
                 pub enum MemBusSpeedType { // in MHz
                     Ddr400 = 200,
                     Ddr533 = 266,
@@ -3986,7 +4186,8 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct MemBusSpeed {
                         type_: u8,
@@ -4027,7 +4228,8 @@ pub mod memory {
 
                 make_accessors! {
                     /// Max. Chip Selects per channel
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct MaxCsPerChannel {
                         type_: u8,
@@ -4063,7 +4265,9 @@ pub mod memory {
                     }
                 }
 
-                #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+                #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy,
+        Clone, Serialize, Deserialize)]
+                #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
                 pub enum MemTechnologyType {
                     Ddr2 = 0,
                     Ddr3 = 1,
@@ -4078,7 +4282,8 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct MemTechnology {
                         type_: u8,
@@ -4115,7 +4320,8 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct WriteLevellingSeedDelay {
                         type_: u8,
@@ -4147,7 +4353,8 @@ pub mod memory {
 
                 make_accessors! {
                     /// See <https://www.amd.com/system/files/TechDocs/43170_14h_Mod_00h-0Fh_BKDG.pdf> section 2.9.3.7.2.1
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct RxEnSeed {
                         type_: u8,
@@ -4187,7 +4394,8 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct LrDimmNoCs6Cs7Routing {
                         type_: u8,
@@ -4223,7 +4431,8 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct SolderedDownSodimm {
                         type_: u8,
@@ -4259,7 +4468,8 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct LvDimmForce1V5 {
                         type_: u8,
@@ -4295,7 +4505,8 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct MinimumRwDataEyeWidth {
                         type_: u8,
@@ -4335,7 +4546,8 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct CpuFamilyFilter {
                         type_: u8,
@@ -4363,7 +4575,8 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct SolderedDownDimmsPerChannel {
                         type_: u8,
@@ -4398,7 +4611,8 @@ pub mod memory {
                     }
                 }
 
-                #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+                #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone, Serialize, Deserialize)]
+                #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
                 pub enum MemPowerPolicyType {
                     Performance = 0,
                     BatteryLife = 1,
@@ -4406,7 +4620,8 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct MemPowerPolicy {
                         type_: u8,
@@ -4442,14 +4657,16 @@ pub mod memory {
                     }
                 }
 
-                #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+                #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone, Serialize, Deserialize)]
+                #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
                 pub enum MotherboardLayerCount {
                     _4 = 0,
                     _6 = 1,
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Copy, Clone, Serialize, Deserialize)]
                     #[repr(C, packed)]
                     pub struct MotherboardLayers {
                         type_: u8,
@@ -4486,7 +4703,7 @@ pub mod memory {
                 }
 
                 // TODO: conditional overrides, actions.
-            }
+        }
 
         impl EntryCompatible for ElementRef<'_> {
             fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
@@ -4635,12 +4852,13 @@ pub mod memory {
                         }
                     }
 
-        //            impl HeaderWithTail for $struct_ {
-        //                type TailArrayItemType = ();
-        //            }
+                    //            impl HeaderWithTail for $struct_ {
+                    //                type TailArrayItemType = ();
+                    //            }
                 )}
 
-                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+Serialize, Deserialize, Clone, Copy)]
                 #[repr(C, packed)]
                 pub struct Terminator {
                     type_: U16<LittleEndian>,
@@ -4654,6 +4872,7 @@ pub mod memory {
                         }
                     }
                 }
+
 
                 impl Terminator {
                     pub fn new() -> Self {
@@ -4670,7 +4889,7 @@ pub mod memory {
         //        impl HeaderWithTail for PlatformTuningElementRef<'_> {
         //            type TailArrayItemType = ();
         //        }
-            }
+        }
 
         impl EntryCompatible for ElementRef<'_> {
             fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
@@ -4920,7 +5139,8 @@ pub mod psp {
     use crate::struct_accessors::{make_accessors, Getter, Setter};
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct IdApcbMapping {
             id_and_feature_mask: u8 : pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
@@ -4949,7 +5169,8 @@ pub mod psp {
         }
     }
 
-    #[derive(Debug, PartialEq, Copy, Clone)]
+    #[derive(Debug, PartialEq, Copy, Clone, Serialize, Deserialize)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub enum RevAndFeatureValue {
         Value(u8),
         NotApplicable,
@@ -4993,7 +5214,8 @@ pub mod psp {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct IdRevApcbMapping {
             id_and_rev_and_feature_mask: u8 : pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
@@ -5029,7 +5251,8 @@ pub mod psp {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodCustom {
             access_method: U16<LittleEndian>, // 0xF for BoardIdGettingMethodCustom
@@ -5068,11 +5291,12 @@ pub mod psp {
         }
     }
     impl HeaderWithTail for BoardIdGettingMethodCustom {
-        type TailArrayItemType = IdApcbMapping;
+        type TailArrayItemType<'de> = IdApcbMapping;
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodGpio {
             access_method: U16<LittleEndian>, // 3 for BoardIdGettingMethodGpio
@@ -5116,11 +5340,12 @@ pub mod psp {
         }
     }
     impl HeaderWithTail for BoardIdGettingMethodGpio {
-        type TailArrayItemType = IdApcbMapping;
+        type TailArrayItemType<'de> = IdApcbMapping;
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodEeprom {
             access_method: U16<LittleEndian>, // 2 for BoardIdGettingMethodEeprom
@@ -5173,11 +5398,12 @@ pub mod psp {
     }
 
     impl HeaderWithTail for BoardIdGettingMethodEeprom {
-        type TailArrayItemType = IdRevApcbMapping;
+        type TailArrayItemType<'de> = IdRevApcbMapping;
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
+Serialize, Deserialize)]
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodSmbus {
             access_method: U16<LittleEndian>, // 1 for BoardIdGettingMethodSmbus
@@ -5239,7 +5465,7 @@ pub mod psp {
     }
 
     impl HeaderWithTail for BoardIdGettingMethodSmbus {
-        type TailArrayItemType = IdApcbMapping;
+        type TailArrayItemType<'de> = IdApcbMapping;
     }
 
     #[cfg(test)]

@@ -1,19 +1,28 @@
+use crate::df;
+use crate::df::SlinkConfig;
+use crate::memory;
 use crate::ondisk::ENTRY_HEADER;
 use crate::ondisk::{
     take_header_from_collection, take_header_from_collection_mut,
     BoardInstances, ContextFormat, ContextType, EntryCompatible, EntryId,
     HeaderWithTail, MutSequenceElementFromBytes, PriorityLevels,
-    SequenceElementFromBytes
+    SequenceElementFromBytes, ElementAsBytes,
 };
-use crate::tokens_entry::TokensEntryBodyItem;
-use crate::types::{Error, FileSystemError, Result};
+use crate::tokens_entry::{TokensEntryBodyItem, TokensEntryItem};
+use crate::types::{Error, FileSystemError, Ptr, Result};
 use crate::ondisk::{Parameters, ParametersIter};
 use crate::naples::{ParameterTokenConfig};
+use crate::psp;
 use core::marker::PhantomData;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
 use pre::pre;
+use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
+use serde::ser::{Serialize, SerializeStruct, Serializer};
 use zerocopy::{AsBytes, FromBytes};
+
+#[cfg(feature = "std")]
+use std::borrow::Cow;
 
 /* Note: high-level interface is:
 
@@ -25,7 +34,7 @@ use zerocopy::{AsBytes, FromBytes};
 
 */
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum EntryItemBody<BufferType> {
     Struct(BufferType),
     Tokens(TokensEntryBodyItem<BufferType>),
@@ -81,13 +90,15 @@ impl<'a> EntryItemBody<&'a mut [u8]> {
     }
 }
 
-impl<'a> EntryItemBody<&'a [u8]> {
+impl<'a> EntryItemBody<Ptr<'a, [u8]>> {
     pub(crate) fn from_slice(
         unit_size: u8,
         entry_id: u16,
         context_type: ContextType,
         b: &'a [u8],
-    ) -> Result<EntryItemBody<&'a [u8]>> {
+    ) -> Result<EntryItemBody<Ptr<'a, [u8]>>> {
+        #[cfg(feature = "std")]
+        let b = Cow::Borrowed(b);
         Ok(match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
@@ -100,7 +111,7 @@ impl<'a> EntryItemBody<&'a [u8]> {
             }
             ContextType::Tokens => {
                 let used_size = b.len();
-                Self::Tokens(TokensEntryBodyItem::<&'_ [u8]>::new(
+                Self::Tokens(TokensEntryBodyItem::<Ptr<'_, [u8]>>::new(
                     unit_size, entry_id, b, used_size,
                 )?)
             }
@@ -347,8 +358,10 @@ impl<'a> EntryMutItem<'a> {
         H: EntryCompatible + Sized + FromBytes + AsBytes + HeaderWithTail,
     >(
         &mut self,
-    ) -> Option<(&'_ mut H, StructArrayEntryMutItem<'_, H::TailArrayItemType>)>
-    {
+    ) -> Option<(
+        &'_ mut H,
+        StructArrayEntryMutItem<'_, H::TailArrayItemType<'_>>,
+    )> {
         let id = self.id();
         match &mut self.body {
             EntryItemBody::Struct(buf) => {
@@ -420,9 +433,529 @@ impl<'a> EntryMutItem<'a> {
     }
 }
 
+#[cfg(feature = "std")]
+extern crate std;
+
+#[cfg(feature = "std")]
+use std::fmt;
+
+#[derive(Clone)]
 pub struct EntryItem<'a> {
-    pub(crate) header: &'a ENTRY_HEADER,
-    pub body: EntryItemBody<&'a [u8]>,
+    pub(crate) header: Ptr<'a, ENTRY_HEADER>,
+    pub body: EntryItemBody<Ptr<'a, [u8]>>,
+}
+
+#[cfg(feature = "std")]
+impl<'a> Serialize for EntryItem<'a> {
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> core::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("EntryItem", 2)?;
+        state.serialize_field("header", &*self.header)?;
+
+        match &self.body {
+            EntryItemBody::<_>::Tokens(tokens) => {
+                let v = tokens.iter().collect::<Vec<_>>();
+                state.serialize_field("tokens", &v)?;
+            }
+            EntryItemBody::<_>::Struct(buf) => {
+                if let Some(s) = self.body_as_struct_array::<memory::LrdimmDdr4OdtPatElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("LrdimmDdr4OdtPatElement", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::Ddr4OdtPatElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("Ddr4OdtPatElement", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::DdrPostPackageRepairElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("DdrPostPackageRepairElement", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::DimmInfoSmbusElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("DimmInfoSmbusElement", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::RdimmDdr4CadBusElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("RdimmDdr4CadBusElement", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::UdimmDdr4CadBusElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("UdimmDdr4CadBusElement", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::LrdimmDdr4CadBusElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("LrdimmDdr4CadBusElement", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::Ddr4DataBusElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("Ddr4DataBusElement", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::LrdimmDdr4DataBusElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("LrdimmDdr4DataBusElement", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::MaxFreqElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("MaxFreqElement", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::LrMaxFreqElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("LrMaxFreqElement", &v)?;
+                } else if let Some((s, _)) = self.body_as_struct::<memory::ConsoleOutControl>() {
+                    state.serialize_field("ConsoleOutControl", &s)?;
+                } else if let Some((s, _)) = self.body_as_struct::<memory::ExtVoltageControl>() {
+                    state.serialize_field("ExtVoltageControl", &s)?;
+                } else if let Some((s, _)) = self.body_as_struct::<memory::ErrorOutControl116>() {
+                    state.serialize_field("ErrorOutControl116", &s)?;
+                } else if let Some((s, _)) = self.body_as_struct::<memory::ErrorOutControl112>() {
+                    state.serialize_field("ErrorOutControl112", &s)?;
+                } else if let Some((s, _)) = self.body_as_struct::<SlinkConfig>() {
+                    state.serialize_field("SlinkConfig", &s)?;
+                } else if let Some((header, s)) = self.body_as_struct::<psp::BoardIdGettingMethodGpio>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    let t = (header, v);
+                    state.serialize_field("BoardIdGettingMethodGpio", &t)?;
+                } else if let Some((header, s)) = self.body_as_struct::<psp::BoardIdGettingMethodEeprom>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    let t = (header, v);
+                    state.serialize_field("BoardIdGettingMethodEeprom", &t)?;
+                } else if let Some((header, s)) = self.body_as_struct::<psp::BoardIdGettingMethodSmbus>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    let t = (header, v);
+                    state.serialize_field("BoardIdGettingMethodSmbus", &t)?;
+                } else if let Some((header, s)) = self.body_as_struct::<psp::BoardIdGettingMethodCustom>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    let t = (header, v);
+                    state.serialize_field("BoardIdGettingMethodCustom", &t)?;
+                } else if let Some(s) =
+self.body_as_struct_sequence::<memory::platform_specific_override::ElementRef<'_>>() {
+                    let i = s.iter().unwrap();
+                    let v = i.collect::<Vec<_>>();
+                    state.serialize_field("platform_specific_overrides", &v)?;
+                } else if let Some(s) =
+self.body_as_struct_sequence::<memory::platform_tuning::ElementRef<'_>>() {
+                    let i = s.iter().unwrap();
+                    let v = i.collect::<Vec<_>>();
+                    state.serialize_field("platform_tuning", &v)?;
+                } else {
+                    state.serialize_field("struct_body", &buf)?;
+                }
+            }
+            EntryItemBody::<_>::Parameters(buf) => {
+                state.serialize_field("parameters", &buf)?;
+            }
+        }
+        state.end()
+    }
+}
+
+fn token_vec_to_body<'a, M>(
+    body: &mut Option<Cow<'_, [u8]>>,
+    map: &mut M,
+) -> core::result::Result<(), M::Error>
+where
+    M: MapAccess<'a>,
+{
+    if body.is_some() {
+        return Err(de::Error::duplicate_field("body"));
+    }
+    let val: Vec<TokensEntryItem<'_>> = map.next_value()?;
+    let mut buf: Vec<u8> = Vec::new();
+    for v in val {
+        buf.extend_from_slice(v.entry.as_bytes());
+    }
+    *body = Some(Cow::from(buf));
+    Ok(())
+}
+
+fn struct_vec_to_body<'a, T, M>(
+    body: &mut Option<Cow<'_, [u8]>>,
+    map: &mut M,
+) -> core::result::Result<(), M::Error>
+where
+    T: zerocopy::AsBytes + Deserialize<'a>,
+    M: MapAccess<'a>,
+{
+    if body.is_some() {
+        return Err(de::Error::duplicate_field("body"));
+    }
+    let val: Vec<T> = map.next_value()?;
+    let mut buf: Vec<u8> = Vec::new();
+    for v in val {
+        buf.extend_from_slice(v.as_bytes());
+    }
+    *body = Some(Cow::from(buf));
+    Ok(())
+}
+
+fn struct_to_body<'a, T, M>(
+    body: &mut Option<Cow<'_, [u8]>>,
+    map: &mut M,
+) -> core::result::Result<(), M::Error>
+where
+    T: zerocopy::AsBytes + Deserialize<'a> + HeaderWithTail,
+    M: MapAccess<'a>,
+{
+    if body.is_some() {
+        return Err(de::Error::duplicate_field("body"));
+    }
+    let mut buf: Vec<u8> = Vec::new();
+    if size_of::<T::TailArrayItemType<'_>>() != 0 {
+        let (h, val): (T, Vec<T::TailArrayItemType<'a>>) = map.next_value()?;
+        buf.extend_from_slice(h.as_bytes());
+        for v in val {
+            buf.extend_from_slice(v.as_bytes());
+        }
+    } else {
+        let h: T = map.next_value()?;
+        buf.extend_from_slice(h.as_bytes());
+    }
+    *body = Some(Cow::from(buf));
+    Ok(())
+}
+
+fn struct_sequence_to_body<'a, T, M>(
+    body: &mut Option<Cow<'_, [u8]>>,
+    map: &mut M,
+) -> core::result::Result<(), M::Error>
+where
+    T: ElementAsBytes + Deserialize<'a>,
+    M: MapAccess<'a>,
+{
+    if body.is_some() {
+        return Err(de::Error::duplicate_field("body"));
+    }
+    let val: Vec<T> = map.next_value()?;
+    let mut buf: Vec<u8> = Vec::new();
+    for v in val {
+        buf.extend_from_slice(v.element_as_bytes());
+    }
+    *body = Some(Cow::from(buf));
+    Ok(())
+}
+
+#[cfg(feature = "std")]
+impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        enum Field {
+            Header,
+            Tokens,
+            // Body as struct array
+            LrdimmDdr4OdtPatElement,
+            Ddr4OdtPatElement,
+            DdrPostPackageRepairElement,
+            DimmInfoSmbusElement,
+            RdimmDdr4CadBusElement,
+            UdimmDdr4CadBusElement,
+            LrdimmDdr4CadBusElement,
+            Ddr4DataBusElement,
+            LrdimmDdr4DataBusElement,
+            MaxFreqElement,
+            LrMaxFreqElement,
+            // Body as struct
+            ConsoleOutControl,
+            ExtVoltageControl,
+            ErrorOutControl116,
+            ErrorOutControl112,
+            SlinkConfig,
+            BoardIdGettingMethodGpio,
+            BoardIdGettingMethodEeprom,
+            BoardIdGettingMethodSmbus,
+            BoardIdGettingMethodCustom,
+            // struct sequence
+            PlatformSpecificOverrides,
+            PlatformTuning,
+            //Parameters,
+        }
+        const FIELDS: &'static [&'static str] = &[
+            "header",
+            "tokens",
+            "LrdimmDdr4OdtPatElement",
+            "Ddr4OdtPatElement",
+            "DdrPostPackageRepairElement",
+            "DimmInfoSmbusElement",
+            "RdimmDdr4CadBusElement",
+            "UdimmDdr4CadBusElement",
+            "LrdimmDdr4CadBusElement",
+            "Ddr4DataBusElement",
+            "LrdimmDdr4DataBusElement",
+            "MaxFreqElement",
+            "LrMaxFreqElement",
+            // Body as struct
+            "ConsoleOutControl",
+            "ExtVoltageControl",
+            "ErrorOutControl116",
+            "ErrorOutControl112",
+            "SlinkConfig",
+            "BoardIdGettingMethodGpio",
+            "BoardIdGettingMethodEeprom",
+            "BoardIdGettingMethodSmbus",
+            "BoardIdGettingMethodCustom",
+            // struct sequence
+            "platform_specific_overrides",
+            "platform_tuning",
+            //"parameters"
+        ];
+
+        impl<'de> Deserialize<'de> for Field {
+            fn deserialize<D>(
+                deserializer: D,
+            ) -> core::result::Result<Field, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                struct FieldVisitor;
+
+                impl<'de> Visitor<'de> for FieldVisitor {
+                    type Value = Field;
+
+                    fn expecting(
+                        &self,
+                        formatter: &mut fmt::Formatter<'_>,
+                    ) -> fmt::Result {
+                        formatter.write_str("`header` or Entry Item Body")
+                    }
+
+                    fn visit_str<E>(
+                        self,
+                        value: &str,
+                    ) -> core::result::Result<Field, E>
+                    where
+                        E: de::Error,
+                    {
+                        match value {
+                            "header" => Ok(Field::Header),
+                            "tokens" => Ok(Field::Tokens),
+                            "LrdimmDdr4OdtPatElement" => {
+                                Ok(Field::LrdimmDdr4OdtPatElement)
+                            }
+                            "Ddr4OdtPatElement" => Ok(Field::Ddr4OdtPatElement),
+                            "DdrPostPackageRepairElement" => {
+                                Ok(Field::DdrPostPackageRepairElement)
+                            }
+                            "DimmInfoSmbusElement" => {
+                                Ok(Field::DimmInfoSmbusElement)
+                            }
+                            "RdimmDdr4CadBusElement" => {
+                                Ok(Field::RdimmDdr4CadBusElement)
+                            }
+                            "UdimmDdr4CadBusElement" => {
+                                Ok(Field::UdimmDdr4CadBusElement)
+                            }
+                            "LrdimmDdr4CadBusElement" => {
+                                Ok(Field::LrdimmDdr4CadBusElement)
+                            }
+                            "Ddr4DataBusElement" => {
+                                Ok(Field::Ddr4DataBusElement)
+                            }
+                            "LrdimmDdr4DataBusElement" => {
+                                Ok(Field::LrdimmDdr4DataBusElement)
+                            }
+                            "MaxFreqElement" => Ok(Field::MaxFreqElement),
+                            "LrMaxFreqElement" => Ok(Field::LrMaxFreqElement),
+                            "ConsoleOutControl" => Ok(Field::ConsoleOutControl),
+                            "ExtVoltageControl" => Ok(Field::ExtVoltageControl),
+                            "ErrorOutControl116" => {
+                                Ok(Field::ErrorOutControl116)
+                            }
+                            "ErrorOutControl112" => {
+                                Ok(Field::ErrorOutControl112)
+                            }
+                            "SlinkConfig" => Ok(Field::SlinkConfig),
+                            "BoardIdGettingMethodGpio" => {
+                                Ok(Field::BoardIdGettingMethodGpio)
+                            }
+                            "BoardIdGettingMethodEeprom" => {
+                                Ok(Field::BoardIdGettingMethodEeprom)
+                            }
+                            "BoardIdGettingMethodSmbus" => {
+                                Ok(Field::BoardIdGettingMethodSmbus)
+                            }
+                            "BoardIdGettingMethodCustom" => {
+                                Ok(Field::BoardIdGettingMethodCustom)
+                            }
+                            "platform_specific_overrides" => {
+                                Ok(Field::PlatformSpecificOverrides)
+                            }
+                            "platform_tuning" => Ok(Field::PlatformTuning),
+                            //"parameters" => Ok(Field::Parameters),
+                            _ => Err(de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+
+                deserializer.deserialize_identifier(FieldVisitor)
+            }
+        }
+
+        struct EntryItemVisitor;
+
+        impl<'de> Visitor<'de> for EntryItemVisitor {
+            type Value = EntryItem<'de>;
+
+            fn expecting(
+                &self,
+                formatter: &mut fmt::Formatter<'_>,
+            ) -> fmt::Result {
+                formatter.write_str("struct EntryItem")
+            }
+
+            fn visit_map<V>(
+                self,
+                mut map: V,
+            ) -> core::result::Result<EntryItem<'static>, V::Error>
+            where
+                V: MapAccess<'de>,
+            {
+                let mut header: Option<ENTRY_HEADER> = None;
+                let mut body: Option<Cow<'_, [u8]>> = None;
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Header => {
+                            if header.is_some() {
+                                return Err(de::Error::duplicate_field(
+                                    "header",
+                                ));
+                            }
+                            header = Some(map.next_value()?);
+                        }
+                        Field::Tokens => {
+                            token_vec_to_body::<V>(&mut body, &mut map)?;
+                        }
+                        Field::LrdimmDdr4OdtPatElement => {
+                            struct_vec_to_body::<
+                                memory::LrdimmDdr4OdtPatElement,
+                                V,
+                            >(&mut body, &mut map)?;
+                        }
+                        Field::Ddr4OdtPatElement => {
+                            struct_vec_to_body::<memory::Ddr4OdtPatElement, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+                        Field::DdrPostPackageRepairElement => {
+                            struct_vec_to_body::<
+                                memory::DdrPostPackageRepairElement,
+                                V,
+                            >(&mut body, &mut map)?;
+                        }
+                        Field::DimmInfoSmbusElement => {
+                            struct_vec_to_body::<
+                                memory::DimmInfoSmbusElement,
+                                V,
+                            >(&mut body, &mut map)?;
+                        }
+                        Field::RdimmDdr4CadBusElement => {
+                            struct_vec_to_body::<
+                                memory::RdimmDdr4CadBusElement,
+                                V,
+                            >(&mut body, &mut map)?;
+                        }
+                        Field::UdimmDdr4CadBusElement => {
+                            struct_vec_to_body::<
+                                memory::UdimmDdr4CadBusElement,
+                                V,
+                            >(&mut body, &mut map)?;
+                        }
+                        Field::LrdimmDdr4CadBusElement => {
+                            struct_vec_to_body::<
+                                memory::LrdimmDdr4CadBusElement,
+                                V,
+                            >(&mut body, &mut map)?;
+                        }
+                        Field::Ddr4DataBusElement => {
+                            struct_vec_to_body::<memory::Ddr4DataBusElement, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+                        Field::LrdimmDdr4DataBusElement => {
+                            struct_vec_to_body::<
+                                memory::LrdimmDdr4DataBusElement,
+                                V,
+                            >(&mut body, &mut map)?;
+                        }
+                        Field::MaxFreqElement => {
+                            struct_vec_to_body::<memory::MaxFreqElement, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+                        Field::LrMaxFreqElement => {
+                            struct_vec_to_body::<memory::LrMaxFreqElement, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+
+                        Field::ConsoleOutControl => {
+                            struct_to_body::<memory::ConsoleOutControl, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+                        Field::ExtVoltageControl => {
+                            struct_to_body::<memory::ExtVoltageControl, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+                        Field::ErrorOutControl116 => {
+                            struct_to_body::<memory::ErrorOutControl116, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+                        Field::ErrorOutControl112 => {
+                            struct_to_body::<memory::ErrorOutControl112, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+                        Field::SlinkConfig => {
+                            struct_to_body::<df::SlinkConfig, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+                        Field::BoardIdGettingMethodGpio => {
+                            struct_to_body::<psp::BoardIdGettingMethodGpio, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+                        Field::BoardIdGettingMethodEeprom => {
+                            struct_to_body::<psp::BoardIdGettingMethodEeprom, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+                        Field::BoardIdGettingMethodSmbus => {
+                            struct_to_body::<psp::BoardIdGettingMethodSmbus, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+                        Field::BoardIdGettingMethodCustom => {
+                            struct_to_body::<psp::BoardIdGettingMethodCustom, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+
+                        Field::PlatformSpecificOverrides => {
+                            struct_sequence_to_body::<
+                                memory::platform_specific_override::Element,
+                                V,
+                            >(&mut body, &mut map)?;
+                        }
+                        Field::PlatformTuning => {
+                            struct_sequence_to_body::<
+                                memory::platform_tuning::Element,
+                                V,
+                            >(&mut body, &mut map)?;
+                        }
+                    }
+                }
+                let header =
+                    header.ok_or_else(|| de::Error::missing_field("header"))?;
+                let body =
+                    body.ok_or_else(|| de::Error::missing_field("body"))?;
+                let buf = Cow::Owned(header);
+                Ok(EntryItem {
+                    header: buf,
+                    body: EntryItemBody::<Ptr<'static, [u8]>>::Struct(body),
+                })
+            }
+        }
+        deserializer.deserialize_struct("EntryItem", FIELDS, EntryItemVisitor)
+    }
 }
 
 pub struct StructSequenceEntryItem<'a, T> {
@@ -601,11 +1134,19 @@ impl<'a> EntryItem<'a> {
         Ok(())
     }
 
+    pub fn body_as_buf(&'a self) -> Option<&[u8]> {
+        match &self.body {
+            EntryItemBody::Struct(buf) => Some(buf),
+            _ => None,
+        }
+    }
+
     pub fn body_as_struct<
         H: EntryCompatible + Sized + FromBytes + HeaderWithTail,
     >(
-        &self,
-    ) -> Option<(&'a H, StructArrayEntryItem<'a, H::TailArrayItemType>)> {
+        &'a self,
+    ) -> Option<(&'a H, StructArrayEntryItem<'a, H::TailArrayItemType<'_>>)>
+    {
         let id = self.id();
         match &self.body {
             EntryItemBody::Struct(buf) => {
@@ -628,7 +1169,7 @@ impl<'a> EntryItem<'a> {
     }
 
     pub fn body_as_struct_array<T: EntryCompatible + Sized + FromBytes>(
-        &self,
+        &'a self,
     ) -> Option<StructArrayEntryItem<'a, T>> {
         match &self.body {
             EntryItemBody::Struct(buf) => {

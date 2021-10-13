@@ -1,4 +1,4 @@
-use crate::types::{Error, FileSystemError, Result};
+use crate::types::{Error, FileSystemError, Ptr, Result};
 
 use crate::entry::{EntryItem, EntryItemBody, EntryMutItem};
 use crate::ondisk::GroupId;
@@ -16,10 +16,15 @@ use core::mem::size_of;
 use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use pre::pre;
+use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize)]
 pub struct GroupItem<'a> {
-    pub(crate) header: &'a GROUP_HEADER,
+    #[serde(borrow)]
+    pub(crate) header: Ptr<'a, GROUP_HEADER>,
+    #[serde(skip)]
     pub(crate) buf: &'a [u8],
+    #[serde(skip)]
     pub(crate) used_size: usize,
 }
 
@@ -104,9 +109,13 @@ impl<'a> GroupIter<'a> {
 
         let unit_size = header.unit_size;
         let entry_id = header.entry_id.get();
+
+        #[cfg(feature = "std")]
+        let header = std::borrow::Cow::Borrowed(header);
+
         Ok(EntryItem {
             header,
-            body: EntryItemBody::<&'_ [u8]>::from_slice(
+            body: EntryItemBody::<Ptr<'_, [u8]>>::from_slice(
                 unit_size,
                 entry_id,
                 context_type,
@@ -212,7 +221,7 @@ impl GroupItem<'_> {
 
     pub fn entries(&self) -> GroupIter<'_> {
         GroupIter {
-            header: self.header,
+            header: &*self.header,
             buf: self.buf,
             remaining_used_size: self.used_size,
         }
@@ -456,16 +465,25 @@ impl<'a> GroupMutIter<'a> {
         header
             .board_instance_mask
             .set(u16::from(board_instance_mask));
-        let body = take_body_from_collection_mut(
+        let body = take_body_from_collection_mut(&mut buf, payload_size, 1)
+            .ok_or(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "ENTRY_HEADER",
+            ))?;
+        payload_initializer(body);
+        if payload_size != entry_allocation as usize {}
+        let padding = take_body_from_collection_mut(
             &mut buf,
-            payload_size,
-            ENTRY_ALIGNMENT,
+            entry_allocation as usize
+                - payload_size
+                - size_of::<ENTRY_HEADER>(),
+            1,
         )
         .ok_or(Error::FileSystem(
             FileSystemError::InconsistentHeader,
-            "ENTRY_HEADER",
+            "padding",
         ))?;
-        payload_initializer(body);
+        padding.iter_mut().for_each(|b| *b = 0u8);
         self.remaining_used_size = self
             .remaining_used_size
             .checked_add(entry_allocation as usize)
@@ -474,6 +492,7 @@ impl<'a> GroupMutIter<'a> {
     }
 }
 
+//#[derive(Serialize, Deserialize, Debug)]
 #[derive(Debug)]
 pub struct GroupMutItem<'a> {
     pub(crate) header: &'a mut GROUP_HEADER,

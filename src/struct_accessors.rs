@@ -4,6 +4,7 @@ use crate::types::Error;
 use crate::types::Result;
 use byteorder::LittleEndian;
 use num_traits::{FromPrimitive, ToPrimitive};
+use serde::{Deserialize, Serialize};
 use zerocopy::{AsBytes, FromBytes, U16, U32, U64};
 
 pub(crate) trait Getter<T> {
@@ -55,7 +56,9 @@ impl<T: FromPrimitive> Getter<Result<T>> for u32 {
         T::from_u32(self).ok_or(Error::EntryTypeMismatch)
     }
 }
-#[derive(Debug, PartialEq, FromBytes, AsBytes, Clone, Copy)]
+#[derive(
+    Debug, PartialEq, FromBytes, AsBytes, Clone, Copy, Serialize, Deserialize,
+)]
 #[repr(C, packed)]
 pub(crate) struct BU8(pub(crate) u8);
 impl Getter<Result<bool>> for BU8 {
@@ -77,7 +80,9 @@ impl From<bool> for BU8 {
     }
 }
 
-#[derive(Debug, PartialEq, FromBytes, AsBytes, Clone, Copy)]
+#[derive(
+    Debug, PartialEq, FromBytes, AsBytes, Clone, Copy, Serialize, Deserialize,
+)]
 #[repr(C, packed)]
 pub(crate) struct BLU16(pub(crate) U16<LittleEndian>);
 impl Getter<Result<bool>> for BLU16 {
@@ -131,6 +136,25 @@ impl Setter<bool> for BLU16 {
     }
 }
 
+/// Since primitive types are not a Result, this just wraps them into a Result.
+/// The reason this exists is because our macros don't know whether or not
+/// the getters return Result--but they have to be able to call map_err
+/// on it in case these DO return Result.
+pub(crate) trait DummyErrorChecks: Sized {
+    fn map_err<F, O>(self, _: O) -> core::result::Result<Self, F>
+    where
+        O: Fn(Self) -> F,
+    {
+        Ok(self)
+    }
+}
+
+impl DummyErrorChecks for u16 {}
+
+impl DummyErrorChecks for u8 {}
+
+impl DummyErrorChecks for bool {}
+
 /// This macro expects a struct as a parameter (attributes are fine) and then,
 /// first, defines the exact same struct. Afterwards, it automatically impl
 /// getters (and setters) for the fields where there was "get" (and "set")
@@ -176,6 +200,7 @@ macro_rules! make_accessors {(
             $(
               paste! {
                   #[inline]
+                  #[allow(dead_code)]
                   $setter_vis
                   fn [<set_ $field_name>] (self: &'_ mut Self, value: $field_setter_user_ty) {
                       self.$field_name.set1(value)
@@ -184,14 +209,31 @@ macro_rules! make_accessors {(
                   #[inline]
                   #[must_use]
                   $setter_vis
-                  fn [<with_ $field_name>]<'a>(self: &mut Self, value: $field_setter_user_ty) -> &mut Self {
-                      let result = self;
+                  fn [<with_ $field_name>]<'a>(self: Self, value: $field_setter_user_ty) -> Self {
+                      let mut result = self;
                       result.$field_name.set1(value);
                       result
                   }
               }
             )?
         )?)*
+    }
+    // for serde
+    paste::paste!{
+        #[doc(hidden)]
+        #[derive(serde::Serialize, serde::Deserialize)]
+        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+        // Doing remoting automatically would make it impossible for the user to use another one.
+        // Since the config format presumably needs to be
+        // backward-compatible, that wouldn't be such a great idea.
+        //#[serde(remote = "" $StructName)]
+        pub(crate) struct [<Serde $StructName>] {
+            $(
+                $($(
+                    pub $field_name: $field_setter_user_ty,
+                )?)?
+            )*
+        }
     }
 )}
 

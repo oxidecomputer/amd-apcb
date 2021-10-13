@@ -24,7 +24,9 @@ pre = "0.2.1"
 static_assertions = "1.1.0"
 strum = "0.23"
 strum_macros = "0.23.1"
-zerocopy = "0.6"
+zerocopy = {git = "ssh://git@github.com/oxidecomputer/zerocopy-fork.git", branch = "main"}
+serde = { version = "1.0", features = ["derive"] }
+schemars = "0.8.8"
 
 [features]
 default = []
