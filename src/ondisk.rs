@@ -4781,6 +4781,13 @@ pub enum FchConsoleOutSuperIoType {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum FchConsoleSerialPort {
+    SuperIo = 0,
+    Uart0Mmio = 1,
+    Uart1Mmio = 2,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum DfToggle {
     Disabled = 0,
     Enabled = 1,
@@ -5391,6 +5398,8 @@ make_token_accessors! {
 
     // Fch
 
+    fch_console_out_enable(TokenEntryId::Bool, default 0, id 0xddb7_59da) : pub get bool : pub set bool, // TODO: Before using default, fix default.  It's possibly not correct.  FIXME EntryId
+    fch_console_out_serial_port(TokenEntryId::Byte, default 0, id 0xfff9_f34d) : pub get FchConsoleSerialPort : pub set FchConsoleSerialPort,
     fch_smbus_speed(TokenEntryId::Byte, default 42, id 0x2447_3329) : pub get FchSmbusSpeed : pub set FchSmbusSpeed,
     fch_rom3_base_high(TokenEntryId::DWord, default 0, id 0x3e7d_5274) : pub get u32 : pub set u32,
     FchGppClkMap(TokenEntryId::Word, default 0xffff, id 0xcd7e_6983), // u16; bitfield; GppAllClkForceOn; Auto; S0Gpp0ClkOff; ...; S1Gpp4ClkOff
