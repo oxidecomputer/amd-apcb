@@ -779,6 +779,13 @@ mod tests {
                 PriorityLevels::from_level(PriorityLevel::Normal),
             )
             .unwrap();
+        let mut tokens = apcb
+            .tokens_mut(
+                0,
+                BoardInstances::from_instance(0).unwrap(),
+                PriorityLevels::from_level(PriorityLevel::Normal),
+            )
+            .unwrap();
         assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::_4800Baud);
         tokens
             .set_abl_serial_baud_rate(BaudRate::_9600Baud)

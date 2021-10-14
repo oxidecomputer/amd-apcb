@@ -7,8 +7,8 @@ use crate::ondisk::PriorityLevels;
 use crate::types::Error;
 use crate::types::Result;
 
-pub struct TokensMut<'a> {
-    pub(crate) apcb: &'a mut Apcb<'a>,
+pub struct TokensMut<'a, 'b> {
+    pub(crate) apcb: &'b mut Apcb<'a>,
     pub(crate) instance_id: u16,
     pub(crate) board_instance_mask: BoardInstances,
     pub(crate) priority_mask: PriorityLevels,
@@ -20,9 +20,9 @@ pub struct Tokens<'a> {
     //pub(crate) priority_mask: PriorityLevels,
 }
 
-impl<'a> TokensMut<'a> {
+impl<'a, 'b> TokensMut<'a, 'b> {
     pub(crate) fn new(
-        apcb: &'a mut Apcb<'a>,
+        apcb: &'b mut Apcb<'a>,
         instance_id: u16,
         board_instance_mask: BoardInstances,
         priority_mask: PriorityLevels,
@@ -92,7 +92,7 @@ macro_rules! make_token_accessors {(
                 }
             }
             }
-            impl<'a> TokensMut<'a> {
+            impl<'a, 'b> TokensMut<'a, 'b> {
             #[inline]
             $getter_vis
             fn $field_name (self: &'_ Self)

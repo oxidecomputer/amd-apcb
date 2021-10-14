@@ -1119,12 +1119,12 @@ impl<'a> Apcb<'a> {
     /// PRIORITY_MASK is used if the entry needs to be created.
     /// The proxy takes care of creating the group, entry and token as
     /// necessary.  It does not delete stuff.
-    pub fn tokens_mut(
-        &'a mut self,
+    pub fn tokens_mut<'b>(
+        &'b mut self,
         instance_id: u16,
         board_instance_mask: BoardInstances,
         priority_mask: PriorityLevels,
-    ) -> Result<TokensMut<'a>> {
+    ) -> Result<TokensMut<'a, 'b>> {
         TokensMut::new(self, instance_id, board_instance_mask, priority_mask)
     }
     /// Constructs a attribute accessor proxy for the given combination of
@@ -1133,7 +1133,7 @@ impl<'a> Apcb<'a> {
         &'a self,
         instance_id: u16,
         board_instance_mask: BoardInstances,
-    ) -> Result<Tokens<'a>> {
+    ) -> Result<Tokens<'_>> {
         Tokens::new(self, instance_id, board_instance_mask)
     }
 }
