@@ -13,8 +13,8 @@ pub struct TokensMut<'a, 'b> {
     pub(crate) board_instance_mask: BoardInstances,
     pub(crate) priority_mask: PriorityLevels,
 }
-pub struct Tokens<'a> {
-    pub(crate) apcb: &'a Apcb<'a>,
+pub struct Tokens<'a, 'b> {
+    pub(crate) apcb: &'b Apcb<'a>,
     pub(crate) instance_id: u16,
     pub(crate) board_instance_mask: BoardInstances,
     //pub(crate) priority_mask: PriorityLevels,
@@ -43,9 +43,9 @@ impl<'a, 'b> TokensMut<'a, 'b> {
     }
 }
 
-impl<'a> Tokens<'a> {
+impl<'a, 'b> Tokens<'a, 'b> {
     pub(crate) fn new(
-        apcb: &'a Apcb<'a>,
+        apcb: &'b Apcb<'a>,
         instance_id: u16,
         board_instance_mask: BoardInstances,
     ) -> Result<Self> {
@@ -71,7 +71,7 @@ macro_rules! make_token_accessors {(
 ) => (
     $(
         $(
-            impl<'a> Tokens<'a> {
+            impl<'a, 'b> Tokens<'a, 'b> {
             #[inline]
             $getter_vis
             fn $field_name (self: &'_ Self)

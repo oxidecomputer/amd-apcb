@@ -1129,11 +1129,11 @@ impl<'a> Apcb<'a> {
     }
     /// Constructs a attribute accessor proxy for the given combination of
     /// (INSTANCE_ID, BOARD_INSTANCE_MASK).  ENTRY_ID is inferred on access.
-    pub fn tokens(
-        &'a self,
+    pub fn tokens<'b>(
+        &'b self,
         instance_id: u16,
         board_instance_mask: BoardInstances,
-    ) -> Result<Tokens<'_>> {
+    ) -> Result<Tokens<'a, 'b>> {
         Tokens::new(self, instance_id, board_instance_mask)
     }
 }
