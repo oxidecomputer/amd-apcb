@@ -1378,9 +1378,6 @@ pub mod memory {
     }
 
     impl DimmInfoSmbusElement {
-        pub fn new() -> Result<Self> {
-            Self::default()
-        }
         pub fn new_slot(
             socket_id: u8,
             channel_id: u8,
