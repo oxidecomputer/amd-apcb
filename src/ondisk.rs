@@ -1560,9 +1560,9 @@ pub mod memory {
 
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     pub enum PortSize {
-        Size8Bit = 1,
-        Size16Bit = 2,
-        Size32Bit = 4,
+        _8Bit = 1,
+        _16Bit = 2,
+        _32Bit = 4,
     }
 
     make_accessors! {
