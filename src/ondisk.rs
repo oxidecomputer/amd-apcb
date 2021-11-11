@@ -12,7 +12,7 @@ use crate::types::Result;
 use byteorder::LittleEndian;
 use core::cmp::Ordering;
 use core::convert::TryInto;
-use core::mem::{replace, size_of};
+use core::mem::{take, size_of};
 use modular_bitfield::prelude::*;
 use num_derive::FromPrimitive;
 use num_derive::ToPrimitive;
@@ -68,7 +68,7 @@ pub trait HeaderWithTail {
 pub fn take_header_from_collection_mut<'a, T: Sized + FromBytes + AsBytes>(
     buf: &mut &'a mut [u8],
 ) -> Option<&'a mut T> {
-    let xbuf = replace(&mut *buf, &mut []);
+    let xbuf = take(&mut *buf);
     match LayoutVerified::<_, T>::new_from_prefix(xbuf) {
         Some((item, xbuf)) => {
             *buf = xbuf;
@@ -88,7 +88,7 @@ pub fn take_body_from_collection_mut<'a>(
     size: usize,
     alignment: usize,
 ) -> Option<&'a mut [u8]> {
-    let xbuf = replace(&mut *buf, &mut []);
+    let xbuf = take(&mut *buf);
     if xbuf.len() >= size {
         let (item, xbuf) = xbuf.split_at_mut(size);
         if size % alignment != 0 && xbuf.len() >= alignment - (size % alignment)
@@ -110,7 +110,7 @@ pub fn take_body_from_collection_mut<'a>(
 pub fn take_header_from_collection<'a, T: Sized + FromBytes>(
     buf: &mut &'a [u8],
 ) -> Option<&'a T> {
-    let xbuf = replace(&mut *buf, &[]);
+    let xbuf = take(&mut *buf);
     match LayoutVerified::<_, T>::new_from_prefix(xbuf) {
         Some((item, xbuf)) => {
             *buf = xbuf;
@@ -130,7 +130,7 @@ pub fn take_body_from_collection<'a>(
     size: usize,
     alignment: usize,
 ) -> Option<&'a [u8]> {
-    let xbuf = replace(&mut *buf, &[]);
+    let xbuf = take(&mut *buf);
     if xbuf.len() >= size {
         let (item, xbuf) = xbuf.split_at(size);
         if size % alignment != 0 && xbuf.len() >= alignment - (size % alignment)
@@ -1378,6 +1378,9 @@ pub mod memory {
     }
 
     impl DimmInfoSmbusElement {
+        pub fn new() -> Result<Self> {
+            Self::default()
+        }
         pub fn new_slot(
             socket_id: u8,
             channel_id: u8,
@@ -4135,6 +4138,12 @@ pub mod memory {
                         Self {
                             type_: 0xfeef.into(),
                         }
+                    }
+                }
+
+                impl Terminator {
+                    pub fn new() -> Self {
+                        Self::default()
                     }
                 }
 
