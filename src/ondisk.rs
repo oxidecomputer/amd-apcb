@@ -1765,6 +1765,7 @@ pub mod memory {
     }
     impl_bitfield_primitive_conversion!(DimmsPerChannelSelector, 0b1111, u32);
 
+    #[derive(Clone, Copy)]
     pub enum DimmsPerChannel {
         NoSlot,   // 0xf0
         DontCare, // 0xff
