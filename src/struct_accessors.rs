@@ -63,6 +63,15 @@ impl Getter<Result<bool>> for BU8 {
     }
 }
 
+impl From<bool> for BU8 {
+    fn from(value: bool) -> Self {
+        match value {
+            true => Self(1),
+            false => Self(0),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, FromBytes, AsBytes, Clone, Copy)]
 #[repr(C, packed)]
 pub(crate) struct BLU16(pub(crate) U16<LittleEndian>);
