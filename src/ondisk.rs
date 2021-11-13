@@ -2865,6 +2865,15 @@ pub mod memory {
             let x = self.dimm_rank_bitmap.get();
             self.dimm_rank_bitmap.set((x & !0xF0) | (value << 4));
         }
+        pub fn dimm2_rank(&self) -> Result<Ddr4DimmRanks> {
+            Ddr4DimmRanks::from_u32((self.dimm_rank_bitmap.get() >> 8) & 15)
+                .ok_or(Error::EntryTypeMismatch)
+        }
+        pub fn set_dimm2_rank(&mut self, value: Ddr4DimmRanks) {
+            let value = value.to_u32().unwrap();
+            let x = self.dimm_rank_bitmap.get();
+            self.dimm_rank_bitmap.set((x & 0xFF) | (value << 8));
+        }
     }
 
     impl Default for Ddr4OdtPatElement {
