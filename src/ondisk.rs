@@ -3368,6 +3368,17 @@ pub mod memory {
                         }
                     }
                 }
+                impl MaxDimmsPerChannel {
+                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, value: u8) -> Result<Self> {
+                        Ok(Self {
+                            sockets: sockets.to_u8().unwrap(),
+                            channels: channels.to_u8().unwrap(),
+                            dimms: dimms.to_u8().unwrap(),
+                            value,
+                            .. Self::default()
+                        })
+                    }
+                }
 
                 make_accessors! {
                     #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
