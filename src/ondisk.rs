@@ -3378,8 +3378,7 @@ pub mod memory {
                         sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
                         channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
                         dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "all"
-                        /// See BKDG.  Example: index i = M\[B,A\]_CLK_H/L\[i\]; value = mask of which CS are connected (CS0 = 1 << 0, CS1 = 1 << 1, CS2 = 1 << 2, CS3 = 1 << 3).
-                        pub connections: [u8; 8], // index: memory clock pin; value: mask for connected CS pins on DIMM
+                        pub connections: [u8; 8], // index: memory clock pin; value: Connected CS pin on DIMM
                     }
                 }
                 impl_EntryCompatible!(MemclkMap, 7, 11);
@@ -3396,14 +3395,14 @@ pub mod memory {
                     }
                 }
                 impl MemclkMap {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, connections: [u8; 8]) -> Self {
-                        Self {
+                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, connections: [u8; 8]) -> Result<Self> {
+                        Ok(Self {
                             sockets: sockets.to_u8().unwrap(),
                             channels: channels.to_u8().unwrap(),
                             dimms: dimms.to_u8().unwrap(),
                             connections,
                             ..Self::default()
-                        }
+                        })
                     }
                 }
 
