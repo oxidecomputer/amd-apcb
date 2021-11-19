@@ -3579,8 +3579,8 @@ pub mod memory {
                         type_: u8,
                         payload_size: u8,
                         sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds>, // Note: must always be "all" here
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "all" here
+                        channels: u8 : pub get Result<ChannelIds>, // Note: must always be "any" here
+                        dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "any" here
                         technology_type: U32<LittleEndian> : pub get Result<MemTechnologyType> : pub set MemTechnologyType,
                     }
                 }
@@ -3598,12 +3598,12 @@ pub mod memory {
                     }
                 }
                 impl MemTechnology {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, technology_type: u32) -> Self {
+                    pub fn new(sockets: SocketIds, technology_type: MemTechnologyType) -> Self {
                         Self {
                             sockets: sockets.to_u8().unwrap(),
-                            channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
-                            technology_type: technology_type.into(),
+                            channels: ChannelIds::Any.to_u8().unwrap(),
+                            dimms: DimmSlots::Any.to_u8().unwrap(),
+                            technology_type: (technology_type as u32).into(),
                             ..Self::default()
                         }
                     }
