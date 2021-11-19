@@ -3529,7 +3529,7 @@ pub mod memory {
                         payload_size: u8,
                         sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
                         channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "all"
+                        dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "Any"
                         value: u8,
                     }
                 }
@@ -3547,14 +3547,14 @@ pub mod memory {
                     }
                 }
                 impl MaxCsPerChannel {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, value: u8) -> Self {
-                        Self {
+                    pub fn new(sockets: SocketIds, channels: ChannelIds, value: u8) -> Result<Self> {
+                        Ok(Self {
                             sockets: sockets.to_u8().unwrap(),
                             channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
+                            dimms:  DimmSlots::Any.to_u8().unwrap(),
                             value,
                             ..Self::default()
-                        }
+                        })
                     }
                 }
 
