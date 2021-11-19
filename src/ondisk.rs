@@ -2923,6 +2923,18 @@ pub mod memory {
         }
     }
 
+    impl Ddr4OdtPatElement {
+        pub fn new(dimm_rank_bitmaps: Ddr4OdtPatDimmRankBitmaps, cs0_odt_pattern: OdtPatPattern, cs1_odt_pattern : OdtPatPattern, cs2_odt_pattern: OdtPatPattern, cs3_odt_pattern: OdtPatPattern) -> Self {
+            Self {
+                dimm_rank_bitmaps: dimm_rank_bitmaps.to_u32().unwrap().into(),
+                cs0_odt_pattern: cs0_odt_pattern.to_u32().unwrap().into(),
+                cs1_odt_pattern: cs1_odt_pattern.to_u32().unwrap().into(),
+                cs2_odt_pattern: cs2_odt_pattern.to_u32().unwrap().into(),
+                cs3_odt_pattern: cs3_odt_pattern.to_u32().unwrap().into(),
+            }
+        }
+    }
+
     impl EntryCompatible for Ddr4OdtPatElement {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
@@ -2975,6 +2987,17 @@ pub mod memory {
                 cs1_odt_pattern: 0.into(),
                 cs2_odt_pattern: 0.into(),
                 cs3_odt_pattern: 0.into(),
+            }
+        }
+    }
+    impl LrdimmDdr4OdtPatElement {
+        pub fn new(dimm_rank_bitmaps: Ddr4OdtPatDimmRankBitmaps, cs0_odt_pattern: OdtPatPattern, cs1_odt_pattern : OdtPatPattern, cs2_odt_pattern: OdtPatPattern, cs3_odt_pattern: OdtPatPattern) -> Self {
+            Self {
+                dimm_rank_bitmaps: dimm_rank_bitmaps.to_u32().unwrap().into(),
+                cs0_odt_pattern: cs0_odt_pattern.to_u32().unwrap().into(),
+                cs1_odt_pattern: cs1_odt_pattern.to_u32().unwrap().into(),
+                cs2_odt_pattern: cs2_odt_pattern.to_u32().unwrap().into(),
+                cs3_odt_pattern: cs3_odt_pattern.to_u32().unwrap().into(),
             }
         }
     }
