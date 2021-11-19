@@ -3413,8 +3413,8 @@ pub mod memory {
                         type_: u8,
                         payload_size: u8,
                         sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds>,  // Note: must always be "all"
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "all" here
+                        channels: u8 : pub get Result<ChannelIds>,  // Note: must always be "any"
+                        dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "any" here
                         value: u8 : pub get Result<u8> : pub set u8,
                     }
                 }
