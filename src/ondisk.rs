@@ -2857,7 +2857,11 @@ pub mod memory {
                 }
             }
         }
-
+        impl $struct_name {
+            pub fn new() -> Self {
+                Self::default()
+            }
+        }
     )}
 
     define_ErrorOutControl!(ErrorOutControl116, 3, 1); // Milan
