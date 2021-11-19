@@ -2863,15 +2863,6 @@ pub mod memory {
     define_ErrorOutControl!(ErrorOutControl116, 3, 1); // Milan
     define_ErrorOutControl!(ErrorOutControl112, 0, 0);
 
-    #[bitfield(bits = 4)]
-    #[derive(Clone, Copy, BitfieldSpecifier)]
-    pub struct Ddr4OdtPatDimmRankBitmap {
-        pub unspecified: B1,
-        pub single_rank: B1,
-        pub double_rank: B1,
-        #[skip] __: B1,
-    }
-
     #[bitfield(bits = 32)]
     #[repr(u32)]
     #[derive(Clone, Copy, BitfieldSpecifier)]
