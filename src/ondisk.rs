@@ -3271,7 +3271,7 @@ pub mod memory {
                         sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
                         channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
                         dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
-                        /// index i = CPU package's clock enable (CKE) pin, value = memory rank's CKE pin mask
+                        /// index i = CPU package's clock enable (CKE) pin, value = memory rank's CKE pin
                         pub connections: [u8; 4],
                     }
                 }
@@ -3286,6 +3286,17 @@ pub mod memory {
                             dimms: DimmSlots::Any.to_u8().unwrap(),
                             connections: [0; 4], // probably invalid
                         }
+                    }
+                }
+                impl CkeTristateMap {
+                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, connections: [u8; 4]) -> Result<Self> {
+                        Ok(Self {
+                            sockets: sockets.to_u8().unwrap(),
+                            channels: channels.to_u8().unwrap(),
+                            dimms: dimms.to_u8().unwrap(),
+                            connections,
+                            .. Self::default()
+                        })
                     }
                 }
 
