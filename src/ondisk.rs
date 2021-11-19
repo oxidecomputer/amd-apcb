@@ -3395,11 +3395,11 @@ pub mod memory {
                     }
                 }
                 impl MemclkMap {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, connections: [u8; 8]) -> Result<Self> {
+                    pub fn new(sockets: SocketIds, channels: ChannelIds, connections: [u8; 8]) -> Result<Self> {
                         Ok(Self {
                             sockets: sockets.to_u8().unwrap(),
                             channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
+                            dimms: DimmSlots::Any.to_u8().unwrap(),
                             connections,
                             ..Self::default()
                         })
