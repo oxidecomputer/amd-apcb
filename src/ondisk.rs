@@ -3432,11 +3432,11 @@ pub mod memory {
                     }
                 }
                 impl MaxChannelsPerSocket {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, value: u8) -> Result<Self> {
+                    pub fn new(value: u8) -> Result<Self> {
                         Ok(Self {
-                            sockets: sockets.to_u8().unwrap(),
-                            channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
+                            sockets: SocketIds::ALL.to_u8().unwrap(),
+                            channels: ChannelIds::Any.to_u8().unwrap(),
+                            dimms: DimmSlots::Any.to_u8().unwrap(),
                             value,
                             ..Self::default()
                         })
