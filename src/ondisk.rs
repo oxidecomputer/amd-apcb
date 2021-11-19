@@ -3325,7 +3325,7 @@ pub mod memory {
                         sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
                         channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
                         dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
-                        /// index i = CPU package CS pin (MA_CS_L\[i\]), value = memory rank's CS pin mask
+                        /// index i = CPU package CS pin (MA_CS_L\[i\]), value = memory rank's CS pin
                         pub connections: [u8; 8],
                     }
                 }
@@ -3340,6 +3340,17 @@ pub mod memory {
                             dimms: DimmSlots::Any.to_u8().unwrap(),
                             connections: [0; 8], // probably invalid
                         }
+                    }
+                }
+                impl CsTristateMap {
+                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, connections: [u8; 8]) -> Result<Self> {
+                        Ok(Self {
+                            sockets: sockets.to_u8().unwrap(),
+                            channels: channels.to_u8().unwrap(),
+                            dimms: dimms.to_u8().unwrap(),
+                            connections,
+                            .. Self::default()
+                        })
                     }
                 }
 
