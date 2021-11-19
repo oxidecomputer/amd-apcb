@@ -1665,7 +1665,7 @@ pub mod memory {
     impl_bitfield_primitive_conversion!(Ddr4DimmRanks, 0b1111, u32);
 
     #[bitfield(bits = 4)]
-    #[derive(Clone, Copy, PartialEq)]
+    #[derive(Clone, Copy, PartialEq, BitfieldSpecifier)]
     pub struct LrdimmDdr4DimmRanks {
         pub unpopulated: bool,
         pub lr: bool,
@@ -2938,21 +2938,13 @@ pub mod memory {
         }
     }
 
-    #[bitfield(bits = 4)]
-    #[derive(Clone, Copy, BitfieldSpecifier)]
-    pub struct LrdimmDdr4OdtPatDimmRankBitmap {
-        pub unspecified: B1,
-        pub lrdimm: B1,
-        #[skip] __: B2,
-    }
-
     #[bitfield(bits = 32)]
     #[repr(u32)]
     #[derive(Clone, Copy, BitfieldSpecifier)]
     pub struct LrdimmDdr4OdtPatDimmRankBitmaps {
-        pub dimm0: LrdimmDdr4OdtPatDimmRankBitmap, // @0
-        pub dimm1: LrdimmDdr4OdtPatDimmRankBitmap, // @4
-        pub dimm2: LrdimmDdr4OdtPatDimmRankBitmap, // @8
+        pub dimm0: LrdimmDdr4DimmRanks, // @bit 0
+        pub dimm1: LrdimmDdr4DimmRanks, // @bit 4
+        pub dimm2: LrdimmDdr4DimmRanks, // @bit 8
         #[skip] __: B20,
     }
 
