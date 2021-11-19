@@ -1639,29 +1639,54 @@ pub mod memory {
         }
     }
 
-    #[bitfield(bits = 32)]
-    #[repr(u32)]
-    #[derive(Clone, Copy, PartialEq)]
+    #[bitfield(bits = 4)]
+    #[derive(Clone, Copy, PartialEq, BitfieldSpecifier)]
     pub struct Ddr4DimmRanks {
         pub unpopulated: bool,
         pub single_rank: bool,
         pub dual_rank: bool,
         pub quad_rank: bool,
-        #[skip]
-        __: B28,
+    }
+
+    impl From<Ddr4DimmRanks> for u32 {
+        fn from(source: Ddr4DimmRanks) -> u32 {
+           let bytes = source.into_bytes();
+           bytes[0] as u32
+        }
+    }
+
+    impl From<u32> for Ddr4DimmRanks {
+        fn from(source: u32) -> Ddr4DimmRanks {
+            assert!(source <= 0xFF);
+            Ddr4DimmRanks::from_bytes([source as u8])
+        }
     }
 
     impl_bitfield_primitive_conversion!(Ddr4DimmRanks, 0b1111, u32);
 
-    #[bitfield(bits = 32)]
-    #[repr(u32)]
+    #[bitfield(bits = 4)]
     #[derive(Clone, Copy, PartialEq)]
     pub struct LrdimmDdr4DimmRanks {
         pub unpopulated: bool,
         pub lr: bool,
         #[skip]
-        __: B30,
+        __: B2,
     }
+
+    impl From<LrdimmDdr4DimmRanks> for u32 {
+        fn from(source: LrdimmDdr4DimmRanks) -> u32 {
+           let bytes = source.into_bytes();
+           bytes[0] as u32
+        }
+    }
+
+    impl From<u32> for LrdimmDdr4DimmRanks {
+        fn from(source: u32) -> LrdimmDdr4DimmRanks {
+            assert!(source <= 0xFF);
+            LrdimmDdr4DimmRanks::from_bytes([source as u8])
+        }
+    }
+
     impl_bitfield_primitive_conversion!(LrdimmDdr4DimmRanks, 0b11, u32);
 
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
