@@ -3508,13 +3508,13 @@ pub mod memory {
                     }
                 }
                 impl MemBusSpeed {
-                    pub fn new(sockets: SocketIds, channels: ChannelIds, dimms: DimmSlots, timing_mode: u32, bus_speed: u32) -> Self {
+                    pub fn new(sockets: SocketIds, channels: ChannelIds, timing_mode: TimingMode, bus_speed: MemBusSpeedType) -> Self {
                         Self {
                             sockets: sockets.to_u8().unwrap(),
                             channels: channels.to_u8().unwrap(),
-                            dimms: dimms.to_u8().unwrap(),
-                            timing_mode: timing_mode.into(),
-                            bus_speed: bus_speed.into(),
+                            dimms: DimmSlots::Any.to_u8().unwrap(),
+                            timing_mode: (timing_mode as u32).into(),
+                            bus_speed: (bus_speed as u32).into(),
                             ..Self::default()
                         }
                     }
