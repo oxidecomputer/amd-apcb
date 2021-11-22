@@ -2885,24 +2885,24 @@ pub mod memory {
     #[bitfield(bits = 32)]
     #[repr(u32)]
     #[derive(Clone, Copy)]
-    pub struct OdtPatPattern {
+    pub struct OdtPatPatterns {
         pub reading_pattern: B4, // @0 // TODO: Meaning
         #[skip] __: B4, // @4
         pub writing_pattern: B4, // @8
         #[skip] __: B20,
     }
 
-    impl_bitfield_primitive_conversion!(OdtPatPattern, 0b1111_0000_1111, u32);
+    impl_bitfield_primitive_conversion!(OdtPatPatterns, 0b1111_0000_1111, u32);
 
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct Ddr4OdtPatElement {
             dimm_rank_bitmaps: U32<LittleEndian> : pub get Result<Ddr4OdtPatDimmRankBitmaps> : pub set Ddr4OdtPatDimmRankBitmaps,
-            cs0_odt_pattern: U32<LittleEndian> : pub get Result<OdtPatPattern> : pub set OdtPatPattern,
-            cs1_odt_pattern: U32<LittleEndian> : pub get Result<OdtPatPattern> : pub set OdtPatPattern,
-            cs2_odt_pattern: U32<LittleEndian> : pub get Result<OdtPatPattern> : pub set OdtPatPattern,
-            cs3_odt_pattern: U32<LittleEndian> : pub get Result<OdtPatPattern> : pub set OdtPatPattern,
+            cs0_odt_patterns: U32<LittleEndian> : pub get Result<OdtPatPatterns> : pub set OdtPatPatterns,
+            cs1_odt_patterns: U32<LittleEndian> : pub get Result<OdtPatPatterns> : pub set OdtPatPatterns,
+            cs2_odt_patterns: U32<LittleEndian> : pub get Result<OdtPatPatterns> : pub set OdtPatPatterns,
+            cs3_odt_patterns: U32<LittleEndian> : pub get Result<OdtPatPatterns> : pub set OdtPatPatterns,
         }
     }
 
@@ -2910,22 +2910,22 @@ pub mod memory {
         fn default() -> Self {
             Self {
                 dimm_rank_bitmaps: (1 | (2 << 4)).into(),
-                cs0_odt_pattern: 0.into(),
-                cs1_odt_pattern: 0.into(),
-                cs2_odt_pattern: 0.into(),
-                cs3_odt_pattern: 0.into(),
+                cs0_odt_patterns: 0.into(),
+                cs1_odt_patterns: 0.into(),
+                cs2_odt_patterns: 0.into(),
+                cs3_odt_patterns: 0.into(),
             }
         }
     }
 
     impl Ddr4OdtPatElement {
-        pub fn new(dimm_rank_bitmaps: Ddr4OdtPatDimmRankBitmaps, cs0_odt_pattern: OdtPatPattern, cs1_odt_pattern : OdtPatPattern, cs2_odt_pattern: OdtPatPattern, cs3_odt_pattern: OdtPatPattern) -> Self {
+        pub fn new(dimm_rank_bitmaps: Ddr4OdtPatDimmRankBitmaps, cs0_odt_patterns: OdtPatPatterns, cs1_odt_patterns: OdtPatPatterns, cs2_odt_patterns: OdtPatPatterns, cs3_odt_patterns: OdtPatPatterns) -> Self {
             Self {
                 dimm_rank_bitmaps: dimm_rank_bitmaps.to_u32().unwrap().into(),
-                cs0_odt_pattern: cs0_odt_pattern.to_u32().unwrap().into(),
-                cs1_odt_pattern: cs1_odt_pattern.to_u32().unwrap().into(),
-                cs2_odt_pattern: cs2_odt_pattern.to_u32().unwrap().into(),
-                cs3_odt_pattern: cs3_odt_pattern.to_u32().unwrap().into(),
+                cs0_odt_patterns: cs0_odt_patterns.to_u32().unwrap().into(),
+                cs1_odt_patterns: cs1_odt_patterns.to_u32().unwrap().into(),
+                cs2_odt_patterns: cs2_odt_patterns.to_u32().unwrap().into(),
+                cs3_odt_patterns: cs3_odt_patterns.to_u32().unwrap().into(),
             }
         }
     }
@@ -2959,10 +2959,10 @@ pub mod memory {
         #[repr(C, packed)]
         pub struct LrdimmDdr4OdtPatElement {
             dimm_rank_bitmaps: U32<LittleEndian> : pub get Result<LrdimmDdr4OdtPatDimmRankBitmaps> : pub set LrdimmDdr4OdtPatDimmRankBitmaps,
-            cs0_odt_pattern: U32<LittleEndian> : pub get Result<OdtPatPattern> : pub set OdtPatPattern,
-            cs1_odt_pattern: U32<LittleEndian> : pub get Result<OdtPatPattern> : pub set OdtPatPattern,
-            cs2_odt_pattern: U32<LittleEndian> : pub get Result<OdtPatPattern> : pub set OdtPatPattern,
-            cs3_odt_pattern: U32<LittleEndian> : pub get Result<OdtPatPattern> : pub set OdtPatPattern,
+            cs0_odt_patterns: U32<LittleEndian> : pub get Result<OdtPatPatterns> : pub set OdtPatPatterns,
+            cs1_odt_patterns: U32<LittleEndian> : pub get Result<OdtPatPatterns> : pub set OdtPatPatterns,
+            cs2_odt_patterns: U32<LittleEndian> : pub get Result<OdtPatPatterns> : pub set OdtPatPatterns,
+            cs3_odt_patterns: U32<LittleEndian> : pub get Result<OdtPatPatterns> : pub set OdtPatPatterns,
         }
     }
 
@@ -2970,21 +2970,21 @@ pub mod memory {
         fn default() -> Self {
             Self {
                 dimm_rank_bitmaps: (1 | (2 << 4)).into(),
-                cs0_odt_pattern: 0.into(),
-                cs1_odt_pattern: 0.into(),
-                cs2_odt_pattern: 0.into(),
-                cs3_odt_pattern: 0.into(),
+                cs0_odt_patterns: 0.into(),
+                cs1_odt_patterns: 0.into(),
+                cs2_odt_patterns: 0.into(),
+                cs3_odt_patterns: 0.into(),
             }
         }
     }
     impl LrdimmDdr4OdtPatElement {
-        pub fn new(dimm_rank_bitmaps: Ddr4OdtPatDimmRankBitmaps, cs0_odt_pattern: OdtPatPattern, cs1_odt_pattern : OdtPatPattern, cs2_odt_pattern: OdtPatPattern, cs3_odt_pattern: OdtPatPattern) -> Self {
+        pub fn new(dimm_rank_bitmaps: Ddr4OdtPatDimmRankBitmaps, cs0_odt_patterns: OdtPatPatterns, cs1_odt_patterns : OdtPatPatterns, cs2_odt_patterns: OdtPatPatterns, cs3_odt_patterns: OdtPatPatterns) -> Self {
             Self {
                 dimm_rank_bitmaps: dimm_rank_bitmaps.to_u32().unwrap().into(),
-                cs0_odt_pattern: cs0_odt_pattern.to_u32().unwrap().into(),
-                cs1_odt_pattern: cs1_odt_pattern.to_u32().unwrap().into(),
-                cs2_odt_pattern: cs2_odt_pattern.to_u32().unwrap().into(),
-                cs3_odt_pattern: cs3_odt_pattern.to_u32().unwrap().into(),
+                cs0_odt_patterns: cs0_odt_patterns.to_u32().unwrap().into(),
+                cs1_odt_patterns: cs1_odt_patterns.to_u32().unwrap().into(),
+                cs2_odt_patterns: cs2_odt_patterns.to_u32().unwrap().into(),
+                cs3_odt_patterns: cs3_odt_patterns.to_u32().unwrap().into(),
             }
         }
     }
