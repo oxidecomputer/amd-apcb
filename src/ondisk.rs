@@ -2980,7 +2980,7 @@ pub mod memory {
         }
     }
     impl LrdimmDdr4OdtPatElement {
-        pub fn new(dimm_rank_bitmaps: Ddr4OdtPatDimmRankBitmaps, cs0_odt_patterns: OdtPatPatterns, cs1_odt_patterns : OdtPatPatterns, cs2_odt_patterns: OdtPatPatterns, cs3_odt_patterns: OdtPatPatterns) -> Self {
+        pub fn new(dimm_rank_bitmaps: LrdimmDdr4OdtPatDimmRankBitmaps, cs0_odt_patterns: OdtPatPatterns, cs1_odt_patterns : OdtPatPatterns, cs2_odt_patterns: OdtPatPatterns, cs3_odt_patterns: OdtPatPatterns) -> Self {
             Self {
                 dimm_rank_bitmaps: dimm_rank_bitmaps.to_u32().unwrap().into(),
                 cs0_odt_patterns: cs0_odt_patterns.to_u32().unwrap().into(),
