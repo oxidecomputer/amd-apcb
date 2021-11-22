@@ -2082,6 +2082,38 @@ pub mod memory {
         }
     }
 
+    impl LrdimmDdr4CadBusElement {
+        pub fn new(
+            dimm_slots_per_channel: u32,
+            ddr_rates: DdrRates,
+            dimm0_ranks: LrdimmDdr4DimmRanks,
+            dimm1_ranks: LrdimmDdr4DimmRanks,
+            address_command_control: u32,
+        ) -> Result<Self> {
+            if address_command_control < 0x100_0000 {
+                Ok(LrdimmDdr4CadBusElement {
+                    dimm_slots_per_channel: dimm_slots_per_channel.into(),
+                    ddr_rates: ddr_rates
+                        .to_u32()
+                        .ok_or(Error::EntryTypeMismatch)?
+                        .into(),
+                    dimm0_ranks: dimm0_ranks
+                        .to_u32()
+                        .ok_or(Error::EntryTypeMismatch)?
+                        .into(),
+                    dimm1_ranks: dimm1_ranks
+                        .to_u32()
+                        .ok_or(Error::EntryTypeMismatch)?
+                        .into(),
+                    address_command_control: address_command_control.into(),
+                    ..Self::default()
+                })
+            } else {
+                Err(Error::EntryTypeMismatch)
+            }
+        }
+    }
+
     impl EntryCompatible for LrdimmDdr4CadBusElement {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
@@ -2426,6 +2458,51 @@ pub mod memory {
         }
     }
 
+    impl LrdimmDdr4DataBusElement {
+        pub fn new(
+            dimm_slots_per_channel: u32,
+            ddr_rates: DdrRates,
+            dimm0_ranks: LrdimmDdr4DimmRanks,
+            dimm1_ranks: LrdimmDdr4DimmRanks,
+            rtt_nom: RttNom,
+            rtt_wr: RttWr,
+            rtt_park: RttPark,
+            pmu_phy_vref: u32,
+            vref_dq: VrefDq,
+        ) -> Result<Self> {
+            Ok(Self {
+                dimm_slots_per_channel: dimm_slots_per_channel.into(),
+                ddr_rates: ddr_rates
+                    .to_u32()
+                    .ok_or(Error::EntryTypeMismatch)?
+                    .into(),
+                dimm0_ranks: dimm0_ranks
+                    .to_u32()
+                    .ok_or(Error::EntryTypeMismatch)?
+                    .into(),
+                dimm1_ranks: dimm1_ranks
+                    .to_u32()
+                    .ok_or(Error::EntryTypeMismatch)?
+                    .into(),
+                rtt_nom: rtt_nom
+                    .to_u32()
+                    .ok_or(Error::EntryTypeMismatch)?
+                    .into(),
+                rtt_wr: rtt_wr.to_u32().ok_or(Error::EntryTypeMismatch)?.into(),
+                rtt_park: rtt_park
+                    .to_u32()
+                    .ok_or(Error::EntryTypeMismatch)?
+                    .into(),
+                pmu_phy_vref: pmu_phy_vref.into(),
+                vref_dq: vref_dq
+                    .to_u32()
+                    .ok_or(Error::EntryTypeMismatch)?
+                    .into(),
+                ..Self::default()
+            })
+        }
+    }
+
     impl EntryCompatible for LrdimmDdr4DataBusElement {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
@@ -2600,6 +2677,33 @@ pub mod memory {
                 _reserved: 0,
                 conditions: [1.into(), 0.into(), 1.into(), 0.into()],
                 speeds: [1600.into(), 4401.into(), 4401.into()],
+            }
+        }
+    }
+
+    impl LrMaxFreqElement {
+        pub fn new(
+            dimm_slots_per_channel: DimmsPerChannel,
+            dimm_count: u16,
+            v_1_5_count: u16,
+            v_1_35_count: u16,
+            v_1_25_count: u16,
+            speed_0: DdrSpeed,
+        ) -> Self {
+            Self {
+                dimm_slots_per_channel: dimm_slots_per_channel.to_u8().unwrap(),
+                conditions: [
+                    dimm_count.into(),
+                    v_1_5_count.into(),
+                    v_1_35_count.into(),
+                    v_1_25_count.into(),
+                ],
+                speeds: [
+                    speed_0.to_u16().unwrap().into(),
+                    DdrSpeed::UnsupportedMilan.to_u16().unwrap().into(),
+                    DdrSpeed::UnsupportedMilan.to_u16().unwrap().into(),
+                ],
+                ..Self::default()
             }
         }
     }
