@@ -2882,13 +2882,15 @@ pub mod memory {
 
     impl_bitfield_primitive_conversion!(Ddr4OdtPatDimmRankBitmaps, 0b0111_0111_0111, u32);
 
+    type OdtPatPattern = B4; // TODO: Meaning
+
     #[bitfield(bits = 32)]
     #[repr(u32)]
     #[derive(Clone, Copy)]
     pub struct OdtPatPatterns {
-        pub reading_pattern: B4, // @0 // TODO: Meaning
-        #[skip] __: B4, // @4
-        pub writing_pattern: B4, // @8
+        pub reading_pattern: OdtPatPattern, // @bit 0
+        #[skip] __: B4, // @bit 4
+        pub writing_pattern: OdtPatPattern, // @bit 8
         #[skip] __: B20,
     }
 
