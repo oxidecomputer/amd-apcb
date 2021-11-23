@@ -5122,10 +5122,10 @@ pub enum MemControllerPmuTrainDfeDdr4 {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemMbistDataEyeType {
-    Type1dVolate = 0,
-    Type1dTiming = 1,
-    Type2dFullDataEye = 2,
-    TypeWorstCaseMarginOnly = 3,
+    _1dVolate = 0,
+    _1dTiming = 1,
+    _2dFullDataEye = 2,
+    WorstCaseMarginOnly = 3,
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
