@@ -5129,12 +5129,6 @@ pub enum MemMbistDataEyeType {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
-pub enum DfInvertDramMap {
-    Normal = 0,
-    Inverted = 1,
-}
-
-#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum DfXgmiTxEqMode {
     Disabled = 0,
     EnabledByLane = 1,
@@ -5635,7 +5629,7 @@ make_token_accessors! {
     //Df4LinkMaxXgmiSpeed(TokenEntryId::Byte, default ?, id 0x3f30_7cb3),
     df_xgmi_tx_eq_mode(TokenEntryId::Byte, default 0xff, id 0xade7_9549) : pub get DfXgmiTxEqMode : pub set DfXgmiTxEqMode,
     df_cake_crc_threshold_bounds(TokenEntryId::DWord, default 100, id 0x9258_cf45) : pub get DfCakeCrcThresholdBounds : pub set DfCakeCrcThresholdBounds, // default: 0.001%
-    df_invert_dram_map(TokenEntryId::Byte, default 0, id 0x6574_b2c0) : pub get DfInvertDramMap : pub set DfInvertDramMap,
+    df_invert_dram_map(TokenEntryId::Byte, default 0, id 0x6574_b2c0) : pub get DfToggle : pub set DfToggle,
 
     // Dxio
 
