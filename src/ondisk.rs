@@ -2854,9 +2854,10 @@ pub mod memory {
                     },
                 }
             }
-            pub fn with_error_reporting_gpio(&mut self, value: Option<Gpio>) -> &mut Self {
-                self.set_error_reporting_gpio(value);
-                self
+            pub fn with_error_reporting_gpio(self, value: Option<Gpio>) -> Self {
+                let mut result = self;
+                result.set_error_reporting_gpio(value);
+                result
             }
             pub fn power_good_gpio(&self) -> Result<Option<Gpio>> {
                 match self.enable_power_good_gpio {
