@@ -5402,7 +5402,7 @@ impl ToPrimitive for CbsMemPowerDownDelay {
     }
 }
 
-type MemUserTimingMode = memory::platform_specific_override::TimingMode;
+pub type MemUserTimingMode = memory::platform_specific_override::TimingMode;
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemHealBistEnable {
