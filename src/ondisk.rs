@@ -5011,7 +5011,7 @@ pub enum MemHealPprType {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemHealTestSelect {
-    Default = 0,
+    Normal = 0,
     NoVendorTests = 1,
     ForceAllVendorTests = 2,
 }
