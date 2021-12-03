@@ -2598,7 +2598,10 @@ pub mod memory {
         pub fn set_speed(&mut self, value: DdrSpeed) {
             self.speeds[0].set(value.to_u16().unwrap())
         }
+
+        /// Note: unsupported_speed differs between Rome and Milan--so pass UnsupportedRome or UnsupportedMilan here as appropriate.
         pub fn new(
+            unsupported_speed: DdrSpeed,
             dimm_slots_per_channel: DimmsPerChannel,
             dimm_count: u16,
             single_rank_count: u16,
@@ -2616,8 +2619,8 @@ pub mod memory {
                 ],
                 speeds: [
                     speed_0.to_u16().unwrap().into(),
-                    DdrSpeed::UnsupportedMilan.to_u16().unwrap().into(),
-                    DdrSpeed::UnsupportedMilan.to_u16().unwrap().into(),
+                    unsupported_speed.to_u16().unwrap().into(),
+                    unsupported_speed.to_u16().unwrap().into(),
                 ],
                 ..Self::default()
             }
@@ -2682,7 +2685,9 @@ pub mod memory {
     }
 
     impl LrMaxFreqElement {
+        /// Note: unsupported_speed differs between Rome and Milan--so pass UnsupportedRome or UnsupportedMilan here as appropriate.
         pub fn new(
+            unsupported_speed: DdrSpeed,
             dimm_slots_per_channel: DimmsPerChannel,
             dimm_count: u16,
             v_1_5_count: u16,
@@ -2700,8 +2705,8 @@ pub mod memory {
                 ],
                 speeds: [
                     speed_0.to_u16().unwrap().into(),
-                    DdrSpeed::UnsupportedMilan.to_u16().unwrap().into(),
-                    DdrSpeed::UnsupportedMilan.to_u16().unwrap().into(),
+                    unsupported_speed.to_u16().unwrap().into(),
+                    unsupported_speed.to_u16().unwrap().into(),
                 ],
                 ..Self::default()
             }
@@ -2809,7 +2814,7 @@ pub mod memory {
             #[repr(C, packed)]
             pub struct $struct_name {
                 enable_error_reporting: BU8 : pub get Result<bool> : pub set bool,
-                enable_error_reporting_gpio: BU8,
+                enable_error_reporting_gpio: BU8 : pub get Result<bool> : pub set bool, // FIXME: Remove
                 enable_error_reporting_beep_codes: BU8 : pub get Result<bool> : pub set bool,
                 /// Note: Receiver of the error log: Send 0xDEAD5555 to the INPUT_PORT to acknowledge.
                 enable_using_handshake: BU8 : pub get Result<bool> : pub set bool, // otherwise see output_delay
@@ -4955,6 +4960,26 @@ pub enum MemActionOnBistFailure {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemDataPoison {
+    Disabled = 0,
+    Enabled = 1,
+    Auto = 0xff,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemMaxActivityCount {
+    Untested = 0,
+    _700K = 1,
+    _600K = 2,
+    _500K = 3,
+    _400K = 4,
+    _300K = 5,
+    _200K = 6,
+    Unlimited = 8,
+    Auto = 0xff,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemRcwWeakDriveDisable {
     Disabled = 0,
     Enabled = 1,
@@ -5000,6 +5025,25 @@ pub enum DfToggle {
     Disabled = 0,
     Enabled = 1,
     Auto = 3,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemTsmeMode {
+    Disabled = 0,
+    Enabled = 1,
+    // Auto = 0xff, // TODO: Test.
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemNvdimmPowerSource {
+    DeviceManaged = 1,
+    HostManaged = 2,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemControllerWritingCrcMode {
+    Disabled = 0,
+    Enabled = 1,
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
@@ -5066,10 +5110,44 @@ pub enum DfRemapAt1TiB {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum DfXgmiLinkConfig {
+    _2_links_connected = 0,
+    _3_links_connected = 1,
+    _4_links_connected = 2,
+    Auto = 3,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum DfPstateModeSelect {
+    Normal = 0,
+    LimitHighest = 1,
+    LimitAll = 2,
+    Auto = 0xff,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum GnbSmuDfPstateFclkLimit {
+    _1600_Mhz = 0,
+    _1467_Mhz = 1,
+    _1333_MHz = 2,
+    _1200_MHz = 3,
+    _1067_MHz = 4,
+    _933_MHz = 5,
+    _800_MHz = 6,
+    Auto = 0xff,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum SecondPcieLinkSpeed {
     Keep = 0,
     Gen1 = 1,
     Gen2 = 2,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum BmcLinkSpeed {
+    PcieGen1 = 1,
+    PcieGen2 = 2,
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
@@ -5121,6 +5199,43 @@ pub enum MemControllerPmuTrainDfeDdr4 {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemControllerPmuTrainingMode {
+    _1D = 0,
+    _1D_2D_Read_Only = 1,
+    _1D_2D_Write_Only = 2,
+    _1D_2D = 3,
+    Auto = 0xff,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum UmaMode {
+    None = 0,
+    Specified = 1,
+    Auto = 2,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemMbistTest {
+    Disabled = 0,
+    Enabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemMbistAggressorsChannels {
+    Disabled = 0,
+    _1_AggressorsPer2Channels = 1,
+    _3_AggressorsPer4Channels = 3,
+    _7_AggressorsPer8Channels = 7,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemMbistTestMode {
+    PhysicalInterface = 0,
+    DataEye = 1,
+    // Both = , ?
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemMbistDataEyeType {
     _1dVolate = 0,
     _1dTiming = 1,
@@ -5135,6 +5250,22 @@ pub enum DfXgmiTxEqMode {
     EnabledByLink = 2,
     EnabledByLinkAndRxVetting = 3,
     Auto = 0xff,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum BmcGen2TxDeemphasis {
+    Csr = 0,
+    Upstream = 1,
+    Minus_6_dB = 2,
+    Minus_3_5_dB = 3,
+    Disabled = 0xff,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum EccSymbolSize {
+    x4 = 0,
+    x8 = 1,
+    x16 = 2,
 }
 
 // This trait exists so we can impl it for bool; the macro MAKE_TOKEN_ACCESSORS
@@ -5509,6 +5640,7 @@ pub enum MemTrainingHdtControl {
     DetailedDebugMessages = 5,
     CoarseDebugMessages = 10,
     StageCompletionMessages = 200,
+    StageCompletionMessages1 = 201, // FIXME
     // TODO: Seen in the wild: 201
     FirmwareCompletionMessagesOnly = 0xfe,
 }
@@ -5517,6 +5649,72 @@ pub enum MemTrainingHdtControl {
 pub enum PspEnableDebugMode {
     Disabled = 0,
     Enabled = 1,
+}
+
+#[bitfield(bits = 16)]
+#[repr(u16)]
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub struct FchGppClkMapSelection {
+    s0_gpp0_off: B1,
+    s0_gpp1_off: B1,
+    s0_gpp4_off: B1,
+    s0_gpp2_off: B1,
+    s0_gpp3_off: B1,
+    #[skip] __: B3,
+
+    s1_gpp0_off: B1,
+    s1_gpp1_off: B1,
+    s1_gpp4_off: B1,
+    s1_gpp2_off: B1,
+    s1_gpp3_off: B1,
+    #[skip] __: B3,
+}
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum FchGppClkMap {
+    On,
+    Value(FchGppClkMapSelection),
+    Auto,
+}
+impl FromPrimitive for FchGppClkMap {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value < 0x100 {
+            match value {
+                0xffff => Some(Self::Auto),
+                0x0000 => Some(Self::On),
+                x => Some(Self::Value(FchGppClkMapSelection::from_bytes([(value & 0xff) as u8, (value >> 8) as u8]))),
+            }
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
+}
+impl ToPrimitive for FchGppClkMap {
+    fn to_i64(&self) -> Option<i64> {
+        match self {
+            Self::On => Some(0),
+            Self::Value(x) => {
+                let result: u16 = (*x).into();
+                if result == 0xffff || result == 0x0000 {
+                    None
+                } else {
+                    Some(result.try_into().ok()?)
+                }
+            }
+            Self::Auto => Some(0xffff),
+        }
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
 }
 
 make_token_accessors! {
@@ -5528,7 +5726,7 @@ make_token_accessors! {
 
     psp_tp_port(TokenEntryId::Bool, default 1, id 0x0460_abe8) : pub get bool : pub set bool,
     psp_error_display(TokenEntryId::Bool, default 1, id 0xdc33_ff21) : pub get bool : pub set bool,
-    psp_event_log_display(TokenEntryId::Bool, default 0, id 0x0c47_3e1c) : pub get bool : pub set bool, // TODO: Before using default, fix default.  It's possibly not correct.
+    psp_event_log_display(TokenEntryId::Bool, default 0, id 0x0c47_3e1c) : pub get bool : pub set bool,
     psp_stop_on_error(TokenEntryId::Bool, default 0, id 0xe702_4a21) : pub get bool : pub set bool,
     psp_psb_auto_fuse(TokenEntryId::Bool, default 1, id 0x2fcd_70c9) : pub get bool : pub set bool,
     psp_enable_debug_mode(TokenEntryId::Byte, default 0, id 0xd109_1cd0) : pub get PspEnableDebugMode : pub set PspEnableDebugMode,
@@ -5543,7 +5741,7 @@ make_token_accessors! {
     mem_clock_value(TokenEntryId::DWord, default 0xffff_ffff, id 0xcc83_f65f) : pub get MemClockValue : pub set MemClockValue,
     cbs_mem_speed_ddr4(TokenEntryId::Byte, default 0xff, id 0xe060_4ce9) : pub get CbsMemSpeedDdr4 : pub set CbsMemSpeedDdr4,
     mem_enable_bank_swizzle(TokenEntryId::Bool, default 1, id 0x6414_d160) : pub get bool : pub set bool,
-    mem_action_on_bist_failure(TokenEntryId::Byte, default 0, id 0xcbc2_c0dd) : pub get MemActionOnBistFailure : pub set MemActionOnBistFailure,
+    mem_action_on_bist_failure(TokenEntryId::Byte, default 0, id 0xcbc2_c0dd) : pub get MemActionOnBistFailure : pub set MemActionOnBistFailure, // Milan
     mem_rcw_weak_drive_disable(TokenEntryId::Byte, default 1, id 0xa30d_781a) : pub get MemRcwWeakDriveDisable : pub set MemRcwWeakDriveDisable, // FIXME is it u32 ?
 
     mem_user_timing_mode(TokenEntryId::DWord, default 0xff, id 0xfc56_0d7d) : pub get MemUserTimingMode : pub set MemUserTimingMode,
@@ -5575,11 +5773,11 @@ make_token_accessors! {
     mem_sub_urg_ref_lower_bound(TokenEntryId::Byte, default 4, id 0xe756_2ab6) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first)
     mem_controller_pmu_train_ffe_ddr4(TokenEntryId::Byte, default 0xff, id 0x0d46_186d) : pub get MemControllerPmuTrainFfeDdr4 : pub set MemControllerPmuTrainFfeDdr4, // FIXME: is it bool ?
     mem_controller_pmu_train_dfe_ddr4(TokenEntryId::Byte, default 0xff, id 0x36a4_bb5b) : pub get MemControllerPmuTrainDfeDdr4 : pub set MemControllerPmuTrainDfeDdr4, // FIXME: is it bool ?
-    mem_tsme_enable(TokenEntryId::Bool, default 1, id 0xd1fa_6660) : pub get bool : pub set bool, // See Transparent Secure Memory Encryption in PPR
+    mem_tsme_mode(TokenEntryId::Byte, default 1, id 0xd1fa_6660) : pub get MemTsmeMode : pub set MemTsmeMode, // See Transparent Secure Memory Encryption in PPR
     mem_training_hdt_control(TokenEntryId::Byte, default 200, id 0xaf6d_3a6f) : pub get MemTrainingHdtControl : pub set MemTrainingHdtControl, // TODO: Before using default, fix default.  It's possibly not correct.
     mem_mbist_data_eye_type(TokenEntryId::Byte, default 3, id 0x4e2e_dc1b) : pub get MemMbistDataEyeType : pub set MemMbistDataEyeType,
     // Byte just like AMD
-    mem_mbist_data_eye_silent_execution(TokenEntryId::Byte, default 0, id 0x3f74_c7e7) : pub get bool : pub set bool,
+    mem_mbist_data_eye_silent_execution(TokenEntryId::Byte, default 0, id 0x3f74_c7e7) : pub get bool : pub set bool, // Milan
     mem_heal_bist_enable(TokenEntryId::Byte, default 0, id 0xfba2_3a28) : pub get MemHealBistEnable : pub set MemHealBistEnable,
     MemSelfHealBistEnable(TokenEntryId::Byte, default 0, id 0x2c23_924c), // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
     mem_self_heal_bist_timeout(TokenEntryId::DWord, default 1_0000, id 0xbe75_97d4) : pub get u32 : pub set u32, // in ms
@@ -5587,7 +5785,7 @@ make_token_accessors! {
     mem_heal_test_select(TokenEntryId::Byte, default 0, id 0x5908_2cf2) : pub get MemHealTestSelect : pub set MemHealTestSelect,
     mem_heal_ppr_type(TokenEntryId::Byte, default 0, id 0x5418_1a61) : pub get MemHealPprType : pub set MemHealPprType,
     mem_heal_max_bank_fails(TokenEntryId::Byte, default 3, id 0x632e_55d8) : pub get u8 : pub set u8, // per bank
-    mem_ecc_sync_flood(TokenEntryId::Bool, default 0, id 0x88bd_40c2) : pub get bool : pub set bool, // TODO: Before using default, fix default.  It's possibly not correct.
+    mem_ecc_sync_flood(TokenEntryId::Bool, default 0, id 0x88bd_40c2) : pub get bool : pub set bool,
     mem_restore_control(TokenEntryId::Bool, default 0, id 0xfedb_01f8) : pub get bool : pub set bool,
     mem_restore_valid_days(TokenEntryId::DWord, default 30, id 0x6bd7_0482) : pub get u32 : pub set u32,
     mem_post_package_repair_enable(TokenEntryId::Bool, default 0, id 0xcdc0_3e4e) : pub get bool : pub set bool,
@@ -5600,20 +5798,21 @@ make_token_accessors! {
 
     // Fch
 
-    fch_console_out_enable(TokenEntryId::Bool, default 0, id 0xddb7_59da) : pub get bool : pub set bool, // TODO: Before using default, fix default.  It's possibly not correct.  FIXME EntryId
+    fch_console_out_mode(TokenEntryId::Byte, default 0, id 0xddb7_59da) : pub get u8 : pub set u8,
+    fch_console_out_basic_enable(TokenEntryId::Byte, default 0, id 0xa0903f98) : pub get u8 : pub set u8, // Rome (Obsolete)
     fch_console_out_serial_port(TokenEntryId::Byte, default 0, id 0xfff9_f34d) : pub get FchConsoleSerialPort : pub set FchConsoleSerialPort,
     fch_smbus_speed(TokenEntryId::Byte, default 42, id 0x2447_3329) : pub get FchSmbusSpeed : pub set FchSmbusSpeed,
     fch_rom3_base_high(TokenEntryId::DWord, default 0, id 0x3e7d_5274) : pub get u32 : pub set u32,
-    FchGppClkMap(TokenEntryId::Word, default 0xffff, id 0xcd7e_6983), // u16; bitfield; GppAllClkForceOn; Auto; S0Gpp0ClkOff; ...; S1Gpp4ClkOff
-    FchConsoleOutEnable(TokenEntryId::Byte, default 0, id 0xddb7_59da), // TODO: Before using default, fix default.  It's possibly not correct.
+    fch_gpp_clk_map(TokenEntryId::Word, default 0xffff, id 0xcd7e_6983) : pub get FchGppClkMap : pub set FchGppClkMap,
     fch_console_out_super_io_type(TokenEntryId::Byte, default 0, id 0x5c8d_6e82) : pub get FchConsoleOutSuperIoType : pub set FchConsoleOutSuperIoType, // init mode
 
     // Df
 
     df_group_d_platform(TokenEntryId::Bool, default 0, id 0x6831_8493) : pub get bool : pub set bool, // [F17M30] needs it to be true
     df_ext_ip_sync_flood_propagation(TokenEntryId::Byte, default 0, id 0xfffe_0b07) : pub get DfExtIpSyncFloodPropagation : pub set DfExtIpSyncFloodPropagation,
-    df_sync_flood_propagation(TokenEntryId::Byte, default 0, id 0x4963_9134) : pub get DfSyncFloodPropagation : pub set DfSyncFloodPropagation, // enum; 0: allow syncflood propagation; 1: disable syncflood propagation; 0xff: auto
-    df_mem_interleaving(TokenEntryId::Byte, default 7, id 0xce01_87ef) : pub get DfMemInterleaving : pub set DfMemInterleaving,
+    df_sync_flood_propagation(TokenEntryId::Byte, default 0, id 0x4963_9134) : pub get DfSyncFloodPropagation : pub set DfSyncFloodPropagation,
+    //df_mem_interleaving(TokenEntryId::Byte, default 7, id 0xce01_87ef) : pub get DfMemInterleaving : pub set DfMemInterleaving,
+    df_mem_interleaving(TokenEntryId::Byte, default 7, id 0xce0176ef) : pub get DfMemInterleaving : pub set DfMemInterleaving, // Rome
     df_mem_interleaving_size(TokenEntryId::Byte, default 7, id 0x2606_c42e) : pub get DfMemInterleavingSize : pub set DfMemInterleavingSize,
     df_dram_numa_per_socket(TokenEntryId::Byte, default 1, id 0x2cf3_dac9) : pub get DfDramNumaPerSocket : pub set DfDramNumaPerSocket, // TODO: Maybe the default value here should be 7
     df_probe_filter(TokenEntryId::Byte, default 1, id 0x6597_c573) : pub get DfToggle : pub set DfToggle,
@@ -5624,16 +5823,13 @@ make_token_accessors! {
     df_bottom_io(TokenEntryId::Byte, default 0xe0, id 0x8fb9_8529) : pub get u8 : pub set u8, // Where the PCI MMIO hole will start (bits 31 to 24 inclusive)
     df_pci_mmio_size(TokenEntryId::DWord, default 0x1000_0000, id 0x3d9b_7d7b) : pub get u32 : pub set u32,
     df_remap_at_1tib(TokenEntryId::Byte, default 0, id 0x35ee_96f3) : pub get DfRemapAt1TiB : pub set DfRemapAt1TiB,
-    //Df3Xgmi2LinkConfig(TokenEntryId::Byte, default ?, id 0xb0b6_ad3a), // enum; 0: 2link; 1: 3link; 2: 4link
-    //Df3LinkMaxXgmiSpeed(TokenEntryId::Byte, default ?, id 0x53ba_449b),
-    //Df4LinkMaxXgmiSpeed(TokenEntryId::Byte, default ?, id 0x3f30_7cb3),
     df_xgmi_tx_eq_mode(TokenEntryId::Byte, default 0xff, id 0xade7_9549) : pub get DfXgmiTxEqMode : pub set DfXgmiTxEqMode,
     df_cake_crc_threshold_bounds(TokenEntryId::DWord, default 100, id 0x9258_cf45) : pub get DfCakeCrcThresholdBounds : pub set DfCakeCrcThresholdBounds, // default: 0.001%
     df_invert_dram_map(TokenEntryId::Byte, default 0, id 0x6574_b2c0) : pub get DfToggle : pub set DfToggle,
 
     // Dxio
 
-    dxio_vga_api_enable(TokenEntryId::Bool, default 0, id 0xbd5a_a3c6) : pub get bool : pub set bool,
+    dxio_vga_api_enable(TokenEntryId::Bool, default 0, id 0xbd5a_a3c6) : pub get bool : pub set bool, // Milan
     dxio_phy_param_vga(TokenEntryId::DWord, default 0xffff_ffff, id 0xde09_c43b) : pub get DxioPhyParamVga : pub set DxioPhyParamVga,
     dxio_phy_param_pole(TokenEntryId::DWord, default 0xffff_ffff, id 0xb189_447e) : pub get DxioPhyParamPole : pub set DxioPhyParamPole,
     dxio_phy_param_dc(TokenEntryId::DWord, default 0xffff_ffff, id 0x2066_7c30) : pub get DxioPhyParamDc : pub set DxioPhyParamDc,
@@ -5643,10 +5839,152 @@ make_token_accessors! {
 
     configure_second_pcie_link(TokenEntryId::Bool, default 0, id 0x7142_8092) : pub get bool : pub set bool,
     second_pcie_link_speed(TokenEntryId::Byte, default 0, id 0x8723_750f) : pub get SecondPcieLinkSpeed : pub set SecondPcieLinkSpeed,
-    second_pcie_link_max_payload(TokenEntryId::Byte, default 0xff, id 0xe02d_f04b) : pub get SecondPcieLinkMaxPayload : pub set SecondPcieLinkMaxPayload, // TODO: Before using default, fix default.  It's possibly not correct.
-    performance_tracing(TokenEntryId::Bool, default 0, id 0xf27a_10f0) : pub get bool : pub set bool,
+    second_pcie_link_max_payload(TokenEntryId::Byte, default 0xff, id 0xe02d_f04b) : pub get SecondPcieLinkMaxPayload : pub set SecondPcieLinkMaxPayload, // Milan
+    performance_tracing(TokenEntryId::Bool, default 0, id 0xf27a_10f0) : pub get bool : pub set bool, // Milan
     display_pmu_training_results(TokenEntryId::Bool, default 0, id 0x9e36_a9d4) : pub get bool : pub set bool,
-    workload_profile(TokenEntryId::Byte, default 0, id 0x22f4_299f) : pub get WorkloadProfile : pub set WorkloadProfile,
+    workload_profile(TokenEntryId::Byte, default 0, id 0x22f4_299f) : pub get WorkloadProfile : pub set WorkloadProfile, // Milan
+
+    // MBIST for Milan and Rome; defaults wrong!
+
+    mem_mbist_aggressor_static_lane_control(TokenEntryId::Bool, default 0, id 0x77e6f2c9) : pub get bool : pub set bool, // Rome
+    mem_mbist_victim_static_lane_control(TokenEntryId::Bool, default 0, id 0xe1cc135e) : pub get bool : pub set bool, // Rome
+    mem_mbist_worse_cas_granularity(TokenEntryId::Byte, default 0, id 0x23b0b6a1) : pub get u8 : pub set u8, // Rome
+    mem_mbist_read_data_eye_voltage_step(TokenEntryId::Byte, default 0, id 0x35d6a4f8) : pub get u8 : pub set u8, // Rome
+    mem_mbist_aggressor_static_lane_val(TokenEntryId::Byte, default 0, id 0x4474d416) : pub get u8 : pub set u8, // Rome
+    mem_mbist_victim_static_lane_val(TokenEntryId::Byte, default 0, id 0x4d7e0206) : pub get u8 : pub set u8, // Rome
+    mem_mbist_test_mode(TokenEntryId::Byte, default 0, id 0x567a1fc0) : pub get MemMbistTestMode : pub set MemMbistTestMode, // Rome (Obsolete)
+    mem_mbist_aggressor_static_lane_sel_ecc(TokenEntryId::Byte, default 0, id 0x57122e99) : pub get u8 : pub set u8, // Rome
+    mem_mbist_read_data_eye_timing_step(TokenEntryId::Byte, default 0, id 0x58ccd28a) : pub get u8 : pub set u8, // Rome
+    mem_mbist_data_eye_execution_repeat_count(TokenEntryId::Byte, default 0, id 0x8e4bdad7) : pub get u8 : pub set u8, // Rome (Obsolete)
+    mem_mbist_victim_static_lane_sel_ecc(TokenEntryId::Byte, default 0, id 0xa6e92cee) : pub get u8 : pub set u8, // Rome (Obsolete)
+    mem_mbist_pattern_length(TokenEntryId::Byte, default 0, id 0xae7baedd) : pub get u8 : pub set u8, // Rome
+    mem_mbist_halt_on_error(TokenEntryId::Byte, default 0, id 0xb1940f25) : pub get u8 : pub set u8, // Rome (Obsolete)
+    mem_mbist_write_data_eye_voltage_step(TokenEntryId::Byte, default 0, id 0xcda61022) : pub get u8 : pub set u8, // Rome
+    mem_mbist_per_bit_slave_die_report(TokenEntryId::Byte, default 0, id 0xcff56411) : pub get u8 : pub set u8, // Rome
+    mem_mbist_write_data_eye_timing_step(TokenEntryId::Byte, default 0, id 0xd9025142) : pub get u8 : pub set u8, // Rome
+    mem_mbist_aggressors_channels(TokenEntryId::Byte, default 0, id 0xdcd1444a) : pub get MemMbistAggressorsChannels : pub set MemMbistAggressorsChannels, // Rome
+    mem_mbist_test(TokenEntryId::Byte, default 0, id 0xdf5502c8) : pub get MemMbistTest : pub set MemMbistTest, // (obsolete)
+    mem_mbist_pattern_select(TokenEntryId::Byte, default 0, id 0xf527ebf8) : pub get u8 : pub set u8, // Rome
+
+    // Capabilities for Milan and Rome; defaults wrong!
+
+    mem_udimm_capable(TokenEntryId::Bool, default 0, id 0x3cf8a8ec) : pub get bool : pub set bool, // Rome
+    mem_sodimm_capable(TokenEntryId::Bool, default 0, id 0x7c61c187) : pub get bool : pub set bool, // Rome
+    mem_rdimm_capable(TokenEntryId::Bool, default 0, id 0x81726666) : pub get bool : pub set bool, // Rome
+    mem_lrdimm_capable(TokenEntryId::Bool, default 0, id 0x14fbf20) : pub get bool : pub set bool,
+    mem_dimm_type_lpddr3_capable(TokenEntryId::Bool, default 0, id 0xad96aa30) : pub get bool : pub set bool, // Rome
+    mem_dimm_type_ddr3_capable(TokenEntryId::Bool, default 0, id 0x789210c) : pub get bool : pub set bool,
+    mem_quad_rank_capable(TokenEntryId::Bool, default 0, id 0xe6dfd3dc) : pub get bool : pub set bool, // Rome (Obsolete)
+    mem_mbist_aggressor_on(TokenEntryId::Byte, default 0, id 0x32361c4) : pub get bool : pub set bool, // obsolete
+
+    // Unsorted Milan; defaults wrong!
+
+    mem_mode_unganged(TokenEntryId::Bool, default 0, id 0x3ce1180) : pub get bool : pub set bool,
+    gnb_additional_features(TokenEntryId::Bool, default 0, id 0xf4c7789) : pub get bool : pub set bool, // Milan
+    gnb_additional_feature_dsm(TokenEntryId::Bool, default 0, id 0x31a6afad) : pub get bool : pub set bool, // Milan
+    vga_program(TokenEntryId::Bool, default 0, id 0x6570eace) : pub get bool : pub set bool, // Milan
+    nvdimm_n_disable(TokenEntryId::Bool, default 0, id 0x941a92d4) : pub get bool : pub set bool, // mem_disable_nvdimm_n_feature; Milan
+    gnb_additional_feature_l3_performance_bias(TokenEntryId::Bool, default 0, id 0xa003b37a) : pub get bool : pub set bool, // Milan
+    gnb_additional_feature_dsm_detector(TokenEntryId::Bool, default 0, id 0xf5768cee) : pub get bool : pub set bool, // Milan
+
+    mem_override_dimm_spd_max_activity_count(TokenEntryId::Byte, default 0xff, id 0x853cdaa) : pub get MemMaxActivityCount : pub set MemMaxActivityCount,
+    gnb_smu_df_pstate_fclk_limit(TokenEntryId::Byte, default 0xff, id 0xea388ac3) : pub get GnbSmuDfPstateFclkLimit : pub set GnbSmuDfPstateFclkLimit, // Milan
+
+    gnb_off_ramp_stall(TokenEntryId::DWord, default 0, id 0x88b3c0d4) : pub get u32 : pub set u32, // value 0xc8
+    psp_measure_config(TokenEntryId::DWord, default 0, id 0xdd3ad029) : pub get u32 : pub set u32, // Milan; reserved, must be 0
+
+    // Unsorted Milan; obsolete and ungrouped; defaults wrong!
+
+    ecc_symbol_size(TokenEntryId::Word, default 1, id 0x302d5c04) : pub get EccSymbolSize : pub set EccSymbolSize, // (Obsolete)
+    scrub_dram_rate(TokenEntryId::Word, default 0, id 0x9adddd6b) : pub get u16 : pub set u16, // (Obsolete); <= 0x16; or 0xff
+    scrub_l2_rate(TokenEntryId::Word, default 0, id 0x2266c144) : pub get u16 : pub set u16, // (Obsolete); <= 0x16
+    scrub_l3_rate(TokenEntryId::Word, default 0, id 0xc0279ae0) : pub get u16 : pub set u16, // (Obsolete); <= 0x16; maybe 00h disable; maybe otherwise x: (x * 20 ns)
+    scrub_icache_rate(TokenEntryId::Word, default 0, id 0x99639ee4) : pub get u16 : pub set u16, // (Obsolete); <= 0x16
+    scrub_dcache_rate(TokenEntryId::Word, default 0, id 0xb398daa0) : pub get u16 : pub set u16, // (Obsolete); <= 0x16
+    // See for example MCP9843/98243
+    dimm_sensor_config(TokenEntryId::Word, default 0x408, id 0x51e7b610) : pub get u16 : pub set u16, // (Obsolete) DIMM temperature sensor register at address 1
+    dimm_sensor_upper(TokenEntryId::Word, default 80, id 0xb5af557a) : pub get u16 : pub set u16, // (Obsolete); DIMM temperature sensor register at address 2
+    dimm_sensor_lower(TokenEntryId::Word, default 10, id 0xc5ea38a0) : pub get u16 : pub set u16, // (Obsolete); DIMM temperature sensor register at address 3
+    dimm_sensor_critical(TokenEntryId::Word, default 95, id 0x38e9bf5d) : pub get u16 : pub set u16, // (Obsolete); DIMM temperature sensor register at address 4
+    // I doubt that AMD converts those, but the 2 lowest bits usually set up the resolution. 0: 0.5 ºC; 1: 0.25 ºC; 2: 0.125 ºC; 3: 0.0625 ºC; higher resolution is slower.
+    dimm_sensor_resolution(TokenEntryId::Byte, default 0, id 0x831af313) : pub get u8 : pub set u8, // Rome (Obsolete); DIMM temperature sensor register at address 8
+    dimm_3ds_sensor_critical(TokenEntryId::Word, default 0, id 0x16b77f73) : pub get u16 : pub set u16, // value 0x50 // (Obsolete; added in Milan)
+    dimm_3ds_sensor_upper(TokenEntryId::Word, default 0, id 0x2db877e4) : pub get u16 : pub set u16, // value 0x42 // (Obsolete; added in Milan)
+
+    // Unsorted Rome; ungrouped; defaults wrong!
+
+    mem_power_down_mode(TokenEntryId::DWord, default 0, id 0x23dd2705) : pub get u32 : pub set u32, // power_down_mode; Rome
+    mem_uma_size(TokenEntryId::DWord, default 0, id 0x37b1f8cf) : pub get u32 : pub set u32, // uma_size; Rome // FIXME enum
+    mem_uma_alignment(TokenEntryId::DWord, default 0, id 0x57ddf512) : pub get u32 : pub set u32, // value 0xffffc0 // Rome // FIXME enum?
+    pcie_reset_control(TokenEntryId::Bool, default 0, id 0xf7bb3451) : pub get bool : pub set bool, // Rome (Obsolete)
+    pcie_reset_pin_select(TokenEntryId::Byte, default 0, id 0x8c0b2de9) : pub get u8 : pub set u8, // value 2 // Rome; 0..=4; FIXME: enum?
+    pcie_reset_gpio_pin(TokenEntryId::DWord, default 0, id 0x596663ac) : pub get u32 : pub set u32, // value 0xffffffff // pcie_reset_gpio_pin_select; Rome
+    mem_mbist_aggressor_static_lane_sel_i32(TokenEntryId::DWord, default 0, id 0x745218ad) : pub get u32 : pub set u32, // mem_mbist_aggr_static_lane_sel_l32; Rome
+    mem_mbist_victim_static_lane_sel_i32(TokenEntryId::DWord, default 0, id 0x81880d15) : pub get u32 : pub set u32, // value 0 // Rome
+    mem_mbist_victim_static_lane_sel_u32(TokenEntryId::DWord, default 0, id 0xaf669f33) : pub get u32 : pub set u32, // value 0 // Rome
+    cpu_fetch_from_spi_ap_base(TokenEntryId::DWord, default 0, id 0xd403ea0e) : pub get u32 : pub set u32, // value 0xfff00000 // Rome
+    mem_mbist_aggressor_static_lane_sel_u32(TokenEntryId::DWord, default 0, id 0xfac9f48f) : pub get u32 : pub set u32, // value 0 // Rome
+    mem_dram_addresss_command_parity_retry_count(TokenEntryId::Byte, default 0, id 0x3e7c51f8) : pub get u8 : pub set u8, // value 1 // Rome
+    u0xc9e9a1c9(TokenEntryId::Byte, default 0, id 0xc9e9a1c9) : pub get u8 : pub set u8, // value 8 // Rome
+    df_3link_max_xgmi_speed(TokenEntryId::Byte, default 0, id 0x53ba449b) : pub get u8 : pub set u8, // value 0xff // Rome
+    df_4link_max_xgmi_speed(TokenEntryId::Byte, default 0, id 0x3f307cb3) : pub get u8 : pub set u8, // value 0xff //  Rome
+    mem_dram_double_refresh_rate(TokenEntryId::Byte, default 0, id 0x44d40026) : pub get u8 : pub set u8, // value 0 // Rome
+    mem_dram_double_refresh_rate_unused(TokenEntryId::Bool, default 0, id 0x974e8e7c) : pub get bool : pub set bool, // value 0 // Rome (unused)
+    u0x5985083a(TokenEntryId::Byte, default 0, id 0x5985083a) : pub get u8 : pub set u8, // value 0xff // Rome
+    df_pstate_mode_select(TokenEntryId::Byte, default 0xff, id 0xaeb84b12) : pub get DfPstateModeSelect : pub set DfPstateModeSelect, // value 0xff // Rome
+    df_xgmi_config(TokenEntryId::Byte, default 3, id 0xb0b6ad3e) : pub get DfXgmiLinkConfig : pub set DfXgmiLinkConfig, // Rome
+    u0xd155798a(TokenEntryId::Byte, default 0, id 0xd155798a) : pub get u8 : pub set u8, // value 0xff // Rome
+    mem_dqs_training_control(TokenEntryId::Bool, default 0, id 0x3caaa3fa) : pub get bool : pub set bool, // Rome
+    mem_channel_interleaving(TokenEntryId::Bool, default 0, id 0x48254f73) : pub get bool : pub set bool, // Rome
+    mem_pstate(TokenEntryId::Bool, default 0, id 0x56b93947) : pub get bool : pub set bool, // Rome
+    mem_amp(TokenEntryId::Bool, default 0, id 0x592cb3ca) : pub get bool : pub set bool, // value 1 // amp_enable; Rome
+    mem_limit_memory_to_below_1_TiB(TokenEntryId::Bool, default 0, id 0x5e71e6d8) : pub get bool : pub set bool, // value 1 // Rome
+    mem_oc_vddio_control(TokenEntryId::Bool, default 0, id 0x6cd36dbe) : pub get bool : pub set bool, // value 0 // Rome
+    mem_uma_above_4_GiB(TokenEntryId::Bool, default 0, id 0x77e41d2a) : pub get bool : pub set bool, // value 1 // Rome
+    u0x8f84dcb4(TokenEntryId::Bool, default 0, id 0x8f84dcb4) : pub get bool : pub set bool, // value 0 // Rome
+    u0x96176308(TokenEntryId::Bool, default 0, id 0x96176308) : pub get bool : pub set bool, // value 1 // Rome
+    mem_on_die_thermal_sensor(TokenEntryId::Bool, default 0, id 0xaeb3f914) : pub get bool : pub set bool, // odts_en; Rome
+    mem_all_clocks(TokenEntryId::Bool, default 0, id 0xb95e0555) : pub get bool : pub set bool, // mem_all_clocks_on; Rome
+    mem_clear(TokenEntryId::Bool, default 0, id 0xc6acdb37) : pub get bool : pub set bool, // enable_mem_clr; Rome
+    mem_ddr4_force_data_mask_disable(TokenEntryId::Bool, default 0, id 0xd68482b3) : pub get bool : pub set bool, // Rome
+    mem_ecc_redirection(TokenEntryId::Bool, default 0, id 0xdede0e09) : pub get bool : pub set bool, // Rome
+    mem_temp_controlled_extended_refresh(TokenEntryId::Bool, default 0, id 0xf402f423) : pub get bool : pub set bool, // Rome (Obsolete)
+    mem_data_scramble(TokenEntryId::Byte, default 0, id 0x98aca5b4) : pub get u8 : pub set u8, // Rome (Obsolete)
+    u0x190305df(TokenEntryId::Byte, default 0, id 0x190305df) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
+    uma_mode(TokenEntryId::Byte, default 0, id 0x1fb35295) : pub get UmaMode : pub set UmaMode, // value 2 // Rome (Obsolete)
+    mem_nvdimm_power_source(TokenEntryId::Byte, default 0, id 0x286d0075) : pub get MemNvdimmPowerSource : pub set MemNvdimmPowerSource, // value 1 // Rome (Obsolete)
+    mem_data_poison(TokenEntryId::Byte, default 0, id 0x48959473) : pub get MemDataPoison : pub set MemDataPoison, // value 1 // Rome (Obsolete)
+    // See PPR SwCmdThrotCyc
+    sw_cmd_throt_cycles(TokenEntryId::Byte, default 0, id 0xdcec8fcb) : pub get u8 : pub set u8, // value 0 // (Obsolete)
+    odts_cmd_throttle_cycles(TokenEntryId::Byte, default 0, id 0x69318e90) : pub get u8 : pub set u8, // value 0x57 // Rome (Obsolete); TODO: Auto?
+    u0x6c4ccf38(TokenEntryId::Byte, default 0, id 0x6c4ccf38) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
+    mem_dram_vref_range(TokenEntryId::Byte, default 0, id 0xa8769655) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
+    mem_cpu_vref_range(TokenEntryId::Byte, default 0, id 0x7627cb6d) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
+    mem_controller_writing_crc_mode(TokenEntryId::Byte, default 0, id 0x7d1c6e46) : pub get MemControllerWritingCrcMode : pub set MemControllerWritingCrcMode, // value 0 // Rome
+    mem_controller_writing_crc_max_replay(TokenEntryId::Byte, default 0, id 0x6bb1acf9) : pub get u8 : pub set u8, // value 8 // Rome
+    mem_controller_writing_crc_limit(TokenEntryId::Byte, default 0, id 0xc73a7692) : pub get u8 : pub set u8, // 0..=1 // Rome
+    pmu_training_mode(TokenEntryId::Byte, default 0xff, id 0xbd4a6afc) : pub get MemControllerPmuTrainingMode : pub set MemControllerPmuTrainingMode, // Rome (Obsolete)
+    mother_board_type_0(TokenEntryId::Bool, default 0, id 0x536464b) : pub get bool : pub set bool, // value 0
+    mctp_reroute_enable(TokenEntryId::Bool, default 0, id 0x79f2a8d5) : pub get bool : pub set bool, // value 0
+    iohc_mixed_rw_workaround(TokenEntryId::Bool, default 0, id 0xec3faf5a) : pub get bool : pub set bool, // value 0 // FIXME remove?
+    df_sys_storage_at_top_of_mem(TokenEntryId::Byte, default 0, id 0x249e08d5) : pub get u8 : pub set u8, // value 3 // TODO: 0: distributed, 1: consolidated; 0xff: auto // FIXME.
+    u0x28eb57ad(TokenEntryId::Byte, default 0, id 0x28eb57ad) : pub get u8 : pub set u8, // value 0x1e // 0x0E to 0x3E; XXX // FIXME remove?
+
+    // BMC Rome
+
+    bmc_socket(TokenEntryId::Byte, default 0, id 0x846573f9) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
+    bmc_device(TokenEntryId::Byte, default 0, id 0xd5bc5fc9) : pub get u8 : pub set u8, // value 5 // Rome (Obsolete)
+    bmc_function(TokenEntryId::Byte, default 0, id 0x1de4dd61) : pub get u8 : pub set u8, // value 2 // Rome (Obsolete)
+    bmc_start_lane(TokenEntryId::Byte, default 0, id 0xb88d87df) : pub get u8 : pub set u8, // value 0x81 // Rome (Obsolete)
+    bmc_end_lane(TokenEntryId::Byte, default 0, id 0x143f3963) : pub get u8 : pub set u8, // value 0x81 // Rome (Obsolete)
+    bmc_vga_io_enable(TokenEntryId::Bool, default 0, id 0x468d2cfa) : pub get bool : pub set bool, // value 0 // legacy
+    bmc_vga_io_port(TokenEntryId::Word, default 0, id 0x6e06198) : pub get u16 : pub set u16, // value 0 // legacy
+    bmc_vga_io_port_size(TokenEntryId::Byte, default 0, id 0xfc3f2520) : pub get u16 : pub set u16, // value 0 // legacy
+    bmc_vga_io_bar_to_replace(TokenEntryId::Byte, default 0, id 0x2c81a37f) : pub get u8 : pub set u8, // value 0; 0 to 6 // legacy
+    bmc_gen2_tx_deemphasis(TokenEntryId::Byte, default 0xff, id 0xf30d142d) : pub get BmcGen2TxDeemphasis : pub set BmcGen2TxDeemphasis, // value 0xff
+    bmc_link_speed(TokenEntryId::Byte, default 0, id 0x9c790f4b) : pub get BmcLinkSpeed : pub set BmcLinkSpeed, // value 1
+    bmc_init_before_dram(TokenEntryId::Bool, default 0, id 0xfa94ee37) : pub get bool : pub set bool, // value 0
+    u0xae7f0df4(TokenEntryId::Byte, default 0, id 0xae7f0df4) : pub get u8 : pub set u8, // value 0xff // Rome
 }
 
 #[cfg(test)]
