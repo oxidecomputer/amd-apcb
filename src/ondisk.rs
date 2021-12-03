@@ -5221,6 +5221,13 @@ pub enum MemMbistTest {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemMbistPatternSelect {
+    Prbs = 0,
+    Sso = 1,
+    Both = 2,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemMbistAggressorsChannels {
     Disabled = 0,
     _1_AggressorsPer2Channels = 1,
@@ -5847,24 +5854,24 @@ make_token_accessors! {
     // MBIST for Milan and Rome; defaults wrong!
 
     mem_mbist_aggressor_static_lane_control(TokenEntryId::Bool, default 0, id 0x77e6f2c9) : pub get bool : pub set bool, // Rome
-    mem_mbist_victim_static_lane_control(TokenEntryId::Bool, default 0, id 0xe1cc135e) : pub get bool : pub set bool, // Rome
+    mem_mbist_tgt_static_lane_control(TokenEntryId::Bool, default 0, id 0xe1cc135e) : pub get bool : pub set bool, // Rome
     mem_mbist_worse_cas_granularity(TokenEntryId::Byte, default 0, id 0x23b0b6a1) : pub get u8 : pub set u8, // Rome
     mem_mbist_read_data_eye_voltage_step(TokenEntryId::Byte, default 0, id 0x35d6a4f8) : pub get u8 : pub set u8, // Rome
     mem_mbist_aggressor_static_lane_val(TokenEntryId::Byte, default 0, id 0x4474d416) : pub get u8 : pub set u8, // Rome
-    mem_mbist_victim_static_lane_val(TokenEntryId::Byte, default 0, id 0x4d7e0206) : pub get u8 : pub set u8, // Rome
+    mem_mbist_tgt_static_lane_val(TokenEntryId::Byte, default 0, id 0x4d7e0206) : pub get u8 : pub set u8, // Rome
     mem_mbist_test_mode(TokenEntryId::Byte, default 0, id 0x567a1fc0) : pub get MemMbistTestMode : pub set MemMbistTestMode, // Rome (Obsolete)
     mem_mbist_aggressor_static_lane_sel_ecc(TokenEntryId::Byte, default 0, id 0x57122e99) : pub get u8 : pub set u8, // Rome
     mem_mbist_read_data_eye_timing_step(TokenEntryId::Byte, default 0, id 0x58ccd28a) : pub get u8 : pub set u8, // Rome
     mem_mbist_data_eye_execution_repeat_count(TokenEntryId::Byte, default 0, id 0x8e4bdad7) : pub get u8 : pub set u8, // Rome (Obsolete)
-    mem_mbist_victim_static_lane_sel_ecc(TokenEntryId::Byte, default 0, id 0xa6e92cee) : pub get u8 : pub set u8, // Rome (Obsolete)
-    mem_mbist_pattern_length(TokenEntryId::Byte, default 0, id 0xae7baedd) : pub get u8 : pub set u8, // Rome
+    mem_mbist_tgt_static_lane_sel_ecc(TokenEntryId::Byte, default 0, id 0xa6e92cee) : pub get u8 : pub set u8, // Rome (Obsolete)
+    mem_mbist_pattern_length(TokenEntryId::Byte, default 0, id 0xae7baedd) : pub get u8 : pub set u8, // Rome; that's powers of ten; 3..=12
     mem_mbist_halt_on_error(TokenEntryId::Byte, default 0, id 0xb1940f25) : pub get u8 : pub set u8, // Rome (Obsolete)
     mem_mbist_write_data_eye_voltage_step(TokenEntryId::Byte, default 0, id 0xcda61022) : pub get u8 : pub set u8, // Rome
     mem_mbist_per_bit_slave_die_report(TokenEntryId::Byte, default 0, id 0xcff56411) : pub get u8 : pub set u8, // Rome
     mem_mbist_write_data_eye_timing_step(TokenEntryId::Byte, default 0, id 0xd9025142) : pub get u8 : pub set u8, // Rome
     mem_mbist_aggressors_channels(TokenEntryId::Byte, default 0, id 0xdcd1444a) : pub get MemMbistAggressorsChannels : pub set MemMbistAggressorsChannels, // Rome
     mem_mbist_test(TokenEntryId::Byte, default 0, id 0xdf5502c8) : pub get MemMbistTest : pub set MemMbistTest, // (obsolete)
-    mem_mbist_pattern_select(TokenEntryId::Byte, default 0, id 0xf527ebf8) : pub get u8 : pub set u8, // Rome
+    mem_mbist_pattern_select(TokenEntryId::Byte, default 0, id 0xf527ebf8) : pub get MemMbistPatternSelect : pub set MemMbistPatternSelect, // Rome
 
     // Capabilities for Milan and Rome; defaults wrong!
 
@@ -5918,12 +5925,12 @@ make_token_accessors! {
     mem_uma_alignment(TokenEntryId::DWord, default 0, id 0x57ddf512) : pub get u32 : pub set u32, // value 0xffffc0 // Rome // FIXME enum?
     pcie_reset_control(TokenEntryId::Bool, default 0, id 0xf7bb3451) : pub get bool : pub set bool, // Rome (Obsolete)
     pcie_reset_pin_select(TokenEntryId::Byte, default 0, id 0x8c0b2de9) : pub get u8 : pub set u8, // value 2 // Rome; 0..=4; FIXME: enum?
-    pcie_reset_gpio_pin(TokenEntryId::DWord, default 0, id 0x596663ac) : pub get u32 : pub set u32, // value 0xffffffff // pcie_reset_gpio_pin_select; Rome
-    mem_mbist_aggressor_static_lane_sel_i32(TokenEntryId::DWord, default 0, id 0x745218ad) : pub get u32 : pub set u32, // mem_mbist_aggr_static_lane_sel_l32; Rome
-    mem_mbist_victim_static_lane_sel_i32(TokenEntryId::DWord, default 0, id 0x81880d15) : pub get u32 : pub set u32, // value 0 // Rome
-    mem_mbist_victim_static_lane_sel_u32(TokenEntryId::DWord, default 0, id 0xaf669f33) : pub get u32 : pub set u32, // value 0 // Rome
+    pcie_reset_gpio_pin(TokenEntryId::DWord, default 0, id 0x596663ac) : pub get u32 : pub set u32, // value 0xffffffff // Rome; FIXME: enum?
+    mem_mbist_aggressor_static_lane_sel_lo(TokenEntryId::DWord, default 0, id 0x745218ad) : pub get u32 : pub set u32, // Rome
+    mem_mbist_aggressor_static_lane_sel_hi(TokenEntryId::DWord, default 0, id 0xfac9f48f) : pub get u32 : pub set u32, // Rome
+    mem_mbist_tgt_static_lane_sel_lo(TokenEntryId::DWord, default 0, id 0x81880d15) : pub get u32 : pub set u32, // value 0 // Rome
+    mem_mbist_tgt_static_lane_sel_hi(TokenEntryId::DWord, default 0, id 0xaf669f33) : pub get u32 : pub set u32, // value 0 // Rome
     cpu_fetch_from_spi_ap_base(TokenEntryId::DWord, default 0, id 0xd403ea0e) : pub get u32 : pub set u32, // value 0xfff00000 // Rome
-    mem_mbist_aggressor_static_lane_sel_u32(TokenEntryId::DWord, default 0, id 0xfac9f48f) : pub get u32 : pub set u32, // value 0 // Rome
     mem_dram_addresss_command_parity_retry_count(TokenEntryId::Byte, default 0, id 0x3e7c51f8) : pub get u8 : pub set u8, // value 1 // Rome
     u0xc9e9a1c9(TokenEntryId::Byte, default 0, id 0xc9e9a1c9) : pub get u8 : pub set u8, // value 8 // Rome
     df_3link_max_xgmi_speed(TokenEntryId::Byte, default 0, id 0x53ba449b) : pub get u8 : pub set u8, // value 0xff // Rome
