@@ -5774,8 +5774,9 @@ make_token_accessors! {
 
     // Byte just like AMD
     mem_rcd_parity(TokenEntryId::Byte, default 1, id 0x647d_7662) : pub get bool : pub set bool,
+    mem_uncorrected_ecc_retry_ddr4(TokenEntryId::Bool, default 1, id 0xbff0_0125) : pub get bool : pub set bool,
     // Byte just like AMD
-    mem_uncorrected_ecc_retry_ddr4(TokenEntryId::Byte, default 1, id 0xbff0_0125) : pub get bool : pub set bool,
+    cbs_mem_uncorrected_ecc_retry_ddr4(TokenEntryId::Byte, default 1, id 0xbff0_0125) : pub get bool : pub set bool,
     mem_urg_ref_limit(TokenEntryId::Byte, default 6, id 0x1333_32df) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first)
     mem_sub_urg_ref_lower_bound(TokenEntryId::Byte, default 4, id 0xe756_2ab6) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first)
     mem_controller_pmu_train_ffe_ddr4(TokenEntryId::Byte, default 0xff, id 0x0d46_186d) : pub get MemControllerPmuTrainFfeDdr4 : pub set MemControllerPmuTrainFfeDdr4, // FIXME: is it bool ?
