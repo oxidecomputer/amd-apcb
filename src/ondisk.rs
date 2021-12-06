@@ -5783,9 +5783,6 @@ make_token_accessors! {
     mem_controller_pmu_train_dfe_ddr4(TokenEntryId::Byte, default 0xff, id 0x36a4_bb5b) : pub get MemControllerPmuTrainDfeDdr4 : pub set MemControllerPmuTrainDfeDdr4, // FIXME: is it bool ?
     mem_tsme_mode(TokenEntryId::Byte, default 1, id 0xd1fa_6660) : pub get MemTsmeMode : pub set MemTsmeMode, // See Transparent Secure Memory Encryption in PPR
     mem_training_hdt_control(TokenEntryId::Byte, default 200, id 0xaf6d_3a6f) : pub get MemTrainingHdtControl : pub set MemTrainingHdtControl, // TODO: Before using default, fix default.  It's possibly not correct.
-    mem_mbist_data_eye_type(TokenEntryId::Byte, default 3, id 0x4e2e_dc1b) : pub get MemMbistDataEyeType : pub set MemMbistDataEyeType,
-    // Byte just like AMD
-    mem_mbist_data_eye_silent_execution(TokenEntryId::Byte, default 0, id 0x3f74_c7e7) : pub get bool : pub set bool, // Milan
     mem_heal_bist_enable(TokenEntryId::Byte, default 0, id 0xfba2_3a28) : pub get MemHealBistEnable : pub set MemHealBistEnable,
     MemSelfHealBistEnable(TokenEntryId::Byte, default 0, id 0x2c23_924c), // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
     mem_self_heal_bist_timeout(TokenEntryId::DWord, default 1_0000, id 0xbe75_97d4) : pub get u32 : pub set u32, // in ms
@@ -5854,6 +5851,9 @@ make_token_accessors! {
 
     // MBIST for Milan and Rome; defaults wrong!
 
+    mem_mbist_data_eye_type(TokenEntryId::Byte, default 3, id 0x4e2e_dc1b) : pub get MemMbistDataEyeType : pub set MemMbistDataEyeType,
+    // Byte just like AMD
+    mem_mbist_data_eye_silent_execution(TokenEntryId::Byte, default 0, id 0x3f74_c7e7) : pub get bool : pub set bool, // Milan
     mem_mbist_aggressor_static_lane_control(TokenEntryId::Bool, default 0, id 0x77e6f2c9) : pub get bool : pub set bool, // Rome
     mem_mbist_tgt_static_lane_control(TokenEntryId::Bool, default 0, id 0xe1cc135e) : pub get bool : pub set bool, // Rome
     mem_mbist_worse_cas_granularity(TokenEntryId::Byte, default 0, id 0x23b0b6a1) : pub get u8 : pub set u8, // Rome
@@ -5863,8 +5863,8 @@ make_token_accessors! {
     mem_mbist_test_mode(TokenEntryId::Byte, default 0, id 0x567a1fc0) : pub get MemMbistTestMode : pub set MemMbistTestMode, // Rome (Obsolete)
     mem_mbist_aggressor_static_lane_sel_ecc(TokenEntryId::Byte, default 0, id 0x57122e99) : pub get u8 : pub set u8, // Rome
     mem_mbist_read_data_eye_timing_step(TokenEntryId::Byte, default 0, id 0x58ccd28a) : pub get u8 : pub set u8, // Rome
-    mem_mbist_data_eye_execution_repeat_count(TokenEntryId::Byte, default 0, id 0x8e4bdad7) : pub get u8 : pub set u8, // Rome (Obsolete)
-    mem_mbist_tgt_static_lane_sel_ecc(TokenEntryId::Byte, default 0, id 0xa6e92cee) : pub get u8 : pub set u8, // Rome (Obsolete)
+    mem_mbist_data_eye_execution_repeat_count(TokenEntryId::Byte, default 0, id 0x8e4bdad7) : pub get u8 : pub set u8, // Rome; 0..=10
+    mem_mbist_tgt_static_lane_sel_ecc(TokenEntryId::Byte, default 0, id 0xa6e92cee) : pub get u8 : pub set u8, // Rome
     mem_mbist_pattern_length(TokenEntryId::Byte, default 0, id 0xae7baedd) : pub get u8 : pub set u8, // Rome; that's powers of ten; 3..=12
     mem_mbist_halt_on_error(TokenEntryId::Byte, default 0, id 0xb1940f25) : pub get u8 : pub set u8, // Rome (Obsolete)
     mem_mbist_write_data_eye_voltage_step(TokenEntryId::Byte, default 0, id 0xcda61022) : pub get u8 : pub set u8, // Rome
@@ -5873,17 +5873,21 @@ make_token_accessors! {
     mem_mbist_aggressors_channels(TokenEntryId::Byte, default 0, id 0xdcd1444a) : pub get MemMbistAggressorsChannels : pub set MemMbistAggressorsChannels, // Rome
     mem_mbist_test(TokenEntryId::Byte, default 0, id 0xdf5502c8) : pub get MemMbistTest : pub set MemMbistTest, // (obsolete)
     mem_mbist_pattern_select(TokenEntryId::Byte, default 0, id 0xf527ebf8) : pub get MemMbistPatternSelect : pub set MemMbistPatternSelect, // Rome
+    mem_mbist_aggressor_on(TokenEntryId::Byte, default 0, id 0x32361c4) : pub get bool : pub set bool, // Rome; obsolete
+    mem_mbist_aggressor_static_lane_sel_lo(TokenEntryId::DWord, default 0, id 0x745218ad) : pub get u32 : pub set u32, // Rome
+    mem_mbist_aggressor_static_lane_sel_hi(TokenEntryId::DWord, default 0, id 0xfac9f48f) : pub get u32 : pub set u32, // Rome
+    mem_mbist_tgt_static_lane_sel_lo(TokenEntryId::DWord, default 0, id 0x81880d15) : pub get u32 : pub set u32, // value 0 // Rome
+    mem_mbist_tgt_static_lane_sel_hi(TokenEntryId::DWord, default 0, id 0xaf669f33) : pub get u32 : pub set u32, // value 0 // Rome
 
-    // Capabilities for Milan and Rome; defaults wrong!
+    // Capabilities for Rome; defaults wrong!
 
     mem_udimm_capable(TokenEntryId::Bool, default 0, id 0x3cf8a8ec) : pub get bool : pub set bool, // Rome
     mem_sodimm_capable(TokenEntryId::Bool, default 0, id 0x7c61c187) : pub get bool : pub set bool, // Rome
     mem_rdimm_capable(TokenEntryId::Bool, default 0, id 0x81726666) : pub get bool : pub set bool, // Rome
     mem_lrdimm_capable(TokenEntryId::Bool, default 0, id 0x14fbf20) : pub get bool : pub set bool,
     mem_dimm_type_lpddr3_capable(TokenEntryId::Bool, default 0, id 0xad96aa30) : pub get bool : pub set bool, // Rome
-    mem_dimm_type_ddr3_capable(TokenEntryId::Bool, default 0, id 0x789210c) : pub get bool : pub set bool,
-    mem_quad_rank_capable(TokenEntryId::Bool, default 0, id 0xe6dfd3dc) : pub get bool : pub set bool, // Rome (Obsolete)
-    mem_mbist_aggressor_on(TokenEntryId::Byte, default 0, id 0x32361c4) : pub get bool : pub set bool, // obsolete
+    mem_dimm_type_ddr3_capable(TokenEntryId::Bool, default 0, id 0x789210c) : pub get bool : pub set bool, // Rome
+    mem_quad_rank_capable(TokenEntryId::Bool, default 0, id 0xe6dfd3dc) : pub get bool : pub set bool, // Rome
 
     // Unsorted Milan; defaults wrong!
 
@@ -5903,34 +5907,30 @@ make_token_accessors! {
 
     // Unsorted Milan; obsolete and ungrouped; defaults wrong!
 
-    ecc_symbol_size(TokenEntryId::Word, default 1, id 0x302d5c04) : pub get EccSymbolSize : pub set EccSymbolSize, // (Obsolete)
-    scrub_dram_rate(TokenEntryId::Word, default 0, id 0x9adddd6b) : pub get u16 : pub set u16, // (Obsolete); <= 0x16; or 0xff
-    scrub_l2_rate(TokenEntryId::Word, default 0, id 0x2266c144) : pub get u16 : pub set u16, // (Obsolete); <= 0x16
-    scrub_l3_rate(TokenEntryId::Word, default 0, id 0xc0279ae0) : pub get u16 : pub set u16, // (Obsolete); <= 0x16; maybe 00h disable; maybe otherwise x: (x * 20 ns)
-    scrub_icache_rate(TokenEntryId::Word, default 0, id 0x99639ee4) : pub get u16 : pub set u16, // (Obsolete); <= 0x16
-    scrub_dcache_rate(TokenEntryId::Word, default 0, id 0xb398daa0) : pub get u16 : pub set u16, // (Obsolete); <= 0x16
-    // See for example MCP9843/98243
-    dimm_sensor_config(TokenEntryId::Word, default 0x408, id 0x51e7b610) : pub get u16 : pub set u16, // (Obsolete) DIMM temperature sensor register at address 1
-    dimm_sensor_upper(TokenEntryId::Word, default 80, id 0xb5af557a) : pub get u16 : pub set u16, // (Obsolete); DIMM temperature sensor register at address 2
-    dimm_sensor_lower(TokenEntryId::Word, default 10, id 0xc5ea38a0) : pub get u16 : pub set u16, // (Obsolete); DIMM temperature sensor register at address 3
-    dimm_sensor_critical(TokenEntryId::Word, default 95, id 0x38e9bf5d) : pub get u16 : pub set u16, // (Obsolete); DIMM temperature sensor register at address 4
-    // I doubt that AMD converts those, but the 2 lowest bits usually set up the resolution. 0: 0.5 ºC; 1: 0.25 ºC; 2: 0.125 ºC; 3: 0.0625 ºC; higher resolution is slower.
-    dimm_sensor_resolution(TokenEntryId::Byte, default 0, id 0x831af313) : pub get u8 : pub set u8, // Rome (Obsolete); DIMM temperature sensor register at address 8
     dimm_3ds_sensor_critical(TokenEntryId::Word, default 0, id 0x16b77f73) : pub get u16 : pub set u16, // value 0x50 // (Obsolete; added in Milan)
     dimm_3ds_sensor_upper(TokenEntryId::Word, default 0, id 0x2db877e4) : pub get u16 : pub set u16, // value 0x42 // (Obsolete; added in Milan)
 
     // Unsorted Rome; ungrouped; defaults wrong!
 
+    ecc_symbol_size(TokenEntryId::Word, default 1, id 0x302d5c04) : pub get EccSymbolSize : pub set EccSymbolSize, // Rome (Obsolete)
+    scrub_dram_rate(TokenEntryId::Word, default 0, id 0x9adddd6b) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16; or 0xff
+    scrub_l2_rate(TokenEntryId::Word, default 0, id 0x2266c144) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16
+    scrub_l3_rate(TokenEntryId::Word, default 0, id 0xc0279ae0) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16; maybe 00h disable; maybe otherwise x: (x * 20 ns)
+    scrub_icache_rate(TokenEntryId::Word, default 0, id 0x99639ee4) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16
+    scrub_dcache_rate(TokenEntryId::Word, default 0, id 0xb398daa0) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16
+    // See for example MCP9843/98243
+    dimm_sensor_config(TokenEntryId::Word, default 0x408, id 0x51e7b610) : pub get u16 : pub set u16, // Rome (Obsolete) DIMM temperature sensor register at address 1
+    dimm_sensor_upper(TokenEntryId::Word, default 80, id 0xb5af557a) : pub get u16 : pub set u16, // Rome (Obsolete); DIMM temperature sensor register at address 2
+    dimm_sensor_lower(TokenEntryId::Word, default 10, id 0xc5ea38a0) : pub get u16 : pub set u16, // Rome (Obsolete); DIMM temperature sensor register at address 3
+    dimm_sensor_critical(TokenEntryId::Word, default 95, id 0x38e9bf5d) : pub get u16 : pub set u16, // Rome (Obsolete); DIMM temperature sensor register at address 4
+    // I doubt that AMD converts those, but the 2 lowest bits usually set up the resolution. 0: 0.5 ºC; 1: 0.25 ºC; 2: 0.125 ºC; 3: 0.0625 ºC; higher resolution is slower.
+    dimm_sensor_resolution(TokenEntryId::Byte, default 0, id 0x831af313) : pub get u8 : pub set u8, // Rome (Obsolete); DIMM temperature sensor register at address 8
     mem_power_down_mode(TokenEntryId::DWord, default 0, id 0x23dd2705) : pub get u32 : pub set u32, // power_down_mode; Rome
     mem_uma_size(TokenEntryId::DWord, default 0, id 0x37b1f8cf) : pub get u32 : pub set u32, // uma_size; Rome // FIXME enum
     mem_uma_alignment(TokenEntryId::DWord, default 0, id 0x57ddf512) : pub get u32 : pub set u32, // value 0xffffc0 // Rome // FIXME enum?
     pcie_reset_control(TokenEntryId::Bool, default 0, id 0xf7bb3451) : pub get bool : pub set bool, // Rome (Obsolete)
     pcie_reset_pin_select(TokenEntryId::Byte, default 0, id 0x8c0b2de9) : pub get u8 : pub set u8, // value 2 // Rome; 0..=4; FIXME: enum?
     pcie_reset_gpio_pin(TokenEntryId::DWord, default 0, id 0x596663ac) : pub get u32 : pub set u32, // value 0xffffffff // Rome; FIXME: enum?
-    mem_mbist_aggressor_static_lane_sel_lo(TokenEntryId::DWord, default 0, id 0x745218ad) : pub get u32 : pub set u32, // Rome
-    mem_mbist_aggressor_static_lane_sel_hi(TokenEntryId::DWord, default 0, id 0xfac9f48f) : pub get u32 : pub set u32, // Rome
-    mem_mbist_tgt_static_lane_sel_lo(TokenEntryId::DWord, default 0, id 0x81880d15) : pub get u32 : pub set u32, // value 0 // Rome
-    mem_mbist_tgt_static_lane_sel_hi(TokenEntryId::DWord, default 0, id 0xaf669f33) : pub get u32 : pub set u32, // value 0 // Rome
     cpu_fetch_from_spi_ap_base(TokenEntryId::DWord, default 0, id 0xd403ea0e) : pub get u32 : pub set u32, // value 0xfff00000 // Rome
     mem_dram_addresss_command_parity_retry_count(TokenEntryId::Byte, default 0, id 0x3e7c51f8) : pub get u8 : pub set u8, // value 1 // Rome
     u0xc9e9a1c9(TokenEntryId::Byte, default 0, id 0xc9e9a1c9) : pub get u8 : pub set u8, // value 8 // Rome
