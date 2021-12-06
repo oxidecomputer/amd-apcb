@@ -5895,7 +5895,7 @@ make_token_accessors! {
     gnb_additional_features(TokenEntryId::Bool, default 0, id 0xf4c7789) : pub get bool : pub set bool, // Milan
     gnb_additional_feature_dsm(TokenEntryId::Bool, default 0, id 0x31a6afad) : pub get bool : pub set bool, // Milan
     vga_program(TokenEntryId::Bool, default 0, id 0x6570eace) : pub get bool : pub set bool, // Milan
-    nvdimm_n_disable(TokenEntryId::Bool, default 0, id 0x941a92d4) : pub get bool : pub set bool, // mem_disable_nvdimm_n_feature; Milan
+    mem_nvdimm_n_disable(TokenEntryId::Bool, default 0, id 0x941a92d4) : pub get bool : pub set bool, // Milan
     gnb_additional_feature_l3_performance_bias(TokenEntryId::Bool, default 0, id 0xa003b37a) : pub get bool : pub set bool, // Milan
     gnb_additional_feature_dsm_detector(TokenEntryId::Bool, default 0, id 0xf5768cee) : pub get bool : pub set bool, // Milan
 
