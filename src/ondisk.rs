@@ -5944,7 +5944,7 @@ make_token_accessors! {
     pcie_reset_gpio_pin(TokenEntryId::DWord, default 0, id 0x596663ac) : pub get u32 : pub set u32, // value 0xffffffff // Rome; FIXME: enum?
     cpu_fetch_from_spi_ap_base(TokenEntryId::DWord, default 0, id 0xd403ea0e) : pub get u32 : pub set u32, // value 0xfff00000 // Rome
     mem_dram_address_command_parity_retry_count(TokenEntryId::Byte, default 0, id 0x3e7c51f8) : pub get u8 : pub set u8, // value 1 // Rome
-    u0xc9e9a1c9(TokenEntryId::Byte, default 0, id 0xc9e9a1c9) : pub get u8 : pub set u8, // value 8 // Rome
+    mem_parity_error_max_replay_ddr4(TokenEntryId::Byte, default 0, id 0xc9e9a1c9) : pub get u8 : pub set u8, // value 8 // Rome // 0..=0x3f (6 bit)
     df_3link_max_xgmi_speed(TokenEntryId::Byte, default 0, id 0x53ba449b) : pub get u8 : pub set u8, // value 0xff // Rome
     df_4link_max_xgmi_speed(TokenEntryId::Byte, default 0, id 0x3f307cb3) : pub get u8 : pub set u8, // value 0xff //  Rome
     mem_dram_double_refresh_rate(TokenEntryId::Byte, default 0, id 0x44d40026) : pub get u8 : pub set u8, // value 0 // Rome
