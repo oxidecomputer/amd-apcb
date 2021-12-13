@@ -5040,6 +5040,17 @@ pub enum MemNvdimmPowerSource {
     HostManaged = 2,
 }
 
+// See JESD82-31A Table 48.
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemRdimmTimingCmdParLatency {
+    _1_nCK = 0, // not valid in gear-down mode
+    _2_nCK = 1,
+    _3_nCK = 2, // not valid in gear-down mode
+    _4_nCK = 3,
+    _0_nCK = 4, // only valid if parity checking and CAL modes are disabled
+    Auto = 0xff,
+}
+
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemControllerWritingCrcMode {
     Disabled = 0,
@@ -5941,7 +5952,10 @@ make_token_accessors! {
     u0x5985083a(TokenEntryId::Byte, default 0, id 0x5985083a) : pub get u8 : pub set u8, // value 0xff // Rome
     df_pstate_mode_select(TokenEntryId::Byte, default 0xff, id 0xaeb84b12) : pub get DfPstateModeSelect : pub set DfPstateModeSelect, // value 0xff // Rome
     df_xgmi_config(TokenEntryId::Byte, default 3, id 0xb0b6ad3e) : pub get DfXgmiLinkConfig : pub set DfXgmiLinkConfig, // Rome
-    u0xd155798a(TokenEntryId::Byte, default 0, id 0xd155798a) : pub get u8 : pub set u8, // value 0xff // Rome
+    // See DramTiming15_UMCWPHY0_mp0_umc0 CmdParLatency (for the DDR4 Registering Clock Driver).
+    // See also JESD82-31A DDR4 REGISTERING CLOCK DRIVER.
+    // See also <https://github.com/enjoy-digital/litedram/blob/master/litedram/init.py#L460>.
+    mem_rdimm_timing_rcd_f0rc0f_additional_latency(TokenEntryId::Byte, default 0xff, id 0xd155798a) : pub get MemRdimmTimingCmdParLatency : pub set MemRdimmTimingCmdParLatency, // Rome
     mem_dqs_training_control(TokenEntryId::Bool, default 0, id 0x3caaa3fa) : pub get bool : pub set bool, // Rome
     mem_channel_interleaving(TokenEntryId::Bool, default 0, id 0x48254f73) : pub get bool : pub set bool, // Rome
     mem_pstate(TokenEntryId::Bool, default 0, id 0x56b93947) : pub get bool : pub set bool, // Rome
