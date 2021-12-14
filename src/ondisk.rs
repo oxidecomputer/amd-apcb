@@ -5831,7 +5831,8 @@ make_token_accessors! {
     mem_sub_urg_ref_lower_bound(TokenEntryId::Byte, default 4, id 0xe756_2ab6) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first)
     mem_controller_pmu_train_ffe_ddr4(TokenEntryId::Byte, default 0xff, id 0x0d46_186d) : pub get MemControllerPmuTrainFfeDdr4 : pub set MemControllerPmuTrainFfeDdr4, // FIXME: is it bool ?
     mem_controller_pmu_train_dfe_ddr4(TokenEntryId::Byte, default 0xff, id 0x36a4_bb5b) : pub get MemControllerPmuTrainDfeDdr4 : pub set MemControllerPmuTrainDfeDdr4, // FIXME: is it bool ?
-    mem_tsme_mode(TokenEntryId::Byte, default 1, id 0xd1fa_6660) : pub get MemTsmeMode : pub set MemTsmeMode, // See Transparent Secure Memory Encryption in PPR
+    mem_tsme_mode_rome(TokenEntryId::Byte, default 1, id 0xd1fa_6660) : pub get MemTsmeMode : pub set MemTsmeMode, // See Transparent Secure Memory Encryption in PPR
+    mem_tsme_mode_milan(TokenEntryId::Bool, default 1, id 0xd1fa_6660) : pub get bool : pub set bool, // See Transparent Secure Memory Encryption in PPR
     mem_training_hdt_control(TokenEntryId::Byte, default 200, id 0xaf6d_3a6f) : pub get MemTrainingHdtControl : pub set MemTrainingHdtControl, // TODO: Before using default, fix default.  It's possibly not correct.
     mem_heal_bist_enable(TokenEntryId::Byte, default 0, id 0xfba2_3a28) : pub get MemHealBistEnable : pub set MemHealBistEnable,
     MemSelfHealBistEnable(TokenEntryId::Byte, default 0, id 0x2c23_924c), // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
