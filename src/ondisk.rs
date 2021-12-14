@@ -13,6 +13,7 @@ use byteorder::LittleEndian;
 use core::cmp::Ordering;
 use core::convert::TryInto;
 use core::mem::{take, size_of};
+use core::num::NonZeroU8;
 use modular_bitfield::prelude::*;
 use num_derive::FromPrimitive;
 use num_derive::ToPrimitive;
@@ -5051,6 +5052,44 @@ pub enum MemRdimmTimingCmdParLatency {
     Auto = 0xff,
 }
 
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum MemThrottleCtrlRollWindowDepth {
+    Memclks(NonZeroU8),
+    // 0: reserved
+    // TODO: Maybe Auto = 0xff ?
+}
+
+impl FromPrimitive for MemThrottleCtrlRollWindowDepth {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value > 0 && value <= 0xff {
+            let value = NonZeroU8::new(value as u8)?;
+            Some(Self::Memclks(value))
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
+}
+impl ToPrimitive for MemThrottleCtrlRollWindowDepth {
+    fn to_i64(&self) -> Option<i64> {
+        match self {
+            Self::Memclks(x) => {
+                Some((*x).get().into())
+            }
+        }
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemControllerWritingCrcMode {
     Disabled = 0,
@@ -5949,7 +5988,8 @@ make_token_accessors! {
     df_4link_max_xgmi_speed(TokenEntryId::Byte, default 0, id 0x3f307cb3) : pub get u8 : pub set u8, // value 0xff //  Rome
     mem_dram_double_refresh_rate(TokenEntryId::Byte, default 0, id 0x44d40026) : pub get u8 : pub set u8, // value 0 // Rome
     mem_dram_double_refresh_rate_unused(TokenEntryId::Bool, default 0, id 0x974e8e7c) : pub get bool : pub set bool, // value 0 // Rome (unused)
-    u0x5985083a(TokenEntryId::Byte, default 0, id 0x5985083a) : pub get u8 : pub set u8, // value 0xff // Rome
+    // See UMC::CH::ThrottleCtrl RollWindowDepth
+    mem_roll_window_depth(TokenEntryId::Byte, default 0xff, id 0x5985083a) : pub get MemThrottleCtrlRollWindowDepth : pub set MemThrottleCtrlRollWindowDepth, // Rome
     df_pstate_mode_select(TokenEntryId::Byte, default 0xff, id 0xaeb84b12) : pub get DfPstateModeSelect : pub set DfPstateModeSelect, // value 0xff // Rome
     df_xgmi_config(TokenEntryId::Byte, default 3, id 0xb0b6ad3e) : pub get DfXgmiLinkConfig : pub set DfXgmiLinkConfig, // Rome
     // See DramTiming15_UMCWPHY0_mp0_umc0 CmdParLatency (for the DDR4 Registering Clock Driver).
