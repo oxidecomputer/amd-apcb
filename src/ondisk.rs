@@ -5136,13 +5136,14 @@ pub enum DfMemInterleaving {
     Auto = 7,
 }
 
+#[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum DfMemInterleavingSize {
-    Size256Byte = 0,
-    Size512Byte = 1,
-    Size1024Byte = 2,
-    Size2048Byte = 3,
-    Size4096Byte = 4,
+    _256_Byte = 0,
+    _512_Byte = 1,
+    _1024_Byte = 2,
+    _2048_Byte = 3,
+    _4096_Byte = 4,
     Auto = 7,
 }
 
