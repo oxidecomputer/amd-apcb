@@ -4942,6 +4942,7 @@ pub mod psp {
     }
 }
 
+#[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum BaudRate {
     _2400Baud = 0,
@@ -5043,6 +5044,7 @@ pub enum MemNvdimmPowerSource {
 }
 
 // See JESD82-31A Table 48.
+#[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemRdimmTimingCmdParLatency {
     _1_nCK = 0, // not valid in gear-down mode
@@ -5160,6 +5162,7 @@ pub enum DfRemapAt1TiB {
     Auto = 0xff,
 }
 
+#[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum DfXgmiLinkConfig {
     _2_links_connected = 0,
@@ -5176,6 +5179,7 @@ pub enum DfPstateModeSelect {
     Auto = 0xff,
 }
 
+#[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum GnbSmuDfPstateFclkLimit {
     _1600_Mhz = 0,
@@ -5249,6 +5253,7 @@ pub enum MemControllerPmuTrainDfeDdr4 {
     Auto = 0xff,
 }
 
+#[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemControllerPmuTrainingMode {
     _1D = 0,
@@ -5278,6 +5283,7 @@ pub enum MemMbistPatternSelect {
     Both = 2,
 }
 
+#[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemMbistAggressorsChannels {
     Disabled = 0,
@@ -5293,6 +5299,7 @@ pub enum MemMbistTestMode {
     // Both = , ?
 }
 
+#[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum MemMbistDataEyeType {
     _1dVolate = 0,
@@ -5310,6 +5317,7 @@ pub enum DfXgmiTxEqMode {
     Auto = 0xff,
 }
 
+#[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum BmcGen2TxDeemphasis {
     Csr = 0,
@@ -5319,6 +5327,7 @@ pub enum BmcGen2TxDeemphasis {
     Disabled = 0xff,
 }
 
+#[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum EccSymbolSize {
     x4 = 0,
