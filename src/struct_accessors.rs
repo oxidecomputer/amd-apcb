@@ -166,7 +166,7 @@ macro_rules! make_accessors {(
             #[inline]
             $getter_vis
             fn $field_name (self: &'_ Self)
-                -> $field_user_ty
+                -> Result<$field_user_ty>
             {
                 self.$field_name.get1()
             }

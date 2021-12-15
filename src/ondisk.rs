@@ -1095,7 +1095,7 @@ make_accessors! {
         pub(crate) context_type: u8,   // see ContextType enum
         pub(crate) context_format: u8, // see ContextFormat enum
         pub(crate) unit_size: u8,      // in Byte.  Applicable when ContextType == 2.  value should be 8
-        pub(crate) priority_mask: u8 : pub get Result<PriorityLevels> : pub set PriorityLevels,
+        pub(crate) priority_mask: u8 : pub get PriorityLevels : pub set PriorityLevels,
         pub(crate) key_size: u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
         pub(crate) key_pos: u8,  // Sorting key position of the unit specified of UnitSize
         pub(crate) board_instance_mask: U16<LittleEndian>, // Board-specific Apcb instance mask
@@ -1188,11 +1188,11 @@ pub mod df {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct SlinkRegion {
-            size: U64<LittleEndian> : pub get Result<u64> : pub set u64,
-            alignment: u8 : pub get Result<u8> : pub set u8,
-            socket: u8 : pub get Result<u8> : pub set u8, // 0|1
-            phys_nbio_map: u8 : pub get Result<u8> : pub set u8, // bitmap
-            interleaving: u8 : pub get Result<SlinkRegionInterleavingSize> : pub set SlinkRegionInterleavingSize,
+            size: U64<LittleEndian> : pub get u64 : pub set u64,
+            alignment: u8 : pub get u8 : pub set u8,
+            socket: u8 : pub get u8 : pub set u8, // 0|1
+            phys_nbio_map: u8 : pub get u8 : pub set u8, // bitmap
+            interleaving: u8 : pub get SlinkRegionInterleavingSize : pub set SlinkRegionInterleavingSize,
             _reserved: [u8; 4],
         }
     }
@@ -1283,10 +1283,10 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct DimmInfoSmbusElement {
-            dimm_slot_present: BU8 : pub get Result<bool>, // if false, it's soldered-down and not a slot
-            socket_id: u8 : pub get Result<u8> : pub set u8,
-            channel_id: u8 : pub get Result<u8> : pub set u8,
-            dimm_id: u8 : pub get Result<u8> : pub set u8,
+            dimm_slot_present: BU8 : pub get bool, // if false, it's soldered-down and not a slot
+            socket_id: u8 : pub get u8 : pub set u8,
+            channel_id: u8 : pub get u8 : pub set u8,
+            dimm_id: u8 : pub get u8 : pub set u8,
             // For soldered-down DIMMs, SPD data is hardcoded in APCB (in entry MemoryEntryId::SpdInfo), and DIMM_SMBUS_ADDRESS here is the index in the structure for SpdInfo.
             dimm_smbus_address: u8,
             i2c_mux_address: u8,
@@ -1439,18 +1439,18 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct AblConsoleOutControl {
-            enable_console_logging: BU8 : pub get Result<bool> : pub set bool,
-            enable_mem_flow_logging: BU8 : pub get Result<bool> : pub set bool,
-            enable_mem_setreg_logging: BU8 : pub get Result<bool> : pub set bool,
-            enable_mem_getreg_logging: BU8 : pub get Result<bool> : pub set bool,
-            enable_mem_status_logging: BU8 : pub get Result<bool> : pub set bool,
-            enable_mem_pmu_logging: BU8 : pub get Result<bool> : pub set bool,
-            enable_mem_pmu_sram_read_logging: BU8 : pub get Result<bool> : pub set bool,
-            enable_mem_pmu_sram_write_logging: BU8 : pub get Result<bool> : pub set bool,
-            enable_mem_test_verbose_logging: BU8 : pub get Result<bool> : pub set bool,
-            enable_mem_basic_output_logging: BU8 : pub get Result<bool> : pub set bool,
+            enable_console_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_flow_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_setreg_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_getreg_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_status_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_pmu_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_pmu_sram_read_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_pmu_sram_write_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_test_verbose_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_basic_output_logging: BU8 : pub get bool : pub set bool,
             _reserved: U16<LittleEndian>,
-            abl_console_port: U32<LittleEndian> : pub get Result<u32> : pub set u32,
+            abl_console_port: U32<LittleEndian> : pub get u32 : pub set u32,
         }
     }
 
@@ -1483,8 +1483,8 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct AblBreakpointControl {
-            enable_breakpoint: BU8 : pub get Result<bool> : pub set bool,
-            break_on_all_dies: BU8 : pub get Result<bool> : pub set bool,
+            enable_breakpoint: BU8 : pub get bool : pub set bool,
+            break_on_all_dies: BU8 : pub get bool : pub set bool,
         }
     }
 
@@ -1570,15 +1570,15 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct ExtVoltageControl {
-            enabled: BU8 : pub get Result<bool> : pub set bool,
+            enabled: BU8 : pub get bool : pub set bool,
             _reserved: [u8; 3],
-            input_port: U32<LittleEndian> : pub get Result<u32> : pub set u32,
-            output_port: U32<LittleEndian> : pub get Result<u32> : pub set u32,
-            input_port_size: U32<LittleEndian> : pub get Result<PortSize> : pub set PortSize,
-            output_port_size: U32<LittleEndian> : pub get Result<PortSize> : pub set PortSize,
-            input_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // default: 6 (FCH)
-            output_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // default: 6 (FCH)
-            clear_acknowledgement: BU8 : pub get Result<bool> : pub set bool,
+            input_port: U32<LittleEndian> : pub get u32 : pub set u32,
+            output_port: U32<LittleEndian> : pub get u32 : pub set u32,
+            input_port_size: U32<LittleEndian> : pub get PortSize : pub set PortSize,
+            output_port_size: U32<LittleEndian> : pub get PortSize : pub set PortSize,
+            input_port_type: U32<LittleEndian> : pub get PortType : pub set PortType, // default: 6 (FCH)
+            output_port_type: U32<LittleEndian> : pub get PortType : pub set PortType, // default: 6 (FCH)
+            clear_acknowledgement: BU8 : pub get bool : pub set bool,
             _reserved_2: [u8; 3],
         }
     }
@@ -1861,22 +1861,22 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct RdimmDdr4CadBusElement {
-            dimm_slots_per_channel: U32<LittleEndian> : pub get Result<u32> : pub set u32,
-            ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get Result<RdimmDdr4Voltages> : pub set RdimmDdr4Voltages,
-            dimm0_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
-            dimm1_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
+            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
+            ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
+            vdd_io: U32<LittleEndian> : pub get RdimmDdr4Voltages : pub set RdimmDdr4Voltages,
+            dimm0_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
+            dimm1_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
 
-            gear_down_mode: BLU16 : pub get Result<bool> : pub set bool,
+            gear_down_mode: BLU16 : pub get bool : pub set bool,
             _reserved: U16<LittleEndian>,
-            slow_mode: BLU16 : pub get Result<bool> : pub set bool, // (probably) 2T is slow, 1T is fast
+            slow_mode: BLU16 : pub get bool : pub set bool, // (probably) 2T is slow, 1T is fast
             _reserved_2: U16<LittleEndian>,
-            address_command_control: U32<LittleEndian> : pub get Result<u32> : pub set u32, // 24 bit; often all used bytes are equal
+            address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
 
-            cke_drive_strength: u8 : pub get Result<CadBusCkeDriveStrength> : pub set CadBusCkeDriveStrength,
-            cs_odt_drive_strength: u8 : pub get Result<CadBusCsOdtDriveStrength> : pub set CadBusCsOdtDriveStrength,
-            address_command_drive_strength: u8 : pub get Result<CadBusAddressCommandDriveStrength> : pub set CadBusAddressCommandDriveStrength,
-            clk_drive_strength: u8 : pub get Result<CadBusClkDriveStrength> : pub set CadBusClkDriveStrength,
+            cke_drive_strength: u8 : pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
+            cs_odt_drive_strength: u8 : pub get CadBusCsOdtDriveStrength : pub set CadBusCsOdtDriveStrength,
+            address_command_drive_strength: u8 : pub get CadBusAddressCommandDriveStrength : pub set CadBusAddressCommandDriveStrength,
+            clk_drive_strength: u8 : pub get CadBusClkDriveStrength : pub set CadBusClkDriveStrength,
         }
     }
 
@@ -1968,22 +1968,22 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct UdimmDdr4CadBusElement {
-            dimm_slots_per_channel: U32<LittleEndian> : pub get Result<u32> : pub set u32,
-            ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get Result<UdimmDdr4Voltages> : pub set UdimmDdr4Voltages,
-            dimm0_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
-            dimm1_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
+            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
+            ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
+            vdd_io: U32<LittleEndian> : pub get UdimmDdr4Voltages : pub set UdimmDdr4Voltages,
+            dimm0_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
+            dimm1_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
 
-            gear_down_mode: U16<LittleEndian> : pub get Result<u16> : pub set u16,
+            gear_down_mode: U16<LittleEndian> : pub get u16 : pub set u16,
             _reserved: U16<LittleEndian>,
-            slow_mode: U16<LittleEndian> : pub get Result<u16> : pub set u16,
+            slow_mode: U16<LittleEndian> : pub get u16 : pub set u16,
             _reserved_2: U16<LittleEndian>,
-            address_command_control: U32<LittleEndian> : pub get Result<u32> : pub set u32, // 24 bit; often all used bytes are equal
+            address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
 
-            cke_drive_strength: u8 : pub get Result<CadBusCkeDriveStrength> : pub set CadBusCkeDriveStrength,
-            cs_odt_drive_strength: u8 : pub get Result<CadBusCsOdtDriveStrength> : pub set CadBusCsOdtDriveStrength,
-            address_command_drive_strength: u8 : pub get Result<CadBusAddressCommandDriveStrength> : pub set CadBusAddressCommandDriveStrength,
-            clk_drive_strength: u8 : pub get Result<CadBusClkDriveStrength> : pub set CadBusClkDriveStrength,
+            cke_drive_strength: u8 : pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
+            cs_odt_drive_strength: u8 : pub get CadBusCsOdtDriveStrength : pub set CadBusCsOdtDriveStrength,
+            address_command_drive_strength: u8 : pub get CadBusAddressCommandDriveStrength : pub set CadBusAddressCommandDriveStrength,
+            clk_drive_strength: u8 : pub get CadBusClkDriveStrength : pub set CadBusClkDriveStrength,
         }
     }
 
@@ -2041,22 +2041,22 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4CadBusElement {
-            dimm_slots_per_channel: U32<LittleEndian> : pub get Result<u32> : pub set u32,
-            ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get Result<LrdimmDdr4Voltages> : pub set LrdimmDdr4Voltages,
-            dimm0_ranks: U32<LittleEndian> : pub get Result<LrdimmDdr4DimmRanks> : pub set LrdimmDdr4DimmRanks,
-            dimm1_ranks: U32<LittleEndian> : pub get Result<LrdimmDdr4DimmRanks> : pub set LrdimmDdr4DimmRanks,
+            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
+            ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
+            vdd_io: U32<LittleEndian> : pub get LrdimmDdr4Voltages : pub set LrdimmDdr4Voltages,
+            dimm0_ranks: U32<LittleEndian> : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
+            dimm1_ranks: U32<LittleEndian> : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
 
-            gear_down_mode: U16<LittleEndian> : pub get Result<u16> : pub set u16,
+            gear_down_mode: U16<LittleEndian> : pub get u16 : pub set u16,
             _reserved: U16<LittleEndian>,
-            slow_mode: U16<LittleEndian> : pub get Result<u16> : pub set u16,
+            slow_mode: U16<LittleEndian> : pub get u16 : pub set u16,
             _reserved_2: U16<LittleEndian>,
-            address_command_control: U32<LittleEndian> : pub get Result<u32> : pub set u32, // 24 bit; often all used bytes are equal
+            address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
 
-            cke_drive_strength: u8 : pub get Result<CadBusCkeDriveStrength> : pub set CadBusCkeDriveStrength,
-            cs_odt_drive_strength: u8 : pub get Result<CadBusCsOdtDriveStrength> : pub set CadBusCsOdtDriveStrength,
-            address_command_drive_strength: u8 : pub get Result<CadBusAddressCommandDriveStrength> : pub set CadBusAddressCommandDriveStrength,
-            clk_drive_strength: u8 : pub get Result<CadBusClkDriveStrength> : pub set CadBusClkDriveStrength,
+            cke_drive_strength: u8 : pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
+            cs_odt_drive_strength: u8 : pub get CadBusCsOdtDriveStrength : pub set CadBusCsOdtDriveStrength,
+            address_command_drive_strength: u8 : pub get CadBusAddressCommandDriveStrength : pub set CadBusAddressCommandDriveStrength,
+            clk_drive_strength: u8 : pub get CadBusClkDriveStrength : pub set CadBusClkDriveStrength,
         }
     }
 
@@ -2314,22 +2314,22 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct Ddr4DataBusElement {
-            dimm_slots_per_channel: U32<LittleEndian> : pub get Result<u32> : pub set u32,
-            ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get Result<RdimmDdr4Voltages> : pub set RdimmDdr4Voltages,
-            dimm0_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
-            dimm1_ranks: U32<LittleEndian> : pub get Result<Ddr4DimmRanks> : pub set Ddr4DimmRanks,
+            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
+            ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
+            vdd_io: U32<LittleEndian> : pub get RdimmDdr4Voltages : pub set RdimmDdr4Voltages,
+            dimm0_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
+            dimm1_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
 
-            rtt_nom: U32<LittleEndian> : pub get Result<RttNom> : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
-            rtt_wr: U32<LittleEndian> : pub get Result<RttWr> : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
-            rtt_park: U32<LittleEndian> : pub get Result<RttPark> : pub set RttPark, // contains ODT termination resistor to be used when ODT is low
-            dq_drive_strength: U32<LittleEndian> : pub get Result<u32> : pub set u32, // for data
-            dqs_drive_strength: U32<LittleEndian> : pub get Result<u32> : pub set u32, // for data strobe (bit clock)
-            odt_drive_strength: U32<LittleEndian> : pub get Result<u32> : pub set u32, // for on-die termination
-            pmu_phy_vref: U32<LittleEndian> : pub get Result<u32> : pub set u32,
+            rtt_nom: U32<LittleEndian> : pub get RttNom : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
+            rtt_wr: U32<LittleEndian> : pub get RttWr : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
+            rtt_park: U32<LittleEndian> : pub get RttPark : pub set RttPark, // contains ODT termination resistor to be used when ODT is low
+            dq_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data
+            dqs_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data strobe (bit clock)
+            odt_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for on-die termination
+            pmu_phy_vref: U32<LittleEndian> : pub get u32 : pub set u32,
             // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
             // See <https://github.com/LongJohnCoder/ddr-doc/blob/gh-pages/jedec/JESD79-4.pdf> Table 15
-            pub(crate) vref_dq: U32<LittleEndian> : pub get Result<VrefDq> : pub set VrefDq, // MR6 vref calibration value; 23|30|32
+            pub(crate) vref_dq: U32<LittleEndian> : pub get VrefDq : pub set VrefDq, // MR6 vref calibration value; 23|30|32
         }
     }
 
@@ -2420,21 +2420,21 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4DataBusElement {
-            dimm_slots_per_channel: U32<LittleEndian> : pub get Result<u32> : pub set u32,
-            ddr_rates: U32<LittleEndian> : pub get Result<DdrRates> : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get Result<LrdimmDdr4Voltages> : pub set LrdimmDdr4Voltages,
-            dimm0_ranks: U32<LittleEndian> : pub get Result<LrdimmDdr4DimmRanks> : pub set LrdimmDdr4DimmRanks,
-            dimm1_ranks: U32<LittleEndian> : pub get Result<LrdimmDdr4DimmRanks> : pub set LrdimmDdr4DimmRanks,
+            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
+            ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
+            vdd_io: U32<LittleEndian> : pub get LrdimmDdr4Voltages : pub set LrdimmDdr4Voltages,
+            dimm0_ranks: U32<LittleEndian> : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
+            dimm1_ranks: U32<LittleEndian> : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
 
-            rtt_nom: U32<LittleEndian> : pub get Result<RttNom> : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
-            rtt_wr: U32<LittleEndian> : pub get Result<RttWr> : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
-            rtt_park: U32<LittleEndian> : pub get Result<RttPark> : pub set RttPark, // contains ODT termination resistor to be used when ODT is low
-            dq_drive_strength: U32<LittleEndian> : pub get Result<u32> : pub set u32, // for data
-            dqs_drive_strength: U32<LittleEndian> : pub get Result<u32> : pub set u32, // for data strobe (bit clock)
-            odt_drive_strength: U32<LittleEndian> : pub get Result<u32> : pub set u32, // for on-die termination
-            pmu_phy_vref: U32<LittleEndian> : pub get Result<u32> : pub set u32,
+            rtt_nom: U32<LittleEndian> : pub get RttNom : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
+            rtt_wr: U32<LittleEndian> : pub get RttWr : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
+            rtt_park: U32<LittleEndian> : pub get RttPark : pub set RttPark, // contains ODT termination resistor to be used when ODT is low
+            dq_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data
+            dqs_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data strobe (bit clock)
+            odt_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for on-die termination
+            pmu_phy_vref: U32<LittleEndian> : pub get u32 : pub set u32,
             // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
-            vref_dq: U32<LittleEndian> : pub get Result<u32> : pub set u32, // MR6 vref calibration value; 23|30|32
+            vref_dq: U32<LittleEndian> : pub get u32 : pub set u32, // MR6 vref calibration value; 23|30|32
         }
     }
 
@@ -2561,7 +2561,7 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct MaxFreqElement {
-            dimm_slots_per_channel: u8 : pub get Result<DimmsPerChannel> : pub set DimmsPerChannel,
+            dimm_slots_per_channel: u8 : pub get DimmsPerChannel : pub set DimmsPerChannel,
             _reserved: u8,
             conditions: [U16<LittleEndian>; 4], // number of dimm on a channel, number of single-rank dimm, number of dual-rank dimm, number of quad-rank dimm
             speeds: [U16<LittleEndian>; 3], // speed limit with voltage 1.5 V, 1.35 V, 1.25 V // FIXME make accessible
@@ -2667,7 +2667,7 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct LrMaxFreqElement {
-            dimm_slots_per_channel: u8 : pub get Result<u8> : pub set u8,
+            dimm_slots_per_channel: u8 : pub get u8 : pub set u8,
             _reserved: u8,
             pub conditions: [U16<LittleEndian>; 4], // maybe: number of dimm on a channel, 0, number of lr dimm, 0 // FIXME: Make accessible
             pub speeds: [U16<LittleEndian>; 3], // maybe: speed limit with voltage 1.5 V, 1.35 V, 1.25 V; FIXME: Make accessible
@@ -2727,9 +2727,9 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Clone, Copy)]
         #[repr(C, packed)]
         pub struct Gpio {
-            pin: u8 : pub get Result<u8> : pub set u8, // in FCH
-            iomux_control: u8 : pub get Result<u8> : pub set u8, // how to configure that pin
-            bank_control: u8 : pub get Result<u8> : pub set u8, // how to configure bank control
+            pin: u8 : pub get u8 : pub set u8, // in FCH
+            iomux_control: u8 : pub get u8 : pub set u8, // how to configure that pin
+            bank_control: u8 : pub get u8 : pub set u8, // how to configure bank control
         }
     }
 
@@ -2775,8 +2775,8 @@ pub mod memory {
         #[repr(C, packed)]
         pub struct ErrorOutControlBeepCode {
             error_type: U16<LittleEndian>,
-            peak_map: U16<LittleEndian> : pub get Result<u16> : pub set u16,
-            peak_attr: U32<LittleEndian> : pub get Result<ErrorOutControlBeepCodePeakAttr> : pub set ErrorOutControlBeepCodePeakAttr,
+            peak_map: U16<LittleEndian> : pub get u16 : pub set u16,
+            peak_attr: U32<LittleEndian> : pub get ErrorOutControlBeepCodePeakAttr : pub set ErrorOutControlBeepCodePeakAttr,
         }
     }
     impl ErrorOutControlBeepCode {
@@ -2814,26 +2814,26 @@ pub mod memory {
             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
             #[repr(C, packed)]
             pub struct $struct_name {
-                enable_error_reporting: BU8 : pub get Result<bool> : pub set bool,
-                enable_error_reporting_gpio: BU8 : pub get Result<bool> : pub set bool, // FIXME: Remove
-                enable_error_reporting_beep_codes: BU8 : pub get Result<bool> : pub set bool,
+                enable_error_reporting: BU8 : pub get bool : pub set bool,
+                enable_error_reporting_gpio: BU8 : pub get bool : pub set bool, // FIXME: Remove
+                enable_error_reporting_beep_codes: BU8 : pub get bool : pub set bool,
                 /// Note: Receiver of the error log: Send 0xDEAD5555 to the INPUT_PORT to acknowledge.
-                enable_using_handshake: BU8 : pub get Result<bool> : pub set bool, // otherwise see output_delay
-                input_port: U32<LittleEndian> : pub get Result<u32> : pub set u32, // for handshake
-                output_delay: U32<LittleEndian> : pub get Result<u32> : pub set u32, // if no handshake; in units of 10 ns.
-                output_port: U32<LittleEndian> : pub get Result<u32> : pub set u32,
-                stop_on_first_fatal_error: BU8: pub get Result<bool> : pub set bool,
+                enable_using_handshake: BU8 : pub get bool : pub set bool, // otherwise see output_delay
+                input_port: U32<LittleEndian> : pub get u32 : pub set u32, // for handshake
+                output_delay: U32<LittleEndian> : pub get u32 : pub set u32, // if no handshake; in units of 10 ns.
+                output_port: U32<LittleEndian> : pub get u32 : pub set u32,
+                stop_on_first_fatal_error: BU8: pub get bool : pub set bool,
                 _reserved: [u8; 3],
-                input_port_size: U32<LittleEndian> : pub get Result<PortSize> : pub set PortSize,
-                output_port_size: U32<LittleEndian> : pub get Result<PortSize> : pub set PortSize,
-                input_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // PortType; default: 6
-                output_port_type: U32<LittleEndian> : pub get Result<PortType> : pub set PortType, // PortType; default: 6
-                clear_acknowledgement: BU8 : pub get Result<bool> : pub set bool,
+                input_port_size: U32<LittleEndian> : pub get PortSize : pub set PortSize,
+                output_port_size: U32<LittleEndian> : pub get PortSize : pub set PortSize,
+                input_port_type: U32<LittleEndian> : pub get PortType : pub set PortType, // PortType; default: 6
+                output_port_type: U32<LittleEndian> : pub get PortType : pub set PortType, // PortType; default: 6
+                clear_acknowledgement: BU8 : pub get bool : pub set bool,
                 _reserved_before_gpio: [u8; $padding_before_gpio],
                 error_reporting_gpio: Gpio,
                 _reserved_after_gpio: [u8; $padding_after_gpio],
                 pub beep_code_table: [ErrorOutControlBeepCode; 8], // FIXME: Make accessible
-                enable_heart_beat: BU8 : pub get Result<bool> : pub set bool,
+                enable_heart_beat: BU8 : pub get bool : pub set bool,
                 enable_power_good_gpio: BU8,
                 power_good_gpio: Gpio,
                 _reserved_end: [u8; 3], // pad
@@ -3011,11 +3011,11 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct Ddr4OdtPatElement {
-            dimm_rank_bitmaps: U32<LittleEndian> : pub get Result<Ddr4OdtPatDimmRankBitmaps> : pub set Ddr4OdtPatDimmRankBitmaps,
-            cs0_odt_patterns: U32<LittleEndian> : pub get Result<OdtPatPatterns> : pub set OdtPatPatterns,
-            cs1_odt_patterns: U32<LittleEndian> : pub get Result<OdtPatPatterns> : pub set OdtPatPatterns,
-            cs2_odt_patterns: U32<LittleEndian> : pub get Result<OdtPatPatterns> : pub set OdtPatPatterns,
-            cs3_odt_patterns: U32<LittleEndian> : pub get Result<OdtPatPatterns> : pub set OdtPatPatterns,
+            dimm_rank_bitmaps: U32<LittleEndian> : pub get Ddr4OdtPatDimmRankBitmaps : pub set Ddr4OdtPatDimmRankBitmaps,
+            cs0_odt_patterns: U32<LittleEndian> : pub get OdtPatPatterns : pub set OdtPatPatterns,
+            cs1_odt_patterns: U32<LittleEndian> : pub get OdtPatPatterns : pub set OdtPatPatterns,
+            cs2_odt_patterns: U32<LittleEndian> : pub get OdtPatPatterns : pub set OdtPatPatterns,
+            cs3_odt_patterns: U32<LittleEndian> : pub get OdtPatPatterns : pub set OdtPatPatterns,
         }
     }
 
@@ -3071,11 +3071,11 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4OdtPatElement {
-            dimm_rank_bitmaps: U32<LittleEndian> : pub get Result<LrdimmDdr4OdtPatDimmRankBitmaps> : pub set LrdimmDdr4OdtPatDimmRankBitmaps,
-            cs0_odt_patterns: U32<LittleEndian> : pub get Result<OdtPatPatterns> : pub set OdtPatPatterns,
-            cs1_odt_patterns: U32<LittleEndian> : pub get Result<OdtPatPatterns> : pub set OdtPatPatterns,
-            cs2_odt_patterns: U32<LittleEndian> : pub get Result<OdtPatPatterns> : pub set OdtPatPatterns,
-            cs3_odt_patterns: U32<LittleEndian> : pub get Result<OdtPatPatterns> : pub set OdtPatPatterns,
+            dimm_rank_bitmaps: U32<LittleEndian> : pub get LrdimmDdr4OdtPatDimmRankBitmaps : pub set LrdimmDdr4OdtPatDimmRankBitmaps,
+            cs0_odt_patterns: U32<LittleEndian> : pub get OdtPatPatterns : pub set OdtPatPatterns,
+            cs1_odt_patterns: U32<LittleEndian> : pub get OdtPatPatterns : pub set OdtPatPatterns,
+            cs2_odt_patterns: U32<LittleEndian> : pub get OdtPatPatterns : pub set OdtPatPatterns,
+            cs3_odt_patterns: U32<LittleEndian> : pub get OdtPatPatterns : pub set OdtPatPatterns,
         }
     }
 
@@ -3423,9 +3423,9 @@ pub mod memory {
                     pub struct CkeTristateMap {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
+                        sockets: u8 : pub get SocketIds : pub set SocketIds,
+                        channels: u8 : pub get ChannelIds : pub set ChannelIds,
+                        dimms: u8 : pub get DimmSlots : pub set DimmSlots,
                         /// index i = CPU package's clock enable (CKE) pin, value = memory rank's CKE pin
                         pub connections: [u8; 4],
                     }
@@ -3461,9 +3461,9 @@ pub mod memory {
                     pub struct OdtTristateMap {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
+                        sockets: u8 : pub get SocketIds : pub set SocketIds,
+                        channels: u8 : pub get ChannelIds : pub set ChannelIds,
+                        dimms: u8 : pub get DimmSlots : pub set DimmSlots,
                         /// index i = CPU package's ODT pin (MA_ODT\[i\]), value = memory rank's ODT pin mask
                         pub connections: [u8; 4],
                     }
@@ -3499,9 +3499,9 @@ pub mod memory {
                     pub struct CsTristateMap {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
+                        sockets: u8 : pub get SocketIds : pub set SocketIds,
+                        channels: u8 : pub get ChannelIds : pub set ChannelIds,
+                        dimms: u8 : pub get DimmSlots : pub set DimmSlots,
                         /// index i = CPU package CS pin (MA_CS_L\[i\]), value = memory rank's CS pin
                         pub connections: [u8; 8],
                     }
@@ -3537,10 +3537,10 @@ pub mod memory {
                     pub struct MaxDimmsPerChannel {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots, // Note: must always be "any"
-                        value: u8 : pub get Result<u8> : pub set u8,
+                        sockets: u8 : pub get SocketIds : pub set SocketIds,
+                        channels: u8 : pub get ChannelIds : pub set ChannelIds,
+                        dimms: u8 : pub get DimmSlots : pub set DimmSlots, // Note: must always be "any"
+                        value: u8 : pub get u8 : pub set u8,
                     }
                 }
                 impl_EntryCompatible!(MaxDimmsPerChannel, 4, 4);
@@ -3574,9 +3574,9 @@ pub mod memory {
                     pub struct MemclkMap {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "all"
+                        sockets: u8 : pub get SocketIds : pub set SocketIds,
+                        channels: u8 : pub get ChannelIds : pub set ChannelIds,
+                        dimms: u8 : pub get DimmSlots, // Note: must always be "all"
                         pub connections: [u8; 8], // index: memory clock pin; value: Connected CS pin on DIMM
                     }
                 }
@@ -3611,10 +3611,10 @@ pub mod memory {
                     pub struct MaxChannelsPerSocket {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds>,  // Note: must always be "any"
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "any" here
-                        value: u8 : pub get Result<u8> : pub set u8,
+                        sockets: u8 : pub get SocketIds : pub set SocketIds,
+                        channels: u8 : pub get ChannelIds,  // Note: must always be "any"
+                        dimms: u8 : pub get DimmSlots, // Note: must always be "any" here
+                        value: u8 : pub get u8 : pub set u8,
                     }
                 }
                 impl_EntryCompatible!(MaxChannelsPerSocket, 8, 4);
@@ -3685,11 +3685,11 @@ pub mod memory {
                     pub struct MemBusSpeed {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "all"
-                        timing_mode: U32<LittleEndian> : pub get Result<TimingMode> : pub set TimingMode,
-                        bus_speed: U32<LittleEndian> : pub get Result<MemBusSpeedType> : pub set MemBusSpeedType,
+                        sockets: u8 : pub get SocketIds : pub set SocketIds,
+                        channels: u8 : pub get ChannelIds : pub set ChannelIds,
+                        dimms: u8 : pub get DimmSlots, // Note: must always be "all"
+                        timing_mode: U32<LittleEndian> : pub get TimingMode : pub set TimingMode,
+                        bus_speed: U32<LittleEndian> : pub get MemBusSpeedType : pub set MemBusSpeedType,
                     }
                 }
                 impl_EntryCompatible!(MemBusSpeed, 9, 11);
@@ -3726,9 +3726,9 @@ pub mod memory {
                     pub struct MaxCsPerChannel {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "Any"
+                        sockets: u8 : pub get SocketIds : pub set SocketIds,
+                        channels: u8 : pub get ChannelIds : pub set ChannelIds,
+                        dimms: u8 : pub get DimmSlots, // Note: must always be "Any"
                         value: u8,
                     }
                 }
@@ -3777,10 +3777,10 @@ pub mod memory {
                     pub struct MemTechnology {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds>, // Note: must always be "any" here
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: must always be "any" here
-                        technology_type: U32<LittleEndian> : pub get Result<MemTechnologyType> : pub set MemTechnologyType,
+                        sockets: u8 : pub get SocketIds : pub set SocketIds,
+                        channels: u8 : pub get ChannelIds, // Note: must always be "any" here
+                        dimms: u8 : pub get DimmSlots, // Note: must always be "any" here
+                        technology_type: U32<LittleEndian> : pub get MemTechnologyType : pub set MemTechnologyType,
                     }
                 }
                 impl_EntryCompatible!(MemTechnology, 11, 7);
@@ -3814,9 +3814,9 @@ pub mod memory {
                     pub struct WriteLevellingSeedDelay {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
+                        sockets: u8 : pub get SocketIds : pub set SocketIds,
+                        channels: u8 : pub get ChannelIds : pub set ChannelIds,
+                        dimms: u8 : pub get DimmSlots : pub set DimmSlots,
                         seed: [u8; 8],
                         ecc_seed: u8,
                     }
@@ -3843,9 +3843,9 @@ pub mod memory {
                     pub struct RxEnSeed {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
+                        sockets: u8 : pub get SocketIds : pub set SocketIds,
+                        channels: u8 : pub get ChannelIds : pub set ChannelIds,
+                        dimms: u8 : pub get DimmSlots : pub set DimmSlots,
                         seed: [U16<LittleEndian>; 8],
                         ecc_seed: U16<LittleEndian>,
                     }
@@ -3883,9 +3883,9 @@ pub mod memory {
                     pub struct LrDimmNoCs6Cs7Routing {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots> : pub set DimmSlots,
+                        sockets: u8 : pub get SocketIds : pub set SocketIds,
+                        channels: u8 : pub get ChannelIds : pub set ChannelIds,
+                        dimms: u8 : pub get DimmSlots : pub set DimmSlots,
                         value: u8, // Note: always 1
                     }
                 }
@@ -3919,9 +3919,9 @@ pub mod memory {
                     pub struct SolderedDownSodimm {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
+                        sockets: u8 : pub get SocketIds : pub set SocketIds,
+                        channels: u8 : pub get ChannelIds : pub set ChannelIds,
+                        dimms: u8 : pub get DimmSlots, // Note: always "all"
                         value: u8, // Note: always 1
                     }
                 }
@@ -3955,9 +3955,9 @@ pub mod memory {
                     pub struct LvDimmForce1V5 {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds>, // Note: always "all"
-                        channels: u8 : pub get Result<ChannelIds>, // Note: always "all"
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
+                        sockets: u8 : pub get SocketIds, // Note: always "all"
+                        channels: u8 : pub get ChannelIds, // Note: always "all"
+                        dimms: u8 : pub get DimmSlots, // Note: always "all"
                         value: u8, // Note: always 1
                     }
                 }
@@ -3991,11 +3991,11 @@ pub mod memory {
                     pub struct MinimumRwDataEyeWidth {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
-                        min_read_data_eye_width: u8 : pub get Result<u8> : pub set u8,
-                        min_write_data_eye_width: u8 : pub get Result<u8> : pub set u8,
+                        sockets: u8 : pub get SocketIds : pub set SocketIds,
+                        channels: u8 : pub get ChannelIds : pub set ChannelIds,
+                        dimms: u8 : pub get DimmSlots, // Note: always "all"
+                        min_read_data_eye_width: u8 : pub get u8 : pub set u8,
+                        min_write_data_eye_width: u8 : pub get u8 : pub set u8,
                     }
                 }
                 impl_EntryCompatible!(MinimumRwDataEyeWidth, 17, 5);
@@ -4031,7 +4031,7 @@ pub mod memory {
                     pub struct CpuFamilyFilter {
                         type_: u8,
                         payload_size: u8,
-                        cpu_family_revision: U32<LittleEndian> : pub get Result<u32> : pub set u32,
+                        cpu_family_revision: U32<LittleEndian> : pub get u32 : pub set u32,
                     }
                 }
                 impl_EntryCompatible!(CpuFamilyFilter, 18, 4);
@@ -4059,10 +4059,10 @@ pub mod memory {
                     pub struct SolderedDownDimmsPerChannel {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds> : pub set SocketIds,
-                        channels: u8 : pub get Result<ChannelIds> : pub set ChannelIds,
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
-                        value: u8 : pub get Result<u8> : pub set u8,
+                        sockets: u8 : pub get SocketIds : pub set SocketIds,
+                        channels: u8 : pub get ChannelIds : pub set ChannelIds,
+                        dimms: u8 : pub get DimmSlots, // Note: always "all"
+                        value: u8 : pub get u8 : pub set u8,
                     }
                 }
                 impl_EntryCompatible!(SolderedDownDimmsPerChannel, 19, 4);
@@ -4102,10 +4102,10 @@ pub mod memory {
                     pub struct MemPowerPolicy {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds>, // Note: always "all"
-                        channels: u8 : pub get Result<ChannelIds>, // Note: always "all"
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
-                        value: u8 : pub get Result<MemPowerPolicyType> : pub set MemPowerPolicyType,
+                        sockets: u8 : pub get SocketIds, // Note: always "all"
+                        channels: u8 : pub get ChannelIds, // Note: always "all"
+                        dimms: u8 : pub get DimmSlots, // Note: always "all"
+                        value: u8 : pub get MemPowerPolicyType : pub set MemPowerPolicyType,
                     }
                 }
                 impl_EntryCompatible!(MemPowerPolicy, 20, 4);
@@ -4145,10 +4145,10 @@ pub mod memory {
                     pub struct MotherboardLayers {
                         type_: u8,
                         payload_size: u8,
-                        sockets: u8 : pub get Result<SocketIds>, // Note: always "all"
-                        channels: u8 : pub get Result<ChannelIds>, // Note: always "all"
-                        dimms: u8 : pub get Result<DimmSlots>, // Note: always "all"
-                        value: u8 : pub get Result<MotherboardLayerCount> : pub set MotherboardLayerCount,
+                        sockets: u8 : pub get SocketIds, // Note: always "all"
+                        channels: u8 : pub get ChannelIds, // Note: always "all"
+                        dimms: u8 : pub get DimmSlots, // Note: always "all"
+                        value: u8 : pub get MotherboardLayerCount : pub set MotherboardLayerCount,
                     }
                 }
                 impl_EntryCompatible!(MotherboardLayers, 21, 4);
@@ -4608,9 +4608,9 @@ pub mod psp {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct IdApcbMapping {
-            id_and_feature_mask: u8 : pub get Result<u8> : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
-            id_and_feature_value: u8 : pub get Result<u8> : pub set u8,
-            board_instance_index: u8 : pub get Result<u8> : pub set u8,
+            id_and_feature_mask: u8 : pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
+            id_and_feature_value: u8 : pub get u8 : pub set u8,
+            board_instance_index: u8 : pub get u8 : pub set u8,
         }
     }
     impl IdApcbMapping {
@@ -4681,10 +4681,10 @@ pub mod psp {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
         #[repr(C, packed)]
         pub struct IdRevApcbMapping {
-            id_and_rev_and_feature_mask: u8 : pub get Result<u8> : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
-            id_and_feature_value: u8 : pub get Result<u8> : pub set u8,
-            rev_and_feature_value: u8 : pub get Result<RevAndFeatureValue> : pub set RevAndFeatureValue,
-            board_instance_index: u8 : pub get Result<u8> : pub set u8,
+            id_and_rev_and_feature_mask: u8 : pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
+            id_and_feature_value: u8 : pub get u8 : pub set u8,
+            rev_and_feature_value: u8 : pub get RevAndFeatureValue : pub set RevAndFeatureValue,
+            board_instance_index: u8 : pub get u8 : pub set u8,
         }
     }
 
@@ -4718,7 +4718,7 @@ pub mod psp {
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodCustom {
             access_method: U16<LittleEndian>, // 0xF for BoardIdGettingMethodCustom
-            feature_mask: U16<LittleEndian> : pub get Result<u16> : pub set u16,
+            feature_mask: U16<LittleEndian> : pub get u16 : pub set u16,
         }
     }
 
@@ -4809,10 +4809,10 @@ pub mod psp {
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodEeprom {
             access_method: U16<LittleEndian>, // 2 for BoardIdGettingMethodEeprom
-            i2c_controller_index: U16<LittleEndian> : pub get Result<u16> : pub set u16,
-            device_address: U16<LittleEndian> : pub get Result<u16> : pub set u16,
-            board_id_offset: U16<LittleEndian> : pub get Result<u16> : pub set u16, // Byte offset
-            board_rev_offset: U16<LittleEndian> : pub get Result<u16> : pub set u16, // Byte offset
+            i2c_controller_index: U16<LittleEndian> : pub get u16 : pub set u16,
+            device_address: U16<LittleEndian> : pub get u16 : pub set u16,
+            board_id_offset: U16<LittleEndian> : pub get u16 : pub set u16, // Byte offset
+            board_rev_offset: U16<LittleEndian> : pub get u16 : pub set u16, // Byte offset
         }
     }
 
@@ -4866,12 +4866,12 @@ pub mod psp {
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodSmbus {
             access_method: U16<LittleEndian>, // 1 for BoardIdGettingMethodSmbus
-            i2c_controller_index: U16<LittleEndian> : pub get Result<u16> : pub set u16,
-            i2c_mux_address: u8 : pub get Result<u8> : pub set u8,
-            mux_control_address: u8 : pub get Result<u8> : pub set u8,
-            mux_channel: u8 : pub get Result<u8> : pub set u8,
-            smbus_address: U16<LittleEndian> : pub get Result<u16> : pub set u16,
-            register_index: U16<LittleEndian> : pub get Result<u16> : pub set u16,
+            i2c_controller_index: U16<LittleEndian> : pub get u16 : pub set u16,
+            i2c_mux_address: u8 : pub get u8 : pub set u8,
+            mux_control_address: u8 : pub get u8 : pub set u8,
+            mux_channel: u8 : pub get u8 : pub set u8,
+            smbus_address: U16<LittleEndian> : pub get u16 : pub set u16,
+            register_index: U16<LittleEndian> : pub get u16 : pub set u16,
         }
     }
 
