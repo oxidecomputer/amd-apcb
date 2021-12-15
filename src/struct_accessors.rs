@@ -19,9 +19,14 @@ impl Getter<u32> for U32<LittleEndian> {
         self.get()
     }
 }
-impl Getter<u16> for U16<LittleEndian> {
-    fn get1(self) -> u16 {
-        self.get()
+impl Getter<Result<u16>> for U16<LittleEndian> {
+    fn get1(self) -> Result<u16> {
+        Ok(self.get())
+    }
+}
+impl Getter<Result<u64>> for U64<LittleEndian> {
+    fn get1(self) -> Result<u64> {
+        Ok(self.get())
     }
 }
 impl Getter<u8> for u8 {
