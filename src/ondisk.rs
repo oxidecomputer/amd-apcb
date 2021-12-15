@@ -5205,14 +5205,15 @@ pub enum BmcLinkSpeed {
     PcieGen2 = 2,
 }
 
+#[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum SecondPcieLinkMaxPayload {
-    P128Byte = 0,
-    P256Byte = 1,
-    P512Byte = 2,
-    P1024Byte = 3,
-    P2048Byte = 4,
-    P4096Byte = 5,
+    _128_Byte = 0,
+    _256_Byte = 1,
+    _512_Byte = 2,
+    _1024_Byte = 3,
+    _2048_Byte = 4,
+    _4096_Byte = 5,
     HardwareDefault = 0xff,
 }
 
