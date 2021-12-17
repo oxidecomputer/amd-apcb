@@ -175,19 +175,33 @@ impl Default for V2_HEADER {
     }
 }
 
+// The funny reserved values here were such that older firmware (which
+// expects a V2_HEADER and does not honor its header_size) can skip this
+// unknown struct.
+// That is done by making the beginning here look like valid GROUP_HEADER
+// and ENTRY_HEADER.  The firmware reads [V2_HEADER, GROUP_HEADER,
+// ENTRY_HEADER].
+// The sizes have since diverged. Now it doesn't make much sense to have
+// them any more, except for bug compatibility.
 #[derive(FromBytes, AsBytes, Unaligned, Clone, Copy)]
 #[repr(C, packed)]
 pub(crate) struct V3_HEADER_EXT {
     pub signature: [u8; 4],        // "ECB2"
     reserved_1: U16<LittleEndian>, // 0
-    reserved_2: U16<LittleEndian>, // 0x10
-    pub struct_version: U16<LittleEndian>,
-    pub data_version: U16<LittleEndian>,
-    pub ext_header_size: U32<LittleEndian>, // 96
-    reserved_3: U16<LittleEndian>,          // 0
-    reserved_4: U16<LittleEndian>,          // 0xFFFF
-    reserved_5: U16<LittleEndian>,          // 0x40
-    reserved_6: U16<LittleEndian>,          // 0x00
+    reserved_2: U16<LittleEndian>, // 0x10 // GROUP_HEADER::header_size
+    pub struct_version: U16<LittleEndian>, // GROUP_HEADER::version
+    pub data_version: U16<LittleEndian>, // GROUP_HEADER::_reserved
+    pub ext_header_size: U32<LittleEndian>, // 96 // GROUP_HEADER::group_size
+    reserved_3: U16<LittleEndian>,          // 0 // ENTRY_HEADER::group_id
+    reserved_4: U16<LittleEndian>,          // 0xFFFF // ENTRY_HEADER::entry_id
+    // reserved_5 includes 0x10 for the entry header; that
+    // gives 48 Byte payload for the entry--which is inconsistent with the
+    // size of the fields following afterwards.
+    reserved_5: U16<LittleEndian>,          // 0x40 // ENTRY_HEADER::entry_size
+    reserved_6: U16<LittleEndian>,          // 0x00 // ENTRY_HEADER::instance_id
+    // ENTRY_HEADER::{context_type, context_format, unit_size, prority_mask,
+    // key_size, key_pos, board_instance_mask}.  Those are all of
+    // ENTRY_HEADER's fields.
     reserved_7: [U32<LittleEndian>; 2],     // 0 0
     pub data_offset: U16<LittleEndian>,     // 0x58
     pub header_checksum: u8,
