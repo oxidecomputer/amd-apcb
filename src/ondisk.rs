@@ -5724,18 +5724,18 @@ pub enum PspEnableDebugMode {
 #[repr(u16)]
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct FchGppClkMapSelection {
-    s0_gpp0_off: B1,
-    s0_gpp1_off: B1,
-    s0_gpp4_off: B1,
-    s0_gpp2_off: B1,
-    s0_gpp3_off: B1,
+    pub s0_gpp0_off: B1,
+    pub s0_gpp1_off: B1,
+    pub s0_gpp4_off: B1,
+    pub s0_gpp2_off: B1,
+    pub s0_gpp3_off: B1,
     #[skip] __: B3,
 
-    s1_gpp0_off: B1,
-    s1_gpp1_off: B1,
-    s1_gpp4_off: B1,
-    s1_gpp2_off: B1,
-    s1_gpp3_off: B1,
+    pub s1_gpp0_off: B1,
+    pub s1_gpp1_off: B1,
+    pub s1_gpp4_off: B1,
+    pub s1_gpp2_off: B1,
+    pub s1_gpp3_off: B1,
     #[skip] __: B3,
 }
 
