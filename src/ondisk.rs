@@ -5075,6 +5075,16 @@ pub enum MemThrottleCtrlRollWindowDepth {
     // 0: reserved
 }
 
+/// See UMC::SpazCtrl: AutoRefFineGranMode.
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemAutoRefreshFineGranMode {
+    Fixed1Times = 0,
+    Fixed2Times = 1,
+    Fixed4Times = 2,
+    Otf2Times = 5,
+    Otf4Times = 6,
+}
+
 impl FromPrimitive for MemThrottleCtrlRollWindowDepth {
     fn from_u64(value: u64) -> Option<Self> {
         if value > 0 && value <= 0xff {
@@ -6039,7 +6049,7 @@ make_token_accessors! {
     mem_ecc_redirection(TokenEntryId::Bool, default 0, id 0xdede0e09) : pub get bool : pub set bool, // Rome
     mem_temp_controlled_extended_refresh(TokenEntryId::Bool, default 0, id 0xf402f423) : pub get bool : pub set bool, // Rome (Obsolete)
     mem_data_scramble(TokenEntryId::Byte, default 0, id 0x98aca5b4) : pub get u8 : pub set u8, // Rome (Obsolete)
-    u0x190305df(TokenEntryId::Byte, default 0, id 0x190305df) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
+    mem_auto_refresh_fine_gran_mode(TokenEntryId::Byte, default 0, id 0x190305df) : pub get MemAutoRefreshFineGranMode : pub set MemAutoRefreshFineGranMode, // value 0 // Rome (Obsolete)
     uma_mode(TokenEntryId::Byte, default 0, id 0x1fb35295) : pub get UmaMode : pub set UmaMode, // value 2 // Rome (Obsolete)
     mem_nvdimm_power_source(TokenEntryId::Byte, default 0, id 0x286d0075) : pub get MemNvdimmPowerSource : pub set MemNvdimmPowerSource, // value 1 // Rome (Obsolete)
     mem_data_poison(TokenEntryId::Byte, default 0, id 0x48959473) : pub get MemDataPoison : pub set MemDataPoison, // value 1 // Rome (Obsolete)
