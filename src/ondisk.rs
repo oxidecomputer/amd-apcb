@@ -6070,7 +6070,6 @@ make_token_accessors! {
     // See PPR SwCmdThrotCyc
     sw_cmd_throt_cycles(TokenEntryId::Byte, default 0, id 0xdcec8fcb) : pub get u8 : pub set u8, // value 0 // (Obsolete)
     odts_cmd_throttle_cycles(TokenEntryId::Byte, default 0, id 0x69318e90) : pub get u8 : pub set u8, // value 0x57 // Rome (Obsolete); TODO: Auto?
-    u0x6c4ccf38(TokenEntryId::Byte, default 0, id 0x6c4ccf38) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
     mem_dram_vref_range(TokenEntryId::Byte, default 0, id 0xa8769655) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
     mem_cpu_vref_range(TokenEntryId::Byte, default 0, id 0x7627cb6d) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
     mem_controller_writing_crc_mode(TokenEntryId::Byte, default 0, id 0x7d1c6e46) : pub get MemControllerWritingCrcMode : pub set MemControllerWritingCrcMode, // value 0 // Rome
