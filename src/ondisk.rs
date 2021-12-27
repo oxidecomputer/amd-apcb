@@ -6025,6 +6025,7 @@ make_token_accessors! {
     mem_dqs_training_control(TokenEntryId::Bool, default 0, id 0x3caaa3fa) : pub get bool : pub set bool, // Rome
     mem_channel_interleaving(TokenEntryId::Bool, default 0, id 0x48254f73) : pub get bool : pub set bool, // Rome
     mem_pstate(TokenEntryId::Bool, default 0, id 0x56b93947) : pub get bool : pub set bool, // Rome
+    /// Average the time between refresh requests
     mem_amp(TokenEntryId::Bool, default 0, id 0x592cb3ca) : pub get bool : pub set bool, // value 1 // amp_enable; Rome
     mem_limit_memory_to_below_1_TiB(TokenEntryId::Bool, default 0, id 0x5e71e6d8) : pub get bool : pub set bool, // value 1 // Rome
     mem_oc_vddio_control(TokenEntryId::Bool, default 0, id 0x6cd36dbe) : pub get bool : pub set bool, // value 0 // Rome
