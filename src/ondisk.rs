@@ -5073,7 +5073,6 @@ pub enum MemRdimmTimingCmdParLatency {
 pub enum MemThrottleCtrlRollWindowDepth {
     Memclks(NonZeroU8),
     // 0: reserved
-    // TODO: Maybe Auto = 0xff ?
 }
 
 impl FromPrimitive for MemThrottleCtrlRollWindowDepth {
