@@ -5359,6 +5359,13 @@ pub enum BmcGen2TxDeemphasis {
     Disabled = 0xff,
 }
 
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum BmcRcbCheckingMode {
+    EnableRcbChecking = 0,
+    DisableRcbChecking = 1,
+    Auto = 0xff,
+}
+
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum EccSymbolSize {
@@ -6089,7 +6096,8 @@ make_token_accessors! {
     bmc_gen2_tx_deemphasis(TokenEntryId::Byte, default 0xff, id 0xf30d142d) : pub get BmcGen2TxDeemphasis : pub set BmcGen2TxDeemphasis, // value 0xff
     bmc_link_speed(TokenEntryId::Byte, default 0, id 0x9c790f4b) : pub get BmcLinkSpeed : pub set BmcLinkSpeed, // value 1
     bmc_init_before_dram(TokenEntryId::Bool, default 0, id 0xfa94ee37) : pub get bool : pub set bool, // value 0
-    u0xae7f0df4(TokenEntryId::Byte, default 0, id 0xae7f0df4) : pub get u8 : pub set u8, // value 0xff // Rome
+    /// See <https://www.techdesignforums.com/practice/technique/common-pitfalls-in-pci-express-design/>.
+    bmc_rcb_checking_mode(TokenEntryId::Byte, default 0, id 0xae7f0df4) : pub get BmcRcbCheckingMode : pub set BmcRcbCheckingMode, // value 0xff // Rome
 }
 
 #[cfg(test)]
