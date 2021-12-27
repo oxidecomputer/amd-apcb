@@ -6037,7 +6037,6 @@ make_token_accessors! {
     df_3link_max_xgmi_speed(TokenEntryId::Byte, default 0, id 0x53ba449b) : pub get u8 : pub set u8, // value 0xff // Rome
     df_4link_max_xgmi_speed(TokenEntryId::Byte, default 0, id 0x3f307cb3) : pub get u8 : pub set u8, // value 0xff //  Rome
     mem_dram_double_refresh_rate(TokenEntryId::Byte, default 0, id 0x44d40026) : pub get u8 : pub set u8, // value 0 // Rome
-    mem_dram_double_refresh_rate_unused(TokenEntryId::Bool, default 0, id 0x974e8e7c) : pub get bool : pub set bool, // value 0 // Rome (unused)
     // See UMC::CH::ThrottleCtrl RollWindowDepth
     mem_roll_window_depth(TokenEntryId::Byte, default 0xff, id 0x5985083a) : pub get MemThrottleCtrlRollWindowDepth : pub set MemThrottleCtrlRollWindowDepth, // Rome
     df_pstate_mode_select(TokenEntryId::Byte, default 0xff, id 0xaeb84b12) : pub get DfPstateModeSelect : pub set DfPstateModeSelect, // value 0xff // Rome
