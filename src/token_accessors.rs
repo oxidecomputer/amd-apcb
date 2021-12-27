@@ -72,6 +72,7 @@ macro_rules! make_token_accessors {(
     $(
         $(
             impl<'a, 'b> Tokens<'a, 'b> {
+            #[allow(non_snake_case)]
             #[inline]
             $getter_vis
             fn $field_name (self: &'_ Self)
@@ -93,6 +94,7 @@ macro_rules! make_token_accessors {(
             }
             }
             impl<'a, 'b> TokensMut<'a, 'b> {
+            #[allow(non_snake_case)]
             #[inline]
             $getter_vis
             fn $field_name (self: &'_ Self)
@@ -114,6 +116,7 @@ macro_rules! make_token_accessors {(
             }
             $(
               paste! {
+                  #[allow(non_snake_case)]
                   #[inline]
                   $setter_vis
                   fn [<set_ $field_name>] (self: &'_ mut Self, value: $field_setter_user_ty) -> Result<()> {
