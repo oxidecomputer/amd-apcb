@@ -5085,6 +5085,13 @@ pub enum MemAutoRefreshFineGranMode {
     Otf4Times = 6,
 }
 
+/// See UMC::CH::ThrottleCtrl: DisRefCmdThrotCnt.
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum MemAutoRefreshsCountForThrottling {
+    Enabled = 0,
+    Disabled = 1,
+}
+
 impl FromPrimitive for MemThrottleCtrlRollWindowDepth {
     fn from_u64(value: u64) -> Option<Self> {
         if value > 0 && value <= 0xff {
@@ -6040,7 +6047,7 @@ make_token_accessors! {
     mem_limit_memory_to_below_1_TiB(TokenEntryId::Bool, default 0, id 0x5e71e6d8) : pub get bool : pub set bool, // value 1 // Rome
     mem_oc_vddio_control(TokenEntryId::Bool, default 0, id 0x6cd36dbe) : pub get bool : pub set bool, // value 0 // Rome
     mem_uma_above_4_GiB(TokenEntryId::Bool, default 0, id 0x77e41d2a) : pub get bool : pub set bool, // value 1 // Rome
-    u0x8f84dcb4(TokenEntryId::Bool, default 0, id 0x8f84dcb4) : pub get bool : pub set bool, // value 0 // Rome
+    mem_auto_refreshs_count_for_throttling(TokenEntryId::Bool, default 0, id 0x8f84dcb4) : pub get MemAutoRefreshsCountForThrottling : pub set MemAutoRefreshsCountForThrottling, // value 0 // Rome
     u0x96176308(TokenEntryId::Bool, default 0, id 0x96176308) : pub get bool : pub set bool, // value 1 // Rome
     mem_on_die_thermal_sensor(TokenEntryId::Bool, default 0, id 0xaeb3f914) : pub get bool : pub set bool, // odts_en; Rome
     mem_all_clocks(TokenEntryId::Bool, default 0, id 0xb95e0555) : pub get bool : pub set bool, // mem_all_clocks_on; Rome
