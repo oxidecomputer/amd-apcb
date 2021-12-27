@@ -6074,7 +6074,6 @@ make_token_accessors! {
     mctp_reroute_enable(TokenEntryId::Bool, default 0, id 0x79f2a8d5) : pub get bool : pub set bool, // value 0
     iohc_mixed_rw_workaround(TokenEntryId::Bool, default 0, id 0xec3faf5a) : pub get bool : pub set bool, // value 0 // FIXME remove?
     df_sys_storage_at_top_of_mem(TokenEntryId::Byte, default 0, id 0x249e08d5) : pub get u8 : pub set u8, // value 3 // TODO: 0: distributed, 1: consolidated; 0xff: auto // FIXME.
-    u0x28eb57ad(TokenEntryId::Byte, default 0, id 0x28eb57ad) : pub get u8 : pub set u8, // value 0x1e // 0x0E to 0x3E; XXX // FIXME remove?
 
     // BMC Rome
 
