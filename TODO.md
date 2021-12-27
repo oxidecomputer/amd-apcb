@@ -1,5 +1,24 @@
+# CLEAN UP
+
+* https://github.com/Robbepop/modular-bitfield/issues/31
+  * Says that modular-bitfield now allows deserializing unknown invalid bitpatterns without failure!
+    * Getters protect, though.
+* Compile-time assertions
+  * `const _: () = assert!(std::mem::size_of::<u64>() == 8);`
+* Tokens
+  * u0x96176308 = is_capsule_mode: bool (fch)
+  * u0x6c4ccf38 = mem_ps(platform specific)_error_handling: 0~0xff (usually 0); obsolete
+  * u0xae7f0df4 = bmc_rcb_wrong_attr_dis: 0=en, 1=dis, skip=0xff
+* FchSmbusSpeed::Auto missing?
+* Sanity-check MaxFreqElement::new argument 1
+* update_checksum split into two parts!!!!
+  Maybe automate them, though.
+* define_ErrorOutControl: CHECK DEFAULT VALUES!
+* RdimmDdr4CadBusElement::new: has address_command_control as one conglomerate--should be split.
+
 # Features
 
+* Error log should also be readable maybe.
 * GroupMutIter: Also validate()
 * Sanity-check "new" fns that exist
 * Add "new" fn for the others, too?
@@ -19,6 +38,9 @@
 # (Future) Compatibility
 
 * Maybe remove PartialEq from structs
+* Remove `pub type CadBusAddressCommandDriveStrength = CadBusClkDriveStrength`
+* Remove `pub type CadBusCkeDriveStrength = CadBusClkDriveStrength`
+* Remove `pub type CadBusCsOdtDriveStrength = CadBusClkDriveStrength`
 
 # Security
 
