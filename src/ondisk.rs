@@ -5349,6 +5349,18 @@ pub enum DfXgmiTxEqMode {
     Auto = 0xff,
 }
 
+/// Placement of private memory regions (PSP, SMU, CC6)
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum DfSysStorageAtTopOfMem {
+    /// CCD0 and CCD1 at the top of specific memory region (default)
+    Distributed = 0,
+    /// Consolidate the privileged region and put at the top of the last memory region (recommended)
+    ConsolidatedInLastDramPair = 1,
+    /// Consolidate and put at the top of the first memory region
+    ConsolidatedInFirstDramPair = 2,
+    Auto = 0xff,
+}
+
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum BmcGen2TxDeemphasis {
@@ -6078,7 +6090,7 @@ make_token_accessors! {
     mother_board_type_0(TokenEntryId::Bool, default 0, id 0x536464b) : pub get bool : pub set bool, // value 0
     mctp_reroute_enable(TokenEntryId::Bool, default 0, id 0x79f2a8d5) : pub get bool : pub set bool, // value 0
     iohc_mixed_rw_workaround(TokenEntryId::Bool, default 0, id 0xec3faf5a) : pub get bool : pub set bool, // value 0 // FIXME remove?
-    df_sys_storage_at_top_of_mem(TokenEntryId::Byte, default 0, id 0x249e08d5) : pub get u8 : pub set u8, // value 3 // TODO: 0: distributed, 1: consolidated; 0xff: auto // FIXME.
+    df_sys_storage_at_top_of_mem(TokenEntryId::Byte, default 0xff, id 0x249e08d5) : pub get DfSysStorageAtTopOfMem : pub set DfSysStorageAtTopOfMem,
 
     // BMC Rome
 
