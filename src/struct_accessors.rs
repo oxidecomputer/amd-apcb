@@ -179,6 +179,7 @@ macro_rules! make_accessors {(
                   }
 
                   #[inline]
+                  #[must_use]
                   $setter_vis
                   fn [<with_ $field_name>]<'a>(self: Self, value: $field_setter_user_ty) -> Self {
                       let mut result = self;
