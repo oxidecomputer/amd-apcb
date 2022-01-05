@@ -1,6 +1,10 @@
 use crate::ondisk::{
     take_header_from_collection, take_header_from_collection_mut, TokenEntryId,
     TOKEN_ENTRY,
+    BoolTags,
+    ByteTags,
+    WordTags,
+    DWordTags,
 };
 use crate::types::{Error, FileSystemError, Result};
 use core::mem::size_of;
@@ -267,10 +271,43 @@ impl<'a> Iterator for TokensEntryIterMut<'a> {
     }
 }
 
-#[derive(Debug)]
 pub struct TokensEntryItem<'a> {
     entry_id: TokenEntryId,
     entry: &'a TOKEN_ENTRY,
+}
+
+impl<'a> core::fmt::Debug for TokensEntryItem<'a> {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let entry = self.entry;
+        let key = entry.key.get();
+        let mut ds = fmt.debug_struct("TokensEntryItem_TOKEN_ENTRY");
+        let n: Option<u32> = None;
+        match self.entry_id {
+            TokenEntryId::Bool => if let Some(key) = BoolTags::from_u32(key) {
+                ds.field("key", &key)
+            } else {
+                ds.field("key", &n)
+            },
+            TokenEntryId::Byte => if let Some(key) = ByteTags::from_u32(key) {
+                ds.field("key", &key)
+            } else {
+                ds.field("key", &n)
+            },
+            TokenEntryId::Word => if let Some(key) = WordTags::from_u32(key) {
+                ds.field("key", &key)
+            } else {
+                ds.field("key", &n)
+            },
+            TokenEntryId::DWord => if let Some(key) = DWordTags::from_u32(key) {
+                ds.field("key", &key)
+            } else {
+                ds.field("key", &n)
+            },
+            TokenEntryId::Unknown(_) => {
+                ds.field("key", &key)
+            },
+        }.field("value", &entry.value.get()).finish()
+    }
 }
 
 impl<'a> TokensEntryItem<'a> {

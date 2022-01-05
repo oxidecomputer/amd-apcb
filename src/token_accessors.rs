@@ -6,6 +6,7 @@ use crate::ondisk::GroupId;
 use crate::ondisk::PriorityLevels;
 use crate::types::Error;
 use crate::types::Result;
+use strum_macros::EnumString;
 
 pub struct TokensMut<'a, 'b> {
     pub(crate) apcb: &'b mut Apcb<'a>,
@@ -63,12 +64,21 @@ impl<'a, 'b> Tokens<'a, 'b> {
 /// NAME(TYPE, default DEFAULT_VALUE, id TOKEN_ID) = KEY[: pub get TYPE [: pub
 /// set TYPE]]
 macro_rules! make_token_accessors {(
+    $(#[$enum_meta:meta])*
+    $enum_vis:vis enum $enum_name:ident: {$field_entry_id:expr} {
         $(
             $(#[$field_meta:meta])*
             $field_vis:vis
-            $field_name:ident($field_entry_id:expr, default $field_default_value:expr, id $field_key:expr) $(: $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
+            $field_name:ident(default $field_default_value:expr, id $field_key:expr) $(: $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
         ),* $(,)?
+    }
 ) => (
+    $(#[$enum_meta])*
+    $enum_vis enum $enum_name {
+        $(
+            $field_name = $field_key,
+        )*
+    }
     $(
         $(
             impl<'a, 'b> Tokens<'a, 'b> {
