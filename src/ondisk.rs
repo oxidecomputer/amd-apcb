@@ -1136,11 +1136,20 @@ impl Default for ENTRY_HEADER {
 
 pub const ENTRY_ALIGNMENT: usize = 4;
 
-#[derive(FromBytes, AsBytes, Debug)]
+#[derive(FromBytes, AsBytes)]
 #[repr(C, packed)]
 pub struct TOKEN_ENTRY {
     pub key: U32<LittleEndian>,
     pub value: U32<LittleEndian>,
+}
+
+impl core::fmt::Debug for TOKEN_ENTRY {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        fmt.debug_struct("TOKEN_ENTRY")
+                .field("key", &self.key.get())
+                .field("value", &self.value.get())
+                .finish()
+    }
 }
 
 /*
