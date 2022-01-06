@@ -4,9 +4,11 @@ use crate::apcb::Apcb;
 use crate::ondisk::BoardInstances;
 use crate::ondisk::GroupId;
 use crate::ondisk::PriorityLevels;
+use crate::ondisk::{EntryId, TokenEntryId};
 use crate::types::Error;
 use crate::types::Result;
 use strum_macros::EnumString;
+use crate::entry::EntryItemBody;
 
 pub struct TokensMut<'a, 'b> {
     pub(crate) apcb: &'b mut Apcb<'a>,
@@ -42,6 +44,23 @@ impl<'a, 'b> TokensMut<'a, 'b> {
             priority_mask,
         })
     }
+
+    pub(crate) fn get(&self, token_entry_id: TokenEntryId, field_key: u32) -> Result<u32> {
+        let group = self.apcb.group(GroupId::Token).ok_or_else(|| Error::GroupNotFound)?;
+        let entry = group.entry_exact(EntryId::Token(token_entry_id), self.instance_id, self.board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
+        match &entry.body {
+            EntryItemBody::<_>::Tokens(ref a) => {
+                let token = a.token(field_key).ok_or_else(|| Error::TokenNotFound)?;
+                assert!(token.id() == field_key);
+                let token_value = token.value();
+                Ok(token_value)
+            },
+            _ => {
+                return Err(Error::EntryTypeMismatch);
+            },
+        }
+    }
+
 }
 
 impl<'a, 'b> Tokens<'a, 'b> {
@@ -55,6 +74,22 @@ impl<'a, 'b> Tokens<'a, 'b> {
             instance_id,
             board_instance_mask,
         })
+    }
+
+    pub(crate) fn get(&self, token_entry_id: TokenEntryId, field_key: u32) -> Result<u32> {
+        let group = self.apcb.group(GroupId::Token).ok_or_else(|| Error::GroupNotFound)?;
+        let entry = group.entry_exact(EntryId::Token(token_entry_id), self.instance_id, self.board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
+        match &entry.body {
+            EntryItemBody::<_>::Tokens(ref a) => {
+                let token = a.token(field_key).ok_or_else(|| Error::TokenNotFound)?;
+                assert!(token.id() == field_key);
+                let token_value = token.value();
+                Ok(token_value)
+            },
+            _ => {
+                return Err(Error::EntryTypeMismatch);
+            },
+        }
     }
 }
 
@@ -82,26 +117,14 @@ macro_rules! make_token_accessors {(
     $(
         $(
             impl<'a, 'b> Tokens<'a, 'b> {
-            #[allow(non_snake_case)]
-            #[inline]
-            $getter_vis
-            fn $field_name (self: &'_ Self)
-                -> Result<$field_user_ty>
-            {
-                let group = self.apcb.group(GroupId::Token).ok_or_else(|| Error::GroupNotFound)?;
-                let entry = group.entry_exact(EntryId::Token($field_entry_id), self.instance_id, self.board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
-                match &entry.body {
-                    EntryItemBody::<_>::Tokens(ref a) => {
-                        let token = a.token($field_key).ok_or_else(|| Error::TokenNotFound)?;
-                        assert!(token.id() == $field_key);
-                        let token_value = token.value();
-                        <$field_user_ty>::from_u32(token_value).ok_or_else(|| Error::EntryTypeMismatch)
-                    },
-                    _ => {
-                        return Err(Error::EntryTypeMismatch);
-                    },
+                #[allow(non_snake_case)]
+                #[inline]
+                $getter_vis
+                fn $field_name (self: &'_ Self)
+                    -> Result<$field_user_ty>
+                {
+                    <$field_user_ty>::from_u32(self.get($field_entry_id, $field_key)?).ok_or_else(|| Error::EntryTypeMismatch)
                 }
-            }
             }
             impl<'a, 'b> TokensMut<'a, 'b> {
             #[allow(non_snake_case)]
@@ -110,19 +133,7 @@ macro_rules! make_token_accessors {(
             fn $field_name (self: &'_ Self)
                 -> Result<$field_user_ty>
             {
-                let group = self.apcb.group(GroupId::Token).ok_or_else(|| Error::GroupNotFound)?;
-                let entry = group.entry_exact(EntryId::Token($field_entry_id), self.instance_id, self.board_instance_mask).ok_or_else(|| Error::EntryNotFound)?;
-                match &entry.body {
-                    EntryItemBody::<_>::Tokens(ref a) => {
-                        let token = a.token($field_key).ok_or_else(|| Error::TokenNotFound)?;
-                        assert!(token.id() == $field_key);
-                        let token_value = token.value();
-                        <$field_user_ty>::from_u32(token_value).ok_or_else(|| Error::EntryTypeMismatch)
-                    },
-                    _ => {
-                        return Err(Error::EntryTypeMismatch);
-                    },
-                }
+                <$field_user_ty>::from_u32(self.get($field_entry_id, $field_key)?).ok_or_else(|| Error::EntryTypeMismatch)
             }
             $(
               paste! {
