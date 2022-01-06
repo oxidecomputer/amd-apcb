@@ -4,7 +4,7 @@ use crate::apcb::Apcb;
 use crate::ondisk::BoardInstances;
 use crate::ondisk::GroupId;
 use crate::ondisk::PriorityLevels;
-use crate::ondisk::{EntryId, TokenEntryId};
+use crate::ondisk::{EntryId, TokenEntryId, ContextType};
 use crate::types::Error;
 use crate::types::Result;
 use strum_macros::EnumString;
@@ -61,6 +61,44 @@ impl<'a, 'b> TokensMut<'a, 'b> {
         }
     }
 
+    pub(crate) fn set(&mut self, token_entry_id: TokenEntryId, field_key: u32, token_value: u32) -> Result<()> {
+        let entry_id = EntryId::Token(token_entry_id);
+        let token_id = field_key;
+        //let token_value = value.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?;
+        match self.apcb.insert_token(entry_id, self.instance_id, self.board_instance_mask, token_id, token_value) {
+            Err(Error::EntryNotFound) => {
+                match self.apcb.insert_entry(entry_id, self.instance_id, self.board_instance_mask, ContextType::Tokens, self.priority_mask, &[]) {
+                    Err(Error::EntryUniqueKeyViolation) => {
+                    },
+                    Err(x) => {
+                        return Err(x);
+                    },
+                    _ => {
+                    },
+                };
+                self.apcb.insert_token(entry_id, self.instance_id, self.board_instance_mask, token_id, token_value)?;
+            },
+            Err(Error::TokenUniqueKeyViolation) => {
+                let mut group = self.apcb.group_mut(GroupId::Token).unwrap();
+                let mut entry = group.entry_exact_mut(entry_id, self.instance_id, self.board_instance_mask).unwrap();
+                match &mut entry.body {
+                    EntryItemBody::<_>::Tokens(ref mut a) => {
+                        let mut token = a.token_mut(token_id).unwrap();
+                        token.set_value(token_value)?;
+                    },
+                    _ => {
+                        return Err(Error::EntryTypeMismatch);
+                    },
+                }
+            },
+            Err(x) => {
+                return Err(x);
+            },
+            _ => { // inserted new token, and set its value
+            },
+        }
+        Ok(())
+    }
 }
 
 impl<'a, 'b> Tokens<'a, 'b> {
@@ -141,43 +179,8 @@ macro_rules! make_token_accessors {(
                   #[inline]
                   $setter_vis
                   fn [<set_ $field_name>] (self: &'_ mut Self, value: $field_setter_user_ty) -> Result<()> {
-                      let entry_id = EntryId::Token($field_entry_id);
-                      let token_id = $field_key;
                       let token_value = value.to_u32().unwrap();
-                      //let token_value = value.to_u32().ok_or_else(|| Error::EntryTypeMismatch)?;
-                      match self.apcb.insert_token(entry_id, self.instance_id, self.board_instance_mask, token_id, token_value) {
-                          Err(Error::EntryNotFound) => {
-                              match self.apcb.insert_entry(entry_id, self.instance_id, self.board_instance_mask, ContextType::Tokens, self.priority_mask, &[]) {
-                                  Err(Error::EntryUniqueKeyViolation) => {
-                                  },
-                                  Err(x) => {
-                                      return Err(x);
-                                  },
-                                  _ => {
-                                  },
-                              };
-                              self.apcb.insert_token(entry_id, self.instance_id, self.board_instance_mask, token_id, token_value)?;
-                          },
-                          Err(Error::TokenUniqueKeyViolation) => {
-                              let mut group = self.apcb.group_mut(GroupId::Token).unwrap();
-                              let mut entry = group.entry_exact_mut(entry_id, self.instance_id, self.board_instance_mask).unwrap();
-                              match &mut entry.body {
-                                  EntryItemBody::<_>::Tokens(ref mut a) => {
-                                      let mut token = a.token_mut(token_id).unwrap();
-                                      token.set_value(token_value)?;
-                                  },
-                                  _ => {
-                                      return Err(Error::EntryTypeMismatch);
-                                  },
-                              }
-                          },
-                          Err(x) => {
-                              return Err(x);
-                          },
-                          _ => { // inserted new token, and set its value
-                          },
-                      }
-                      Ok(())
+                      self.set($field_entry_id, $field_key, token_value)
                   }
               }
             )?

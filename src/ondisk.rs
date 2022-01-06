@@ -3,7 +3,6 @@
 
 //#![feature(trace_macros)] trace_macros!(true);
 
-use crate::entry::EntryItemBody;
 use crate::struct_accessors::{make_accessors, Getter, Setter};
 use crate::token_accessors::{make_token_accessors, Tokens, TokensMut};
 use crate::types::Error;
