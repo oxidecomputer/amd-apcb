@@ -794,7 +794,7 @@ pub enum TokenEntryId {
     Bool,
     Byte,
     Word,
-    DWord,
+    Dword,
     Unknown(u16),
 }
 
@@ -804,7 +804,7 @@ impl ToPrimitive for TokenEntryId {
             Self::Bool => 0,
             Self::Byte => 1,
             Self::Word => 2,
-            Self::DWord => 4,
+            Self::Dword => 4,
             Self::Unknown(x) => (*x) as i64,
         })
     }
@@ -820,7 +820,7 @@ impl FromPrimitive for TokenEntryId {
                 0 => Self::Bool,
                 1 => Self::Byte,
                 2 => Self::Word,
-                4 => Self::DWord,
+                4 => Self::Dword,
                 x => Self::Unknown(x as u16),
             })
         } else {
@@ -6042,7 +6042,7 @@ make_token_accessors! {
     #[derive(Debug, EnumString, FromPrimitive, ToPrimitive)]
     #[allow(non_camel_case_types)]
     #[non_exhaustive]
-    pub enum DWordTags: {TokenEntryId::DWord} {
+    pub enum DwordTags: {TokenEntryId::Dword} {
         // Memory Controller
 
         mem_bus_frequency_limit(default 1600, id 0x3497_0a3c) : pub get MemBusFrequencyLimit : pub set MemBusFrequencyLimit,

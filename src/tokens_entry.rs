@@ -4,7 +4,7 @@ use crate::ondisk::{
     BoolTags,
     ByteTags,
     WordTags,
-    DWordTags,
+    DwordTags,
 };
 use crate::types::{Error, FileSystemError, Result};
 use core::mem::size_of;
@@ -74,7 +74,7 @@ impl<'a> TokensEntryItemMut<'a> {
                 TokenEntryId::Bool => 0x1,
                 TokenEntryId::Byte => 0xFF,
                 TokenEntryId::Word => 0xFFFF,
-                TokenEntryId::DWord => 0xFFFF_FFFF,
+                TokenEntryId::Dword => 0xFFFF_FFFF,
                 TokenEntryId::Unknown(_) => 0xFFFF_FFFF,
             }
     }
@@ -88,7 +88,7 @@ impl<'a> TokensEntryItemMut<'a> {
                     TokenEntryId::Bool => 0x1,
                     TokenEntryId::Byte => 0xFF,
                     TokenEntryId::Word => 0xFFFF,
-                    TokenEntryId::DWord => 0xFFFF_FFFF,
+                    TokenEntryId::Dword => 0xFFFF_FFFF,
                     TokenEntryId::Unknown(_) => 0xFFFF_FFFF,
                 })
         {
@@ -298,7 +298,7 @@ impl<'a> core::fmt::Debug for TokensEntryItem<'a> {
             } else {
                 ds.field("key", &n)
             },
-            TokenEntryId::DWord => if let Some(key) = DWordTags::from_u32(key) {
+            TokenEntryId::Dword => if let Some(key) = DwordTags::from_u32(key) {
                 ds.field("key", &key)
             } else {
                 ds.field("key", &n)
@@ -320,7 +320,7 @@ impl<'a> TokensEntryItem<'a> {
                 TokenEntryId::Bool => 0x1,
                 TokenEntryId::Byte => 0xFF,
                 TokenEntryId::Word => 0xFFFF,
-                TokenEntryId::DWord => 0xFFFF_FFFF,
+                TokenEntryId::Dword => 0xFFFF_FFFF,
                 TokenEntryId::Unknown(_) => 0xFFFF_FFFF,
             }
     }
