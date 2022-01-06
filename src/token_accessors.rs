@@ -7,7 +7,6 @@ use crate::ondisk::PriorityLevels;
 use crate::ondisk::{EntryId, TokenEntryId, ContextType};
 use crate::types::Error;
 use crate::types::Result;
-use strum_macros::EnumString;
 use crate::entry::EntryItemBody;
 
 pub struct TokensMut<'a, 'b> {
