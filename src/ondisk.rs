@@ -5955,6 +5955,7 @@ make_token_accessors! {
         pcie_reset_pin_select(default 0, id 0x8c0b2de9) : pub get u8 : pub set u8, // value 2 // Rome; 0..=4; FIXME: enum?
         mem_dram_address_command_parity_retry_count(default 0, id 0x3e7c51f8) : pub get u8 : pub set u8, // value 1 // Rome
         mem_parity_error_max_replay_ddr4(default 0, id 0xc9e9a1c9) : pub get u8 : pub set u8, // value 8 // Rome // 0..=0x3f (6 bit)
+        df_2link_max_xgmi_speed(default 0, id 0xd19c_6e80): pub get u8 : pub set u8, // Genoa
         df_3link_max_xgmi_speed(default 0, id 0x53ba449b) : pub get u8 : pub set u8, // value 0xff // Rome
         df_4link_max_xgmi_speed(default 0, id 0x3f307cb3) : pub get u8 : pub set u8, // value 0xff //  Rome
         mem_dram_double_refresh_rate(default 0, id 0x44d40026) : pub get u8 : pub set u8, // value 0 // Rome
