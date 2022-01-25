@@ -526,7 +526,7 @@ impl Parameters {
                  return Ok(parameter_value);
              }
          }
-         Err(Error::TokenNotFound)
+         Err(Error::ParameterNotFound)
     }
 }
 

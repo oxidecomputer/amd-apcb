@@ -20,6 +20,7 @@ pub enum Error {
     TokenNotFound,
     TokenUniqueKeyViolation,
     TokenRange,
+    ParameterNotFound,
     ParameterRange,
 }
 
