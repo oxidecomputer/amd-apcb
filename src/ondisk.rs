@@ -1262,6 +1262,9 @@ impl ParameterAttributes {
     pub fn size(&self) -> usize {
         (self.size_minus_one() as usize) + 1
     }
+    pub fn terminator() -> Self {
+        Self::new().with_time_point(ParameterTimePoint::Never).with_token(ParameterTokenConfig::Limit).with_size_minus_one(0)
+    }
 }
 
 /// For Naples.
@@ -1307,6 +1310,9 @@ impl Iterator for ParametersIter<'_> {
     type Item = (ParameterAttributes, u64);
     fn next(&mut self) -> Option<<Self as Iterator>::Item> {
         let attributes = Self::next_attributes(&mut self.keys).ok()?;
+        if attributes.token() == ParameterTokenConfig::Limit {
+            return None;
+        }
         let size = attributes.size();
         match size {
             1 | 2 | 4 | 8 => {

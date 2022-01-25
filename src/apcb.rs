@@ -13,7 +13,7 @@ use crate::ondisk::{
     take_body_from_collection, take_body_from_collection_mut,
     take_header_from_collection, take_header_from_collection_mut,
     HeaderWithTail, SequenceElementAsBytes,
-    Parameters, ParameterAttributes,
+    ParameterAttributes,
 };
 pub use crate::ondisk::{
     BoardInstances, ContextFormat, ContextType, EntryCompatible, EntryId,
@@ -676,15 +676,62 @@ impl<'a> Apcb<'a> {
         }
     }
 
-    /// This inserts a Naples-style Parameter entry.
-    pub fn insert_parameter_entry(
+    /// This inserts a Naples-style Parameters entry.
+    pub fn insert_parameters_entry(
         &mut self,
         entry_id: EntryId,
-        items: &[(ParameterAttributes, u64)] // FIXME
+        items: &[(ParameterAttributes, u64)],
     ) -> Result<()> {
-        let blob = [1u8,2u8,3u8];
-        //items.as_bytes(); // XXX reorder and delete items
-        self.insert_struct_entry::<Parameters>(entry_id, 0, BoardInstances::new(), PriorityLevels::new(), &Parameters {}, &blob)
+        let mut payload_size = size_of::<u32>() + size_of::<u8>(); // terminator attribute and its value
+        for (key, value) in items {
+            payload_size = payload_size.checked_add(size_of::<ParameterAttributes>()).ok_or(Error::ArithmeticOverflow)?;
+            let value_size = key.size();
+            payload_size = payload_size.checked_add(value_size).ok_or(Error::ArithmeticOverflow)?;
+            if value_size > 8 || *value >= (8u64 << value_size) {
+                 return Err(Error::ParameterRange)
+            }
+        }
+        let off = payload_size % ENTRY_ALIGNMENT;
+        let padding_size: usize =
+            if off == 0 { 0 } else { ENTRY_ALIGNMENT - off };
+        self.internal_insert_entry(
+            entry_id,
+            0,
+            BoardInstances::new(),
+            ContextType::Struct,
+            payload_size,
+            PriorityLevels::new(),
+            &mut |body: &mut [u8]| {
+                let mut body = body;
+                for (key, _) in items {
+                    let raw_key = key.to_u32().unwrap();
+                    let (a, rest) = body.split_at_mut(size_of::<u32>());
+                    a.copy_from_slice(raw_key.as_bytes());
+                    body = rest;
+                }
+                let key = ParameterAttributes::terminator();
+                let raw_key = key.to_u32().unwrap();
+                let (a, rest) = body.split_at_mut(size_of::<u32>());
+                a.copy_from_slice(raw_key.as_bytes());
+                body = rest;
+
+                for (key, value) in items {
+                    let size = key.size();
+                    let (a, rest) = body.split_at_mut(size);
+                    let raw_value = value.as_bytes();
+                    a.copy_from_slice(&raw_value[0..size]);
+                    body = rest;
+                }
+                let (a, rest) = body.split_at_mut(size_of::<u8>());
+                a.copy_from_slice(&[0xffu8]);
+                body = rest;
+
+                // Be bug-compatible with AMD and fill up
+                for i in 0..padding_size {
+                    body[i] = 0;
+                }
+            },
+        )
     }
 
     /// Note: INSTANCE_ID is sometimes != 0.
