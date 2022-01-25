@@ -5358,6 +5358,43 @@ pub enum DfXgmiTxEqMode {
     Auto = 0xff,
 }
 
+#[allow(non_camel_case_types)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+pub enum DfXgmiLinkMaxSpeed {
+    _6_40Gbps = 0,
+    _7_467Gbps = 1,
+    _8_533Gbps = 2,
+    _9_6Gbps = 3,
+    _10_667Gbps = 4,
+    _11Gbps = 5,
+    _12Gbps = 6,
+    _13Gbps = 7,
+    _14Gbps = 8,
+    _15Gbps = 9,
+    _16Gbps = 10,
+    _17Gbps = 11,
+    _18Gbps = 12,
+    _19Gbps = 13,
+    _20Gbps = 14,
+    _21Gbps = 15,
+    _22Gbps = 16,
+    _23Gbps = 17,
+    _24Gbps = 18,
+    _25Gbps = 19,
+    _26Gbps = 20,
+    _27Gbps = 21,
+    _28Gbps = 22,
+    _29Gbps = 23,
+    _30Gbps = 24,
+    _31Gbps = 25,
+    _32Gbps = 26,
+    Auto = 0xff,
+}
+
+pub type DfXgmi2LinkMaxSpeed = DfXgmiLinkMaxSpeed;
+pub type DfXgmi3LinkMaxSpeed = DfXgmiLinkMaxSpeed;
+pub type DfXgmi4LinkMaxSpeed = DfXgmiLinkMaxSpeed;
+
 /// Placement of private memory regions (PSP, SMU, CC6)
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 pub enum DfSysStorageAtTopOfMem {
@@ -5955,9 +5992,9 @@ make_token_accessors! {
         pcie_reset_pin_select(default 0, id 0x8c0b2de9) : pub get u8 : pub set u8, // value 2 // Rome; 0..=4; FIXME: enum?
         mem_dram_address_command_parity_retry_count(default 0, id 0x3e7c51f8) : pub get u8 : pub set u8, // value 1 // Rome
         mem_parity_error_max_replay_ddr4(default 0, id 0xc9e9a1c9) : pub get u8 : pub set u8, // value 8 // Rome // 0..=0x3f (6 bit)
-        df_2link_max_xgmi_speed(default 0, id 0xd19c_6e80): pub get u8 : pub set u8, // Genoa
-        df_3link_max_xgmi_speed(default 0, id 0x53ba449b) : pub get u8 : pub set u8, // value 0xff // Rome
-        df_4link_max_xgmi_speed(default 0, id 0x3f307cb3) : pub get u8 : pub set u8, // value 0xff //  Rome
+        df_2link_max_xgmi_speed(default 0, id 0xd19c_6e80): pub get DfXgmi2LinkMaxSpeed : pub set DfXgmi2LinkMaxSpeed, // Genoa
+        df_3link_max_xgmi_speed(default 0, id 0x53ba449b) : pub get DfXgmi3LinkMaxSpeed : pub set DfXgmi3LinkMaxSpeed, // value 0xff // Rome
+        df_4link_max_xgmi_speed(default 0, id 0x3f307cb3) : pub get DfXgmi4LinkMaxSpeed : pub set DfXgmi4LinkMaxSpeed, // value 0xff //  Rome
         mem_dram_double_refresh_rate(default 0, id 0x44d40026) : pub get u8 : pub set u8, // value 0 // Rome
         // See UMC::CH::ThrottleCtrl RollWindowDepth
         mem_roll_window_depth(default 0xff, id 0x5985083a) : pub get MemThrottleCtrlRollWindowDepth : pub set MemThrottleCtrlRollWindowDepth, // Rome
