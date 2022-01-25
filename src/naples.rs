@@ -347,6 +347,7 @@ pub enum ParameterTokenConfig {
     MemEnableSwCmdThrottle = 0x0733,
     MemEnableForcePowerDownThrotle = 0x0734,
     MemOdtsCmdThrottleCycles = 0x0735,
+    // See PPR SwCmdThrotCyc
     MemSwCmdThrottleCycles = 0x0736,
     MemDimmSensorConf = 0x0737,
     MemDimmSensorUpper = 0x0738,
