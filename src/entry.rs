@@ -3,10 +3,12 @@ use crate::ondisk::{
     take_header_from_collection, take_header_from_collection_mut,
     BoardInstances, ContextFormat, ContextType, EntryCompatible, EntryId,
     HeaderWithTail, MutSequenceElementFromBytes, PriorityLevels,
-    SequenceElementFromBytes,
+    SequenceElementFromBytes
 };
 use crate::tokens_entry::TokensEntryBodyItem;
 use crate::types::{Error, FileSystemError, Result};
+use crate::ondisk::{Parameters, ParametersIter};
+use crate::naples::{ParameterTokenConfig};
 use core::marker::PhantomData;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
@@ -503,6 +505,28 @@ impl<'a, T: 'a + Sized + FromBytes> StructArrayEntryItem<'a, T> {
             buf: self.buf,
             _item: PhantomData,
         }
+    }
+
+    /// This is mostly useful for Naples Parameters.  They are modeled as a
+    /// struct array with an u8 tail, and we want to decode the entire tail
+    /// at once in further processing.
+    pub(crate) fn into_slice(self) -> &'a [u8] {
+        self.buf
+    }
+}
+
+/// Naples
+impl Parameters {
+    pub fn iter<'a>(tail: StructArrayEntryItem<'a, u8>) -> Result<ParametersIter<'a>> {
+         ParametersIter::new(tail.into_slice())
+    }
+    pub fn get(tail: StructArrayEntryItem<'_, u8>, key: ParameterTokenConfig) -> Result<u64> {
+         for (parameter_key, parameter_value) in Self::iter(tail)? {
+             if parameter_key.token() == key {
+                 return Ok(parameter_value);
+             }
+         }
+         Err(Error::TokenNotFound)
     }
 }
 

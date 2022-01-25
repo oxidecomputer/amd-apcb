@@ -8,7 +8,8 @@ use crate::token_accessors::{make_token_accessors, Tokens, TokensMut};
 use crate::types::Error;
 use crate::types::PriorityLevel;
 use crate::types::Result;
-use byteorder::LittleEndian;
+pub use crate::naples::{ParameterTokenConfig, ParameterTimePoint};
+use byteorder::{LittleEndian, ReadBytesExt};
 use core::cmp::Ordering;
 use core::convert::TryInto;
 use core::mem::{take, size_of};
@@ -304,6 +305,8 @@ impl FromPrimitive for GroupId {
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum PspEntryId {
     BoardIdGettingMethod,
+    DefaultParameters, // Naples
+    Parameters, // Naples
 
     Unknown(u16),
 }
@@ -311,6 +314,8 @@ pub enum PspEntryId {
 impl ToPrimitive for PspEntryId {
     fn to_i64(&self) -> Option<i64> {
         Some(match self {
+            Self::DefaultParameters => 0x01,
+            Self::Parameters => 0x02,
             Self::BoardIdGettingMethod => 0x60,
             Self::Unknown(x) => (*x).into(),
         })
@@ -324,6 +329,8 @@ impl FromPrimitive for PspEntryId {
     fn from_u64(value: u64) -> Option<Self> {
         if value < 0x1_0000 {
             match value {
+                0x01 => Some(Self::DefaultParameters),
+                0x02 => Some(Self::Parameters),
                 0x60 => Some(Self::BoardIdGettingMethod),
                 x => Some(Self::Unknown(x as u16)),
             }
@@ -343,12 +350,16 @@ impl FromPrimitive for PspEntryId {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum CcxEntryId {
+    DefaultParameters, // Naples
+    Parameters, // Naples
     Unknown(u16),
 }
 
 impl ToPrimitive for CcxEntryId {
     fn to_i64(&self) -> Option<i64> {
         Some(match self {
+            Self::DefaultParameters => 0x03,
+            Self::Parameters => 0x04,
             Self::Unknown(x) => (*x).into(),
         })
     }
@@ -361,6 +372,8 @@ impl FromPrimitive for CcxEntryId {
     fn from_u64(value: u64) -> Option<Self> {
         if value < 0x1_0000 {
             match value {
+                0x03 => Some(Self::DefaultParameters),
+                0x04 => Some(Self::Parameters),
                 x => Some(Self::Unknown(x as u16)),
             }
         } else {
@@ -379,6 +392,8 @@ impl FromPrimitive for CcxEntryId {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum DfEntryId {
+    DefaultParameters, // Naples
+    Parameters, // Naples
     SlinkConfig,
     XgmiTxEq,
     XgmiPhyOverride,
@@ -388,6 +403,8 @@ pub enum DfEntryId {
 impl ToPrimitive for DfEntryId {
     fn to_i64(&self) -> Option<i64> {
         Some(match self {
+            Self::DefaultParameters => 0x05,
+            Self::Parameters => 0x06,
             Self::SlinkConfig => 0xCC,
             Self::XgmiTxEq => 0xD0,
             Self::XgmiPhyOverride => 0xDD,
@@ -403,6 +420,8 @@ impl FromPrimitive for DfEntryId {
     fn from_u64(value: u64) -> Option<Self> {
         if value < 0x1_0000 {
             Some(match value {
+                0x05 => Self::DefaultParameters,
+                0x06 => Self::Parameters,
                 0xCC => Self::SlinkConfig,
                 0xD0 => Self::XgmiTxEq,
                 0xDD => Self::XgmiPhyOverride,
@@ -424,6 +443,9 @@ impl FromPrimitive for DfEntryId {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum MemoryEntryId {
+    DefaultParameters, // Naples
+    Parameters, // Naples
+
     SpdInfo,
     DimmInfoSmbus,
     DimmConfigInfoId,
@@ -480,6 +502,9 @@ pub enum MemoryEntryId {
 impl ToPrimitive for MemoryEntryId {
     fn to_i64(&self) -> Option<i64> {
         Some(match self {
+            Self::DefaultParameters => 0x07,
+            Self::Parameters => 0x08,
+
             Self::SpdInfo => 0x30,
             Self::DimmInfoSmbus => 0x31,
             Self::DimmConfigInfoId => 0x32,
@@ -542,6 +567,9 @@ impl FromPrimitive for MemoryEntryId {
     fn from_u64(value: u64) -> Option<Self> {
         if value < 0x1_0000 {
             Some(match value {
+                0x07 => Self::DefaultParameters,
+                0x08 => Self::Parameters,
+
                 0x30 => Self::SpdInfo,
                 0x31 => Self::DimmInfoSmbus,
                 0x32 => Self::DimmConfigInfoId,
@@ -610,12 +638,16 @@ impl FromPrimitive for MemoryEntryId {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum GnbEntryId {
+    DefaultParameters, // Naples
+    Parameters, // Naples
     Unknown(u16),
 }
 
 impl ToPrimitive for GnbEntryId {
     fn to_i64(&self) -> Option<i64> {
         Some(match self {
+            Self::DefaultParameters => 0x09,
+            Self::Parameters => 0x0A,
             Self::Unknown(x) => (*x) as i64,
         })
     }
@@ -628,6 +660,8 @@ impl FromPrimitive for GnbEntryId {
     fn from_u64(value: u64) -> Option<Self> {
         if value < 0x1_0000 {
             Some(match value {
+                0x09 => Self::DefaultParameters,
+                0x0A => Self::Parameters,
                 x => Self::Unknown(x as u16),
             })
         } else {
@@ -646,12 +680,17 @@ impl FromPrimitive for GnbEntryId {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum FchEntryId {
+    DefaultParameters, // Naples
+    Parameters, // Naples
+
     Unknown(u16),
 }
 
 impl ToPrimitive for FchEntryId {
     fn to_i64(&self) -> Option<i64> {
         Some(match self {
+            Self::DefaultParameters => 0x0B,
+            Self::Parameters => 0x0C,
             Self::Unknown(x) => (*x) as i64,
         })
     }
@@ -664,6 +703,8 @@ impl FromPrimitive for FchEntryId {
     fn from_u64(value: u64) -> Option<Self> {
         if value < 0x1_0000 {
             Some(match value {
+                0x0B => Self::DefaultParameters,
+                0x0C => Self::Parameters,
                 x => Self::Unknown(x as u16),
             })
         } else {
@@ -682,12 +723,17 @@ impl FromPrimitive for FchEntryId {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum CbsEntryId {
+    DefaultParameters, // Naples
+    Parameters, // Naples
+
     Unknown(u16),
 }
 
 impl ToPrimitive for CbsEntryId {
     fn to_i64(&self) -> Option<i64> {
         Some(match self {
+            Self::DefaultParameters => 0x0D,
+            Self::Parameters => 0x0E,
             Self::Unknown(x) => (*x) as i64,
         })
     }
@@ -700,6 +746,8 @@ impl FromPrimitive for CbsEntryId {
     fn from_u64(value: u64) -> Option<Self> {
         if value < 0x1_0000 {
             Some(match value {
+                0x0D => Self::DefaultParameters,
+                0x0E => Self::Parameters,
                 x => Self::Unknown(x as u16),
             })
         } else {
@@ -1192,6 +1240,124 @@ pub trait EntryCompatible {
 }
 
 // Starting here come the actual Entry formats (struct )
+
+/// For Naples.
+#[bitfield(bits = 32)]
+#[repr(u32)]
+#[derive(Copy, Clone, Debug)]
+pub struct ParameterAttributes {
+    #[bits = 8]
+    pub time_point: ParameterTimePoint,
+    #[bits = 13]
+    pub token: ParameterTokenConfig,
+    #[bits = 3]
+    pub size_minus_one: B3,
+    #[skip]
+    __: B8,
+}
+
+impl_bitfield_primitive_conversion!(ParameterAttributes, 0b1111_1111_1111_1111_1111_1111, u32);
+
+impl ParameterAttributes {
+    pub fn size(&self) -> usize {
+        (self.size_minus_one() as usize) + 1
+    }
+}
+
+/// For Naples.
+pub struct ParametersIter<'a> {
+    keys: &'a [u8],
+    values: &'a [u8],
+}
+
+impl<'a> ParametersIter<'a> {
+    pub(crate) fn next_attributes<'b>(buf: &mut &'b [u8]) -> Result<ParameterAttributes> {
+        match take_header_from_collection::<u32>(buf) {
+            Some(attributes) => {
+                let attributes = ParameterAttributes::from_u32(*attributes).ok_or(Error::ParameterRange)?;
+                Ok(attributes)
+            },
+            None => {
+                Err(Error::ParameterRange)
+            }
+        }
+    }
+    pub fn new(buf: &'a [u8]) -> Result<Self> {
+        let beginning = buf;
+        let mut buf = buf;
+        loop {
+            match Self::next_attributes(&mut buf) {
+                Err(e) => {
+                    return Err(e)
+                }
+                Ok(attributes) => {
+                    if attributes.token() == ParameterTokenConfig::Limit {
+                        return Ok(Self {
+                            keys: beginning, // TODO: split before buf would be enough.
+                            values: buf,
+                        })
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl Iterator for ParametersIter<'_> {
+    type Item = (ParameterAttributes, u64);
+    fn next(&mut self) -> Option<<Self as Iterator>::Item> {
+        let attributes = Self::next_attributes(&mut self.keys).ok()?;
+        let size = attributes.size();
+        match size {
+            1 | 2 | 4 | 8 => {
+                let raw_value = take_body_from_collection(&mut self.values, size, 1)?;
+                let mut raw_value = raw_value;
+                match raw_value.len() {
+                    1 => Some((attributes, raw_value.read_u8().ok()?.into())),
+                    2 => Some((attributes, raw_value.read_u16::<LittleEndian>().ok()?.into())),
+                    4 => Some((attributes, raw_value.read_u32::<LittleEndian>().ok()?.into())),
+                    8 => Some((attributes, raw_value.read_u64::<LittleEndian>().ok()?.into())),
+                    _ => None // TODO: Raise error
+                }
+            },
+            _ => {
+                None
+            }
+        }
+    }
+}
+
+/// For Naples.
+#[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+#[repr(C, packed)]
+pub struct Parameters {
+}
+
+impl HeaderWithTail for Parameters {
+    type TailArrayItemType = u8;
+}
+
+impl EntryCompatible for Parameters {
+    fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+        matches!(
+            entry_id,
+            EntryId::Psp(PspEntryId::DefaultParameters) |
+            EntryId::Psp(PspEntryId::Parameters) |
+            EntryId::Ccx(CcxEntryId::DefaultParameters) |
+            EntryId::Ccx(CcxEntryId::Parameters) |
+            EntryId::Df(DfEntryId::DefaultParameters) |
+            EntryId::Df(DfEntryId::Parameters) |
+            EntryId::Memory(MemoryEntryId::DefaultParameters) |
+            EntryId::Memory(MemoryEntryId::Parameters) |
+            EntryId::Gnb(GnbEntryId::DefaultParameters) |
+            EntryId::Gnb(GnbEntryId::Parameters) |
+            EntryId::Fch(FchEntryId::DefaultParameters) |
+            EntryId::Fch(FchEntryId::Parameters) |
+            EntryId::Cbs(CbsEntryId::DefaultParameters) |
+            EntryId::Cbs(CbsEntryId::Parameters)
+         )
+    }
+}
 
 pub mod df {
     use super::*;

@@ -9,6 +9,7 @@ extern crate memoffset;
 mod apcb;
 mod entry;
 mod group;
+mod naples;
 mod ondisk;
 mod struct_accessors;
 mod struct_variants_enum;

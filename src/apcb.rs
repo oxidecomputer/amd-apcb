@@ -13,6 +13,7 @@ use crate::ondisk::{
     take_body_from_collection, take_body_from_collection_mut,
     take_header_from_collection, take_header_from_collection_mut,
     HeaderWithTail, SequenceElementAsBytes,
+    Parameters, ParameterAttributes,
 };
 pub use crate::ondisk::{
     BoardInstances, ContextFormat, ContextType, EntryCompatible, EntryId,
@@ -673,6 +674,17 @@ impl<'a> Apcb<'a> {
         } else {
             Err(Error::EntryTypeMismatch)
         }
+    }
+
+    /// This inserts a Naples-style Parameter entry.
+    pub fn insert_parameter_entry(
+        &mut self,
+        entry_id: EntryId,
+        items: &[(ParameterAttributes, u64)] // FIXME
+    ) -> Result<()> {
+        let blob = [1u8,2u8,3u8];
+        //items.as_bytes(); // XXX reorder and delete items
+        self.insert_struct_entry::<Parameters>(entry_id, 0, BoardInstances::new(), PriorityLevels::new(), &Parameters {}, &blob)
     }
 
     /// Note: INSTANCE_ID is sometimes != 0.

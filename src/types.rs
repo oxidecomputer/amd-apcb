@@ -20,6 +20,7 @@ pub enum Error {
     TokenNotFound,
     TokenUniqueKeyViolation,
     TokenRange,
+    ParameterRange,
 }
 
 pub type Result<Q> = core::result::Result<Q, Error>;
