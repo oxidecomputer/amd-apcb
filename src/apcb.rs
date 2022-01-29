@@ -1072,62 +1072,59 @@ impl<'a> Apcb<'a> {
         }
         Ok(result)
     }
+
+    fn header_mut(backing_store: &'_ mut [u8]) -> Result<&mut V2_HEADER> {
+        let mut backing_store = &mut *backing_store;
+        let header = take_header_from_collection_mut::<V2_HEADER>(
+            &mut backing_store,
+        )
+        .ok_or(Error::FileSystem(
+            FileSystemError::InconsistentHeader,
+            "V2_HEADER",
+        ))?;
+        if header.signature != *b"APCB" {
+            return Err(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "V2_HEADER::signature",
+            ))
+        }
+
+        if usize::from(header.header_size) >= size_of::<V2_HEADER>() {
+        } else {
+            return Err(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "V2_HEADER::header_size",
+            ))
+        }
+        let version = header.version.get();
+        if version == Self::ROME_VERSION || version == Self::NAPLES_VERSION {
+        } else {
+            return Err(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "V2_HEADER::version"))
+        }
+        Ok(header)
+    }
+
+    pub fn update_checksum(backing_store: &'_ mut [u8]) -> Result<()> {
+        let header = Self::header_mut(backing_store)?;
+        header
+            .unique_apcb_instance
+            .set(header.unique_apcb_instance.get().wrapping_add(1));
+        header.checksum_byte = 0; // make calculate_checksum's job easier
+        let checksum_byte = Self::calculate_checksum(backing_store)?;
+        let header = Self::header_mut(backing_store)?;
+        header.checksum_byte = checksum_byte;
+        Ok(())
+    }
+
     /// User is expected to call this once after modifying anything in the apcb
     /// (including insertions and deletions). We update both the checksum
     /// and the unique_apcb_instance.
-    pub fn update_checksum(backing_store: &'_ mut [u8]) -> Result<()> {
-        {
-            let mut backing_store = &mut *backing_store;
-            let header = take_header_from_collection_mut::<V2_HEADER>(
-                &mut backing_store,
-            )
-            .ok_or(Error::FileSystem(
-                FileSystemError::InconsistentHeader,
-                "V2_HEADER",
-            ))?;
-            if header.signature != *b"APCB" {
-                return Err(Error::FileSystem(
-                    FileSystemError::InconsistentHeader,
-                    "V2_HEADER::signature",
-                ));
-            }
+//    pub fn save(backing_store: &'_ mut [u8]) {
+//    }
 
-            if usize::from(header.header_size) >= size_of::<V2_HEADER>() {
-            } else {
-                return Err(Error::FileSystem(
-                    FileSystemError::InconsistentHeader,
-                    "V2_HEADER::header_size",
-                ));
-            }
-            let version = header.version.get();
-            if version == Self::ROME_VERSION || version == Self::NAPLES_VERSION {
-            } else {
-                return Err(Error::FileSystem(
-                    FileSystemError::InconsistentHeader,
-                    "V2_HEADER::version",
-                ));
-            }
-            header.checksum_byte = 0; // make calculate_checksum's job easier
-                                      // Use the chance to also update unique_apcb_instance (assumption:
-                                      // user calls update_checksum only when there was an actual change).
-            header
-                .unique_apcb_instance
-                .set(header.unique_apcb_instance.get().wrapping_add(1));
-        }
-        let checksum_byte = Self::calculate_checksum(backing_store)?;
-        {
-            let mut backing_store = &mut *backing_store;
-            let header = take_header_from_collection_mut::<V2_HEADER>(
-                &mut backing_store,
-            )
-            .ok_or(Error::FileSystem(
-                FileSystemError::InconsistentHeader,
-                "V2_HEADER",
-            ))?;
-            header.checksum_byte = checksum_byte;
-        }
-        Ok(())
-    }
+
     pub fn create(
         backing_store: &'a mut [u8],
         initial_unique_apcb_instance: u32,
