@@ -906,22 +906,9 @@ impl<'a> Apcb<'a> {
         })
     }
 
-    pub(crate) fn calculate_checksum(backing_store: &'_ [u8]) -> Result<u8> {
-        let stored_checksum_byte: u8;
-        let apcb_size: usize;
-        {
-            let mut backing_store = backing_store;
-            let header =
-                take_header_from_collection::<V2_HEADER>(&mut backing_store)
-                    .ok_or(Error::FileSystem(
-                        FileSystemError::InconsistentHeader,
-                        "V2_HEADER",
-                    ))?;
-            stored_checksum_byte = header.checksum_byte;
-            apcb_size = header.apcb_size.get() as usize;
-        }
+    pub(crate) fn calculate_checksum(stored_checksum_byte: u8, apcb_size: u32, backing_store: &'_ [u8]) -> Result<u8> {
         let mut checksum_byte = 0u8;
-        if backing_store.len() < apcb_size {
+        if backing_store.len() < apcb_size as usize {
             return Err(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
                 "V2_HEADER::apcb_size",
@@ -943,7 +930,10 @@ impl<'a> Apcb<'a> {
     ) -> Result<Self> {
         let mut backing_store = &mut *backing_store;
         let checksum_byte = if options.check_checksum {
-            Self::calculate_checksum(backing_store)?
+            let header = Self::header_mut(backing_store)?;
+            let stored_checksum_byte = header.checksum_byte;
+            let apcb_size = header.apcb_size.get();
+            Self::calculate_checksum(stored_checksum_byte, apcb_size, backing_store)?
         } else {
             0
         };
@@ -1109,7 +1099,9 @@ impl<'a> Apcb<'a> {
     pub fn update_checksum(backing_store: &'_ mut [u8]) -> Result<()> {
         let header = Self::header_mut(backing_store)?;
         header.checksum_byte = 0; // make calculate_checksum's job easier
-        let checksum_byte = Self::calculate_checksum(backing_store)?;
+        let stored_checksum_byte = header.checksum_byte;
+        let apcb_size = header.apcb_size.get();
+        let checksum_byte = Self::calculate_checksum(stored_checksum_byte, apcb_size, backing_store)?;
         let header = Self::header_mut(backing_store)?;
         header.checksum_byte = checksum_byte;
         Ok(())
