@@ -1108,9 +1108,6 @@ impl<'a> Apcb<'a> {
 
     pub fn update_checksum(backing_store: &'_ mut [u8]) -> Result<()> {
         let header = Self::header_mut(backing_store)?;
-        header
-            .unique_apcb_instance
-            .set(header.unique_apcb_instance.get().wrapping_add(1));
         header.checksum_byte = 0; // make calculate_checksum's job easier
         let checksum_byte = Self::calculate_checksum(backing_store)?;
         let header = Self::header_mut(backing_store)?;
@@ -1121,9 +1118,14 @@ impl<'a> Apcb<'a> {
     /// User is expected to call this once after modifying anything in the apcb
     /// (including insertions and deletions). We update both the checksum
     /// and the unique_apcb_instance.
-//    pub fn save(backing_store: &'_ mut [u8]) {
-//    }
-
+    pub fn save(backing_store: &'_ mut [u8]) -> Result<()> {
+        let header = Self::header_mut(backing_store)?;
+        header
+            .unique_apcb_instance
+            .set(header.unique_apcb_instance.get().wrapping_add(1));
+        Self::update_checksum(backing_store)?;
+        Ok(())
+    }
 
     pub fn create(
         backing_store: &'a mut [u8],
