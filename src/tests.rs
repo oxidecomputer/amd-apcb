@@ -90,7 +90,7 @@ mod tests {
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         apcb.delete_group(GroupId::Psp)?;
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups();
@@ -110,7 +110,7 @@ mod tests {
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         apcb.delete_group(GroupId::Memory)?;
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups();
@@ -136,7 +136,7 @@ mod tests {
                 panic!("test failed")
             }
         }
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups();
@@ -158,7 +158,7 @@ mod tests {
                 .unwrap();
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
         apcb.delete_group(GroupId::Psp)?;
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let groups = apcb.groups();
@@ -176,7 +176,7 @@ mod tests {
                 .unwrap();
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
 
         let mut apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
@@ -203,7 +203,7 @@ mod tests {
             0,
             BoardInstances::all(),
         )?;
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups();
@@ -235,7 +235,7 @@ mod tests {
                 .unwrap();
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let mut apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         apcb.insert_entry(
@@ -255,7 +255,7 @@ mod tests {
             &[2u8; 4],
         )?;
 
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups();
@@ -314,7 +314,7 @@ mod tests {
             &[],
         )?;
 
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let mut apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups_mut();
@@ -427,7 +427,7 @@ mod tests {
             &[(), ()],
         )?;
 
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups();
@@ -532,7 +532,7 @@ mod tests {
             &items,
         )?;
 
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups();
@@ -711,7 +711,7 @@ mod tests {
             2,
         )?;
 
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let mut apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups_mut();
@@ -891,7 +891,7 @@ mod tests {
             &[],
         )?;
 
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let mut apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
 
@@ -906,7 +906,7 @@ mod tests {
             1,
         )?;
 
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
 
@@ -1035,7 +1035,7 @@ mod tests {
             &[],
         )?;
 
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let mut apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
 
@@ -1057,7 +1057,7 @@ mod tests {
             2,
         )?;
 
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
 
@@ -1166,7 +1166,7 @@ mod tests {
             &[],
         )?;
 
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let mut apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
 
@@ -1195,7 +1195,7 @@ mod tests {
             0x42,
         )?;
 
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
 
@@ -1294,7 +1294,7 @@ mod tests {
             ],
         )?;
 
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let mut apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups_mut();
@@ -1415,7 +1415,7 @@ mod tests {
             PriorityLevels::from_level(PriorityLevel::Normal),
             &[element],
         )?;
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let mut apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups_mut();
@@ -1500,7 +1500,7 @@ mod tests {
             PriorityLevels::from_level(PriorityLevel::Normal),
             &[element],
         )?;
-        Apcb::update_checksum(&mut buffer[0..]).unwrap();
+        apcb.save().unwrap();
         let mut apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups_mut();
