@@ -28,6 +28,7 @@ use num_traits::ToPrimitive;
 use pre::pre;
 use static_assertions::const_assert;
 use zerocopy::AsBytes;
+use zerocopy::LayoutVerified;
 
 pub struct ApcbIoOptions {
     pub check_checksum: bool,
@@ -42,8 +43,8 @@ impl Default for ApcbIoOptions {
 }
 
 pub struct Apcb<'a> {
-    header: &'a mut V2_HEADER,
-    v3_header_ext: Option<V3_HEADER_EXT>,
+    header: LayoutVerified<&'a mut [u8], V2_HEADER>,
+    v3_header_ext: Option<LayoutVerified<&'a mut [u8], V3_HEADER_EXT>>,
     beginning_of_groups: &'a mut [u8],
     used_size: usize,
 }
@@ -928,7 +929,7 @@ impl<'a> Apcb<'a> {
         backing_store: &'a mut [u8],
         options: &ApcbIoOptions,
     ) -> Result<Self> {
-        let mut backing_store = &mut *backing_store;
+        let backing_store_len = backing_store.len();
         let checksum_byte = if options.check_checksum {
             let header = Self::header_mut(backing_store)?;
             let stored_checksum_byte = header.checksum_byte;
@@ -937,8 +938,8 @@ impl<'a> Apcb<'a> {
         } else {
             0
         };
-        let header =
-            take_header_from_collection_mut::<V2_HEADER>(&mut backing_store)
+        let (header, mut rest) = LayoutVerified::<&mut [u8], V2_HEADER>
+                ::new_unaligned_from_prefix(backing_store)
                 .ok_or(Error::FileSystem(
                     FileSystemError::InconsistentHeader,
                     "V2_HEADER",
@@ -979,13 +980,14 @@ impl<'a> Apcb<'a> {
         let v3_header_ext = if usize::from(header.header_size)
             == size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>()
         {
-            let value = take_header_from_collection_mut::<V3_HEADER_EXT>(
-                &mut backing_store,
-            )
-            .ok_or(Error::FileSystem(
+            let (mut header_ext, restb) = LayoutVerified::<&mut [u8], V3_HEADER_EXT>
+                ::new_unaligned_from_prefix(rest)
+                .ok_or(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
                 "V3_HEADER_EXT",
             ))?;
+            let value = &mut *header_ext;
+            rest = restb;
             if value.signature == *b"ECB2" {
             } else {
                 return Err(Error::FileSystem(
@@ -1028,7 +1030,7 @@ impl<'a> Apcb<'a> {
                     "V3_HEADER_EXT::signature_ending",
                 ));
             }
-            Some(*value)
+            Some(header_ext)
         } else {
             //// TODO: Maybe skip weird header
             None
@@ -1040,7 +1042,7 @@ impl<'a> Apcb<'a> {
                 FileSystemError::InconsistentHeader,
                 "V2_HEADER::header_size",
             ))? as usize;
-        if used_size <= backing_store.len() {
+        if used_size <= backing_store_len {
         } else {
             return Err(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
@@ -1051,7 +1053,7 @@ impl<'a> Apcb<'a> {
         let result = Self {
             header,
             v3_header_ext,
-            beginning_of_groups: backing_store,
+            beginning_of_groups: rest,
             used_size,
         };
         match result.groups().validate() {
