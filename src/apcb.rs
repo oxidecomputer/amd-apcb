@@ -907,15 +907,30 @@ impl<'a> Apcb<'a> {
         })
     }
 
-    pub(crate) fn calculate_checksum(stored_checksum_byte: u8, apcb_size: u32, backing_store: &'_ [u8]) -> Result<u8> {
+    pub(crate) fn calculate_checksum(header: &LayoutVerified<&'_ mut [u8], V2_HEADER>, v3_header_ext: &Option<LayoutVerified<&'_ mut [u8], V3_HEADER_EXT>>, beginning_of_groups: &mut [u8]) -> Result<u8> {
         let mut checksum_byte = 0u8;
-        if backing_store.len() < apcb_size as usize {
+        let stored_checksum_byte = header.checksum_byte;
+        let apcb_size = header.apcb_size.get();
+        for c in header.bytes() {
+            checksum_byte = checksum_byte.wrapping_add(*c);
+        }
+        let mut offset = header.bytes().len();
+        if let Some(v3_header_ext) = &v3_header_ext {
+            for c in v3_header_ext.bytes() {
+                checksum_byte = checksum_byte.wrapping_add(*c);
+            }
+            offset = offset.checked_add(v3_header_ext.bytes().len()).ok_or(Error::OutOfSpace)?;
+        }
+        let apcb_size = header.apcb_size.get();
+        let beginning_of_groups_used_size = (apcb_size as usize).checked_sub(offset).ok_or(Error::OutOfSpace)?;
+        let beginning_of_groups = &beginning_of_groups;
+        if beginning_of_groups.len() < beginning_of_groups_used_size {
             return Err(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
                 "V2_HEADER::apcb_size",
             ));
         }
-        for c in &backing_store[..apcb_size as usize] {
+        for c in &beginning_of_groups[0..beginning_of_groups_used_size] {
             checksum_byte = checksum_byte.wrapping_add(*c);
         }
         // Correct for stored_checksum_byte
@@ -930,14 +945,6 @@ impl<'a> Apcb<'a> {
         options: &ApcbIoOptions,
     ) -> Result<Self> {
         let backing_store_len = backing_store.len();
-        let checksum_byte = if options.check_checksum {
-            let header = Self::header_mut(backing_store)?;
-            let stored_checksum_byte = header.checksum_byte;
-            let apcb_size = header.apcb_size.get();
-            Self::calculate_checksum(stored_checksum_byte, apcb_size, backing_store)?
-        } else {
-            0
-        };
         let (header, mut rest) = LayoutVerified::<&mut [u8], V2_HEADER>
                 ::new_unaligned_from_prefix(backing_store)
                 .ok_or(Error::FileSystem(
@@ -966,14 +973,6 @@ impl<'a> Apcb<'a> {
                 FileSystemError::InconsistentHeader,
                 "V2_HEADER::version",
             ));
-        }
-        if options.check_checksum {
-            if header.checksum_byte != checksum_byte {
-                return Err(Error::FileSystem(
-                    FileSystemError::InconsistentHeader,
-                    "V2_HEADER::checksum_byte",
-                ));
-            }
         }
         let apcb_size = header.apcb_size.get();
 
@@ -1050,12 +1049,26 @@ impl<'a> Apcb<'a> {
             ));
         }
 
+        let checksum_byte = if options.check_checksum {
+            Self::calculate_checksum(&header, &v3_header_ext, rest)?
+        } else {
+            0
+        };
+        if options.check_checksum {
+            if header.checksum_byte != checksum_byte {
+                return Err(Error::FileSystem(
+                    FileSystemError::InconsistentHeader,
+                    "V2_HEADER::checksum_byte",
+                ));
+            }
+        }
         let result = Self {
             header,
             v3_header_ext,
             beginning_of_groups: rest,
             used_size,
         };
+
         match result.groups().validate() {
             Ok(_) => {}
             Err(e) => {
@@ -1065,59 +1078,22 @@ impl<'a> Apcb<'a> {
         Ok(result)
     }
 
-    fn header_mut(backing_store: &'_ mut [u8]) -> Result<&mut V2_HEADER> {
-        let mut backing_store = &mut *backing_store;
-        let header = take_header_from_collection_mut::<V2_HEADER>(
-            &mut backing_store,
-        )
-        .ok_or(Error::FileSystem(
-            FileSystemError::InconsistentHeader,
-            "V2_HEADER",
-        ))?;
-        if header.signature != *b"APCB" {
-            return Err(Error::FileSystem(
-                FileSystemError::InconsistentHeader,
-                "V2_HEADER::signature",
-            ))
-        }
-
-        if usize::from(header.header_size) >= size_of::<V2_HEADER>() {
-        } else {
-            return Err(Error::FileSystem(
-                FileSystemError::InconsistentHeader,
-                "V2_HEADER::header_size",
-            ))
-        }
-        let version = header.version.get();
-        if version == Self::ROME_VERSION || version == Self::NAPLES_VERSION {
-        } else {
-            return Err(Error::FileSystem(
-                FileSystemError::InconsistentHeader,
-                "V2_HEADER::version"))
-        }
-        Ok(header)
-    }
-
-    pub fn update_checksum(backing_store: &'_ mut [u8]) -> Result<()> {
-        let header = Self::header_mut(backing_store)?;
-        header.checksum_byte = 0; // make calculate_checksum's job easier
-        let stored_checksum_byte = header.checksum_byte;
-        let apcb_size = header.apcb_size.get();
-        let checksum_byte = Self::calculate_checksum(stored_checksum_byte, apcb_size, backing_store)?;
-        let header = Self::header_mut(backing_store)?;
-        header.checksum_byte = checksum_byte;
+    pub fn update_checksum(&mut self) -> Result<()> {
+        self.header.checksum_byte = 0; // make calculate_checksum's job easier
+        let checksum_byte = Self::calculate_checksum(&self.header, &self.v3_header_ext, self.beginning_of_groups)?;
+        self.header.checksum_byte = checksum_byte;
         Ok(())
     }
 
     /// User is expected to call this once after modifying anything in the apcb
     /// (including insertions and deletions). We update both the checksum
     /// and the unique_apcb_instance.
-    pub fn save(backing_store: &'_ mut [u8]) -> Result<()> {
-        let header = Self::header_mut(backing_store)?;
-        header
+    pub fn save(&mut self) -> Result<()> {
+        let unique_apcb_instance = self.header.unique_apcb_instance.get();
+        self.header
             .unique_apcb_instance
-            .set(header.unique_apcb_instance.get().wrapping_add(1));
-        Self::update_checksum(backing_store)?;
+            .set(unique_apcb_instance.wrapping_add(1));
+        self.update_checksum()?;
         Ok(())
     }
 
@@ -1131,7 +1107,7 @@ impl<'a> Apcb<'a> {
         }
         {
             let mut backing_store = &mut *backing_store;
-            let header = take_header_from_collection_mut::<V2_HEADER>(
+            let mut header = take_header_from_collection_mut::<V2_HEADER>(
                 &mut backing_store,
             )
             .ok_or(Error::FileSystem(
@@ -1158,7 +1134,9 @@ impl<'a> Apcb<'a> {
             );
             header.apcb_size = (header.header_size.get() as u32).into();
         }
-        Self::update_checksum(backing_store)?;
+        let (mut header, rest) = LayoutVerified::<&'_ mut [u8], V2_HEADER>::new_unaligned_from_prefix(backing_store).unwrap();
+        let (v3_header_ext, rest) = LayoutVerified::<&'_ mut [u8], V3_HEADER_EXT>::new_unaligned_from_prefix(rest).unwrap();
+        header.checksum_byte = Self::calculate_checksum(&header, &Some(v3_header_ext), rest)?;
         Self::load(backing_store, options)
     }
     /// Note: Each modification in the APCB causes the value of
