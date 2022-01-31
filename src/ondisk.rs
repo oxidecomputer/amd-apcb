@@ -6403,7 +6403,7 @@ make_token_accessors! {
         mem_oc_vddio_control(default 0, id 0x6cd36dbe) : pub get bool : pub set bool, // value 0 // Rome
         mem_uma_above_4_GiB(default 0, id 0x77e41d2a) : pub get bool : pub set bool, // value 1 // Rome
         mem_auto_refreshs_count_for_throttling(default 0, id 0x8f84dcb4) : pub get MemAutoRefreshsCountForThrottling : pub set MemAutoRefreshsCountForThrottling, // value 0 // Rome
-        u0x96176308(default 0, id 0x96176308) : pub get bool : pub set bool, // value 1 // Rome
+        general_capsule_mode(default 0, id 0x96176308) : pub get bool : pub set bool, // value 1 // Rome
         mem_on_die_thermal_sensor(default 0, id 0xaeb3f914) : pub get bool : pub set bool, // odts_en; Rome
         mem_all_clocks(default 0, id 0xb95e0555) : pub get bool : pub set bool, // mem_all_clocks_on; Rome
         mem_clear(default 0, id 0xc6acdb37) : pub get bool : pub set bool, // enable_mem_clr; Rome
