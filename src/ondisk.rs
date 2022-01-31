@@ -1146,21 +1146,28 @@ impl BoardInstances {
 
 impl_bitfield_primitive_conversion!(BoardInstances, 0xffff, u16);
 
-make_accessors! {
-    #[derive(FromBytes, AsBytes, Unaligned, Debug)]
-    #[repr(C, packed)]
-    pub(crate) struct ENTRY_HEADER {
-        pub(crate) group_id: U16<LittleEndian>, // should be equal to the group's group_id
-        pub(crate) entry_id: U16<LittleEndian>,  // meaning depends on context_type
-        pub(crate) entry_size: U16<LittleEndian>, // including header
-        pub(crate) instance_id: U16<LittleEndian>,
-        pub(crate) context_type: u8,   // see ContextType enum
-        pub(crate) context_format: u8, // see ContextFormat enum
-        pub(crate) unit_size: u8,      // in Byte.  Applicable when ContextType == 2.  value should be 8
-        pub(crate) priority_mask: u8 : pub get PriorityLevels : pub set PriorityLevels,
-        pub(crate) key_size: u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
-        pub(crate) key_pos: u8,  // Sorting key position of the unit specified of UnitSize
-        pub(crate) board_instance_mask: U16<LittleEndian>, // Board-specific Apcb instance mask
+#[derive(FromBytes, AsBytes, Unaligned, Debug)]
+#[repr(C, packed)]
+pub(crate) struct ENTRY_HEADER {
+    pub(crate) group_id: U16<LittleEndian>, // should be equal to the group's group_id
+    pub(crate) entry_id: U16<LittleEndian>,  // meaning depends on context_type
+    pub(crate) entry_size: U16<LittleEndian>, // including header
+    pub(crate) instance_id: U16<LittleEndian>,
+    pub(crate) context_type: u8,   // see ContextType enum
+    pub(crate) context_format: u8, // see ContextFormat enum
+    pub(crate) unit_size: u8,      // in Byte.  Applicable when ContextType == 2.  value should be 8
+    pub(crate) priority_mask: u8, // : pub get PriorityLevels : pub set PriorityLevels,
+    pub(crate) key_size: u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
+    pub(crate) key_pos: u8,  // Sorting key position of the unit specified of UnitSize
+    pub(crate) board_instance_mask: U16<LittleEndian>, // Board-specific Apcb instance mask
+}
+
+impl ENTRY_HEADER {
+    pub fn priority_mask(&self) -> Result<PriorityLevels> {
+        self.priority_mask.get1()
+    }
+    pub fn set_priority_mask(&mut self, value: PriorityLevels) {
+        self.priority_mask.set1(value)
     }
 }
 
