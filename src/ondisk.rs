@@ -6025,7 +6025,7 @@ impl FromPrimitive for FchGppClkMap {
             match value {
                 0xffff => Some(Self::Auto),
                 0x0000 => Some(Self::On),
-                x => Some(Self::Value(FchGppClkMapSelection::from_bytes([(value & 0xff) as u8, (value >> 8) as u8]))),
+                x => Some(Self::Value(FchGppClkMapSelection::from_bytes([(x & 0xff) as u8, (x >> 8) as u8]))),
             }
         } else {
             None
