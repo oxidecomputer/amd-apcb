@@ -3615,7 +3615,7 @@ pub mod memory {
                 }
                 impl_bitfield_primitive_conversion!(DimmSlotsSelection, 0b1111, u8);
                 impl DimmSlotsSelection {
-                    fn builder() -> Self {
+                    pub fn builder() -> Self {
                         Self::new()
                     }
                     pub fn build(&self) -> Self {
