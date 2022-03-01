@@ -3,6 +3,7 @@
 
 //#![feature(trace_macros)] trace_macros!(true);
 
+use core::clone::Clone;
 use crate::struct_accessors::{make_accessors, Getter, Setter};
 use crate::token_accessors::{make_token_accessors, Tokens, TokensMut};
 use crate::types::Error;
@@ -1387,7 +1388,7 @@ pub mod df {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct SlinkRegion {
             size: U64<LittleEndian> : pub get u64 : pub set u64,
@@ -1423,7 +1424,7 @@ pub mod df {
     }
 
     // Rome only; even there, it's almost all 0s
-    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
     #[repr(C, packed)]
     pub struct SlinkConfig {
         pub regions: [SlinkRegion; 4],
@@ -1482,7 +1483,7 @@ pub mod memory {
     use crate::types::Result;
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct DimmInfoSmbusElement {
             dimm_slot_present: BU8 : pub get bool, // if false, it's soldered-down and not a slot
@@ -1638,7 +1639,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct AblConsoleOutControl {
             enable_console_logging: BU8 : pub get bool : pub set bool,
@@ -1676,13 +1677,16 @@ pub mod memory {
     }
 
     impl AblConsoleOutControl {
+        pub fn builder() -> Self {
+            Self::default()
+        }
         pub fn new() -> Self {
             Self::default()
         }
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct AblBreakpointControl {
             enable_breakpoint: BU8 : pub get bool : pub set bool,
@@ -1708,7 +1712,7 @@ pub mod memory {
         }
     }
 
-    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
     #[repr(C, packed)]
     pub struct ConsoleOutControl {
         pub abl_console_out_control: AblConsoleOutControl,
@@ -1769,7 +1773,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct ExtVoltageControl {
             enabled: BU8 : pub get bool : pub set bool,
@@ -1850,6 +1854,14 @@ pub mod memory {
         pub dual_rank: bool,
         pub quad_rank: bool,
     }
+    impl Ddr4DimmRanks {
+        pub fn builder() -> Self {
+            Self::new()
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
+    }
 
     impl From<Ddr4DimmRanks> for u32 {
         fn from(source: Ddr4DimmRanks) -> u32 {
@@ -1874,6 +1886,12 @@ pub mod memory {
         pub lr: bool,
         #[skip]
         __: B2,
+    }
+
+    impl LrdimmDdr4DimmRanks {
+        pub fn builder() -> Self {
+            Self::new()
+        }
     }
 
     impl From<LrdimmDdr4DimmRanks> for u32 {
@@ -1974,6 +1992,14 @@ pub mod memory {
                             * AMD-missing pub ddr4334, set_ddr4334: 32,
                             * AMD-missing pub ddr4400, set_ddr4400: 33, */
     }
+    impl DdrRates {
+        pub fn builder() -> Self {
+            Self::new()
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
+    }
     impl_bitfield_primitive_conversion!(
         DdrRates,
         0b0000_0001_0101_0101_0101_0101_0111_1000,
@@ -1992,6 +2018,14 @@ pub mod memory {
         __: B28,
     }
     impl_bitfield_primitive_conversion!(DimmsPerChannelSelector, 0b1111, u32);
+    impl DimmsPerChannelSelector {
+        pub fn builder() -> Self {
+            Self::new()
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
+    }
 
     #[derive(Clone, Copy)]
     pub enum DimmsPerChannel {
@@ -2056,11 +2090,16 @@ pub mod memory {
         // all = 7
     }
     impl_bitfield_primitive_conversion!(RdimmDdr4Voltages, 0b1, u32);
+    impl RdimmDdr4Voltages {
+        pub fn builder() -> Self {
+            Self::new()
+        }
+    }
 
     // Usually an array of those is used
     make_accessors! {
         /// Control/Address Bus Element
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct RdimmDdr4CadBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
@@ -2163,11 +2202,16 @@ pub mod memory {
         __: B29,
     }
     impl_bitfield_primitive_conversion!(UdimmDdr4Voltages, 0b111, u32);
+    impl UdimmDdr4Voltages {
+        pub fn builder() -> Self {
+            Self::new()
+        }
+    }
 
     // Usually an array of those is used
     make_accessors! {
         /// Control/Address Bus Element
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct UdimmDdr4CadBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
@@ -2212,6 +2256,12 @@ pub mod memory {
         }
     }
 
+    impl UdimmDdr4CadBusElement {
+        pub fn builder() -> Self {
+            Self::default()
+        }
+    }
+
     impl EntryCompatible for UdimmDdr4CadBusElement {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
@@ -2236,11 +2286,16 @@ pub mod memory {
         __: B31,
     }
     impl_bitfield_primitive_conversion!(LrdimmDdr4Voltages, 0b1, u32);
+    impl LrdimmDdr4Voltages {
+        pub fn builder() -> Self {
+            Self::new()
+        }
+    }
 
     // Usually an array of those is used
     make_accessors! {
         /// Control/Address Bus Element
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4CadBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
@@ -2513,7 +2568,7 @@ pub mod memory {
     // Usually an array of those is used
     // Note: This structure is not used for soldered-down DRAM!
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct Ddr4DataBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
@@ -2619,7 +2674,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4DataBusElement {
             dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
@@ -2760,7 +2815,7 @@ pub mod memory {
     // Usually an array of those is used
     // Note: This structure is not used for LR DRAM
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct MaxFreqElement {
             dimm_slots_per_channel: u8 : pub get DimmsPerChannel : pub set DimmsPerChannel,
@@ -2866,7 +2921,7 @@ pub mod memory {
 
     // Usually an array of those is used
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct LrMaxFreqElement {
             dimm_slots_per_channel: u8 : pub get u8 : pub set u8,
@@ -2946,7 +3001,7 @@ pub mod memory {
     }
 
     #[bitfield(bits = 32)]
-    #[derive(Clone, Copy, PartialEq, Debug)]
+    #[derive(PartialEq, Debug, Copy, Clone)]
     #[repr(u32)]
     pub struct ErrorOutControlBeepCodePeakAttr {
         pub peak_count: B5,
@@ -2973,7 +3028,7 @@ pub mod memory {
         Smu = 9,
     }
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct ErrorOutControlBeepCode {
             error_type: U16<LittleEndian>,
@@ -3013,7 +3068,7 @@ pub mod memory {
 
     macro_rules! define_ErrorOutControl {($struct_name:ident, $padding_before_gpio:expr, $padding_after_gpio: expr) => (
         make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
             #[repr(C, packed)]
             pub struct $struct_name {
                 enable_error_reporting: BU8 : pub get bool : pub set bool,
@@ -3043,6 +3098,9 @@ pub mod memory {
         }
 
         impl $struct_name {
+            pub fn builder() -> Self {
+                Self::new()
+            }
             pub fn error_reporting_gpio(&self) -> Result<Option<Gpio>> {
                 match self.enable_error_reporting_gpio {
                     BU8(1) => Ok(Some(self.error_reporting_gpio)),
@@ -3192,8 +3250,15 @@ pub mod memory {
         pub dimm2: Ddr4DimmRanks, // @8
         #[skip] __: B20,
     }
-
     impl_bitfield_primitive_conversion!(Ddr4OdtPatDimmRankBitmaps, 0b0111_0111_0111, u32);
+    impl Ddr4OdtPatDimmRankBitmaps {
+        pub fn builder() -> Self {
+            Self::new()
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
+    }
 
     type OdtPatPattern = B4; // TODO: Meaning
 
@@ -3206,11 +3271,18 @@ pub mod memory {
         pub writing_pattern: OdtPatPattern, // @bit 8
         #[skip] __: B20,
     }
-
     impl_bitfield_primitive_conversion!(OdtPatPatterns, 0b1111_0000_1111, u32);
+    impl OdtPatPatterns {
+        pub fn builder() -> Self {
+            Self::new()
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
+    }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct Ddr4OdtPatElement {
             dimm_rank_bitmaps: U32<LittleEndian> : pub get Ddr4OdtPatDimmRankBitmaps : pub set Ddr4OdtPatDimmRankBitmaps,
@@ -3266,11 +3338,10 @@ pub mod memory {
         pub dimm2: LrdimmDdr4DimmRanks, // @bit 8
         #[skip] __: B20,
     }
-
     impl_bitfield_primitive_conversion!(LrdimmDdr4OdtPatDimmRankBitmaps, 0b0011_0011_0011, u32);
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4OdtPatElement {
             dimm_rank_bitmaps: U32<LittleEndian> : pub get LrdimmDdr4OdtPatDimmRankBitmaps : pub set LrdimmDdr4OdtPatDimmRankBitmaps,
@@ -3363,8 +3434,17 @@ pub mod memory {
         u64
     );
 
+    impl DdrPostPackageRepairBody {
+        pub fn builder() -> Self {
+            Self::new()
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
+    }
+
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct DdrPostPackageRepairElement {
             body: [u8; 8], // no: pub get DdrPostPackageRepairBody : pub set DdrPostPackageRepairBody,
@@ -3386,6 +3466,9 @@ pub mod memory {
             Self {
                 body: [0, 0, 0, 0, 0, 0, 0, 0xff],
             }
+        }
+        pub fn builder() -> Self {
+            Self::invalid()
         }
         #[inline]
         pub fn set_body(&mut self, value: Option<DdrPostPackageRepairBody>) {
@@ -3435,8 +3518,15 @@ pub mod memory {
                     pub g: bool,
                     pub h: bool,
                 }
-
                 impl_bitfield_primitive_conversion!(ChannelIdsSelection, 0b1111_1111, u8);
+                impl ChannelIdsSelection {
+                    pub fn builder() -> Self {
+                        Self::new()
+                    }
+                    pub fn build(&self) -> Self {
+                        self.clone()
+                    }
+                }
 
                 #[derive(PartialEq)]
                 pub enum ChannelIds {
@@ -3505,6 +3595,12 @@ pub mod memory {
 
                 impl SocketIds {
                     pub const ALL: Self = Self::from_bytes([0xff]);
+                    pub fn builder() -> Self {
+                        Self::new()
+                    }
+                    pub fn build(&self) -> Self {
+                        self.clone()
+                    }
                 }
 
                 #[bitfield(bits = 8)]
@@ -3518,6 +3614,14 @@ pub mod memory {
                     #[skip] __: B4,
                 }
                 impl_bitfield_primitive_conversion!(DimmSlotsSelection, 0b1111, u8);
+                impl DimmSlotsSelection {
+                    fn builder() -> Self {
+                        Self::new()
+                    }
+                    pub fn build(&self) -> Self {
+                        self.clone()
+                    }
+                }
                 pub enum DimmSlots {
                     Any, // 0xff
                     Specific(DimmSlotsSelection),
@@ -3620,7 +3724,7 @@ pub mod memory {
                 )}
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct CkeTristateMap {
                         type_: u8,
@@ -3658,7 +3762,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct OdtTristateMap {
                         type_: u8,
@@ -3696,7 +3800,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct CsTristateMap {
                         type_: u8,
@@ -3734,7 +3838,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct MaxDimmsPerChannel {
                         type_: u8,
@@ -3771,7 +3875,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct MemclkMap {
                         type_: u8,
@@ -3808,7 +3912,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct MaxChannelsPerSocket {
                         type_: u8,
@@ -3882,7 +3986,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct MemBusSpeed {
                         type_: u8,
@@ -3923,7 +4027,7 @@ pub mod memory {
 
                 make_accessors! {
                     /// Max. Chip Selects per channel
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct MaxCsPerChannel {
                         type_: u8,
@@ -3974,7 +4078,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct MemTechnology {
                         type_: u8,
@@ -4011,7 +4115,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct WriteLevellingSeedDelay {
                         type_: u8,
@@ -4037,10 +4141,13 @@ pub mod memory {
                         }
                     }
                 }
+                impl WriteLevellingSeedDelay {
+                    // TODO: Add fn new.
+                }
 
                 make_accessors! {
                     /// See <https://www.amd.com/system/files/TechDocs/43170_14h_Mod_00h-0Fh_BKDG.pdf> section 2.9.3.7.2.1
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct RxEnSeed {
                         type_: u8,
@@ -4080,7 +4187,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct LrDimmNoCs6Cs7Routing {
                         type_: u8,
@@ -4116,7 +4223,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct SolderedDownSodimm {
                         type_: u8,
@@ -4152,7 +4259,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct LvDimmForce1V5 {
                         type_: u8,
@@ -4188,7 +4295,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct MinimumRwDataEyeWidth {
                         type_: u8,
@@ -4228,7 +4335,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct CpuFamilyFilter {
                         type_: u8,
@@ -4256,7 +4363,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct SolderedDownDimmsPerChannel {
                         type_: u8,
@@ -4299,7 +4406,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct MemPowerPolicy {
                         type_: u8,
@@ -4342,7 +4449,7 @@ pub mod memory {
                 }
 
                 make_accessors! {
-                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                     #[repr(C, packed)]
                     pub struct MotherboardLayers {
                         type_: u8,
@@ -4533,7 +4640,7 @@ pub mod memory {
         //            }
                 )}
 
-                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+                #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                 #[repr(C, packed)]
                 pub struct Terminator {
                     type_: U16<LittleEndian>,
@@ -4551,6 +4658,12 @@ pub mod memory {
                 impl Terminator {
                     pub fn new() -> Self {
                         Self::default()
+                    }
+                    pub fn builder() -> Self {
+                        Self::new()
+                    }
+                    pub fn build(&self) -> Self {
+                        self.clone()
                     }
                 }
 
@@ -4807,7 +4920,7 @@ pub mod psp {
     use crate::struct_accessors::{make_accessors, Getter, Setter};
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct IdApcbMapping {
             id_and_feature_mask: u8 : pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
@@ -4880,7 +4993,7 @@ pub mod psp {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct IdRevApcbMapping {
             id_and_rev_and_feature_mask: u8 : pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
@@ -4916,7 +5029,7 @@ pub mod psp {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodCustom {
             access_method: U16<LittleEndian>, // 0xF for BoardIdGettingMethodCustom
@@ -4959,7 +5072,7 @@ pub mod psp {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodGpio {
             access_method: U16<LittleEndian>, // 3 for BoardIdGettingMethodGpio
@@ -5007,7 +5120,7 @@ pub mod psp {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodEeprom {
             access_method: U16<LittleEndian>, // 2 for BoardIdGettingMethodEeprom
@@ -5064,7 +5177,7 @@ pub mod psp {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodSmbus {
             access_method: U16<LittleEndian>, // 1 for BoardIdGettingMethodSmbus
@@ -6011,6 +6124,11 @@ pub struct FchGppClkMapSelection {
     pub s1_gpp2_off: B1,
     pub s1_gpp3_off: B1,
     #[skip] __: B3,
+}
+impl FchGppClkMapSelection {
+    pub fn builder() -> Self {
+        Self::new()
+    }
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
