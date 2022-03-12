@@ -51,7 +51,8 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
     (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}{$($state_obj:tt)*}{$($as_bytes:tt)*}
     ) => {
         #[non_exhaustive]
-        #[derive(Debug, Serialize)]
+        #[derive(Debug)]
+        #[cfg_attr(feature = "std", derive(Serialize))]
         pub enum ElementRef<'a> {
              Unknown(&'a [u8]),
              $($state)*
@@ -63,8 +64,9 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
              $($state_mut)*
         }
 
+        #[cfg(feature = "std")]
         #[non_exhaustive]
-        #[derive(Debug, Serialize, Deserialize)]
+        #[derive(Serialize, Deserialize)]
         #[repr(C)]
         pub enum Element {
              Unknown(Vec<u8>),
@@ -86,6 +88,7 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
             }
         }
 
+        #[cfg(feature = "std")]
         impl ElementAsBytes for Element {
             fn element_as_bytes(&self) -> &[u8] {
                 match self {

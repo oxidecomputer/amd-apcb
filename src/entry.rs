@@ -1,28 +1,28 @@
-use crate::df;
-use crate::df::SlinkConfig;
-use crate::memory;
 use crate::ondisk::ENTRY_HEADER;
 use crate::ondisk::{
     take_header_from_collection, take_header_from_collection_mut,
     BoardInstances, ContextFormat, ContextType, EntryCompatible, EntryId,
     HeaderWithTail, MutSequenceElementFromBytes, PriorityLevels,
-    SequenceElementFromBytes, ElementAsBytes,
+    SequenceElementFromBytes,
 };
-use crate::tokens_entry::{TokensEntryBodyItem, TokensEntryItem};
+use crate::tokens_entry::TokensEntryBodyItem;
 use crate::types::{Error, FileSystemError, Ptr, Result};
 use crate::ondisk::{Parameters, ParametersIter};
 use crate::naples::{ParameterTokenConfig};
-use crate::psp;
 use core::marker::PhantomData;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
 use pre::pre;
-use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
-use serde::ser::{Serialize, SerializeStruct, Serializer};
 use zerocopy::{AsBytes, FromBytes};
 
 #[cfg(feature = "std")]
 use std::borrow::Cow;
+#[cfg(feature = "std")]
+use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
+#[cfg(feature = "std")]
+use serde::ser::{Serialize, SerializeStruct, Serializer};
+#[cfg(feature = "std")]
+use crate::ondisk::ElementAsBytes;
 
 /* Note: high-level interface is:
 
@@ -454,6 +454,9 @@ impl<'a> Serialize for EntryItem<'a> {
     where
         S: Serializer,
     {
+        use crate::memory;
+        use crate::psp;
+        use crate::df::SlinkConfig;
         let mut state = serializer.serialize_struct("EntryItem", 2)?;
         state.serialize_field("header", &*self.header)?;
 
@@ -544,6 +547,7 @@ self.body_as_struct_sequence::<memory::platform_tuning::ElementRef<'_>>() {
     }
 }
 
+#[cfg(feature = "std")]
 fn token_vec_to_body<'a, M>(
     body: &mut Option<Cow<'_, [u8]>>,
     map: &mut M,
@@ -551,6 +555,7 @@ fn token_vec_to_body<'a, M>(
 where
     M: MapAccess<'a>,
 {
+    use crate::tokens_entry::TokensEntryItem;
     if body.is_some() {
         return Err(de::Error::duplicate_field("body"));
     }
@@ -563,6 +568,7 @@ where
     Ok(())
 }
 
+#[cfg(feature = "std")]
 fn struct_vec_to_body<'a, T, M>(
     body: &mut Option<Cow<'_, [u8]>>,
     map: &mut M,
@@ -583,6 +589,7 @@ where
     Ok(())
 }
 
+#[cfg(feature = "std")]
 fn struct_to_body<'a, T, M>(
     body: &mut Option<Cow<'_, [u8]>>,
     map: &mut M,
@@ -609,6 +616,7 @@ where
     Ok(())
 }
 
+#[cfg(feature = "std")]
 fn struct_sequence_to_body<'a, T, M>(
     body: &mut Option<Cow<'_, [u8]>>,
     map: &mut M,
@@ -805,6 +813,9 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
             where
                 V: MapAccess<'de>,
             {
+                use crate::memory;
+                use crate::psp;
+                use crate::df;
                 let mut header: Option<ENTRY_HEADER> = None;
                 let mut body: Option<Cow<'_, [u8]>> = None;
                 while let Some(key) = map.next_key()? {

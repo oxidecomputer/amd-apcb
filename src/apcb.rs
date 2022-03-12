@@ -1,6 +1,6 @@
-use crate::types::{Error, FileSystemError, Ptr, PtrMut, Result};
+use crate::types::{Error, FileSystemError, PtrMut, Result};
 
-use crate::entry::{EntryItem, EntryItemBody};
+use crate::entry::EntryItemBody;
 use crate::group::{GroupItem, GroupMutItem};
 use crate::ondisk::GroupId;
 use crate::ondisk::ENTRY_ALIGNMENT;
@@ -26,11 +26,21 @@ use core::mem::size_of;
 use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use pre::pre;
-use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
-use serde::ser::{Serialize, SerializeStruct, Serializer};
 use static_assertions::const_assert;
 use zerocopy::AsBytes;
 use zerocopy::LayoutVerified;
+
+// The following imports are only used for std enviroments and serde.
+#[cfg(feature = "std")]
+extern crate std;
+#[cfg(feature = "std")]
+use std::borrow::Cow;
+#[cfg(feature = "std")]
+use crate::entry::EntryItem;
+#[cfg(feature = "std")]
+use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
+#[cfg(feature = "std")]
+use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 pub struct ApcbIoOptions {
     pub check_checksum: bool,
@@ -43,39 +53,6 @@ impl Default for ApcbIoOptions {
         }
     }
 }
-
-trait FromBuf<'a, T> {
-    fn new(buf: &'a [T]) -> PtrMut<'a, [T]>
-    where
-        T: Clone;
-}
-
-impl<'a, T> FromBuf<'a, T> for PtrMut<'a, T>
-where
-    T: Clone,
-{
-    #[cfg(feature = "std")]
-    fn new(buf: &'a [T]) -> PtrMut<'a, [T]>
-    where
-        T: Clone,
-    {
-        Cow::from(buf)
-    }
-    #[cfg(not(feature = "std"))]
-    fn new(buf: &'a mut [T]) -> PtrMut<'a, [T]>
-    where
-        T: Clone,
-    {
-        buf
-    }
-}
-
-#[cfg(feature = "std")]
-extern crate std;
-
-#[cfg(feature = "std")]
-use std::borrow::Cow;
-
 pub struct Apcb<'a> {
     used_size: usize,
     pub backing_store: PtrMut<'a, [u8]>,
@@ -1245,11 +1222,16 @@ impl<'a> Apcb<'a> {
 
     /// Note: for OPTIONS, try ApcbIoOptions::default()
     pub fn load(
-        mut bs: Ptr<'a, [u8]>,
+        mut bs: PtrMut<'a, [u8]>,
         options: &ApcbIoOptions,
     ) -> Result<Self> {
         let backing_store_len = bs.len();
-        let backing_store = &mut bs.to_mut()[..];
+
+        #[cfg(not(feature = "std"))]
+        let backing_store : &mut [u8] = bs;
+        #[cfg(feature = "std")]
+        let backing_store : &mut [u8] = bs.to_mut();
+
         let (header, mut rest) = LayoutVerified::<& [u8], V2_HEADER>
                 ::new_unaligned_from_prefix(&*backing_store)
                 .ok_or(Error::FileSystem(
@@ -1405,7 +1387,11 @@ impl<'a> Apcb<'a> {
         initial_unique_apcb_instance: u32,
         options: &ApcbIoOptions,
     ) -> Result<Self> {
-        let backing_store = &mut bs.to_mut()[..];
+        #[cfg(not(feature = "std"))]
+        let backing_store : &mut [u8] = bs;
+        #[cfg(feature = "std")]
+        let backing_store : &mut [u8] = bs.to_mut();
+
         for i in 0..backing_store.len() {
             backing_store[i] = 0xFF;
         }

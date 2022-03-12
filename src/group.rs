@@ -16,15 +16,17 @@ use core::mem::size_of;
 use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use pre::pre;
+
+#[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct GroupItem<'a> {
-    #[serde(borrow)]
+    #[cfg_attr(feature = "std", serde(borrow))]
     pub(crate) header: Ptr<'a, GROUP_HEADER>,
-    #[serde(skip)]
+    #[cfg_attr(feature = "std", serde(skip))]
     pub(crate) buf: &'a [u8],
-    #[serde(skip)]
+    #[cfg_attr(feature = "std", serde(skip))]
     pub(crate) used_size: usize,
 }
 
