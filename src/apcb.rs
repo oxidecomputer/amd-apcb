@@ -12,8 +12,7 @@ use crate::ondisk::V3_HEADER_EXT;
 use crate::ondisk::{
     take_body_from_collection, take_body_from_collection_mut,
     take_header_from_collection, take_header_from_collection_mut,
-    HeaderWithTail, SequenceElementAsBytes,
-    ParameterAttributes,
+    HeaderWithTail, ParameterAttributes, SequenceElementAsBytes,
 };
 pub use crate::ondisk::{
     BoardInstances, ContextFormat, ContextType, EntryCompatible, EntryId,
@@ -34,13 +33,13 @@ use zerocopy::LayoutVerified;
 #[cfg(feature = "std")]
 extern crate std;
 #[cfg(feature = "std")]
-use std::borrow::Cow;
-#[cfg(feature = "std")]
 use crate::entry::EntryItem;
 #[cfg(feature = "std")]
 use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
 #[cfg(feature = "std")]
 use serde::ser::{Serialize, SerializeStruct, Serializer};
+#[cfg(feature = "std")]
+use std::borrow::Cow;
 
 pub struct ApcbIoOptions {
     pub check_checksum: bool,
@@ -80,7 +79,8 @@ impl<'a> Serialize for Apcb<'a> {
             entries.extend((g.entries()).collect::<Vec<_>>());
         }
         state.serialize_field("header", &*self.header())?;
-        let v3_header : Option<V3_HEADER_EXT> = self.v3_header_ext().as_ref().map(|h| **h);
+        let v3_header: Option<V3_HEADER_EXT> =
+            self.v3_header_ext().as_ref().map(|h| **h);
         state.serialize_field("v3_header_ext", &v3_header)?;
         state.serialize_field("groups", &groups)?;
         state.serialize_field("entries", &entries)?;
@@ -233,7 +233,7 @@ impl<'a, 'de: 'a> Deserialize<'de> for Apcb<'a> {
                 apcb.header_mut().apcb_size = header_size;
                 match v3_header_ext {
                     Some(v3) => {
-                        apcb.v3_header_ext_mut().map(|mut v| *v=v3);
+                        apcb.v3_header_ext_mut().map(|mut v| *v = v3);
                     }
                     None => {}
                 }
@@ -505,35 +505,46 @@ impl<'a> Apcb<'a> {
     const ROME_VERSION: u16 = 0x30;
     pub const MAX_SIZE: usize = 0x2400;
 
-    pub fn header(&self) -> LayoutVerified::<&[u8], V2_HEADER> {
-        let (header, _) = LayoutVerified::<&[u8], V2_HEADER>
-                ::new_unaligned_from_prefix(&*self.backing_store)
-                .ok_or(Error::FileSystem(
-                    FileSystemError::InconsistentHeader,
-                    "V2_HEADER",
-                )).unwrap();
+    pub fn header(&self) -> LayoutVerified<&[u8], V2_HEADER> {
+        let (header, _) =
+            LayoutVerified::<&[u8], V2_HEADER>::new_unaligned_from_prefix(
+                &*self.backing_store,
+            )
+            .ok_or(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "V2_HEADER",
+            ))
+            .unwrap();
         header
     }
-    pub fn header_mut(&mut self) -> LayoutVerified::<&mut [u8], V2_HEADER> {
+    pub fn header_mut(&mut self) -> LayoutVerified<&mut [u8], V2_HEADER> {
         #[cfg(not(feature = "std"))]
-        let bs : &mut [u8] = self.backing_store;
+        let bs: &mut [u8] = self.backing_store;
         #[cfg(feature = "std")]
-        let bs : &mut [u8] = self.backing_store.to_mut();
-        let (header, _) = LayoutVerified::<&mut [u8], V2_HEADER>
-                ::new_unaligned_from_prefix(bs)
-                .ok_or(Error::FileSystem(
-                    FileSystemError::InconsistentHeader,
-                    "V2_HEADER",
-                )).unwrap();
+        let bs: &mut [u8] = self.backing_store.to_mut();
+        let (header, _) =
+            LayoutVerified::<&mut [u8], V2_HEADER>::new_unaligned_from_prefix(
+                bs,
+            )
+            .ok_or(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "V2_HEADER",
+            ))
+            .unwrap();
         header
     }
-    pub fn v3_header_ext(&self) -> Option<LayoutVerified::<&[u8], V3_HEADER_EXT>> {
-        let (header, rest) = LayoutVerified::<&[u8], V2_HEADER>
-                ::new_unaligned_from_prefix(&*self.backing_store)
-                .ok_or(Error::FileSystem(
-                    FileSystemError::InconsistentHeader,
-                    "V2_HEADER",
-                )).unwrap();
+    pub fn v3_header_ext(
+        &self,
+    ) -> Option<LayoutVerified<&[u8], V3_HEADER_EXT>> {
+        let (header, rest) =
+            LayoutVerified::<&[u8], V2_HEADER>::new_unaligned_from_prefix(
+                &*self.backing_store,
+            )
+            .ok_or(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "V2_HEADER",
+            ))
+            .unwrap();
         let v3_header_ext = if usize::from(header.header_size)
             == size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>()
         {
@@ -549,17 +560,22 @@ impl<'a> Apcb<'a> {
         };
         v3_header_ext
     }
-    pub fn v3_header_ext_mut(&mut self) -> Option<LayoutVerified::<&mut [u8], V3_HEADER_EXT>> {
+    pub fn v3_header_ext_mut(
+        &mut self,
+    ) -> Option<LayoutVerified<&mut [u8], V3_HEADER_EXT>> {
         #[cfg(not(feature = "std"))]
-        let bs : &mut [u8] = self.backing_store;
+        let bs: &mut [u8] = self.backing_store;
         #[cfg(feature = "std")]
-        let bs : &mut [u8] = self.backing_store.to_mut();
-        let (header, rest) = LayoutVerified::<&mut [u8], V2_HEADER>
-                ::new_unaligned_from_prefix(bs)
-                .ok_or(Error::FileSystem(
-                    FileSystemError::InconsistentHeader,
-                    "V2_HEADER",
-                )).unwrap();
+        let bs: &mut [u8] = self.backing_store.to_mut();
+        let (header, rest) =
+            LayoutVerified::<&mut [u8], V2_HEADER>::new_unaligned_from_prefix(
+                bs,
+            )
+            .ok_or(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "V2_HEADER",
+            ))
+            .unwrap();
         let v3_header_ext = if usize::from(header.header_size)
             == size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>()
         {
@@ -964,11 +980,15 @@ impl<'a> Apcb<'a> {
     ) -> Result<()> {
         let mut payload_size = size_of::<u32>() + size_of::<u8>(); // terminator attribute and its value
         for (key, value) in items {
-            payload_size = payload_size.checked_add(size_of::<ParameterAttributes>()).ok_or(Error::ArithmeticOverflow)?;
+            payload_size = payload_size
+                .checked_add(size_of::<ParameterAttributes>())
+                .ok_or(Error::ArithmeticOverflow)?;
             let value_size = key.size();
-            payload_size = payload_size.checked_add(value_size).ok_or(Error::ArithmeticOverflow)?;
+            payload_size = payload_size
+                .checked_add(value_size)
+                .ok_or(Error::ArithmeticOverflow)?;
             if value_size > 8 || *value >= (8u64 << value_size) {
-                 return Err(Error::ParameterRange)
+                return Err(Error::ParameterRange);
             }
         }
         let off = payload_size % ENTRY_ALIGNMENT;
@@ -1189,7 +1209,11 @@ impl<'a> Apcb<'a> {
         })
     }
 
-    pub(crate) fn calculate_checksum(header: &LayoutVerified<&'_ [u8], V2_HEADER>, v3_header_ext: &Option<LayoutVerified<&'_ [u8], V3_HEADER_EXT>>, beginning_of_groups: &[u8]) -> Result<u8> {
+    pub(crate) fn calculate_checksum(
+        header: &LayoutVerified<&'_ [u8], V2_HEADER>,
+        v3_header_ext: &Option<LayoutVerified<&'_ [u8], V3_HEADER_EXT>>,
+        beginning_of_groups: &[u8],
+    ) -> Result<u8> {
         let mut checksum_byte = 0u8;
         let stored_checksum_byte = header.checksum_byte;
         for c in header.bytes() {
@@ -1200,10 +1224,14 @@ impl<'a> Apcb<'a> {
             for c in v3_header_ext.bytes() {
                 checksum_byte = checksum_byte.wrapping_add(*c);
             }
-            offset = offset.checked_add(v3_header_ext.bytes().len()).ok_or(Error::OutOfSpace)?;
+            offset = offset
+                .checked_add(v3_header_ext.bytes().len())
+                .ok_or(Error::OutOfSpace)?;
         }
         let apcb_size = header.apcb_size.get();
-        let beginning_of_groups_used_size = (apcb_size as usize).checked_sub(offset).ok_or(Error::OutOfSpace)?;
+        let beginning_of_groups_used_size = (apcb_size as usize)
+            .checked_sub(offset)
+            .ok_or(Error::OutOfSpace)?;
         let beginning_of_groups = &beginning_of_groups;
         if beginning_of_groups.len() < beginning_of_groups_used_size {
             return Err(Error::FileSystem(
@@ -1228,16 +1256,18 @@ impl<'a> Apcb<'a> {
         let backing_store_len = bs.len();
 
         #[cfg(not(feature = "std"))]
-        let backing_store : &mut [u8] = bs;
+        let backing_store: &mut [u8] = bs;
         #[cfg(feature = "std")]
-        let backing_store : &mut [u8] = bs.to_mut();
+        let backing_store: &mut [u8] = bs.to_mut();
 
-        let (header, mut rest) = LayoutVerified::<& [u8], V2_HEADER>
-                ::new_unaligned_from_prefix(&*backing_store)
-                .ok_or(Error::FileSystem(
-                    FileSystemError::InconsistentHeader,
-                    "V2_HEADER",
-                ))?;
+        let (header, mut rest) =
+            LayoutVerified::<&[u8], V2_HEADER>::new_unaligned_from_prefix(
+                &*backing_store,
+            )
+            .ok_or(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "V2_HEADER",
+            ))?;
 
         if header.signature != *b"APCB" {
             return Err(Error::FileSystem(
@@ -1365,7 +1395,11 @@ impl<'a> Apcb<'a> {
 
     pub fn update_checksum(&mut self) -> Result<()> {
         self.header_mut().checksum_byte = 0; // make calculate_checksum's job easier
-        let checksum_byte = Self::calculate_checksum(&self.header(), &self.v3_header_ext(), self.beginning_of_groups())?;
+        let checksum_byte = Self::calculate_checksum(
+            &self.header(),
+            &self.v3_header_ext(),
+            self.beginning_of_groups(),
+        )?;
         self.header_mut().checksum_byte = checksum_byte;
         Ok(())
     }
@@ -1388,9 +1422,9 @@ impl<'a> Apcb<'a> {
         options: &ApcbIoOptions,
     ) -> Result<Self> {
         #[cfg(not(feature = "std"))]
-        let backing_store : &mut [u8] = bs;
+        let backing_store: &mut [u8] = bs;
         #[cfg(feature = "std")]
-        let backing_store : &mut [u8] = bs.to_mut();
+        let backing_store: &mut [u8] = bs.to_mut();
 
         for i in 0..backing_store.len() {
             backing_store[i] = 0xFF;
@@ -1424,10 +1458,14 @@ impl<'a> Apcb<'a> {
             );
             header.apcb_size = (header.header_size.get() as u32).into();
         }
-        let (header, rest) = LayoutVerified::<&'_ [u8],
-V2_HEADER>::new_unaligned_from_prefix(&*backing_store).unwrap();
+        let (header, rest) =
+            LayoutVerified::<&'_ [u8], V2_HEADER>::new_unaligned_from_prefix(
+                &*backing_store,
+            )
+            .unwrap();
         let (v3_header_ext, rest) = LayoutVerified::<&'_ [u8], V3_HEADER_EXT>::new_unaligned_from_prefix(rest).unwrap();
-        let checksum_byte = Self::calculate_checksum(&header, &Some(v3_header_ext), rest)?;
+        let checksum_byte =
+            Self::calculate_checksum(&header, &Some(v3_header_ext), rest)?;
 
         let (mut header, _) = LayoutVerified::<&'_ mut [u8],
 V2_HEADER>::new_unaligned_from_prefix(backing_store).unwrap();

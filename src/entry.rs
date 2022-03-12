@@ -1,3 +1,4 @@
+use crate::naples::ParameterTokenConfig;
 use crate::ondisk::ENTRY_HEADER;
 use crate::ondisk::{
     take_header_from_collection, take_header_from_collection_mut,
@@ -5,10 +6,9 @@ use crate::ondisk::{
     HeaderWithTail, MutSequenceElementFromBytes, PriorityLevels,
     SequenceElementFromBytes,
 };
+use crate::ondisk::{Parameters, ParametersIter};
 use crate::tokens_entry::TokensEntryBodyItem;
 use crate::types::{Error, FileSystemError, Ptr, Result};
-use crate::ondisk::{Parameters, ParametersIter};
-use crate::naples::{ParameterTokenConfig};
 use core::marker::PhantomData;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
@@ -16,13 +16,13 @@ use pre::pre;
 use zerocopy::{AsBytes, FromBytes};
 
 #[cfg(feature = "std")]
-use std::borrow::Cow;
+use crate::ondisk::ElementAsBytes;
 #[cfg(feature = "std")]
 use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
 #[cfg(feature = "std")]
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 #[cfg(feature = "std")]
-use crate::ondisk::ElementAsBytes;
+use std::borrow::Cow;
 
 /* Note: high-level interface is:
 
@@ -454,9 +454,9 @@ impl<'a> Serialize for EntryItem<'a> {
     where
         S: Serializer,
     {
+        use crate::df::SlinkConfig;
         use crate::memory;
         use crate::psp;
-        use crate::df::SlinkConfig;
         let mut state = serializer.serialize_struct("EntryItem", 2)?;
         state.serialize_field("header", &*self.header)?;
 
@@ -813,9 +813,9 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
             where
                 V: MapAccess<'de>,
             {
+                use crate::df;
                 use crate::memory;
                 use crate::psp;
-                use crate::df;
                 let mut header: Option<ENTRY_HEADER> = None;
                 let mut body: Option<Cow<'_, [u8]>> = None;
                 while let Some(key) = map.next_key()? {
@@ -1061,16 +1061,21 @@ impl<'a, T: 'a + Sized + FromBytes> StructArrayEntryItem<'a, T> {
 
 /// Naples
 impl Parameters {
-    pub fn iter<'a>(tail: StructArrayEntryItem<'a, u8>) -> Result<ParametersIter<'a>> {
-         ParametersIter::new(tail.into_slice())
+    pub fn iter<'a>(
+        tail: StructArrayEntryItem<'a, u8>,
+    ) -> Result<ParametersIter<'a>> {
+        ParametersIter::new(tail.into_slice())
     }
-    pub fn get(tail: StructArrayEntryItem<'_, u8>, key: ParameterTokenConfig) -> Result<u64> {
-         for (parameter_key, parameter_value) in Self::iter(tail)? {
-             if parameter_key.token() == key {
-                 return Ok(parameter_value);
-             }
-         }
-         Err(Error::ParameterNotFound)
+    pub fn get(
+        tail: StructArrayEntryItem<'_, u8>,
+        key: ParameterTokenConfig,
+    ) -> Result<u64> {
+        for (parameter_key, parameter_value) in Self::iter(tail)? {
+            if parameter_key.token() == key {
+                return Ok(parameter_value);
+            }
+        }
+        Err(Error::ParameterNotFound)
     }
 }
 
