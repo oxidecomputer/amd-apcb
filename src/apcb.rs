@@ -72,7 +72,7 @@ impl<'a> Serialize for Apcb<'a> {
         // We need the number of groups, but there's no way to get it from the
         // Iterator directly. We have two other fields for now, header and
         // used_size. This is fragile and I don't like it.
-        let mut state = serializer.serialize_struct("Apbc", 5)?;
+        let mut state = serializer.serialize_struct("Apcb", 5)?;
         let groups = self.groups().collect::<Vec<_>>();
         let mut entries: Vec<EntryItem<'_>> = Vec::new();
         for g in &groups {
@@ -750,9 +750,6 @@ impl<'a> Apcb<'a> {
             ))?;
             let group = groups.next().ok_or(Error::GroupNotFound)?;
             group.header.group_size.set(new_group_size);
-            #[cfg(feature = "std")]
-            let buf = &mut self.beginning_of_groups_mut()[offset..];
-            #[cfg(not(feature = "std"))]
             let buf = &mut self.beginning_of_groups_mut()[offset..];
             buf.copy_within(
                 (old_group_size as usize)..old_used_size,
@@ -991,9 +988,6 @@ impl<'a> Apcb<'a> {
                 return Err(Error::ParameterRange);
             }
         }
-        let off = payload_size % ENTRY_ALIGNMENT;
-        let padding_size: usize =
-            if off == 0 { 0 } else { ENTRY_ALIGNMENT - off };
         self.internal_insert_entry(
             entry_id,
             0,
@@ -1022,14 +1016,8 @@ impl<'a> Apcb<'a> {
                     a.copy_from_slice(&raw_value[0..size]);
                     body = rest;
                 }
-                let (a, rest) = body.split_at_mut(size_of::<u8>());
+                let (a, _rest) = body.split_at_mut(size_of::<u8>());
                 a.copy_from_slice(&[0xffu8]);
-                body = rest;
-
-                // Be bug-compatible with AMD and fill up
-                for i in 0..padding_size {
-                    body[i] = 0;
-                }
             },
         )
     }
@@ -1120,9 +1108,6 @@ impl<'a> Apcb<'a> {
                 ),
             )?,
         );
-        #[cfg(feature = "std")]
-        let buf = &mut self.beginning_of_groups_mut()[offset..];
-        #[cfg(not(feature = "std"))]
         let buf = &mut self.beginning_of_groups_mut()[offset..];
         buf.copy_within(group_size..(apcb_size as usize), 0);
         self.used_size =

@@ -460,6 +460,8 @@ impl<'a> Serialize for EntryItem<'a> {
         let mut state = serializer.serialize_struct("EntryItem", 2)?;
         state.serialize_field("header", &*self.header)?;
 
+        // TODO: Automate this type determination instead of maintaining this
+        // manually.
         match &self.body {
             EntryItemBody::<_>::Tokens(tokens) => {
                 let v = tokens.iter().collect::<Vec<_>>();
@@ -548,6 +550,9 @@ self.body_as_struct_sequence::<memory::platform_tuning::ElementRef<'_>>() {
 }
 
 #[cfg(feature = "std")]
+/// if BODY is empty, read a value (which is a Vec of TokensEntryItem) from MAP
+/// and stash it into a new BODY. If BODY is not empty, that's an error. This is
+/// used purely as a helper function during deserialize.
 fn token_vec_to_body<'a, M>(
     body: &mut Option<Cow<'_, [u8]>>,
     map: &mut M,
@@ -555,20 +560,42 @@ fn token_vec_to_body<'a, M>(
 where
     M: MapAccess<'a>,
 {
+    use crate::ondisk::TokenEntryId;
     use crate::tokens_entry::TokensEntryItem;
     if body.is_some() {
         return Err(de::Error::duplicate_field("body"));
     }
     let val: Vec<TokensEntryItem<'_>> = map.next_value()?;
     let mut buf: Vec<u8> = Vec::new();
-    for v in val {
-        buf.extend_from_slice(v.entry.as_bytes());
+
+    if val.len() >= 1 {
+        // Ensure that all tokens in this entry have the same id.
+        let entry_id: TokenEntryId;
+        if let TokenEntryId::Unknown(_eid) = val[0].entry_id {
+            return Err(de::Error::invalid_value(
+                de::Unexpected::Enum,
+                &"expected one of [Bool, Byte, Word, Dword]",
+            ));
+        }
+        entry_id = val[0].entry_id;
+        for v in val {
+            if entry_id != v.entry_id {
+                return Err(de::Error::invalid_value(
+                    de::Unexpected::Enum,
+                    &entry_id,
+                ));
+            }
+            buf.extend_from_slice(v.entry.as_bytes());
+        }
     }
     *body = Some(Cow::from(buf));
     Ok(())
 }
 
 #[cfg(feature = "std")]
+/// if BODY is empty, read a value (which is a Vec) from MAP and stash it into a
+/// new BODY. If BODY is not empty, that's an error. This is used purely as a
+/// helper function during deserialize.
 fn struct_vec_to_body<'a, T, M>(
     body: &mut Option<Cow<'_, [u8]>>,
     map: &mut M,
@@ -590,6 +617,9 @@ where
 }
 
 #[cfg(feature = "std")]
+/// if BODY is empty, read a value (which is a struct) from MAP and stash it
+/// into a new BODY. If BODY is not empty, that's an error. This is used purely
+/// as a helper function during deserialize.
 fn struct_to_body<'a, T, M>(
     body: &mut Option<Cow<'_, [u8]>>,
     map: &mut M,
@@ -617,6 +647,10 @@ where
 }
 
 #[cfg(feature = "std")]
+/// if BODY is empty, read a value (which is a Vec) from MAP and stash it into a
+/// new BODY. If BODY is not empty, that's an error. This is used purely as a
+/// helper function during deserialize. This handles the sequences, and thus the
+/// elements in this vec can each be different.
 fn struct_sequence_to_body<'a, T, M>(
     body: &mut Option<Cow<'_, [u8]>>,
     map: &mut M,

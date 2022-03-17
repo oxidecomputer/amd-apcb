@@ -415,6 +415,15 @@ impl<'a> GroupMutIter<'a> {
         let group_id = entry_id.group_id();
         let entry_id = entry_id.type_id();
 
+        // Make sure that entry_allocation is large enough for the header and
+        // data
+        (entry_allocation as usize)
+            .checked_sub(size_of::<ENTRY_HEADER>() + payload_size)
+            .ok_or(Error::FileSystem(
+                FileSystemError::PayloadTooBig,
+                "ENTRY_HEADER:entry_size",
+            ))?;
+
         // Make sure that move_insertion_point_before does not notice the new
         // uninitialized entry
         self.remaining_used_size = self
@@ -473,7 +482,7 @@ impl<'a> GroupMutIter<'a> {
                 "ENTRY_HEADER",
             ))?;
         payload_initializer(body);
-        if payload_size != entry_allocation as usize {}
+
         let padding = take_body_from_collection_mut(
             &mut buf,
             entry_allocation as usize
@@ -485,6 +494,9 @@ impl<'a> GroupMutIter<'a> {
             FileSystemError::InconsistentHeader,
             "padding",
         ))?;
+        // We pad this with 0s instead of 0xFFs because that's what AMD does,
+        // even though the erase polarity of most flash systems nowadays are
+        // 0xFF.
         padding.iter_mut().for_each(|b| *b = 0u8);
         self.remaining_used_size = self
             .remaining_used_size

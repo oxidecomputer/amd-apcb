@@ -871,6 +871,15 @@ pub enum TokenEntryId {
     Unknown(u16),
 }
 
+#[cfg(feature = "std")]
+use std::fmt::{Formatter, Result as FResult};
+#[cfg(feature = "std")]
+impl serde::de::Expected for TokenEntryId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FResult {
+        write!(f, "{:?}", self)
+    }
+}
+
 impl ToPrimitive for TokenEntryId {
     fn to_i64(&self) -> Option<i64> {
         Some(match self {
@@ -1094,7 +1103,7 @@ make_bitfield_serde! {
 
 impl Default for PriorityLevels {
     fn default() -> Self {
-        Self::new()
+        Self::new().with_normal(true)
     }
 }
 
@@ -2000,16 +2009,23 @@ pub mod memory {
         }
     }
 
-    #[bitfield(bits = 4)]
-    #[derive(
-        Clone, Copy, PartialEq, BitfieldSpecifier, Serialize, Deserialize,
-    )]
-    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-    pub struct Ddr4DimmRanks {
-        pub unpopulated: bool,
-        pub single_rank: bool,
-        pub dual_rank: bool,
-        pub quad_rank: bool,
+    make_bitfield_serde!(
+        #[bitfield(bits = 4)]
+        #[derive(
+            Clone, Copy, PartialEq, BitfieldSpecifier,
+        )]
+        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+        pub struct Ddr4DimmRanks {
+            pub unpopulated: bool : pub get bool : pub set bool,
+            pub single_rank: bool : pub get bool : pub set bool,
+            pub dual_rank: bool : pub get bool : pub set bool,
+            pub quad_rank: bool : pub get bool : pub set bool,
+        }
+    );
+    impl Default for Ddr4DimmRanks {
+        fn default() -> Self {
+            Self::new()
+        }
     }
     impl Ddr4DimmRanks {
         pub fn builder() -> Self {
@@ -2036,18 +2052,25 @@ pub mod memory {
 
     impl_bitfield_primitive_conversion!(Ddr4DimmRanks, 0b1111, u32);
 
+    make_bitfield_serde!(
     #[bitfield(bits = 4)]
     #[derive(
-        Clone, Copy, PartialEq, BitfieldSpecifier, Serialize, Deserialize,
+        Clone, Copy, PartialEq, BitfieldSpecifier,
     )]
     #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-    pub struct LrdimmDdr4DimmRanks {
-        pub unpopulated: bool,
-        pub lr: bool,
-        #[skip]
-        __: B2,
-    }
+        pub struct LrdimmDdr4DimmRanks {
+            pub unpopulated: bool : pub get bool : pub set bool,
+            pub lr: bool : pub get bool : pub set bool,
+            #[skip]
+            __: B2,
+        }
+    );
 
+    impl Default for LrdimmDdr4DimmRanks {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
     impl LrdimmDdr4DimmRanks {
         pub fn builder() -> Self {
             Self::new()
@@ -2095,73 +2118,80 @@ pub mod memory {
     pub type CadBusCkeDriveStrength = CadBusClkDriveStrength;
     pub type CadBusCsOdtDriveStrength = CadBusClkDriveStrength;
 
-    #[bitfield(bits = 32)]
-    #[repr(u32)]
-    #[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
-    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-    pub struct DdrRates {
-        // Note: Bit index is (x/2)//66 of ddrx
-        #[skip]
-        __: bool,
-        #[skip]
-        __: bool,
-        #[skip]
-        __: bool,
-        pub ddr400: bool, // @3
-        pub ddr533: bool, // @4
-        pub ddr667: bool, // @5
-        pub ddr800: bool, // @6
-        #[skip]
-        __: bool,
-        pub ddr1066: bool, // @8
-        #[skip]
-        __: bool,
-        pub ddr1333: bool, // @10
-        #[skip]
-        __: bool,
-        pub ddr1600: bool, // @12
-        #[skip]
-        __: bool,
-        pub ddr1866: bool, // @14
-        #[skip]
-        __: bool, // AMD-missing pub ddr2100 // @15
-        pub ddr2133: bool, // @16
-        #[skip]
-        __: bool,
-        pub ddr2400: bool, // @18
-        #[skip]
-        __: bool,
-        pub ddr2667: bool, // @20
-        #[skip]
-        __: bool, // AMD-missing pub ddr2800 // @21
-        pub ddr2933: bool, // @22
-        #[skip]
-        __: bool, // AMD-missing pub ddr3066: // @23
-        pub ddr3200: bool, // @24
-        #[skip]
-        __: bool, // @25
-        #[skip]
-        __: bool, // @26
-        #[skip]
-        __: bool, // @27
-        #[skip]
-        __: bool, // @28
-        #[skip]
-        __: bool, // @29
-        #[skip]
-        __: bool, // @30
-        #[skip]
-        __: bool, /* @31
-                            * AMD-missing pub ddr3334, set_ddr3334: 25,
-                            * AMD-missing pub ddr3466, set_ddr3466: 26,
-                            * AMD-missing pub ddr3600, set_ddr3600: 27,
-                            * AMD-missing pub ddr3734, set_ddr3734: 28,
-                            * AMD-missing pub ddr3866, set_ddr3866: 29,
-                            * AMD-missing pub ddr4000, set_ddr4000: 30,
-                            * AMD-missing pub ddr4200, set_ddr4200: 31,
-                            * AMD-missing pub ddr4266, set_ddr4266: 32,
-                            * AMD-missing pub ddr4334, set_ddr4334: 32,
-                            * AMD-missing pub ddr4400, set_ddr4400: 33, */
+    make_bitfield_serde!(
+        #[bitfield(bits = 32)]
+        #[repr(u32)]
+        #[derive(Clone, Copy, PartialEq)]
+        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+        pub struct DdrRates {
+            // Note: Bit index is (x/2)//66 of ddrx
+            #[skip]
+            __: bool,
+            #[skip]
+            __: bool,
+            #[skip]
+            __: bool,
+            pub ddr400: bool : pub get bool : pub set bool, // @3
+            pub ddr533: bool : pub get bool : pub set bool, // @4
+            pub ddr667: bool : pub get bool : pub set bool, // @5
+            pub ddr800: bool : pub get bool : pub set bool, // @6
+            #[skip]
+            __: bool,
+            pub ddr1066: bool : pub get bool : pub set bool, // @8
+            #[skip]
+            __: bool,
+            pub ddr1333: bool : pub get bool : pub set bool, // @10
+            #[skip]
+            __: bool,
+            pub ddr1600: bool : pub get bool : pub set bool, // @12
+            #[skip]
+            __: bool,
+            pub ddr1866: bool : pub get bool : pub set bool, // @14
+            #[skip]
+            __: bool, // AMD-missing pub ddr2100 // @15
+            pub ddr2133: bool : pub get bool : pub set bool, // @16
+            #[skip]
+            __: bool,
+            pub ddr2400: bool : pub get bool : pub set bool, // @18
+            #[skip]
+            __: bool,
+            pub ddr2667: bool : pub get bool : pub set bool, // @20
+            #[skip]
+            __: bool, // AMD-missing pub ddr2800 // @21
+            pub ddr2933: bool : pub get bool : pub set bool, // @22
+            #[skip]
+            __: bool, // AMD-missing pub ddr3066: // @23
+            pub ddr3200: bool : pub get bool : pub set bool, // @24
+            #[skip]
+            __: bool, // @25
+            #[skip]
+            __: bool, // @26
+            #[skip]
+            __: bool, // @27
+            #[skip]
+            __: bool, // @28
+            #[skip]
+            __: bool, // @29
+            #[skip]
+            __: bool, // @30
+            #[skip]
+            __: bool, /* @31
+                                * AMD-missing pub ddr3334, set_ddr3334: 25,
+                                * AMD-missing pub ddr3466, set_ddr3466: 26,
+                                * AMD-missing pub ddr3600, set_ddr3600: 27,
+                                * AMD-missing pub ddr3734, set_ddr3734: 28,
+                                * AMD-missing pub ddr3866, set_ddr3866: 29,
+                                * AMD-missing pub ddr4000, set_ddr4000: 30,
+                                * AMD-missing pub ddr4200, set_ddr4200: 31,
+                                * AMD-missing pub ddr4266, set_ddr4266: 32,
+                                * AMD-missing pub ddr4334, set_ddr4334: 32,
+                                * AMD-missing pub ddr4400, set_ddr4400: 33, */
+        }
+    );
+    impl Default for DdrRates {
+        fn default() -> Self {
+            Self::new()
+        }
     }
     impl DdrRates {
         pub fn builder() -> Self {
@@ -2775,28 +2805,27 @@ pub mod memory {
     // Usually an array of those is used
     // Note: This structure is not used for soldered-down DRAM!
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
-            #[repr(C, packed)]
-            pub struct Ddr4DataBusElement {
-                dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
-                ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
-                vdd_io: U32<LittleEndian> : pub get RdimmDdr4Voltages : pub set RdimmDdr4Voltages,
-                dimm0_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
-                dimm1_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct Ddr4DataBusElement {
+            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
+            ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
+            vdd_io: U32<LittleEndian> : pub get RdimmDdr4Voltages : pub set RdimmDdr4Voltages,
+            dimm0_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
+            dimm1_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
 
-                rtt_nom: U32<LittleEndian> : pub get RttNom : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
-                rtt_wr: U32<LittleEndian> : pub get RttWr : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
-                rtt_park: U32<LittleEndian> : pub get RttPark : pub set RttPark, // contains ODT termination resistor to be used when ODT is low
-                dq_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data
-                dqs_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data strobe (bit clock)
-                odt_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for on-die termination
-                pmu_phy_vref: U32<LittleEndian> : pub get u32 : pub set u32,
-                // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
-                // See <https://github.com/LongJohnCoder/ddr-doc/blob/gh-pages/jedec/JESD79-4.pdf> Table 15
-                pub(crate) vref_dq: U32<LittleEndian> : pub get VrefDq : pub set VrefDq, // MR6 vref calibration value; 23|30|32
-            }
+            rtt_nom: U32<LittleEndian> : pub get RttNom : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
+            rtt_wr: U32<LittleEndian> : pub get RttWr : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
+            rtt_park: U32<LittleEndian> : pub get RttPark : pub set RttPark, // contains ODT termination resistor to be used when ODT is low
+            dq_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data
+            dqs_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data strobe (bit clock)
+            odt_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for on-die termination
+            pmu_phy_vref: U32<LittleEndian> : pub get u32 : pub set u32,
+            // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
+            // See <https://github.com/LongJohnCoder/ddr-doc/blob/gh-pages/jedec/JESD79-4.pdf> Table 15
+            pub(crate) vref_dq: U32<LittleEndian> : pub get VrefDq : pub set VrefDq, // MR6 vref calibration value; 23|30|32
         }
+    }
 
     pub type RdimmDdr4DataBusElement = Ddr4DataBusElement; // AMD does this implicitly.
     pub type UdimmDdr4DataBusElement = Ddr4DataBusElement; // AMD does this implicitly.

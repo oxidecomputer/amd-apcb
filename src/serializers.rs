@@ -5,6 +5,7 @@
 // struct in the first place. This might cause problems. Also, serialization can
 // fail if the nice simple user-visible type cannot represent what we are doing.
 
+use crate::memory::*;
 use crate::ondisk::*;
 use crate::struct_accessors::DummyErrorChecks;
 
@@ -12,40 +13,40 @@ use crate::struct_accessors::DummyErrorChecks;
 // fields added/removed/renamed--if those have a public setter.
 macro_rules! make_serde{($StructName:ident, $SerdeStructName:ident, [$($field_name:ident),* $(,)?]
 ) => (
-	paste::paste!{
-		impl<'de> serde::de::Deserialize<'de> for $StructName {
-			fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
-			where D: serde::de::Deserializer<'de>, {
-				let config = $SerdeStructName::deserialize(deserializer)?;
-				Ok($StructName::default()
-				$(
-				.[<with_ $field_name>](config.$field_name.into())
-				)*)
-		        }
-		}
-		impl serde::Serialize for $StructName {
-			fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
-			where S: serde::Serializer, {
-				$SerdeStructName {
-					$(
-						$field_name: self.$field_name().map_err(|_| serde::ser::Error::custom("value unknown"))?.into(),
-					)*
-				}.serialize(serializer)
-			}
-		}
-		#[cfg(std)]
-		impl schemars::JsonSchema for $StructName {
-			fn schema_name() -> String {
-				$SerdeStructName::schema_name()
-			}
-			fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-				$SerdeStructName::json_schema(gen)
-			}
-			/*fn is_referenceable() -> bool {
-				$SerdeStructName::is_referenceable()
-			} FIXME */
-		}
-	}
+    paste::paste!{
+        impl<'de> serde::de::Deserialize<'de> for $StructName {
+            fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+            where D: serde::de::Deserializer<'de>, {
+                let config = $SerdeStructName::deserialize(deserializer)?;
+                Ok($StructName::default()
+                $(
+                .[<with_ $field_name>](config.$field_name.into())
+                )*)
+                }
+        }
+        impl serde::Serialize for $StructName {
+            fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
+            where S: serde::Serializer, {
+                $SerdeStructName {
+                    $(
+                        $field_name: self.$field_name().map_err(|_| serde::ser::Error::custom("value unknown"))?.into(),
+                    )*
+                }.serialize(serializer)
+            }
+        }
+        #[cfg(std)]
+        impl schemars::JsonSchema for $StructName {
+            fn schema_name() -> String {
+                $SerdeStructName::schema_name()
+            }
+            fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+                $SerdeStructName::json_schema(gen)
+            }
+            /*fn is_referenceable() -> bool {
+                $SerdeStructName::is_referenceable()
+            } FIXME */
+        }
+    }
 )}
 
 make_serde!(
@@ -71,57 +72,41 @@ make_serde!(
     SerdePriorityLevels,
     [hard_force, high, medium, event_logging, low, normal,]
 );
-/*
-make_serde!(EfhBulldozerSpiMode, SerdeEfhBulldozerSpiMode, [read_mode, fast_speed_new]);
-make_serde!(EfhNaplesSpiMode, SerdeEfhNaplesSpiMode, [read_mode, fast_speed_new, micron_mode]);
-make_serde!(EfhRomeSpiMode, SerdeEfhRomeSpiMode, [read_mode, fast_speed_new, micron_mode]);
+
 make_serde!(
-    Efh,
-    SerdeEfh,
+    Ddr4DataBusElement,
+    SerdeDdr4DataBusElement,
     [
-        signature,
-        bhd_directory_table_milan,
-        xhci_fw_location,
-        gbe_fw_location,
-        imc_fw_location,
-        low_power_promontory_firmware_location,
-        promontory_firmware_location,
-        psp_directory_table_location_naples,
-        psp_directory_table_location_zen,
-        spi_mode_bulldozer,
-        spi_mode_zen_naples,
-        spi_mode_zen_rome
+        dimm_slots_per_channel,
+        ddr_rates,
+        vdd_io,
+        dimm0_ranks,
+        dimm1_ranks,
+        rtt_nom,
+        rtt_wr,
+        rtt_park,
+        dq_drive_strength,
+        dqs_drive_strength,
+        odt_drive_strength,
+        pmu_phy_vref,
+        vref_dq,
     ]
 );
-
-make_serde!(DirectoryAdditionalInfo, SerdeDirectoryAdditionalInfo, [base_address, address_mode, max_size]);
-make_serde!(PspSoftFuseChain, SerdePspSoftFuseChain, [
-    secure_debug_unlock,
-    early_secure_debug_unlock,
-    unlock_token_in_nvram,
-    force_security_policy_loading_even_if_insecure,
-    load_diagnostic_bootloader,
-    disable_psp_debug_prints,
-    spi_decoding,
-    postcode_decoding,
-    skip_mp2_firmware_loading,
-    postcode_output_control_1byte,
-    force_recovery_booting
-]);
-make_serde!(PspDirectoryEntryAttrs, CustomSerdePspDirectoryEntryAttrs, [
-    type_,
-    sub_program,
-    rom_id
-]);
-make_serde!(BhdDirectoryEntryAttrs, CustomSerdeBhdDirectoryEntryAttrs, [
-    type_,
-    region_type,
-    reset_image,
-    copy_image,
-    read_only,
-    compressed,
-    instance,
-    sub_program,
-    rom_id
-]);
-*/
+make_serde!(
+    Ddr4DimmRanks,
+    SerdeDdr4DimmRanks,
+    [unpopulated, single_rank, dual_rank, quad_rank,]
+);
+make_serde!(
+    LrdimmDdr4DimmRanks,
+    SerdeLrdimmDdr4DimmRanks,
+    [unpopulated, lr]
+);
+make_serde!(
+    DdrRates,
+    SerdeDdrRates,
+    [
+        ddr400, ddr533, ddr667, ddr800, ddr1066, ddr1333, ddr1600, ddr1866,
+        ddr2133, ddr2400, ddr2667, ddr2933, ddr3200,
+    ]
+);

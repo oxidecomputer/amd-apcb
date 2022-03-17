@@ -275,7 +275,7 @@ impl<'a> Iterator for TokensEntryIterMut<'a> {
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct TokensEntryItem<'a> {
-    entry_id: TokenEntryId,
+    pub(crate) entry_id: TokenEntryId,
     #[cfg_attr(feature = "std", serde(borrow))]
     pub(crate) entry: Ptr<'a, TOKEN_ENTRY>,
 }
