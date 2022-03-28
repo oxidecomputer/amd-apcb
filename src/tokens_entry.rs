@@ -11,9 +11,19 @@ use crate::types::{Error, FileSystemError, Ptr, Result};
 use core::mem::size_of;
 use num_traits::FromPrimitive;
 use pre::pre;
-use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[cfg(feature = "std")]
+use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
+#[cfg(feature = "std")]
+use serde::ser::{Serialize, SerializeStruct, Serializer};
+#[cfg(feature = "std")]
+use serde::{Deserialize as DeserializeDerive, Serialize as SerializeDerive};
+#[cfg(feature = "std")]
+use std::borrow::Cow;
+#[cfg(feature = "std")]
+use std::fmt;
+
+#[derive(Debug, Clone, Copy, SerializeDerive, DeserializeDerive)]
 pub struct TokensEntryBodyItem<BufferType> {
     unit_size: u8,
     entry_id: TokenEntryId,
@@ -273,11 +283,292 @@ impl<'a> Iterator for TokensEntryIterMut<'a> {
     }
 }
 
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct TokensEntryItem<'a> {
     pub(crate) entry_id: TokenEntryId,
-    #[cfg_attr(feature = "std", serde(borrow))]
     pub(crate) entry: Ptr<'a, TOKEN_ENTRY>,
+}
+
+#[cfg(feature = "std")]
+impl<'a> Serialize for TokensEntryItem<'a> {
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> core::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("TokensEntryItem", 2)?;
+        let entry = &*self.entry;
+        let key = entry.key.get();
+        let n: Option<u32> = None;
+        match self.entry_id {
+            TokenEntryId::Bool => {
+                if let Some(key) = BoolTags::from_u32(key) {
+                    state.serialize_field("BoolTag", &key)?;
+                } else {
+                    state.serialize_field("UBoolTag", &key)?;
+                }
+            }
+            TokenEntryId::Byte => {
+                if let Some(key) = ByteTags::from_u32(key) {
+                    state.serialize_field("ByteTag", &key)?;
+                } else {
+                    state.serialize_field("UByteTag", &key)?;
+                }
+            }
+            TokenEntryId::Word => {
+                if let Some(key) = WordTags::from_u32(key) {
+                    state.serialize_field("WordTag", &key)?;
+                } else {
+                    state.serialize_field("UWordTag", &key)?;
+                }
+            }
+            TokenEntryId::Dword => {
+                if let Some(key) = DwordTags::from_u32(key) {
+                    state.serialize_field("DwordTag", &key)?;
+                } else {
+                    state.serialize_field("UDwordTag", &key)?;
+                }
+            }
+            TokenEntryId::Unknown(_) => {
+                state.serialize_field("UnknownTag", &key)?;
+            }
+        }
+        state.serialize_field("value", &format!("{:#X}", &self.value()))?;
+        state.end()
+    }
+}
+
+#[cfg(feature = "std")]
+impl<'a, 'de: 'a> Deserialize<'de> for TokensEntryItem<'a> {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        enum Field {
+            UBoolTag,
+            UByteTag,
+            UWordTag,
+            UDwordTag,
+            BoolTag,
+            ByteTag,
+            WordTag,
+            DwordTag,
+            UnknownTag,
+            Value,
+        }
+        const FIELDS: &'static [&'static str] = &[
+            "type",
+            "UBoolTag",
+            "UByteTag",
+            "UWordTag",
+            "UDwordTag",
+            "BoolTag",
+            "ByteTag",
+            "WordTag",
+            "DwordTag",
+            "UnknownTag",
+            "value",
+        ];
+
+        impl<'de> Deserialize<'de> for Field {
+            fn deserialize<D>(
+                deserializer: D,
+            ) -> core::result::Result<Field, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                struct FieldVisitor;
+
+                impl<'de> Visitor<'de> for FieldVisitor {
+                    type Value = Field;
+
+                    fn expecting(
+                        &self,
+                        formatter: &mut fmt::Formatter<'_>,
+                    ) -> fmt::Result {
+                        formatter.write_str(
+                            "`UBoolTag`, `UByteTag`, `UWordTag`, `UDwordTag`, `BoolTag`, `ByteTag`, `WordTag`, `DwordTag`, `UnknownTag`, `value`",
+                        )
+                    }
+
+                    fn visit_str<E>(
+                        self,
+                        value: &str,
+                    ) -> core::result::Result<Field, E>
+                    where
+                        E: de::Error,
+                    {
+                        match value {
+                            "UBoolTag" => Ok(Field::UBoolTag),
+                            "UByteTag" => Ok(Field::UByteTag),
+                            "UWordTag" => Ok(Field::UWordTag),
+                            "UDwordTag" => Ok(Field::UDwordTag),
+                            "BoolTag" => Ok(Field::BoolTag),
+                            "ByteTag" => Ok(Field::ByteTag),
+                            "WordTag" => Ok(Field::WordTag),
+                            "DwordTag" => Ok(Field::DwordTag),
+                            "UnknownTag" => Ok(Field::UnknownTag),
+                            "value" => Ok(Field::Value),
+                            _ => Err(de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+
+                deserializer.deserialize_identifier(FieldVisitor)
+            }
+        }
+
+        struct TokensEntryItemVisitor;
+
+        impl<'de> Visitor<'de> for TokensEntryItemVisitor {
+            type Value = TokensEntryItem<'de>;
+
+            fn expecting(
+                &self,
+                formatter: &mut fmt::Formatter<'_>,
+            ) -> fmt::Result {
+                formatter.write_str("struct TokensEntryItem")
+            }
+
+            fn visit_map<V>(
+                self,
+                mut map: V,
+            ) -> core::result::Result<TokensEntryItem<'static>, V::Error>
+            where
+                V: MapAccess<'de>,
+            {
+                let mut tag: Option<u32> = None;
+                let mut entry_id: Option<TokenEntryId> = None;
+                let mut value: Option<u32> = None;
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::UBoolTag => {
+                            if tag.is_some() {
+                                return Err(de::Error::duplicate_field(
+                                    "Multiple tags specified",
+                                ));
+                            }
+                            entry_id = Some(TokenEntryId::Bool);
+                            let t: u32 = map.next_value()?;
+                            tag = Some(t as u32);
+                        }
+                        Field::UByteTag => {
+                            if tag.is_some() {
+                                return Err(de::Error::duplicate_field(
+                                    "Multiple tags specified",
+                                ));
+                            }
+                            entry_id = Some(TokenEntryId::Byte);
+                            let t: u32 = map.next_value()?;
+                            tag = Some(t as u32);
+                        }
+                        Field::UWordTag => {
+                            if tag.is_some() {
+                                return Err(de::Error::duplicate_field(
+                                    "Multiple tags specified",
+                                ));
+                            }
+                            entry_id = Some(TokenEntryId::Word);
+                            let t: u32 = map.next_value()?;
+                            tag = Some(t as u32);
+                        }
+                        Field::UDwordTag => {
+                            if tag.is_some() {
+                                return Err(de::Error::duplicate_field(
+                                    "Multiple tags specified",
+                                ));
+                            }
+                            entry_id = Some(TokenEntryId::Dword);
+                            let t: u32 = map.next_value()?;
+                            tag = Some(t as u32);
+                        }
+                        Field::BoolTag => {
+                            if tag.is_some() {
+                                return Err(de::Error::duplicate_field(
+                                    "Multiple tags specified",
+                                ));
+                            }
+                            entry_id = Some(TokenEntryId::Bool);
+                            let t: BoolTags = map.next_value()?;
+                            tag = Some(t as u32);
+                        }
+                        Field::ByteTag => {
+                            if tag.is_some() {
+                                return Err(de::Error::duplicate_field(
+                                    "Multiple tags specified",
+                                ));
+                            }
+                            entry_id = Some(TokenEntryId::Byte);
+                            let t: ByteTags = map.next_value()?;
+                            tag = Some(t as u32);
+                        }
+                        Field::WordTag => {
+                            if tag.is_some() {
+                                return Err(de::Error::duplicate_field(
+                                    "Multiple tags specified",
+                                ));
+                            }
+                            entry_id = Some(TokenEntryId::Word);
+                            let t: WordTags = map.next_value()?;
+                            tag = Some(t as u32);
+                        }
+                        Field::DwordTag => {
+                            if tag.is_some() {
+                                return Err(de::Error::duplicate_field(
+                                    "Multiple tags specified",
+                                ));
+                            }
+                            entry_id = Some(TokenEntryId::Dword);
+                            let t: DwordTags = map.next_value()?;
+                            tag = Some(t as u32);
+                        }
+                        Field::UnknownTag => {
+                            if tag.is_some() {
+                                return Err(de::Error::duplicate_field(
+                                    "Multiple tags specified",
+                                ));
+                            }
+                            let t: u32 = map.next_value()?;
+                            entry_id = Some(TokenEntryId::Unknown(t as u16));
+                            tag = Some(t);
+                        }
+                        Field::Value => {
+                            if value.is_some() {
+                                return Err(de::Error::duplicate_field(
+                                    "value",
+                                ));
+                            }
+                            let s: String = map.next_value()?;
+                            let s = s.trim_start_matches("0x");
+                            let t = u32::from_str_radix(s, 16).unwrap();
+                            value = Some(t);
+                        }
+                    }
+                }
+                let entry_id =
+                    entry_id.ok_or_else(|| de::Error::missing_field("type"))?;
+                let tag = tag.ok_or_else(|| de::Error::missing_field("tag"))?;
+                let value =
+                    value.ok_or_else(|| de::Error::missing_field("value"))?;
+
+                let tokenEntry = TOKEN_ENTRY {
+                    key: zerocopy::U32::<zerocopy::LittleEndian>::new(tag),
+                    value: zerocopy::U32::<zerocopy::LittleEndian>::new(value),
+                };
+                let buf = Cow::Owned(tokenEntry);
+                Ok(TokensEntryItem {
+                    entry_id: entry_id,
+                    entry: buf,
+                })
+            }
+        }
+        deserializer.deserialize_struct(
+            "TokensEntryItem",
+            FIELDS,
+            TokensEntryItemVisitor,
+        )
+    }
 }
 
 impl<'a> core::fmt::Debug for TokensEntryItem<'a> {

@@ -110,3 +110,64 @@ make_serde!(
         ddr2133, ddr2400, ddr2667, ddr2933, ddr3200,
     ]
 );
+make_serde!(RdimmDdr4Voltages, SerdeRdimmDdr4Voltages, [v_1_2,]);
+make_serde!(
+    RdimmDdr4CadBusElement,
+    SerdeRdimmDdr4CadBusElement,
+    [
+        dimm_slots_per_channel,
+        ddr_rates,
+        vdd_io,
+        dimm0_ranks,
+        dimm1_ranks,
+        gear_down_mode,
+        slow_mode,
+        address_command_control,
+        cke_drive_strength,
+        cs_odt_drive_strength,
+        address_command_drive_strength,
+        clk_drive_strength,
+    ]
+);
+make_serde!(
+    UdimmDdr4Voltages,
+    SerdeUdimmDdr4Voltages,
+    [v_1_5, v_1_35, v_1_25]
+);
+make_serde!(
+    UdimmDdr4CadBusElement,
+    SerdeUdimmDdr4CadBusElement,
+    [
+        dimm_slots_per_channel,
+        ddr_rates,
+        vdd_io,
+        dimm0_ranks,
+        dimm1_ranks,
+        gear_down_mode,
+        slow_mode,
+        address_command_control,
+        cke_drive_strength,
+        cs_odt_drive_strength,
+        address_command_drive_strength,
+        clk_drive_strength,
+    ]
+);
+make_serde!(LrdimmDdr4Voltages, SerdeLrdimmDdr4Voltages, [v_1_2]);
+make_serde!(
+    LrdimmDdr4CadBusElement,
+    SerdeLrdimmDdr4CadBusElement,
+    [
+        dimm_slots_per_channel,
+        ddr_rates,
+        vdd_io,
+        dimm0_ranks,
+        dimm1_ranks,
+        gear_down_mode,
+        slow_mode,
+        address_command_control,
+        cke_drive_strength,
+        cs_odt_drive_strength,
+        address_command_drive_strength,
+        clk_drive_strength,
+    ]
+);

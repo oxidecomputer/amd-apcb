@@ -186,9 +186,6 @@ macro_rules! make_accessors {(
     }
 
     impl $StructName {
-        pub fn build(&self) -> Self {
-            self.clone()
-        }
         $($(
             #[inline]
             $getter_vis

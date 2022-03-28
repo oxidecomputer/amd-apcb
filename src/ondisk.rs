@@ -2283,48 +2283,54 @@ pub mod memory {
         }
     }
 
-    #[bitfield(bits = 32)]
-    #[repr(u32)]
-    #[derive(Clone, Copy, Serialize, Deserialize)]
-    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-    pub struct RdimmDdr4Voltages {
-        pub v_1_2: bool,
-        #[skip]
-        __: B31,
-        // all = 7
+    make_bitfield_serde! {
+        #[bitfield(bits = 32)]
+        #[repr(u32)]
+        #[derive(Clone, Copy)]
+        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+        pub struct RdimmDdr4Voltages {
+            pub v_1_2: bool : pub get bool : pub set bool,
+            #[skip]
+            __: B31,
+            // all = 7
+        }
     }
     impl_bitfield_primitive_conversion!(RdimmDdr4Voltages, 0b1, u32);
     impl RdimmDdr4Voltages {
         pub fn builder() -> Self {
             Self::new()
         }
+        pub fn default() -> Self {
+            let mut r = Self::new();
+            r.set_v_1_2(true);
+            r
+        }
     }
 
     // Usually an array of those is used
     make_accessors! {
-            /// Control/Address Bus Element
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
-            #[repr(C, packed)]
-            pub struct RdimmDdr4CadBusElement {
-                dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
-                ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
-                vdd_io: U32<LittleEndian> : pub get RdimmDdr4Voltages : pub set RdimmDdr4Voltages,
-                dimm0_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
-                dimm1_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
+        /// Control/Address Bus Element
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct RdimmDdr4CadBusElement {
+            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
+            ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
+            vdd_io: U32<LittleEndian> : pub get RdimmDdr4Voltages : pub set RdimmDdr4Voltages,
+            dimm0_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
+            dimm1_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
 
-                gear_down_mode: BLU16 : pub get bool : pub set bool,
-                _reserved: U16<LittleEndian>,
-                slow_mode: BLU16 : pub get bool : pub set bool, // (probably) 2T is slow, 1T is fast
-                _reserved_2: U16<LittleEndian>,
-                address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
+            gear_down_mode: BLU16 : pub get bool : pub set bool,
+            _reserved: U16<LittleEndian>,
+            slow_mode: BLU16 : pub get bool : pub set bool, // (probably) 2T is slow, 1T is fast
+            _reserved_2: U16<LittleEndian>,
+            address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
 
-                cke_drive_strength: u8 : pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
-                cs_odt_drive_strength: u8 : pub get CadBusCsOdtDriveStrength : pub set CadBusCsOdtDriveStrength,
-                address_command_drive_strength: u8 : pub get CadBusAddressCommandDriveStrength : pub set CadBusAddressCommandDriveStrength,
-                clk_drive_strength: u8 : pub get CadBusClkDriveStrength : pub set CadBusClkDriveStrength,
-            }
+            cke_drive_strength: u8 : pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
+            cs_odt_drive_strength: u8 : pub get CadBusCsOdtDriveStrength : pub set CadBusCsOdtDriveStrength,
+            address_command_drive_strength: u8 : pub get CadBusAddressCommandDriveStrength : pub set CadBusAddressCommandDriveStrength,
+            clk_drive_strength: u8 : pub get CadBusClkDriveStrength : pub set CadBusClkDriveStrength,
         }
+    }
 
     impl Default for RdimmDdr4CadBusElement {
         fn default() -> Self {
@@ -2395,50 +2401,54 @@ pub mod memory {
         }
     }
 
-    #[bitfield(bits = 32)]
-    #[repr(u32)]
-    #[derive(Clone, Copy, Serialize, Deserialize)]
-    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-    pub struct UdimmDdr4Voltages {
-        pub v_1_5: bool,
-        pub v_1_35: bool,
-        pub v_1_25: bool,
-        // all = 7
-        #[skip]
-        __: B29,
+    make_bitfield_serde! {
+        #[bitfield(bits = 32)]
+        #[repr(u32)]
+        #[derive(Clone, Copy)]
+        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+        pub struct UdimmDdr4Voltages {
+            pub v_1_5: bool : pub get bool : pub set bool,
+            pub v_1_35: bool : pub get bool : pub set bool,
+            pub v_1_25: bool : pub get bool : pub set bool,
+            // all = 7
+            #[skip]
+            __: B29,
+        }
     }
     impl_bitfield_primitive_conversion!(UdimmDdr4Voltages, 0b111, u32);
     impl UdimmDdr4Voltages {
         pub fn builder() -> Self {
             Self::new()
         }
+        pub fn default() -> Self {
+            Self::new()
+        }
     }
 
     // Usually an array of those is used
     make_accessors! {
-            /// Control/Address Bus Element
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
-            #[repr(C, packed)]
-            pub struct UdimmDdr4CadBusElement {
-                dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
-                ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
-                vdd_io: U32<LittleEndian> : pub get UdimmDdr4Voltages : pub set UdimmDdr4Voltages,
-                dimm0_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
-                dimm1_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
+        /// Control/Address Bus Element
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct UdimmDdr4CadBusElement {
+            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
+            ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
+            vdd_io: U32<LittleEndian> : pub get UdimmDdr4Voltages : pub set UdimmDdr4Voltages,
+            dimm0_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
+            dimm1_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
 
-                gear_down_mode: U16<LittleEndian> : pub get u16 : pub set u16,
-                _reserved: U16<LittleEndian>,
-                slow_mode: U16<LittleEndian> : pub get u16 : pub set u16,
-                _reserved_2: U16<LittleEndian>,
-                address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
+            gear_down_mode: U16<LittleEndian> : pub get u16 : pub set u16,
+            _reserved: U16<LittleEndian>,
+            slow_mode: U16<LittleEndian> : pub get u16 : pub set u16,
+            _reserved_2: U16<LittleEndian>,
+            address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
 
-                cke_drive_strength: u8 : pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
-                cs_odt_drive_strength: u8 : pub get CadBusCsOdtDriveStrength : pub set CadBusCsOdtDriveStrength,
-                address_command_drive_strength: u8 : pub get CadBusAddressCommandDriveStrength : pub set CadBusAddressCommandDriveStrength,
-                clk_drive_strength: u8 : pub get CadBusClkDriveStrength : pub set CadBusClkDriveStrength,
-            }
+            cke_drive_strength: u8 : pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
+            cs_odt_drive_strength: u8 : pub get CadBusCsOdtDriveStrength : pub set CadBusCsOdtDriveStrength,
+            address_command_drive_strength: u8 : pub get CadBusAddressCommandDriveStrength : pub set CadBusAddressCommandDriveStrength,
+            clk_drive_strength: u8 : pub get CadBusClkDriveStrength : pub set CadBusClkDriveStrength,
         }
+    }
 
     impl Default for UdimmDdr4CadBusElement {
         fn default() -> Self {
@@ -2483,48 +2493,54 @@ pub mod memory {
         }
     }
 
-    #[bitfield(bits = 32)]
-    #[repr(u32)]
-    #[derive(Clone, Copy, Serialize, Deserialize)]
-    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-    pub struct LrdimmDdr4Voltages {
-        pub v_1_2: bool,
-        // all = 7
-        #[skip]
-        __: B31,
+    make_bitfield_serde! {
+        #[bitfield(bits = 32)]
+        #[repr(u32)]
+        #[derive(Clone, Copy)]
+        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+        pub struct LrdimmDdr4Voltages {
+            pub v_1_2: bool: pub get bool : pub set bool,
+            // all = 7
+            #[skip]
+            __: B31,
+        }
     }
     impl_bitfield_primitive_conversion!(LrdimmDdr4Voltages, 0b1, u32);
     impl LrdimmDdr4Voltages {
         pub fn builder() -> Self {
             Self::new()
         }
+        pub fn default() -> Self {
+            let mut lr = Self::new();
+            lr.set_v_1_2(true);
+            lr
+        }
     }
 
     // Usually an array of those is used
     make_accessors! {
-            /// Control/Address Bus Element
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
-            #[repr(C, packed)]
-            pub struct LrdimmDdr4CadBusElement {
-                dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
-                ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
-                vdd_io: U32<LittleEndian> : pub get LrdimmDdr4Voltages : pub set LrdimmDdr4Voltages,
-                dimm0_ranks: U32<LittleEndian> : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
-                dimm1_ranks: U32<LittleEndian> : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
+        /// Control/Address Bus Element
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct LrdimmDdr4CadBusElement {
+            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
+            ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
+            vdd_io: U32<LittleEndian> : pub get LrdimmDdr4Voltages : pub set LrdimmDdr4Voltages,
+            dimm0_ranks: U32<LittleEndian> : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
+            dimm1_ranks: U32<LittleEndian> : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
 
-                gear_down_mode: U16<LittleEndian> : pub get u16 : pub set u16,
-                _reserved: U16<LittleEndian>,
-                slow_mode: U16<LittleEndian> : pub get u16 : pub set u16,
-                _reserved_2: U16<LittleEndian>,
-                address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
+            gear_down_mode: U16<LittleEndian> : pub get u16 : pub set u16,
+            _reserved: U16<LittleEndian>,
+            slow_mode: U16<LittleEndian> : pub get u16 : pub set u16,
+            _reserved_2: U16<LittleEndian>,
+            address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
 
-                cke_drive_strength: u8 : pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
-                cs_odt_drive_strength: u8 : pub get CadBusCsOdtDriveStrength : pub set CadBusCsOdtDriveStrength,
-                address_command_drive_strength: u8 : pub get CadBusAddressCommandDriveStrength : pub set CadBusAddressCommandDriveStrength,
-                clk_drive_strength: u8 : pub get CadBusClkDriveStrength : pub set CadBusClkDriveStrength,
-            }
+            cke_drive_strength: u8 : pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
+            cs_odt_drive_strength: u8 : pub get CadBusCsOdtDriveStrength : pub set CadBusCsOdtDriveStrength,
+            address_command_drive_strength: u8 : pub get CadBusAddressCommandDriveStrength : pub set CadBusAddressCommandDriveStrength,
+            clk_drive_strength: u8 : pub get CadBusClkDriveStrength : pub set CadBusClkDriveStrength,
         }
+    }
 
     impl Default for LrdimmDdr4CadBusElement {
         fn default() -> Self {
