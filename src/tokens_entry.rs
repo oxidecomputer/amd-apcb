@@ -281,27 +281,27 @@ impl<'a> core::fmt::Debug for TokensEntryItem<'a> {
         let entry = self.entry;
         let key = entry.key.get();
         let mut ds = fmt.debug_struct("TokensEntryItem_TOKEN_ENTRY");
-        let n: Option<u32> = None;
+        ds.field("entry_id", &self.entry_id);
         match self.entry_id {
             TokenEntryId::Bool => if let Some(key) = BoolTags::from_u32(key) {
                 ds.field("key", &key)
             } else {
-                ds.field("key", &n)
+                ds.field("key", &key)
             },
             TokenEntryId::Byte => if let Some(key) = ByteTags::from_u32(key) {
                 ds.field("key", &key)
             } else {
-                ds.field("key", &n)
+                ds.field("key", &key)
             },
             TokenEntryId::Word => if let Some(key) = WordTags::from_u32(key) {
                 ds.field("key", &key)
             } else {
-                ds.field("key", &n)
+                ds.field("key", &key)
             },
             TokenEntryId::Dword => if let Some(key) = DwordTags::from_u32(key) {
                 ds.field("key", &key)
             } else {
-                ds.field("key", &n)
+                ds.field("key", &key)
             },
             TokenEntryId::Unknown(_) => {
                 ds.field("key", &key)
