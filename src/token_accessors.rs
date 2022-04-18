@@ -155,34 +155,34 @@ macro_rules! make_token_accessors {(
         )*
     }
     impl core::convert::TryFrom<&TOKEN_ENTRY> for $enum_name {
-        type Error = &'static str;
+        type Error = Error;
         fn try_from(entry: &TOKEN_ENTRY) -> core::result::Result<Self, Self::Error> {
           let tag = entry.key.get();
           let value = entry.value.get();
           $(
            $(
             if ($field_key == tag) {
-                let value = <$field_user_ty>::from_u32(value).ok_or("value invalid")?;
+                let value = <$field_user_ty>::from_u32(value).ok_or(Error::TokenRange)?;
                 Ok(Self::$field_name(value))
             } else
            )?
           )*{
-                Err("unknown")
+                Err(Error::TokenNotFound)
             }
         }
     }
     impl core::convert::TryFrom<$enum_name> for TOKEN_ENTRY {
-        type Error = &'static str;
+        type Error = Error;
         fn try_from(x: $enum_name) -> core::result::Result<Self, Self::Error> {
           $(
             if let $enum_name::$field_name(value) = x {
                 Ok(Self {
                    key: $field_key.into(),
-                   value: value.to_u32().ok_or("value invalid")?.into(),
+                   value: value.to_u32().ok_or(Error::TokenRange)?.into(),
                 })
             } else
           )*{
-                Err("unknown")
+                Err(Error::TokenNotFound)
             }
         }
     }
