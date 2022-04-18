@@ -189,30 +189,35 @@ macro_rules! make_token_accessors {(
     $(
         $(
             impl<'a, 'b> Tokens<'a, 'b> {
-                #[allow(non_snake_case)]
-                #[inline]
-                $getter_vis
-                fn $field_name (self: &'_ Self)
-                    -> Result<$field_user_ty>
-                {
-                    <$field_user_ty>::from_u32(self.get($field_entry_id, $field_key)?).ok_or_else(|| Error::EntryTypeMismatch)
+                paste! {
+                  #[allow(non_snake_case)]
+                  #[inline]
+                  $getter_vis
+                  fn [<$field_name:snake>] (self: &'_ Self)
+                      -> Result<$field_user_ty>
+                  {
+                      <$field_user_ty>::from_u32(self.get($field_entry_id, $field_key)?).ok_or_else(|| Error::EntryTypeMismatch)
+                  }
                 }
             }
             impl<'a, 'b> TokensMut<'a, 'b> {
-            #[allow(non_snake_case)]
-            #[inline]
-            $getter_vis
-            fn $field_name (self: &'_ Self)
-                -> Result<$field_user_ty>
-            {
-                <$field_user_ty>::from_u32(self.get($field_entry_id, $field_key)?).ok_or_else(|| Error::EntryTypeMismatch)
+
+            paste! {
+              #[allow(non_snake_case)]
+              #[inline]
+              $getter_vis
+              fn [<$field_name:snake>] (self: &'_ Self)
+                  -> Result<$field_user_ty>
+              {
+                  <$field_user_ty>::from_u32(self.get($field_entry_id, $field_key)?).ok_or_else(|| Error::EntryTypeMismatch)
+              }
             }
             $(
               paste! {
                   #[allow(non_snake_case)]
                   #[inline]
                   $setter_vis
-                  fn [<set_ $field_name>] (self: &'_ mut Self, value: $field_setter_user_ty) -> Result<()> {
+                  fn [<set_ $field_name:snake>] (self: &'_ mut Self, value: $field_setter_user_ty) -> Result<()> {
                       let token_value = value.to_u32().unwrap();
                       self.set($field_entry_id, $field_key, token_value)
                   }
