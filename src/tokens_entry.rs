@@ -2,10 +2,10 @@ use core::convert::TryFrom;
 use crate::ondisk::{
     take_header_from_collection, take_header_from_collection_mut, TokenEntryId,
     TOKEN_ENTRY,
-    BoolTokens,
-    ByteTokens,
-    WordTokens,
-    DwordTokens,
+    BoolToken,
+    ByteToken,
+    WordToken,
+    DwordToken,
 };
 use crate::types::{Error, FileSystemError, Result};
 use core::mem::size_of;
@@ -285,22 +285,22 @@ impl<'a> core::fmt::Debug for TokensEntryItem<'a> {
         ds.field("entry_id", &self.entry_id);
         let value = entry.value.get();
         match self.entry_id {
-            TokenEntryId::Bool => if let Ok(token) = BoolTokens::try_from(entry) {
+            TokenEntryId::Bool => if let Ok(token) = BoolToken::try_from(entry) {
                 ds.field("token", &token)
             } else {
                 ds.field("key", &key)
             },
-            TokenEntryId::Byte => if let Ok(token) = ByteTokens::try_from(entry) {
+            TokenEntryId::Byte => if let Ok(token) = ByteToken::try_from(entry) {
                 ds.field("token", &token)
             } else {
                 ds.field("key", &key)
             },
-            TokenEntryId::Word => if let Ok(token) = WordTokens::try_from(entry) {
+            TokenEntryId::Word => if let Ok(token) = WordToken::try_from(entry) {
                 ds.field("token", &token)
             } else {
                 ds.field("key", &key)
             },
-            TokenEntryId::Dword => if let Ok(token) = DwordTokens::try_from(entry) {
+            TokenEntryId::Dword => if let Ok(token) = DwordToken::try_from(entry) {
                 ds.field("token", &token)
             } else {
                 ds.field("key", &key)

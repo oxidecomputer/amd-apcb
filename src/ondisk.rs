@@ -6181,7 +6181,7 @@ impl ToPrimitive for FchGppClkMap {
 make_token_accessors! {
     #[allow(non_camel_case_types)]
     #[non_exhaustive]
-    pub enum ByteTokens: {TokenEntryId::Byte} {
+    pub enum ByteToken: {TokenEntryId::Byte} {
         // ABL
 
         abl_serial_baud_rate(default 8, id 0xae46_cea4) : pub get BaudRate : pub set BaudRate,
@@ -6334,7 +6334,7 @@ make_token_accessors! {
 make_token_accessors! {
     #[allow(non_camel_case_types)]
     #[non_exhaustive]
-    pub enum WordTokens: {TokenEntryId::Word} {
+    pub enum WordToken: {TokenEntryId::Word} {
         // PSP
 
         psp_syshub_watchdog_timer_interval(default 2600, id 0xedb5_e4c9) : pub get u16 : pub set u16, // in ms
@@ -6374,7 +6374,7 @@ make_token_accessors! {
 make_token_accessors! {
     #[allow(non_camel_case_types)]
     #[non_exhaustive]
-    pub enum DwordTokens: {TokenEntryId::Dword} {
+    pub enum DwordToken: {TokenEntryId::Dword} {
         // Memory Controller
 
         mem_bus_frequency_limit(default 1600, id 0x3497_0a3c) : pub get MemBusFrequencyLimit : pub set MemBusFrequencyLimit,
@@ -6427,7 +6427,7 @@ make_token_accessors! {
 make_token_accessors! {
     #[allow(non_camel_case_types)]
     #[non_exhaustive]
-    pub enum BoolTokens: {TokenEntryId::Bool} {
+    pub enum BoolToken: {TokenEntryId::Bool} {
         // PSP
 
         psp_tp_port(default 1, id 0x0460_abe8) : pub get bool : pub set bool,
