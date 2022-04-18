@@ -6179,10 +6179,9 @@ impl ToPrimitive for FchGppClkMap {
 }
 
 make_token_accessors! {
-    #[derive(Debug, EnumString, FromPrimitive, ToPrimitive)]
     #[allow(non_camel_case_types)]
     #[non_exhaustive]
-    pub enum ByteTags: {TokenEntryId::Byte} {
+    pub enum ByteTokens: {TokenEntryId::Byte} {
         // ABL
 
         abl_serial_baud_rate(default 8, id 0xae46_cea4) : pub get BaudRate : pub set BaudRate,
@@ -6211,8 +6210,8 @@ make_token_accessors! {
         mem_tsme_mode_rome(default 1, id 0xd1fa_6660) : pub get MemTsmeMode : pub set MemTsmeMode, // See Transparent Secure Memory Encryption in PPR
         mem_training_hdt_control(default 200, id 0xaf6d_3a6f) : pub get MemTrainingHdtControl : pub set MemTrainingHdtControl, // TODO: Before using default, fix default.  It's possibly not correct.
         mem_heal_bist_enable(default 0, id 0xfba2_3a28) : pub get MemHealBistEnable : pub set MemHealBistEnable,
-        MemSelfHealBistEnable(default 0, id 0x2c23_924c), // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
-        MemPmuBistTestSelect(default 0, id 0x7034_fbfb), // TODO: Before using default, fix default.  It's possibly not correct.; note: range 1...7
+        MemSelfHealBistEnable(default 0, id 0x2c23_924c) : pub get u8 : pub set u8, // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
+        MemPmuBistTestSelect(default 0, id 0x7034_fbfb) : pub get u8 : pub set u8, // TODO: Before using default, fix default.  It's possibly not correct.; note: range 1...7
         mem_heal_test_select(default 0, id 0x5908_2cf2) : pub get MemHealTestSelect : pub set MemHealTestSelect,
         mem_heal_ppr_type(default 0, id 0x5418_1a61) : pub get MemHealPprType : pub set MemHealPprType,
         mem_heal_max_bank_fails(default 3, id 0x632e_55d8) : pub get u8 : pub set u8, // per bank
@@ -6333,10 +6332,9 @@ make_token_accessors! {
     }
 }
 make_token_accessors! {
-    #[derive(Debug, EnumString, FromPrimitive, ToPrimitive)]
     #[allow(non_camel_case_types)]
     #[non_exhaustive]
-    pub enum WordTags: {TokenEntryId::Word} {
+    pub enum WordTokens: {TokenEntryId::Word} {
         // PSP
 
         psp_syshub_watchdog_timer_interval(default 2600, id 0xedb5_e4c9) : pub get u16 : pub set u16, // in ms
@@ -6374,10 +6372,9 @@ make_token_accessors! {
     }
 }
 make_token_accessors! {
-    #[derive(Debug, EnumString, FromPrimitive, ToPrimitive)]
     #[allow(non_camel_case_types)]
     #[non_exhaustive]
-    pub enum DwordTags: {TokenEntryId::Dword} {
+    pub enum DwordTokens: {TokenEntryId::Dword} {
         // Memory Controller
 
         mem_bus_frequency_limit(default 1600, id 0x3497_0a3c) : pub get MemBusFrequencyLimit : pub set MemBusFrequencyLimit,
@@ -6428,10 +6425,9 @@ make_token_accessors! {
     }
 }
 make_token_accessors! {
-    #[derive(Debug, EnumString, FromPrimitive, ToPrimitive)]
     #[allow(non_camel_case_types)]
     #[non_exhaustive]
-    pub enum BoolTags: {TokenEntryId::Bool} {
+    pub enum BoolTokens: {TokenEntryId::Bool} {
         // PSP
 
         psp_tp_port(default 1, id 0x0460_abe8) : pub get bool : pub set bool,

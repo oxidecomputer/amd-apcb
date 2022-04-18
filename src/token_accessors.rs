@@ -132,7 +132,7 @@ impl<'a, 'b> Tokens<'a, 'b> {
 
 /// Automatically impl getters (and setters) for the fields where there was
 /// "get" (and "set") specified. The getters and setters so generated are
-/// hardcoded as calling get1() and to_u32(), respectively. Variant syntax:
+/// hardcoded as calling from_u32() and to_u32(), respectively. Variant syntax:
 /// NAME(TYPE, default DEFAULT_VALUE, id TOKEN_ID) = KEY[: pub get TYPE [: pub
 /// set TYPE]]
 macro_rules! make_token_accessors {(
@@ -146,10 +146,38 @@ macro_rules! make_token_accessors {(
     }
 ) => (
     $(#[$enum_meta])*
+    #[derive(Debug)] // TODO: EnumString
     $enum_vis enum $enum_name {
         $(
-            $field_name = $field_key,
+         $(
+            $field_name($field_user_ty),
+         )?
         )*
+    }
+    impl $enum_name {
+        pub fn from_entry(entry: &TOKEN_ENTRY) -> Option<Self> {
+          let tag = entry.key.get();
+          let value = entry.value.get();
+          $(
+           $(
+            if ($field_key == tag) {
+                let value = <$field_user_ty>::from_u32(value)?;
+                Some(Self::$field_name(value))
+            } else
+           )?
+          )*{
+              None
+            }
+        }
+        pub fn tag(&self) -> Option<u32> {
+          $(
+            if let Self::$field_name(_) = self {
+                Some($field_key)
+            } else
+          )*{
+              None
+            }
+        }
     }
     $(
         $(
