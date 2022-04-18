@@ -1,3 +1,4 @@
+use core::convert::TryFrom;
 use crate::ondisk::{
     take_header_from_collection, take_header_from_collection_mut, TokenEntryId,
     TOKEN_ENTRY,
@@ -284,22 +285,22 @@ impl<'a> core::fmt::Debug for TokensEntryItem<'a> {
         ds.field("entry_id", &self.entry_id);
         let value = entry.value.get();
         match self.entry_id {
-            TokenEntryId::Bool => if let Some(token) = BoolTokens::from_entry(entry) {
+            TokenEntryId::Bool => if let Ok(token) = BoolTokens::try_from(entry) {
                 ds.field("token", &token)
             } else {
                 ds.field("key", &key)
             },
-            TokenEntryId::Byte => if let Some(token) = ByteTokens::from_entry(entry) {
+            TokenEntryId::Byte => if let Ok(token) = ByteTokens::try_from(entry) {
                 ds.field("token", &token)
             } else {
                 ds.field("key", &key)
             },
-            TokenEntryId::Word => if let Some(token) = WordTokens::from_entry(entry) {
+            TokenEntryId::Word => if let Ok(token) = WordTokens::try_from(entry) {
                 ds.field("token", &token)
             } else {
                 ds.field("key", &key)
             },
-            TokenEntryId::Dword => if let Some(token) = DwordTokens::from_entry(entry) {
+            TokenEntryId::Dword => if let Ok(token) = DwordTokens::try_from(entry) {
                 ds.field("token", &token)
             } else {
                 ds.field("key", &key)
