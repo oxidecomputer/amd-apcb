@@ -24,7 +24,6 @@ use num_traits::ToPrimitive;
 use paste::paste;
 use serde::de::Deserialize as DeserializeTrait;
 use serde::{Deserialize, Serialize};
-use strum_macros::EnumString;
 use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32, U64};
 
 /// Work around Rust issue# 51443, in case it ever will be phased out.
@@ -862,7 +861,11 @@ impl FromPrimitive for RawEntryId {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Copy)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum TokenEntryId {
     Bool,
     Byte,
@@ -5594,6 +5597,10 @@ pub mod psp {
 
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum BaudRate {
     _2400Baud = 0,
     _3600Baud = 1,
@@ -5607,12 +5614,20 @@ pub enum BaudRate {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemActionOnBistFailure {
     DoNothing = 0,
     DisableProblematicCcds = 1,
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemDataPoison {
     Disabled = 0,
     Enabled = 1,
@@ -5620,6 +5635,10 @@ pub enum MemDataPoison {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemMaxActivityCount {
     Untested = 0,
     _700K = 1,
@@ -5633,12 +5652,20 @@ pub enum MemMaxActivityCount {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemRcwWeakDriveDisable {
     Disabled = 0,
     Enabled = 1,
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemSelfRefreshExitStaggering {
     Disabled = 0,
     OneThird = 3,  // Trfc/3
@@ -5646,6 +5673,10 @@ pub enum MemSelfRefreshExitStaggering {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum CbsMemAddrCmdParityRetryDdr4 {
     Disabled = 0,
     Enabled = 1,
@@ -5653,6 +5684,10 @@ pub enum CbsMemAddrCmdParityRetryDdr4 {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum CcxSevAsidCount {
     _253 = 0,
     _509 = 1,
@@ -5660,6 +5695,10 @@ pub enum CcxSevAsidCount {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum FchConsoleOutSuperIoType {
     Auto = 0,
     Type1 = 1,
@@ -5667,6 +5706,10 @@ pub enum FchConsoleOutSuperIoType {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum FchConsoleSerialPort {
     SuperIo = 0,
     Uart0Mmio = 1,
@@ -5674,6 +5717,10 @@ pub enum FchConsoleSerialPort {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DfToggle {
     Disabled = 0,
     Enabled = 1,
@@ -5681,6 +5728,10 @@ pub enum DfToggle {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemTsmeMode {
     Disabled = 0,
     Enabled = 1,
@@ -5688,6 +5739,10 @@ pub enum MemTsmeMode {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemNvdimmPowerSource {
     DeviceManaged = 1,
     HostManaged = 2,
@@ -5696,6 +5751,10 @@ pub enum MemNvdimmPowerSource {
 // See JESD82-31A Table 48.
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemRdimmTimingCmdParLatency {
     _1_nCK = 0, // not valid in gear-down mode
     _2_nCK = 1,
@@ -5706,6 +5765,10 @@ pub enum MemRdimmTimingCmdParLatency {
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemThrottleCtrlRollWindowDepth {
     Memclks(NonZeroU8),
     // 0: reserved
@@ -5713,6 +5776,10 @@ pub enum MemThrottleCtrlRollWindowDepth {
 
 /// See UMC::SpazCtrl: AutoRefFineGranMode.
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemAutoRefreshFineGranMode {
     Fixed1Times = 0,
     Fixed2Times = 1,
@@ -5723,6 +5790,10 @@ pub enum MemAutoRefreshFineGranMode {
 
 /// See UMC::CH::ThrottleCtrl: DisRefCmdThrotCnt.
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemAutoRefreshsCountForThrottling {
     Enabled = 0,
     Disabled = 1,
@@ -5758,12 +5829,20 @@ impl ToPrimitive for MemThrottleCtrlRollWindowDepth {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemControllerWritingCrcMode {
     Disabled = 0,
     Enabled = 1,
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemHealPprType {
     SoftRepair = 0,
     HardRepair = 1,
@@ -5771,6 +5850,10 @@ pub enum MemHealPprType {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemHealTestSelect {
     Normal = 0,
     NoVendorTests = 1,
@@ -5778,6 +5861,10 @@ pub enum MemHealTestSelect {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DfExtIpSyncFloodPropagation {
     Allow = 0,
     Disable = 1,
@@ -5785,6 +5872,10 @@ pub enum DfExtIpSyncFloodPropagation {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DfSyncFloodPropagation {
     Allow = 0,
     Disable = 1,
@@ -5792,6 +5883,10 @@ pub enum DfSyncFloodPropagation {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DfMemInterleaving {
     None = 0,
     Channel = 1,
@@ -5802,6 +5897,10 @@ pub enum DfMemInterleaving {
 
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DfMemInterleavingSize {
     _256_Byte = 0,
     _512_Byte = 1,
@@ -5812,6 +5911,10 @@ pub enum DfMemInterleavingSize {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DfDramNumaPerSocket {
     None = 0,
     One = 1,
@@ -5821,6 +5924,10 @@ pub enum DfDramNumaPerSocket {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DfRemapAt1TiB {
     Disabled = 0,
     Enabled = 1,
@@ -5829,6 +5936,10 @@ pub enum DfRemapAt1TiB {
 
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DfXgmiLinkConfig {
     _2_links_connected = 0,
     _3_links_connected = 1,
@@ -5837,6 +5948,10 @@ pub enum DfXgmiLinkConfig {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DfPstateModeSelect {
     Normal = 0,
     LimitHighest = 1,
@@ -5846,6 +5961,10 @@ pub enum DfPstateModeSelect {
 
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum GnbSmuDfPstateFclkLimit {
     _1600_Mhz = 0,
     _1467_Mhz = 1,
@@ -5858,6 +5977,10 @@ pub enum GnbSmuDfPstateFclkLimit {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum SecondPcieLinkSpeed {
     Keep = 0,
     Gen1 = 1,
@@ -5865,6 +5988,10 @@ pub enum SecondPcieLinkSpeed {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum BmcLinkSpeed {
     PcieGen1 = 1,
     PcieGen2 = 2,
@@ -5872,6 +5999,10 @@ pub enum BmcLinkSpeed {
 
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum SecondPcieLinkMaxPayload {
     _128_Byte = 0,
     _256_Byte = 1,
@@ -5883,6 +6014,10 @@ pub enum SecondPcieLinkMaxPayload {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum WorkloadProfile {
     Disabled = 0,
     CpuIntensive = 1,
@@ -5906,6 +6041,10 @@ pub enum WorkloadProfile {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemControllerPmuTrainFfeDdr4 {
     Disabled = 0,
     Enabled = 1,
@@ -5913,6 +6052,10 @@ pub enum MemControllerPmuTrainFfeDdr4 {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemControllerPmuTrainDfeDdr4 {
     Disabled = 0,
     Enabled = 1,
@@ -5921,6 +6064,10 @@ pub enum MemControllerPmuTrainDfeDdr4 {
 
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemControllerPmuTrainingMode {
     _1D = 0,
     _1D_2D_Read_Only = 1,
@@ -5930,6 +6077,10 @@ pub enum MemControllerPmuTrainingMode {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum UmaMode {
     None = 0,
     Specified = 1,
@@ -5937,12 +6088,20 @@ pub enum UmaMode {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemMbistTest {
     Disabled = 0,
     Enabled = 1,
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemMbistPatternSelect {
     Prbs = 0,
     Sso = 1,
@@ -5951,6 +6110,10 @@ pub enum MemMbistPatternSelect {
 
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemMbistAggressorsChannels {
     Disabled = 0,
     _1_AggressorsPer2Channels = 1,
@@ -5959,6 +6122,10 @@ pub enum MemMbistAggressorsChannels {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemMbistTestMode {
     PhysicalInterface = 0,
     DataEye = 1,
@@ -5967,6 +6134,10 @@ pub enum MemMbistTestMode {
 
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemMbistDataEyeType {
     _1dVolate = 0,
     _1dTiming = 1,
@@ -5975,6 +6146,10 @@ pub enum MemMbistDataEyeType {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DfXgmiTxEqMode {
     Disabled = 0,
     EnabledByLane = 1,
@@ -5985,6 +6160,10 @@ pub enum DfXgmiTxEqMode {
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DfXgmiLinkMaxSpeed {
     _6_40Gbps = 0,
     _7_467Gbps = 1,
@@ -6022,6 +6201,10 @@ pub type DfXgmi4LinkMaxSpeed = DfXgmiLinkMaxSpeed;
 
 /// Placement of private memory regions (PSP, SMU, CC6)
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DfSysStorageAtTopOfMem {
     /// CCD0 and CCD1 at the top of specific memory region (default)
     Distributed = 0,
@@ -6035,6 +6218,10 @@ pub enum DfSysStorageAtTopOfMem {
 
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum BmcGen2TxDeemphasis {
     Csr = 0,
     Upstream = 1,
@@ -6044,6 +6231,10 @@ pub enum BmcGen2TxDeemphasis {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum BmcRcbCheckingMode {
     EnableRcbChecking = 0,
     DisableRcbChecking = 1,
@@ -6052,6 +6243,10 @@ pub enum BmcRcbCheckingMode {
 
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum EccSymbolSize {
     x4 = 0,
     x8 = 1,
@@ -6089,6 +6284,10 @@ impl FromPrimitive1 for bool {
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DxioPhyParamVga {
     Value(u32), // not 0xffff_ffff
     Skip,
@@ -6132,6 +6331,10 @@ impl ToPrimitive for DxioPhyParamVga {
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DxioPhyParamPole {
     Value(u32), // not 0xffff_ffff
     Skip,
@@ -6175,6 +6378,10 @@ impl ToPrimitive for DxioPhyParamPole {
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DxioPhyParamDc {
     Value(u32), // not 0xffff_ffff
     Skip,
@@ -6218,6 +6425,10 @@ impl ToPrimitive for DxioPhyParamDc {
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DxioPhyParamIqofc {
     Value(i32),
     // Skip
@@ -6246,6 +6457,10 @@ impl ToPrimitive for DxioPhyParamIqofc {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemClockValue {
     // in MHz
     Ddr400 = 200,
@@ -6280,6 +6495,10 @@ pub enum MemClockValue {
 type MemBusFrequencyLimit = MemClockValue;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum CbsMemPowerDownDelay {
     Value(u16), // not 0, not 0xffff
     Auto,
@@ -6326,6 +6545,10 @@ impl ToPrimitive for CbsMemPowerDownDelay {
 pub type MemUserTimingMode = memory::platform_specific_override::TimingMode;
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemHealBistEnable {
     Disabled = 0,
     TestAndRepairAllMemory = 1,
@@ -6334,6 +6557,10 @@ pub enum MemHealBistEnable {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum CbsMemSpeedDdr4 {
     Ddr333 = 4,
     Ddr400 = 6,
@@ -6361,6 +6588,10 @@ pub enum CbsMemSpeedDdr4 {
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum FchSmbusSpeed {
     Value(u8), /* x in 66 MHz / (4 x)
                 * Auto */
@@ -6394,6 +6625,10 @@ impl ToPrimitive for FchSmbusSpeed {
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum DfCakeCrcThresholdBounds {
     Value(u32), // x: 0...1_000_000d; Percentage is 0.00001% * x
 }
@@ -6426,6 +6661,10 @@ impl ToPrimitive for DfCakeCrcThresholdBounds {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum MemTrainingHdtControl {
     DetailedDebugMessages = 5,
     CoarseDebugMessages = 10,
@@ -6436,6 +6675,10 @@ pub enum MemTrainingHdtControl {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum PspEnableDebugMode {
     Disabled = 0,
     Enabled = 1,
@@ -6444,6 +6687,10 @@ pub enum PspEnableDebugMode {
 #[bitfield(bits = 16)]
 #[repr(u16)]
 #[derive(Debug, Copy, Clone, PartialEq)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub struct FchGppClkMapSelection {
     pub s0_gpp0_off: B1,
     pub s0_gpp1_off: B1,
@@ -6468,6 +6715,10 @@ impl FchGppClkMapSelection {
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize, schemars::JsonSchema)
+)]
 pub enum FchGppClkMap {
     On,
     Value(FchGppClkMapSelection),
@@ -6518,6 +6769,7 @@ impl ToPrimitive for FchGppClkMap {
 }
 
 make_token_accessors! {
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     #[non_exhaustive]
     pub enum ByteToken: {TokenEntryId::Byte} {
         // ABL
@@ -6676,6 +6928,7 @@ make_token_accessors! {
     }
 }
 make_token_accessors! {
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     #[non_exhaustive]
     pub enum WordToken: {TokenEntryId::Word} {
         // PSP
@@ -6719,6 +6972,7 @@ make_token_accessors! {
     }
 }
 make_token_accessors! {
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     #[non_exhaustive]
     pub enum DwordToken: {TokenEntryId::Dword} {
         // Memory Controller
@@ -6771,6 +7025,7 @@ make_token_accessors! {
     }
 }
 make_token_accessors! {
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     #[non_exhaustive]
     pub enum BoolToken: {TokenEntryId::Bool} {
         // PSP

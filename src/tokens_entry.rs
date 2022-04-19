@@ -1,13 +1,9 @@
-use core::convert::TryFrom;
 use crate::ondisk::{
-    take_header_from_collection, take_header_from_collection_mut, TokenEntryId,
-    TOKEN_ENTRY,
-    BoolToken,
-    ByteToken,
-    WordToken,
-    DwordToken,
+    take_header_from_collection, take_header_from_collection_mut, BoolToken,
+    ByteToken, DwordToken, TokenEntryId, WordToken, TOKEN_ENTRY,
 };
 use crate::types::{Error, FileSystemError, Ptr, Result};
+use core::convert::TryFrom;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
 use pre::pre;
@@ -17,13 +13,11 @@ use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
 #[cfg(feature = "std")]
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 #[cfg(feature = "std")]
-use serde::{Deserialize as DeserializeDerive, Serialize as SerializeDerive};
-#[cfg(feature = "std")]
 use std::borrow::Cow;
 #[cfg(feature = "std")]
 use std::fmt;
 
-#[derive(Debug, Clone, Copy, SerializeDerive, DeserializeDerive)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct TokensEntryBodyItem<BufferType> {
     unit_size: u8,
     entry_id: TokenEntryId,
@@ -288,6 +282,19 @@ pub struct TokensEntryItem<'a> {
     pub(crate) entry: Ptr<'a, TOKEN_ENTRY>,
 }
 
+#[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+enum SerdeTokensEntryItem {
+    Bool(BoolToken),
+    Byte(ByteToken),
+    Word(WordToken),
+    Dword(DwordToken),
+    Unknown {
+        entry_id: TokenEntryId,
+        tag: u32,
+        value: u32,
+    },
+}
+
 #[cfg(feature = "std")]
 impl<'a> Serialize for TokensEntryItem<'a> {
     fn serialize<S>(
@@ -297,44 +304,38 @@ impl<'a> Serialize for TokensEntryItem<'a> {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("TokensEntryItem", 2)?;
+        let mut state = serializer.serialize_struct("TokensEntryItem", 1)?;
         let entry = &*self.entry;
         let key = entry.key.get();
-        let n: Option<u32> = None;
+        let mut st = SerdeTokensEntryItem::Unknown {
+            entry_id: self.entry_id,
+            tag: key,
+            value: self.value(),
+        };
         match self.entry_id {
             TokenEntryId::Bool => {
-                if let Some(key) = BoolTags::from_u32(key) {
-                    state.serialize_field("BoolTag", &key)?;
-                } else {
-                    state.serialize_field("UBoolTag", &key)?;
+                if let Ok(token) = BoolToken::try_from(entry) {
+                    st = SerdeTokensEntryItem::Bool(token);
                 }
             }
             TokenEntryId::Byte => {
-                if let Some(key) = ByteTags::from_u32(key) {
-                    state.serialize_field("ByteTag", &key)?;
-                } else {
-                    state.serialize_field("UByteTag", &key)?;
+                if let Ok(token) = ByteToken::try_from(entry) {
+                    st = SerdeTokensEntryItem::Byte(token);
                 }
             }
             TokenEntryId::Word => {
-                if let Some(key) = WordTags::from_u32(key) {
-                    state.serialize_field("WordTag", &key)?;
-                } else {
-                    state.serialize_field("UWordTag", &key)?;
+                if let Ok(token) = WordToken::try_from(entry) {
+                    st = SerdeTokensEntryItem::Word(token);
                 }
             }
             TokenEntryId::Dword => {
-                if let Some(key) = DwordTags::from_u32(key) {
-                    state.serialize_field("DwordTag", &key)?;
-                } else {
-                    state.serialize_field("UDwordTag", &key)?;
+                if let Ok(token) = DwordToken::try_from(entry) {
+                    st = SerdeTokensEntryItem::Dword(token);
                 }
             }
-            TokenEntryId::Unknown(_) => {
-                state.serialize_field("UnknownTag", &key)?;
-            }
+            TokenEntryId::Unknown(_) => {}
         }
-        state.serialize_field("value", &format!("{:#X}", &self.value()))?;
+        state.serialize_field("SerdeTokensEntryItem", &st)?;
         state.end()
     }
 }
@@ -346,30 +347,9 @@ impl<'a, 'de: 'a> Deserialize<'de> for TokensEntryItem<'a> {
         D: Deserializer<'de>,
     {
         enum Field {
-            UBoolTag,
-            UByteTag,
-            UWordTag,
-            UDwordTag,
-            BoolTag,
-            ByteTag,
-            WordTag,
-            DwordTag,
-            UnknownTag,
-            Value,
+            SerdeTokensEntryItem,
         }
-        const FIELDS: &'static [&'static str] = &[
-            "type",
-            "UBoolTag",
-            "UByteTag",
-            "UWordTag",
-            "UDwordTag",
-            "BoolTag",
-            "ByteTag",
-            "WordTag",
-            "DwordTag",
-            "UnknownTag",
-            "value",
-        ];
+        const FIELDS: &'static [&'static str] = &["SerdeTokensEntryItem"];
 
         impl<'de> Deserialize<'de> for Field {
             fn deserialize<D>(
@@ -387,9 +367,7 @@ impl<'a, 'de: 'a> Deserialize<'de> for TokensEntryItem<'a> {
                         &self,
                         formatter: &mut fmt::Formatter<'_>,
                     ) -> fmt::Result {
-                        formatter.write_str(
-                            "`UBoolTag`, `UByteTag`, `UWordTag`, `UDwordTag`, `BoolTag`, `ByteTag`, `WordTag`, `DwordTag`, `UnknownTag`, `value`",
-                        )
+                        formatter.write_str("`SerdeTokensEntryItem`")
                     }
 
                     fn visit_str<E>(
@@ -400,16 +378,9 @@ impl<'a, 'de: 'a> Deserialize<'de> for TokensEntryItem<'a> {
                         E: de::Error,
                     {
                         match value {
-                            "UBoolTag" => Ok(Field::UBoolTag),
-                            "UByteTag" => Ok(Field::UByteTag),
-                            "UWordTag" => Ok(Field::UWordTag),
-                            "UDwordTag" => Ok(Field::UDwordTag),
-                            "BoolTag" => Ok(Field::BoolTag),
-                            "ByteTag" => Ok(Field::ByteTag),
-                            "WordTag" => Ok(Field::WordTag),
-                            "DwordTag" => Ok(Field::DwordTag),
-                            "UnknownTag" => Ok(Field::UnknownTag),
-                            "value" => Ok(Field::Value),
+                            "SerdeTokensEntryItem" => {
+                                Ok(Field::SerdeTokensEntryItem)
+                            }
                             _ => Err(de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -438,125 +409,88 @@ impl<'a, 'de: 'a> Deserialize<'de> for TokensEntryItem<'a> {
             where
                 V: MapAccess<'de>,
             {
-                let mut tag: Option<u32> = None;
-                let mut entry_id: Option<TokenEntryId> = None;
-                let mut value: Option<u32> = None;
+                let mut token: Option<SerdeTokensEntryItem> = None;
+                let entry_id: TokenEntryId;
+                let token_entry: TOKEN_ENTRY;
                 while let Some(key) = map.next_key()? {
                     match key {
-                        Field::UBoolTag => {
-                            if tag.is_some() {
+                        Field::SerdeTokensEntryItem => {
+                            if token.is_some() {
                                 return Err(de::Error::duplicate_field(
                                     "Multiple tags specified",
                                 ));
                             }
-                            entry_id = Some(TokenEntryId::Bool);
-                            let t: u32 = map.next_value()?;
-                            tag = Some(t as u32);
-                        }
-                        Field::UByteTag => {
-                            if tag.is_some() {
-                                return Err(de::Error::duplicate_field(
-                                    "Multiple tags specified",
-                                ));
-                            }
-                            entry_id = Some(TokenEntryId::Byte);
-                            let t: u32 = map.next_value()?;
-                            tag = Some(t as u32);
-                        }
-                        Field::UWordTag => {
-                            if tag.is_some() {
-                                return Err(de::Error::duplicate_field(
-                                    "Multiple tags specified",
-                                ));
-                            }
-                            entry_id = Some(TokenEntryId::Word);
-                            let t: u32 = map.next_value()?;
-                            tag = Some(t as u32);
-                        }
-                        Field::UDwordTag => {
-                            if tag.is_some() {
-                                return Err(de::Error::duplicate_field(
-                                    "Multiple tags specified",
-                                ));
-                            }
-                            entry_id = Some(TokenEntryId::Dword);
-                            let t: u32 = map.next_value()?;
-                            tag = Some(t as u32);
-                        }
-                        Field::BoolTag => {
-                            if tag.is_some() {
-                                return Err(de::Error::duplicate_field(
-                                    "Multiple tags specified",
-                                ));
-                            }
-                            entry_id = Some(TokenEntryId::Bool);
-                            let t: BoolTags = map.next_value()?;
-                            tag = Some(t as u32);
-                        }
-                        Field::ByteTag => {
-                            if tag.is_some() {
-                                return Err(de::Error::duplicate_field(
-                                    "Multiple tags specified",
-                                ));
-                            }
-                            entry_id = Some(TokenEntryId::Byte);
-                            let t: ByteTags = map.next_value()?;
-                            tag = Some(t as u32);
-                        }
-                        Field::WordTag => {
-                            if tag.is_some() {
-                                return Err(de::Error::duplicate_field(
-                                    "Multiple tags specified",
-                                ));
-                            }
-                            entry_id = Some(TokenEntryId::Word);
-                            let t: WordTags = map.next_value()?;
-                            tag = Some(t as u32);
-                        }
-                        Field::DwordTag => {
-                            if tag.is_some() {
-                                return Err(de::Error::duplicate_field(
-                                    "Multiple tags specified",
-                                ));
-                            }
-                            entry_id = Some(TokenEntryId::Dword);
-                            let t: DwordTags = map.next_value()?;
-                            tag = Some(t as u32);
-                        }
-                        Field::UnknownTag => {
-                            if tag.is_some() {
-                                return Err(de::Error::duplicate_field(
-                                    "Multiple tags specified",
-                                ));
-                            }
-                            let t: u32 = map.next_value()?;
-                            entry_id = Some(TokenEntryId::Unknown(t as u16));
-                            tag = Some(t);
-                        }
-                        Field::Value => {
-                            if value.is_some() {
-                                return Err(de::Error::duplicate_field(
-                                    "value",
-                                ));
-                            }
-                            let s: String = map.next_value()?;
-                            let s = s.trim_start_matches("0x");
-                            let t = u32::from_str_radix(s, 16).unwrap();
-                            value = Some(t);
+                            token = map.next_value()?;
                         }
                     }
                 }
-                let entry_id =
-                    entry_id.ok_or_else(|| de::Error::missing_field("type"))?;
-                let tag = tag.ok_or_else(|| de::Error::missing_field("tag"))?;
-                let value =
-                    value.ok_or_else(|| de::Error::missing_field("value"))?;
+                let token = token.ok_or_else(|| {
+                    de::Error::missing_field("SerdeTokensEntryItem")
+                })?;
 
-                let tokenEntry = TOKEN_ENTRY {
-                    key: zerocopy::U32::<zerocopy::LittleEndian>::new(tag),
-                    value: zerocopy::U32::<zerocopy::LittleEndian>::new(value),
-                };
-                let buf = Cow::Owned(tokenEntry);
+                match token {
+                    SerdeTokensEntryItem::Bool(t) => {
+                        entry_id = TokenEntryId::Bool;
+                        if let Ok(te) = TOKEN_ENTRY::try_from(t) {
+                            token_entry = te;
+                        } else {
+                            // TODO: Implement better error message!
+                            return Err(de::Error::invalid_value(
+                                serde::de::Unexpected::Enum,
+                                &self,
+                            ));
+                        }
+                    }
+                    SerdeTokensEntryItem::Byte(t) => {
+                        entry_id = TokenEntryId::Byte;
+                        if let Ok(te) = TOKEN_ENTRY::try_from(t) {
+                            token_entry = te;
+                        } else {
+                            return Err(de::Error::invalid_value(
+                                serde::de::Unexpected::Enum,
+                                &self,
+                            ));
+                        }
+                    }
+                    SerdeTokensEntryItem::Word(t) => {
+                        entry_id = TokenEntryId::Word;
+                        if let Ok(te) = TOKEN_ENTRY::try_from(t) {
+                            token_entry = te;
+                        } else {
+                            return Err(de::Error::invalid_value(
+                                serde::de::Unexpected::Enum,
+                                &self,
+                            ));
+                        }
+                    }
+                    SerdeTokensEntryItem::Dword(t) => {
+                        entry_id = TokenEntryId::Dword;
+                        if let Ok(te) = TOKEN_ENTRY::try_from(t) {
+                            token_entry = te;
+                        } else {
+                            return Err(de::Error::invalid_value(
+                                serde::de::Unexpected::Enum,
+                                &self,
+                            ));
+                        }
+                    }
+                    SerdeTokensEntryItem::Unknown {
+                        entry_id: e_id,
+                        tag,
+                        value,
+                    } => {
+                        entry_id = e_id;
+                        token_entry = TOKEN_ENTRY {
+                            key: zerocopy::U32::<zerocopy::LittleEndian>::new(
+                                tag,
+                            ),
+                            value: zerocopy::U32::<zerocopy::LittleEndian>::new(
+                                value,
+                            ),
+                        };
+                    }
+                }
+                let buf = Cow::Owned(token_entry);
                 Ok(TokensEntryItem {
                     entry_id: entry_id,
                     entry: buf,
@@ -579,30 +513,38 @@ impl<'a> core::fmt::Debug for TokensEntryItem<'a> {
         ds.field("entry_id", &self.entry_id);
         let value = entry.value.get();
         match self.entry_id {
-            TokenEntryId::Bool => if let Ok(token) = BoolToken::try_from(entry) {
-                ds.field("token", &token)
-            } else {
-                ds.field("key", &key)
-            },
-            TokenEntryId::Byte => if let Ok(token) = ByteToken::try_from(entry) {
-                ds.field("token", &token)
-            } else {
-                ds.field("key", &key)
-            },
-            TokenEntryId::Word => if let Ok(token) = WordToken::try_from(entry) {
-                ds.field("token", &token)
-            } else {
-                ds.field("key", &key)
-            },
-            TokenEntryId::Dword => if let Ok(token) = DwordToken::try_from(entry) {
-                ds.field("token", &token)
-            } else {
-                ds.field("key", &key)
-            },
-            TokenEntryId::Unknown(_) => {
-                ds.field("key", &key)
-            },
-        }.field("value", &value).finish()
+            TokenEntryId::Bool => {
+                if let Ok(token) = BoolToken::try_from(entry) {
+                    ds.field("token", &token)
+                } else {
+                    ds.field("key", &key)
+                }
+            }
+            TokenEntryId::Byte => {
+                if let Ok(token) = ByteToken::try_from(entry) {
+                    ds.field("token", &token)
+                } else {
+                    ds.field("key", &key)
+                }
+            }
+            TokenEntryId::Word => {
+                if let Ok(token) = WordToken::try_from(entry) {
+                    ds.field("token", &token)
+                } else {
+                    ds.field("key", &key)
+                }
+            }
+            TokenEntryId::Dword => {
+                if let Ok(token) = DwordToken::try_from(entry) {
+                    ds.field("token", &token)
+                } else {
+                    ds.field("key", &key)
+                }
+            }
+            TokenEntryId::Unknown(_) => ds.field("key", &key),
+        }
+        .field("value", &value)
+        .finish()
     }
 }
 

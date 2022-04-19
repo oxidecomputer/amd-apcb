@@ -205,7 +205,7 @@ macro_rules! make_token_accessors {(
     }
 ) => (
     $(#[$enum_meta])*
-    #[derive(Debug)] // TODO: EnumString
+    #[derive(Debug, Serialize, Deserialize)] // TODO: EnumString
     $enum_vis enum $enum_name {
         $(
          $(#[$field_meta])*
