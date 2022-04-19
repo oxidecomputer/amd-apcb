@@ -132,7 +132,7 @@ impl<'a, 'b> Tokens<'a, 'b> {
 
 /// Automatically impl getters (and setters) for the fields where there was
 /// "get" (and "set") specified. The getters and setters so generated are
-/// hardcoded as calling get1() and to_u32(), respectively. Variant syntax:
+/// hardcoded as calling from_u32() and to_u32(), respectively. Variant syntax:
 /// NAME(TYPE, default DEFAULT_VALUE, id TOKEN_ID) = KEY[: pub get TYPE [: pub
 /// set TYPE]]
 macro_rules! make_token_accessors {(
@@ -146,38 +146,78 @@ macro_rules! make_token_accessors {(
     }
 ) => (
     $(#[$enum_meta])*
+    #[derive(Debug)] // TODO: EnumString
     $enum_vis enum $enum_name {
         $(
-            $field_name = $field_key,
+         $(
+            $field_name($field_user_ty),
+         )?
         )*
+    }
+    impl core::convert::TryFrom<&TOKEN_ENTRY> for $enum_name {
+        type Error = Error;
+        fn try_from(entry: &TOKEN_ENTRY) -> core::result::Result<Self, Self::Error> {
+          let tag = entry.key.get();
+          let value = entry.value.get();
+          $(
+           $(
+            if ($field_key == tag) {
+                let value = <$field_user_ty>::from_u32(value).ok_or(Error::TokenRange)?;
+                Ok(Self::$field_name(value))
+            } else
+           )?
+          )*{
+                Err(Error::TokenNotFound)
+            }
+        }
+    }
+    impl core::convert::TryFrom<$enum_name> for TOKEN_ENTRY {
+        type Error = Error;
+        fn try_from(x: $enum_name) -> core::result::Result<Self, Self::Error> {
+          $(
+            if let $enum_name::$field_name(value) = x {
+                Ok(Self {
+                   key: $field_key.into(),
+                   value: value.to_u32().ok_or(Error::TokenRange)?.into(),
+                })
+            } else
+          )*{
+                Err(Error::TokenNotFound)
+            }
+        }
     }
     $(
         $(
             impl<'a, 'b> Tokens<'a, 'b> {
-                #[allow(non_snake_case)]
-                #[inline]
-                $getter_vis
-                fn $field_name (self: &'_ Self)
-                    -> Result<$field_user_ty>
-                {
-                    <$field_user_ty>::from_u32(self.get($field_entry_id, $field_key)?).ok_or_else(|| Error::EntryTypeMismatch)
+                paste! {
+                  #[allow(non_snake_case)]
+                  #[inline]
+                  $getter_vis
+                  fn [<$field_name:snake>] (self: &'_ Self)
+                      -> Result<$field_user_ty>
+                  {
+                      <$field_user_ty>::from_u32(self.get($field_entry_id, $field_key)?).ok_or_else(|| Error::EntryTypeMismatch)
+                  }
                 }
             }
             impl<'a, 'b> TokensMut<'a, 'b> {
-            #[allow(non_snake_case)]
-            #[inline]
-            $getter_vis
-            fn $field_name (self: &'_ Self)
-                -> Result<$field_user_ty>
-            {
-                <$field_user_ty>::from_u32(self.get($field_entry_id, $field_key)?).ok_or_else(|| Error::EntryTypeMismatch)
+
+            paste! {
+              #[allow(non_snake_case)]
+              #[inline]
+              $getter_vis
+              fn [<$field_name:snake>] (self: &'_ Self)
+                  -> Result<$field_user_ty>
+              {
+                  <$field_user_ty>::from_u32(self.get($field_entry_id, $field_key)?).ok_or_else(|| Error::EntryTypeMismatch)
+              }
             }
             $(
               paste! {
                   #[allow(non_snake_case)]
                   #[inline]
                   $setter_vis
-                  fn [<set_ $field_name>] (self: &'_ mut Self, value: $field_setter_user_ty) -> Result<()> {
+                  fn [<set_ $field_name:snake>] (self: &'_ mut Self, value: $field_setter_user_ty) -> Result<()> {
                       let token_value = value.to_u32().unwrap();
                       self.set($field_entry_id, $field_key, token_value)
                   }

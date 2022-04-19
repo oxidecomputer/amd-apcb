@@ -1,10 +1,11 @@
+use core::convert::TryFrom;
 use crate::ondisk::{
     take_header_from_collection, take_header_from_collection_mut, TokenEntryId,
     TOKEN_ENTRY,
-    BoolTags,
-    ByteTags,
-    WordTags,
-    DwordTags,
+    BoolToken,
+    ByteToken,
+    WordToken,
+    DwordToken,
 };
 use crate::types::{Error, FileSystemError, Result};
 use core::mem::size_of;
@@ -282,31 +283,32 @@ impl<'a> core::fmt::Debug for TokensEntryItem<'a> {
         let key = entry.key.get();
         let mut ds = fmt.debug_struct("TokensEntryItem_TOKEN_ENTRY");
         ds.field("entry_id", &self.entry_id);
+        let value = entry.value.get();
         match self.entry_id {
-            TokenEntryId::Bool => if let Some(key) = BoolTags::from_u32(key) {
-                ds.field("key", &key)
+            TokenEntryId::Bool => if let Ok(token) = BoolToken::try_from(entry) {
+                ds.field("token", &token)
             } else {
                 ds.field("key", &key)
             },
-            TokenEntryId::Byte => if let Some(key) = ByteTags::from_u32(key) {
-                ds.field("key", &key)
+            TokenEntryId::Byte => if let Ok(token) = ByteToken::try_from(entry) {
+                ds.field("token", &token)
             } else {
                 ds.field("key", &key)
             },
-            TokenEntryId::Word => if let Some(key) = WordTags::from_u32(key) {
-                ds.field("key", &key)
+            TokenEntryId::Word => if let Ok(token) = WordToken::try_from(entry) {
+                ds.field("token", &token)
             } else {
                 ds.field("key", &key)
             },
-            TokenEntryId::Dword => if let Some(key) = DwordTags::from_u32(key) {
-                ds.field("key", &key)
+            TokenEntryId::Dword => if let Ok(token) = DwordToken::try_from(entry) {
+                ds.field("token", &token)
             } else {
                 ds.field("key", &key)
             },
             TokenEntryId::Unknown(_) => {
                 ds.field("key", &key)
             },
-        }.field("value", &entry.value.get()).finish()
+        }.field("value", &value).finish()
     }
 }
 
