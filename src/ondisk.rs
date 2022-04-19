@@ -6202,11 +6202,14 @@ make_token_accessors! {
         MemRcdParity(default 1, id 0x647d7662) : pub get bool : pub set bool,
         // Byte just like AMD
         CbsMemUncorrectedEccRetryDdr4(default 1, id 0xbff0_0125) : pub get bool : pub set bool,
-        MemUrgRefLimit(default 6, id 0x1333_32df) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first)
-        MemSubUrgRefLowerBound(default 4, id 0xe756_2ab6) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first)
+        /// UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first)
+        MemUrgRefLimit(default 6, id 0x1333_32df) : pub get u8 : pub set u8,
+        /// UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first)
+        MemSubUrgRefLowerBound(default 4, id 0xe756_2ab6) : pub get u8 : pub set u8,
         MemControllerPmuTrainFfeDdr4(default 0xff, id 0x0d46_186d) : pub get MemControllerPmuTrainFfeDdr4 : pub set MemControllerPmuTrainFfeDdr4, // FIXME: is it bool ?
         MemControllerPmuTrainDfeDdr4(default 0xff, id 0x36a4_bb5b) : pub get MemControllerPmuTrainDfeDdr4 : pub set MemControllerPmuTrainDfeDdr4, // FIXME: is it bool ?
-        MemTsmeModeRome(default 1, id 0xd1fa_6660) : pub get MemTsmeMode : pub set MemTsmeMode, // See Transparent Secure Memory Encryption in PPR
+        /// See Transparent Secure Memory Encryption in PPR
+        MemTsmeModeRome(default 1, id 0xd1fa_6660) : pub get MemTsmeMode : pub set MemTsmeMode,
         MemTrainingHdtControl(default 200, id 0xaf6d_3a6f) : pub get MemTrainingHdtControl : pub set MemTrainingHdtControl, // TODO: Before using default, fix default.  It's possibly not correct.
         MemHealBistEnable(default 0, id 0xfba2_3a28) : pub get MemHealBistEnable : pub set MemHealBistEnable,
         MemSelfHealBistEnable(default 0, id 0x2c23_924c) : pub get u8 : pub set u8, // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
@@ -6240,7 +6243,8 @@ make_token_accessors! {
         DfGmiEncrypt(default 0, id 0x08a4_5920) : pub get DfToggle : pub set DfToggle,
         DfXgmiEncrypt(default 0, id 0x6bd3_2f1c) : pub get DfToggle : pub set DfToggle,
         DfSaveRestoreMemEncrypt(default 1, id 0x7b3d_1f75) : pub get DfToggle : pub set DfToggle,
-        DfBottomIo(default 0xe0, id 0x8fb9_8529) : pub get u8 : pub set u8, // Where the PCI MMIO hole will start (bits 31 to 24 inclusive)
+        /// Where the PCI MMIO hole will start (bits 31 to 24 inclusive)
+        DfBottomIo(default 0xe0, id 0x8fb9_8529) : pub get u8 : pub set u8,
         DfRemapAt1Tib(default 0, id 0x35ee_96f3) : pub get DfRemapAt1TiB : pub set DfRemapAt1TiB,
         DfXgmiTxEqMode(default 0xff, id 0xade7_9549) : pub get DfXgmiTxEqMode : pub set DfXgmiTxEqMode,
         DfInvertDramMap(default 0, id 0x6574_b2c0) : pub get DfToggle : pub set DfToggle,
@@ -6265,7 +6269,8 @@ make_token_accessors! {
         MemMbistReadDataEyeTimingStep(default 0, id 0x58ccd28a) : pub get u8 : pub set u8, // Rome
         MemMbistDataEyeExecutionRepeatCount(default 0, id 0x8e4bdad7) : pub get u8 : pub set u8, // Rome; 0..=10
         MemMbistTgtStaticLaneSelEcc(default 0, id 0xa6e92cee) : pub get u8 : pub set u8, // Rome
-        MemMbistPatternLength(default 0, id 0xae7baedd) : pub get u8 : pub set u8, // Rome; that's powers of ten; 3..=12
+        /// in powers of ten; 3..=12
+        MemMbistPatternLength(default 0, id 0xae7baedd) : pub get u8 : pub set u8, // Rome;
         MemMbistHaltOnError(default 0, id 0xb1940f25) : pub get u8 : pub set u8, // Rome (Obsolete)
         MemMbistWriteDataEyeVoltageStep(default 0, id 0xcda61022) : pub get u8 : pub set u8, // Rome
         MemMbistPerBitSlaveDieReport(default 0, id 0xcff56411) : pub get u8 : pub set u8, // Rome
@@ -6282,8 +6287,9 @@ make_token_accessors! {
 
         // Unsorted Rome; ungrouped; defaults wrong!
 
-        // I doubt that AMD converts those, but the 2 lowest bits usually set up the resolution. 0: 0.5 ºC; 1: 0.25 ºC; 2: 0.125 ºC; 3: 0.0625 ºC; higher resolution is slower.
-        DimmSensorResolution(default 0, id 0x831af313) : pub get u8 : pub set u8, // Rome (Obsolete); DIMM temperature sensor register at address 8
+        /// I doubt that AMD converts those, but the 2 lowest bits usually set up the resolution. 0: 0.5 ºC; 1: 0.25 ºC; 2: 0.125 ºC; 3: 0.0625 ºC; higher resolution is slower.
+        /// DIMM temperature sensor register at address 8
+        DimmSensorResolution(default 0, id 0x831af313) : pub get u8 : pub set u8, // Rome (Obsolete)
         PcieResetPinSelect(default 0, id 0x8c0b2de9) : pub get u8 : pub set u8, // value 2 // Rome; 0..=4; FIXME: enum?
         MemDramAddressCommandParityRetryCount(default 0, id 0x3e7c51f8) : pub get u8 : pub set u8, // value 1 // Rome
         MemParityErrorMaxReplayDdr4(default 0, id 0xc9e9a1c9) : pub get u8 : pub set u8, // value 8 // Rome // 0..=0x3f (6 bit)
@@ -6291,20 +6297,20 @@ make_token_accessors! {
         Df3LinkMaxXgmiSpeed(default 0, id 0x53ba449b) : pub get DfXgmi3LinkMaxSpeed : pub set DfXgmi3LinkMaxSpeed, // value 0xff // Rome
         Df4LinkMaxXgmiSpeed(default 0, id 0x3f307cb3) : pub get DfXgmi4LinkMaxSpeed : pub set DfXgmi4LinkMaxSpeed, // value 0xff //  Rome
         MemDramDoubleRefreshRate(default 0, id 0x44d40026) : pub get u8 : pub set u8, // value 0 // Rome
-        // See UMC::CH::ThrottleCtrl RollWindowDepth
+        /// See UMC::CH::ThrottleCtrl RollWindowDepth
         MemRollWindowDepth(default 0xff, id 0x5985083a) : pub get MemThrottleCtrlRollWindowDepth : pub set MemThrottleCtrlRollWindowDepth, // Rome
         DfPstateModeSelect(default 0xff, id 0xaeb84b12) : pub get DfPstateModeSelect : pub set DfPstateModeSelect, // value 0xff // Rome
         DfXgmiConfig(default 3, id 0xb0b6ad3e) : pub get DfXgmiLinkConfig : pub set DfXgmiLinkConfig, // Rome
-        // See DramTiming15_UMCWPHY0_mp0_umc0 CmdParLatency (for the DDR4 Registering Clock Driver).
-        // See also JESD82-31A DDR4 REGISTERING CLOCK DRIVER.
-        // See also <https://github.com/enjoy-digital/litedram/blob/master/litedram/init.py#L460>.
+        /// See DramTiming15_UMCWPHY0_mp0_umc0 CmdParLatency (for the DDR4 Registering Clock Driver).
+        /// See also JESD82-31A DDR4 REGISTERING CLOCK DRIVER.
+        /// See also <https://github.com/enjoy-digital/litedram/blob/master/litedram/init.py#L460>.
         MemRdimmTimingRcdF0Rc0FAdditionalLatency(default 0xff, id 0xd155798a) : pub get MemRdimmTimingCmdParLatency : pub set MemRdimmTimingCmdParLatency, // Rome
         MemDataScramble(default 0, id 0x98aca5b4) : pub get u8 : pub set u8, // Rome (Obsolete)
         MemAutoRefreshFineGranMode(default 0, id 0x190305df) : pub get MemAutoRefreshFineGranMode : pub set MemAutoRefreshFineGranMode, // value 0 // Rome (Obsolete)
         UmaMode(default 0, id 0x1fb35295) : pub get UmaMode : pub set UmaMode, // value 2 // Rome (Obsolete)
         MemNvdimmPowerSource(default 0, id 0x286d0075) : pub get MemNvdimmPowerSource : pub set MemNvdimmPowerSource, // value 1 // Rome (Obsolete)
         MemDataPoison(default 0, id 0x48959473) : pub get MemDataPoison : pub set MemDataPoison, // value 1 // Rome (Obsolete)
-        // See PPR SwCmdThrotCyc
+        /// See PPR SwCmdThrotCyc
         SwCmdThrotCycles(default 0, id 0xdcec8fcb) : pub get u8 : pub set u8, // value 0 // (Obsolete)
         OdtsCmdThrottleCycles(default 0, id 0x69318e90) : pub get u8 : pub set u8, // value 0x57 // Rome (Obsolete); TODO: Auto?
         MemDramVrefRange(default 0, id 0xa8769655) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
@@ -6358,11 +6364,15 @@ make_token_accessors! {
         ScrubL3Rate(default 0, id 0xc0279ae0) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16; maybe 00h disable; maybe otherwise x: (x * 20 ns)
         ScrubIcacheRate(default 0, id 0x99639ee4) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16
         ScrubDcacheRate(default 0, id 0xb398daa0) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16
-        // See for example MCP9843/98243
-        DimmSensorConfig(default 0x408, id 0x51e7b610) : pub get u16 : pub set u16, // Rome (Obsolete) DIMM temperature sensor register at address 1
-        DimmSensorUpper(default 80, id 0xb5af557a) : pub get u16 : pub set u16, // Rome (Obsolete); DIMM temperature sensor register at address 2
-        DimmSensorLower(default 10, id 0xc5ea38a0) : pub get u16 : pub set u16, // Rome (Obsolete); DIMM temperature sensor register at address 3
-        DimmSensorCritical(default 95, id 0x38e9bf5d) : pub get u16 : pub set u16, // Rome (Obsolete); DIMM temperature sensor register at address 4
+        /// See for example MCP9843/98243
+        /// DIMM temperature sensor register at address 1
+        DimmSensorConfig(default 0x408, id 0x51e7b610) : pub get u16 : pub set u16, // Rome (Obsolete)
+        /// DIMM temperature sensor register at address 2
+        DimmSensorUpper(default 80, id 0xb5af557a) : pub get u16 : pub set u16, // Rome (Obsolete)
+        /// DIMM temperature sensor register at address 3
+        DimmSensorLower(default 10, id 0xc5ea38a0) : pub get u16 : pub set u16, // Rome (Obsolete)
+        /// DIMM temperature sensor register at address 4
+        DimmSensorCritical(default 95, id 0x38e9bf5d) : pub get u16 : pub set u16, // Rome (Obsolete)
 
         // BMC Rome
 
@@ -6453,7 +6463,8 @@ make_token_accessors! {
         CbsMemWriteCrcRetryDdr4(default 0, id 0x25fb_6ea6) : pub get bool : pub set bool,
         CbsMemControllerWriteCrcEnableDdr4(default 0, id 0x9445_1a4b) : pub get bool : pub set bool,
         MemUncorrectedEccRetryDdr4(default 1, id 0xbff0_0125) : pub get bool : pub set bool,
-        MemTsmeModeMilan(default 1, id 0xd1fa_6660) : pub get bool : pub set bool, // See Transparent Secure Memory Encryption in PPR
+        /// See Transparent Secure Memory Encryption in PPR
+        MemTsmeModeMilan(default 1, id 0xd1fa_6660) : pub get bool : pub set bool,
         MemEccSyncFlood(default 0, id 0x88bd_40c2) : pub get bool : pub set bool,
         MemRestoreControl(default 0, id 0xfedb_01f8) : pub get bool : pub set bool,
         MemPostPackageRepairEnable(default 0, id 0xcdc0_3e4e) : pub get bool : pub set bool,
@@ -6464,7 +6475,8 @@ make_token_accessors! {
 
         // Df
 
-        DfGroupDPlatform(default 0, id 0x6831_8493) : pub get bool : pub set bool, // [F17M30] needs it to be true
+        /// [F17M30] needs it to be true
+        DfGroupDPlatform(default 0, id 0x6831_8493) : pub get bool : pub set bool,
 
         // Dxio
 
