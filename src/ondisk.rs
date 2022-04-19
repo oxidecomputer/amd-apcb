@@ -6179,359 +6179,355 @@ impl ToPrimitive for FchGppClkMap {
 }
 
 make_token_accessors! {
-    #[allow(non_camel_case_types)]
     #[non_exhaustive]
     pub enum ByteToken: {TokenEntryId::Byte} {
         // ABL
 
-        abl_serial_baud_rate(default 8, id 0xae46_cea4) : pub get BaudRate : pub set BaudRate,
+        AblSerialBaudRate(default 8, id 0xae46_cea4) : pub get BaudRate : pub set BaudRate,
 
         // PSP
 
-        psp_enable_debug_mode(default 0, id 0xd109_1cd0) : pub get PspEnableDebugMode : pub set PspEnableDebugMode,
+        PspEnableDebugMode(default 0, id 0xd109_1cd0) : pub get PspEnableDebugMode : pub set PspEnableDebugMode,
 
         // Memory Controller
 
-        cbs_mem_speed_ddr4(default 0xff, id 0xe060_4ce9) : pub get CbsMemSpeedDdr4 : pub set CbsMemSpeedDdr4,
-        mem_action_on_bist_failure(default 0, id 0xcbc2_c0dd) : pub get MemActionOnBistFailure : pub set MemActionOnBistFailure, // Milan
-        mem_rcw_weak_drive_disable(default 1, id 0xa30d_781a) : pub get MemRcwWeakDriveDisable : pub set MemRcwWeakDriveDisable, // FIXME is it u32 ?
-        mem_self_refresh_exit_staggering(default 0, id 0xbc52_e5f7) : pub get MemSelfRefreshExitStaggering : pub set MemSelfRefreshExitStaggering,
-        cbs_mem_addr_cmd_parity_retry_ddr4(default 0, id 0xbe8b_ebce) : pub get CbsMemAddrCmdParityRetryDdr4 : pub set CbsMemAddrCmdParityRetryDdr4, // FIXME: Is it u32 ?
-        cbs_mem_addr_cmd_parity_error_max_replay_ddr4(default 8, id 0x04e6_a482) : pub get u8 : pub set u8, // 0...0x3f
-        cbs_mem_write_crc_error_max_replay_ddr4(default 8, id 0x74a0_8bec) : pub get u8 : pub set u8,
+        CbsMemSpeedDdr4(default 0xff, id 0xe060_4ce9) : pub get CbsMemSpeedDdr4 : pub set CbsMemSpeedDdr4,
+        MemActionOnBistFailure(default 0, id 0xcbc2_c0dd) : pub get MemActionOnBistFailure : pub set MemActionOnBistFailure, // Milan
+        MemRcwWeakDriveDisable(default 1, id 0xa30d_781a) : pub get MemRcwWeakDriveDisable : pub set MemRcwWeakDriveDisable, // FIXME is it u32 ?
+        MemSelfRefreshExitStaggering(default 0, id 0xbc52_e5f7) : pub get MemSelfRefreshExitStaggering : pub set MemSelfRefreshExitStaggering,
+        CbsMemAddrCmdParityRetryDdr4(default 0, id 0xbe8b_ebce) : pub get CbsMemAddrCmdParityRetryDdr4 : pub set CbsMemAddrCmdParityRetryDdr4, // FIXME: Is it u32 ?
+        CbsMemAddrCmdParityErrorMaxReplayDdr4(default 8, id 0x04e6_a482) : pub get u8 : pub set u8, // 0...0x3f
+        CbsMemWriteCrcErrorMaxReplayDdr4(default 8, id 0x74a0_8bec) : pub get u8 : pub set u8,
         // Byte just like AMD
-        mem_rcd_parity(default 1, id 0x647d_7662) : pub get bool : pub set bool,
+        MemRcdParity(default 1, id 0x647d7662) : pub get bool : pub set bool,
         // Byte just like AMD
-        cbs_mem_uncorrected_ecc_retry_ddr4(default 1, id 0xbff0_0125) : pub get bool : pub set bool,
-        mem_urg_ref_limit(default 6, id 0x1333_32df) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first)
-        mem_sub_urg_ref_lower_bound(default 4, id 0xe756_2ab6) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first)
-        mem_controller_pmu_train_ffe_ddr4(default 0xff, id 0x0d46_186d) : pub get MemControllerPmuTrainFfeDdr4 : pub set MemControllerPmuTrainFfeDdr4, // FIXME: is it bool ?
-        mem_controller_pmu_train_dfe_ddr4(default 0xff, id 0x36a4_bb5b) : pub get MemControllerPmuTrainDfeDdr4 : pub set MemControllerPmuTrainDfeDdr4, // FIXME: is it bool ?
-        mem_tsme_mode_rome(default 1, id 0xd1fa_6660) : pub get MemTsmeMode : pub set MemTsmeMode, // See Transparent Secure Memory Encryption in PPR
-        mem_training_hdt_control(default 200, id 0xaf6d_3a6f) : pub get MemTrainingHdtControl : pub set MemTrainingHdtControl, // TODO: Before using default, fix default.  It's possibly not correct.
-        mem_heal_bist_enable(default 0, id 0xfba2_3a28) : pub get MemHealBistEnable : pub set MemHealBistEnable,
+        CbsMemUncorrectedEccRetryDdr4(default 1, id 0xbff0_0125) : pub get bool : pub set bool,
+        MemUrgRefLimit(default 6, id 0x1333_32df) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first)
+        MemSubUrgRefLowerBound(default 4, id 0xe756_2ab6) : pub get u8 : pub set u8, // UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first)
+        MemControllerPmuTrainFfeDdr4(default 0xff, id 0x0d46_186d) : pub get MemControllerPmuTrainFfeDdr4 : pub set MemControllerPmuTrainFfeDdr4, // FIXME: is it bool ?
+        MemControllerPmuTrainDfeDdr4(default 0xff, id 0x36a4_bb5b) : pub get MemControllerPmuTrainDfeDdr4 : pub set MemControllerPmuTrainDfeDdr4, // FIXME: is it bool ?
+        MemTsmeModeRome(default 1, id 0xd1fa_6660) : pub get MemTsmeMode : pub set MemTsmeMode, // See Transparent Secure Memory Encryption in PPR
+        MemTrainingHdtControl(default 200, id 0xaf6d_3a6f) : pub get MemTrainingHdtControl : pub set MemTrainingHdtControl, // TODO: Before using default, fix default.  It's possibly not correct.
+        MemHealBistEnable(default 0, id 0xfba2_3a28) : pub get MemHealBistEnable : pub set MemHealBistEnable,
         MemSelfHealBistEnable(default 0, id 0x2c23_924c) : pub get u8 : pub set u8, // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
         MemPmuBistTestSelect(default 0, id 0x7034_fbfb) : pub get u8 : pub set u8, // TODO: Before using default, fix default.  It's possibly not correct.; note: range 1...7
-        mem_heal_test_select(default 0, id 0x5908_2cf2) : pub get MemHealTestSelect : pub set MemHealTestSelect,
-        mem_heal_ppr_type(default 0, id 0x5418_1a61) : pub get MemHealPprType : pub set MemHealPprType,
-        mem_heal_max_bank_fails(default 3, id 0x632e_55d8) : pub get u8 : pub set u8, // per bank
+        MemHealTestSelect(default 0, id 0x5908_2cf2) : pub get MemHealTestSelect : pub set MemHealTestSelect,
+        MemHealPprType(default 0, id 0x5418_1a61) : pub get MemHealPprType : pub set MemHealPprType,
+        MemHealMaxBankFails(default 3, id 0x632e_55d8) : pub get u8 : pub set u8, // per bank
 
         // Ccx
 
-        ccx_sev_asid_count(default 1, id 0x5587_6720) : pub get CcxSevAsidCount : pub set CcxSevAsidCount,
+        CcxSevAsidCount(default 1, id 0x5587_6720) : pub get CcxSevAsidCount : pub set CcxSevAsidCount,
 
         // Fch
 
-        fch_console_out_mode(default 0, id 0xddb7_59da) : pub get u8 : pub set u8,
-        fch_console_out_basic_enable(default 0, id 0xa0903f98) : pub get u8 : pub set u8, // Rome (Obsolete)
-        fch_console_out_serial_port(default 0, id 0xfff9_f34d) : pub get FchConsoleSerialPort : pub set FchConsoleSerialPort,
-        fch_smbus_speed(default 42, id 0x2447_3329) : pub get FchSmbusSpeed : pub set FchSmbusSpeed,
-        fch_console_out_super_io_type(default 0, id 0x5c8d_6e82) : pub get FchConsoleOutSuperIoType : pub set FchConsoleOutSuperIoType, // init mode
+        FchConsoleOutMode(default 0, id 0xddb7_59da) : pub get u8 : pub set u8,
+        FchConsoleOutBasicEnable(default 0, id 0xa0903f98) : pub get u8 : pub set u8, // Rome (Obsolete)
+        FchConsoleOutSerialPort(default 0, id 0xfff9_f34d) : pub get FchConsoleSerialPort : pub set FchConsoleSerialPort,
+        FchSmbusSpeed(default 42, id 0x2447_3329) : pub get FchSmbusSpeed : pub set FchSmbusSpeed,
+        FchConsoleOutSuperIoType(default 0, id 0x5c8d_6e82) : pub get FchConsoleOutSuperIoType : pub set FchConsoleOutSuperIoType, // init mode
 
         // Df
 
-        df_ext_ip_sync_flood_propagation(default 0, id 0xfffe_0b07) : pub get DfExtIpSyncFloodPropagation : pub set DfExtIpSyncFloodPropagation,
-        df_sync_flood_propagation(default 0, id 0x4963_9134) : pub get DfSyncFloodPropagation : pub set DfSyncFloodPropagation,
-        //df_mem_interleaving(default 7, id 0xce01_87ef) : pub get DfMemInterleaving : pub set DfMemInterleaving,
-        df_mem_interleaving(default 7, id 0xce0176ef) : pub get DfMemInterleaving : pub set DfMemInterleaving, // Rome
-        df_mem_interleaving_size(default 7, id 0x2606_c42e) : pub get DfMemInterleavingSize : pub set DfMemInterleavingSize,
-        df_dram_numa_per_socket(default 1, id 0x2cf3_dac9) : pub get DfDramNumaPerSocket : pub set DfDramNumaPerSocket, // TODO: Maybe the default value here should be 7
-        df_probe_filter(default 1, id 0x6597_c573) : pub get DfToggle : pub set DfToggle,
-        df_mem_clear(default 3, id 0x9d17_7e57) : pub get DfToggle : pub set DfToggle,
-        df_gmi_encrypt(default 0, id 0x08a4_5920) : pub get DfToggle : pub set DfToggle,
-        df_xgmi_encrypt(default 0, id 0x6bd3_2f1c) : pub get DfToggle : pub set DfToggle,
-        df_save_restore_mem_encrypt(default 1, id 0x7b3d_1f75) : pub get DfToggle : pub set DfToggle,
-        df_bottom_io(default 0xe0, id 0x8fb9_8529) : pub get u8 : pub set u8, // Where the PCI MMIO hole will start (bits 31 to 24 inclusive)
-        df_remap_at_1tib(default 0, id 0x35ee_96f3) : pub get DfRemapAt1TiB : pub set DfRemapAt1TiB,
-        df_xgmi_tx_eq_mode(default 0xff, id 0xade7_9549) : pub get DfXgmiTxEqMode : pub set DfXgmiTxEqMode,
-        df_invert_dram_map(default 0, id 0x6574_b2c0) : pub get DfToggle : pub set DfToggle,
+        DfExtIpSyncFloodPropagation(default 0, id 0xfffe_0b07) : pub get DfExtIpSyncFloodPropagation : pub set DfExtIpSyncFloodPropagation,
+        DfSyncFloodPropagation(default 0, id 0x4963_9134) : pub get DfSyncFloodPropagation : pub set DfSyncFloodPropagation,
+        //DfMemInterleaving(default 7, id 0xce01_87ef) : pub get DfMemInterleaving : pub set DfMemInterleaving,
+        DfMemInterleaving(default 7, id 0xce0176ef) : pub get DfMemInterleaving : pub set DfMemInterleaving, // Rome
+        DfMemInterleavingSize(default 7, id 0x2606_c42e) : pub get DfMemInterleavingSize : pub set DfMemInterleavingSize,
+        DfDramNumaPerSocket(default 1, id 0x2cf3_dac9) : pub get DfDramNumaPerSocket : pub set DfDramNumaPerSocket, // TODO: Maybe the default value here should be 7
+        DfProbeFilter(default 1, id 0x6597_c573) : pub get DfToggle : pub set DfToggle,
+        DfMemClear(default 3, id 0x9d17_7e57) : pub get DfToggle : pub set DfToggle,
+        DfGmiEncrypt(default 0, id 0x08a4_5920) : pub get DfToggle : pub set DfToggle,
+        DfXgmiEncrypt(default 0, id 0x6bd3_2f1c) : pub get DfToggle : pub set DfToggle,
+        DfSaveRestoreMemEncrypt(default 1, id 0x7b3d_1f75) : pub get DfToggle : pub set DfToggle,
+        DfBottomIo(default 0xe0, id 0x8fb9_8529) : pub get u8 : pub set u8, // Where the PCI MMIO hole will start (bits 31 to 24 inclusive)
+        DfRemapAt1Tib(default 0, id 0x35ee_96f3) : pub get DfRemapAt1TiB : pub set DfRemapAt1TiB,
+        DfXgmiTxEqMode(default 0xff, id 0xade7_9549) : pub get DfXgmiTxEqMode : pub set DfXgmiTxEqMode,
+        DfInvertDramMap(default 0, id 0x6574_b2c0) : pub get DfToggle : pub set DfToggle,
 
         // Misc
 
-        second_pcie_link_speed(default 0, id 0x8723_750f) : pub get SecondPcieLinkSpeed : pub set SecondPcieLinkSpeed,
-        second_pcie_link_max_payload(default 0xff, id 0xe02d_f04b) : pub get SecondPcieLinkMaxPayload : pub set SecondPcieLinkMaxPayload, // Milan
-        workload_profile(default 0, id 0x22f4_299f) : pub get WorkloadProfile : pub set WorkloadProfile, // Milan
+        SecondPcieLinkSpeed(default 0, id 0x8723_750f) : pub get SecondPcieLinkSpeed : pub set SecondPcieLinkSpeed,
+        SecondPcieLinkMaxPayload(default 0xff, id 0xe02d_f04b) : pub get SecondPcieLinkMaxPayload : pub set SecondPcieLinkMaxPayload, // Milan
+        WorkloadProfile(default 0, id 0x22f4_299f) : pub get WorkloadProfile : pub set WorkloadProfile, // Milan
 
         // MBIST for Milan and Rome; defaults wrong!
 
-        mem_mbist_data_eye_type(default 3, id 0x4e2e_dc1b) : pub get MemMbistDataEyeType : pub set MemMbistDataEyeType,
+        MemMbistDataEyeType(default 3, id 0x4e2e_dc1b) : pub get MemMbistDataEyeType : pub set MemMbistDataEyeType,
         // Byte just like AMD
-        mem_mbist_data_eye_silent_execution(default 0, id 0x3f74_c7e7) : pub get bool : pub set bool, // Milan
-        mem_mbist_worse_cas_granularity(default 0, id 0x23b0b6a1) : pub get u8 : pub set u8, // Rome
-        mem_mbist_read_data_eye_voltage_step(default 0, id 0x35d6a4f8) : pub get u8 : pub set u8, // Rome
-        mem_mbist_aggressor_static_lane_val(default 0, id 0x4474d416) : pub get u8 : pub set u8, // Rome
-        mem_mbist_tgt_static_lane_val(default 0, id 0x4d7e0206) : pub get u8 : pub set u8, // Rome
-        mem_mbist_test_mode(default 0, id 0x567a1fc0) : pub get MemMbistTestMode : pub set MemMbistTestMode, // Rome (Obsolete)
-        mem_mbist_aggressor_static_lane_sel_ecc(default 0, id 0x57122e99) : pub get u8 : pub set u8, // Rome
-        mem_mbist_read_data_eye_timing_step(default 0, id 0x58ccd28a) : pub get u8 : pub set u8, // Rome
-        mem_mbist_data_eye_execution_repeat_count(default 0, id 0x8e4bdad7) : pub get u8 : pub set u8, // Rome; 0..=10
-        mem_mbist_tgt_static_lane_sel_ecc(default 0, id 0xa6e92cee) : pub get u8 : pub set u8, // Rome
-        mem_mbist_pattern_length(default 0, id 0xae7baedd) : pub get u8 : pub set u8, // Rome; that's powers of ten; 3..=12
-        mem_mbist_halt_on_error(default 0, id 0xb1940f25) : pub get u8 : pub set u8, // Rome (Obsolete)
-        mem_mbist_write_data_eye_voltage_step(default 0, id 0xcda61022) : pub get u8 : pub set u8, // Rome
-        mem_mbist_per_bit_slave_die_report(default 0, id 0xcff56411) : pub get u8 : pub set u8, // Rome
-        mem_mbist_write_data_eye_timing_step(default 0, id 0xd9025142) : pub get u8 : pub set u8, // Rome
-        mem_mbist_aggressors_channels(default 0, id 0xdcd1444a) : pub get MemMbistAggressorsChannels : pub set MemMbistAggressorsChannels, // Rome
-        mem_mbist_test(default 0, id 0xdf5502c8) : pub get MemMbistTest : pub set MemMbistTest, // (obsolete)
-        mem_mbist_pattern_select(default 0, id 0xf527ebf8) : pub get MemMbistPatternSelect : pub set MemMbistPatternSelect, // Rome
-        mem_mbist_aggressor_on(default 0, id 0x32361c4) : pub get bool : pub set bool, // Rome; obsolete
+        MemMbistDataEyeSilentExecution(default 0, id 0x3f74_c7e7) : pub get bool : pub set bool, // Milan
+        MemMbistWorseCasGranularity(default 0, id 0x23b0b6a1) : pub get u8 : pub set u8, // Rome
+        MemMbistReadDataEyeVoltageStep(default 0, id 0x35d6a4f8) : pub get u8 : pub set u8, // Rome
+        MemMbistAggressorStaticLaneVal(default 0, id 0x4474d416) : pub get u8 : pub set u8, // Rome
+        MemMbistTgtStaticLaneVal(default 0, id 0x4d7e0206) : pub get u8 : pub set u8, // Rome
+        MemMbistTestMode(default 0, id 0x567a1fc0) : pub get MemMbistTestMode : pub set MemMbistTestMode, // Rome (Obsolete)
+        MemMbistAggressorStaticLaneSelEcc(default 0, id 0x57122e99) : pub get u8 : pub set u8, // Rome
+        MemMbistReadDataEyeTimingStep(default 0, id 0x58ccd28a) : pub get u8 : pub set u8, // Rome
+        MemMbistDataEyeExecutionRepeatCount(default 0, id 0x8e4bdad7) : pub get u8 : pub set u8, // Rome; 0..=10
+        MemMbistTgtStaticLaneSelEcc(default 0, id 0xa6e92cee) : pub get u8 : pub set u8, // Rome
+        MemMbistPatternLength(default 0, id 0xae7baedd) : pub get u8 : pub set u8, // Rome; that's powers of ten; 3..=12
+        MemMbistHaltOnError(default 0, id 0xb1940f25) : pub get u8 : pub set u8, // Rome (Obsolete)
+        MemMbistWriteDataEyeVoltageStep(default 0, id 0xcda61022) : pub get u8 : pub set u8, // Rome
+        MemMbistPerBitSlaveDieReport(default 0, id 0xcff56411) : pub get u8 : pub set u8, // Rome
+        MemMbistWriteDataEyeTimingStep(default 0, id 0xd9025142) : pub get u8 : pub set u8, // Rome
+        MemMbistAggressorsChannels(default 0, id 0xdcd1444a) : pub get MemMbistAggressorsChannels : pub set MemMbistAggressorsChannels, // Rome
+        MemMbistTest(default 0, id 0xdf5502c8) : pub get MemMbistTest : pub set MemMbistTest, // (obsolete)
+        MemMbistPatternSelect(default 0, id 0xf527ebf8) : pub get MemMbistPatternSelect : pub set MemMbistPatternSelect, // Rome
+        MemMbistAggressorOn(default 0, id 0x32361c4) : pub get bool : pub set bool, // Rome; obsolete
 
         // Unsorted Milan; defaults wrong!
 
-        mem_override_dimm_spd_max_activity_count(default 0xff, id 0x853cdaa) : pub get MemMaxActivityCount : pub set MemMaxActivityCount,
-        gnb_smu_df_pstate_fclk_limit(default 0xff, id 0xea388ac3) : pub get GnbSmuDfPstateFclkLimit : pub set GnbSmuDfPstateFclkLimit, // Milan
+        MemOverrideDimmSpdMaxActivityCount(default 0xff, id 0x853cdaa) : pub get MemMaxActivityCount : pub set MemMaxActivityCount,
+        GnbSmuDfPstateFclkLimit(default 0xff, id 0xea388ac3) : pub get GnbSmuDfPstateFclkLimit : pub set GnbSmuDfPstateFclkLimit, // Milan
 
         // Unsorted Rome; ungrouped; defaults wrong!
 
         // I doubt that AMD converts those, but the 2 lowest bits usually set up the resolution. 0: 0.5 ºC; 1: 0.25 ºC; 2: 0.125 ºC; 3: 0.0625 ºC; higher resolution is slower.
-        dimm_sensor_resolution(default 0, id 0x831af313) : pub get u8 : pub set u8, // Rome (Obsolete); DIMM temperature sensor register at address 8
-        pcie_reset_pin_select(default 0, id 0x8c0b2de9) : pub get u8 : pub set u8, // value 2 // Rome; 0..=4; FIXME: enum?
-        mem_dram_address_command_parity_retry_count(default 0, id 0x3e7c51f8) : pub get u8 : pub set u8, // value 1 // Rome
-        mem_parity_error_max_replay_ddr4(default 0, id 0xc9e9a1c9) : pub get u8 : pub set u8, // value 8 // Rome // 0..=0x3f (6 bit)
-        df_2link_max_xgmi_speed(default 0, id 0xd19c_6e80): pub get DfXgmi2LinkMaxSpeed : pub set DfXgmi2LinkMaxSpeed, // Genoa
-        df_3link_max_xgmi_speed(default 0, id 0x53ba449b) : pub get DfXgmi3LinkMaxSpeed : pub set DfXgmi3LinkMaxSpeed, // value 0xff // Rome
-        df_4link_max_xgmi_speed(default 0, id 0x3f307cb3) : pub get DfXgmi4LinkMaxSpeed : pub set DfXgmi4LinkMaxSpeed, // value 0xff //  Rome
-        mem_dram_double_refresh_rate(default 0, id 0x44d40026) : pub get u8 : pub set u8, // value 0 // Rome
+        DimmSensorResolution(default 0, id 0x831af313) : pub get u8 : pub set u8, // Rome (Obsolete); DIMM temperature sensor register at address 8
+        PcieResetPinSelect(default 0, id 0x8c0b2de9) : pub get u8 : pub set u8, // value 2 // Rome; 0..=4; FIXME: enum?
+        MemDramAddressCommandParityRetryCount(default 0, id 0x3e7c51f8) : pub get u8 : pub set u8, // value 1 // Rome
+        MemParityErrorMaxReplayDdr4(default 0, id 0xc9e9a1c9) : pub get u8 : pub set u8, // value 8 // Rome // 0..=0x3f (6 bit)
+        Df2LinkMaxXgmiSpeed(default 0, id 0xd19c_6e80): pub get DfXgmi2LinkMaxSpeed : pub set DfXgmi2LinkMaxSpeed, // Genoa
+        Df3LinkMaxXgmiSpeed(default 0, id 0x53ba449b) : pub get DfXgmi3LinkMaxSpeed : pub set DfXgmi3LinkMaxSpeed, // value 0xff // Rome
+        Df4LinkMaxXgmiSpeed(default 0, id 0x3f307cb3) : pub get DfXgmi4LinkMaxSpeed : pub set DfXgmi4LinkMaxSpeed, // value 0xff //  Rome
+        MemDramDoubleRefreshRate(default 0, id 0x44d40026) : pub get u8 : pub set u8, // value 0 // Rome
         // See UMC::CH::ThrottleCtrl RollWindowDepth
-        mem_roll_window_depth(default 0xff, id 0x5985083a) : pub get MemThrottleCtrlRollWindowDepth : pub set MemThrottleCtrlRollWindowDepth, // Rome
-        df_pstate_mode_select(default 0xff, id 0xaeb84b12) : pub get DfPstateModeSelect : pub set DfPstateModeSelect, // value 0xff // Rome
-        df_xgmi_config(default 3, id 0xb0b6ad3e) : pub get DfXgmiLinkConfig : pub set DfXgmiLinkConfig, // Rome
+        MemRollWindowDepth(default 0xff, id 0x5985083a) : pub get MemThrottleCtrlRollWindowDepth : pub set MemThrottleCtrlRollWindowDepth, // Rome
+        DfPstateModeSelect(default 0xff, id 0xaeb84b12) : pub get DfPstateModeSelect : pub set DfPstateModeSelect, // value 0xff // Rome
+        DfXgmiConfig(default 3, id 0xb0b6ad3e) : pub get DfXgmiLinkConfig : pub set DfXgmiLinkConfig, // Rome
         // See DramTiming15_UMCWPHY0_mp0_umc0 CmdParLatency (for the DDR4 Registering Clock Driver).
         // See also JESD82-31A DDR4 REGISTERING CLOCK DRIVER.
         // See also <https://github.com/enjoy-digital/litedram/blob/master/litedram/init.py#L460>.
-        mem_rdimm_timing_rcd_f0rc0f_additional_latency(default 0xff, id 0xd155798a) : pub get MemRdimmTimingCmdParLatency : pub set MemRdimmTimingCmdParLatency, // Rome
-        mem_data_scramble(default 0, id 0x98aca5b4) : pub get u8 : pub set u8, // Rome (Obsolete)
-        mem_auto_refresh_fine_gran_mode(default 0, id 0x190305df) : pub get MemAutoRefreshFineGranMode : pub set MemAutoRefreshFineGranMode, // value 0 // Rome (Obsolete)
-        uma_mode(default 0, id 0x1fb35295) : pub get UmaMode : pub set UmaMode, // value 2 // Rome (Obsolete)
-        mem_nvdimm_power_source(default 0, id 0x286d0075) : pub get MemNvdimmPowerSource : pub set MemNvdimmPowerSource, // value 1 // Rome (Obsolete)
-        mem_data_poison(default 0, id 0x48959473) : pub get MemDataPoison : pub set MemDataPoison, // value 1 // Rome (Obsolete)
+        MemRdimmTimingRcdF0Rc0FAdditionalLatency(default 0xff, id 0xd155798a) : pub get MemRdimmTimingCmdParLatency : pub set MemRdimmTimingCmdParLatency, // Rome
+        MemDataScramble(default 0, id 0x98aca5b4) : pub get u8 : pub set u8, // Rome (Obsolete)
+        MemAutoRefreshFineGranMode(default 0, id 0x190305df) : pub get MemAutoRefreshFineGranMode : pub set MemAutoRefreshFineGranMode, // value 0 // Rome (Obsolete)
+        UmaMode(default 0, id 0x1fb35295) : pub get UmaMode : pub set UmaMode, // value 2 // Rome (Obsolete)
+        MemNvdimmPowerSource(default 0, id 0x286d0075) : pub get MemNvdimmPowerSource : pub set MemNvdimmPowerSource, // value 1 // Rome (Obsolete)
+        MemDataPoison(default 0, id 0x48959473) : pub get MemDataPoison : pub set MemDataPoison, // value 1 // Rome (Obsolete)
         // See PPR SwCmdThrotCyc
-        sw_cmd_throt_cycles(default 0, id 0xdcec8fcb) : pub get u8 : pub set u8, // value 0 // (Obsolete)
-        odts_cmd_throttle_cycles(default 0, id 0x69318e90) : pub get u8 : pub set u8, // value 0x57 // Rome (Obsolete); TODO: Auto?
-        mem_dram_vref_range(default 0, id 0xa8769655) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
-        mem_cpu_vref_range(default 0, id 0x7627cb6d) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
-        mem_controller_writing_crc_mode(default 0, id 0x7d1c6e46) : pub get MemControllerWritingCrcMode : pub set MemControllerWritingCrcMode, // value 0 // Rome
-        mem_controller_writing_crc_max_replay(default 0, id 0x6bb1acf9) : pub get u8 : pub set u8, // value 8 // Rome
-        mem_controller_writing_crc_limit(default 0, id 0xc73a7692) : pub get u8 : pub set u8, // 0..=1 // Rome
-        pmu_training_mode(default 0xff, id 0xbd4a6afc) : pub get MemControllerPmuTrainingMode : pub set MemControllerPmuTrainingMode, // Rome (Obsolete)
-        df_sys_storage_at_top_of_mem(default 0xff, id 0x249e08d5) : pub get DfSysStorageAtTopOfMem : pub set DfSysStorageAtTopOfMem,
+        SwCmdThrotCycles(default 0, id 0xdcec8fcb) : pub get u8 : pub set u8, // value 0 // (Obsolete)
+        OdtsCmdThrottleCycles(default 0, id 0x69318e90) : pub get u8 : pub set u8, // value 0x57 // Rome (Obsolete); TODO: Auto?
+        MemDramVrefRange(default 0, id 0xa8769655) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
+        MemCpuVrefRange(default 0, id 0x7627cb6d) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
+        MemControllerWritingCrcMode(default 0, id 0x7d1c6e46) : pub get MemControllerWritingCrcMode : pub set MemControllerWritingCrcMode, // value 0 // Rome
+        MemControllerWritingCrcMaxReplay(default 0, id 0x6bb1acf9) : pub get u8 : pub set u8, // value 8 // Rome
+        MemControllerWritingCrcLimit(default 0, id 0xc73a7692) : pub get u8 : pub set u8, // 0..=1 // Rome
+        PmuTrainingMode(default 0xff, id 0xbd4a6afc) : pub get MemControllerPmuTrainingMode : pub set MemControllerPmuTrainingMode, // Rome (Obsolete)
+        DfSysStorageAtTopOfMem(default 0xff, id 0x249e08d5) : pub get DfSysStorageAtTopOfMem : pub set DfSysStorageAtTopOfMem,
 
         // BMC Rome
 
-        bmc_socket(default 0, id 0x846573f9) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
-        bmc_device(default 0, id 0xd5bc5fc9) : pub get u8 : pub set u8, // value 5 // Rome (Obsolete)
-        bmc_function(default 0, id 0x1de4dd61) : pub get u8 : pub set u8, // value 2 // Rome (Obsolete)
-        bmc_start_lane(default 0, id 0xb88d87df) : pub get u8 : pub set u8, // value 0x81 // Rome (Obsolete)
-        bmc_end_lane(default 0, id 0x143f3963) : pub get u8 : pub set u8, // value 0x81 // Rome (Obsolete)
-        bmc_vga_io_port_size(default 0, id 0xfc3f2520) : pub get u16 : pub set u16, // value 0 // legacy
-        bmc_vga_io_bar_to_replace(default 0, id 0x2c81a37f) : pub get u8 : pub set u8, // value 0; 0 to 6 // legacy
-        bmc_gen2_tx_deemphasis(default 0xff, id 0xf30d142d) : pub get BmcGen2TxDeemphasis : pub set BmcGen2TxDeemphasis, // value 0xff
-        bmc_link_speed(default 0, id 0x9c790f4b) : pub get BmcLinkSpeed : pub set BmcLinkSpeed, // value 1
+        BmcSocket(default 0, id 0x846573f9) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
+        BmcDevice(default 0, id 0xd5bc5fc9) : pub get u8 : pub set u8, // value 5 // Rome (Obsolete)
+        BmcFunction(default 0, id 0x1de4dd61) : pub get u8 : pub set u8, // value 2 // Rome (Obsolete)
+        BmcStartLane(default 0, id 0xb88d87df) : pub get u8 : pub set u8, // value 0x81 // Rome (Obsolete)
+        BmcEndLane(default 0, id 0x143f3963) : pub get u8 : pub set u8, // value 0x81 // Rome (Obsolete)
+        BmcVgaIoPortSize(default 0, id 0xfc3f2520) : pub get u16 : pub set u16, // value 0 // legacy
+        BmcVgaIoBarToReplace(default 0, id 0x2c81a37f) : pub get u8 : pub set u8, // value 0; 0 to 6 // legacy
+        BmcGen2TxDeemphasis(default 0xff, id 0xf30d142d) : pub get BmcGen2TxDeemphasis : pub set BmcGen2TxDeemphasis, // value 0xff
+        BmcLinkSpeed(default 0, id 0x9c790f4b) : pub get BmcLinkSpeed : pub set BmcLinkSpeed, // value 1
         /// See <https://www.techdesignforums.com/practice/technique/common-pitfalls-in-pci-express-design/>.
-        bmc_rcb_checking_mode(default 0, id 0xae7f0df4) : pub get BmcRcbCheckingMode : pub set BmcRcbCheckingMode, // value 0xff // Rome
+        BmcRcbCheckingMode(default 0, id 0xae7f0df4) : pub get BmcRcbCheckingMode : pub set BmcRcbCheckingMode, // value 0xff // Rome
     }
 }
 make_token_accessors! {
-    #[allow(non_camel_case_types)]
     #[non_exhaustive]
     pub enum WordToken: {TokenEntryId::Word} {
         // PSP
 
-        psp_syshub_watchdog_timer_interval(default 2600, id 0xedb5_e4c9) : pub get u16 : pub set u16, // in ms
+        PspSyshubWatchdogTimerInterval(default 2600, id 0xedb5_e4c9) : pub get u16 : pub set u16, // in ms
 
         // Memory Controller
 
-        cbs_mem_power_down_delay(default 0xff, id 0x1ebe_755a) : pub get CbsMemPowerDownDelay : pub set CbsMemPowerDownDelay,
+        CbsMemPowerDownDelay(default 0xff, id 0x1ebe_755a) : pub get CbsMemPowerDownDelay : pub set CbsMemPowerDownDelay,
 
         // Fch
 
-        fch_gpp_clk_map(default 0xffff, id 0xcd7e_6983) : pub get FchGppClkMap : pub set FchGppClkMap,
+        FchGppClkMap(default 0xffff, id 0xcd7e_6983) : pub get FchGppClkMap : pub set FchGppClkMap,
 
         // Unsorted Milan; obsolete and ungrouped; defaults wrong!
 
-        dimm_3ds_sensor_critical(default 0, id 0x16b77f73) : pub get u16 : pub set u16, // value 0x50 // (Obsolete; added in Milan)
-        dimm_3ds_sensor_upper(default 0, id 0x2db877e4) : pub get u16 : pub set u16, // value 0x42 // (Obsolete; added in Milan)
+        Dimm3DsSensorCritical(default 0, id 0x16b77f73) : pub get u16 : pub set u16, // value 0x50 // (Obsolete; added in Milan)
+        Dimm3DsSensorUpper(default 0, id 0x2db877e4) : pub get u16 : pub set u16, // value 0x42 // (Obsolete; added in Milan)
 
         // Unsorted Rome; ungrouped; defaults wrong!
 
-        ecc_symbol_size(default 1, id 0x302d5c04) : pub get EccSymbolSize : pub set EccSymbolSize, // Rome (Obsolete)
-        scrub_dram_rate(default 0, id 0x9adddd6b) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16; or 0xff
-        scrub_l2_rate(default 0, id 0x2266c144) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16
-        scrub_l3_rate(default 0, id 0xc0279ae0) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16; maybe 00h disable; maybe otherwise x: (x * 20 ns)
-        scrub_icache_rate(default 0, id 0x99639ee4) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16
-        scrub_dcache_rate(default 0, id 0xb398daa0) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16
+        EccSymbolSize(default 1, id 0x302d5c04) : pub get EccSymbolSize : pub set EccSymbolSize, // Rome (Obsolete)
+        ScrubDramRate(default 0, id 0x9adddd6b) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16; or 0xff
+        ScrubL2Rate(default 0, id 0x2266c144) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16
+        ScrubL3Rate(default 0, id 0xc0279ae0) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16; maybe 00h disable; maybe otherwise x: (x * 20 ns)
+        ScrubIcacheRate(default 0, id 0x99639ee4) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16
+        ScrubDcacheRate(default 0, id 0xb398daa0) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16
         // See for example MCP9843/98243
-        dimm_sensor_config(default 0x408, id 0x51e7b610) : pub get u16 : pub set u16, // Rome (Obsolete) DIMM temperature sensor register at address 1
-        dimm_sensor_upper(default 80, id 0xb5af557a) : pub get u16 : pub set u16, // Rome (Obsolete); DIMM temperature sensor register at address 2
-        dimm_sensor_lower(default 10, id 0xc5ea38a0) : pub get u16 : pub set u16, // Rome (Obsolete); DIMM temperature sensor register at address 3
-        dimm_sensor_critical(default 95, id 0x38e9bf5d) : pub get u16 : pub set u16, // Rome (Obsolete); DIMM temperature sensor register at address 4
+        DimmSensorConfig(default 0x408, id 0x51e7b610) : pub get u16 : pub set u16, // Rome (Obsolete) DIMM temperature sensor register at address 1
+        DimmSensorUpper(default 80, id 0xb5af557a) : pub get u16 : pub set u16, // Rome (Obsolete); DIMM temperature sensor register at address 2
+        DimmSensorLower(default 10, id 0xc5ea38a0) : pub get u16 : pub set u16, // Rome (Obsolete); DIMM temperature sensor register at address 3
+        DimmSensorCritical(default 95, id 0x38e9bf5d) : pub get u16 : pub set u16, // Rome (Obsolete); DIMM temperature sensor register at address 4
 
         // BMC Rome
 
-        bmc_vga_io_port(default 0, id 0x6e06198) : pub get u16 : pub set u16, // value 0 // legacy
+        BmcVgaIoPort(default 0, id 0x6e06198) : pub get u16 : pub set u16, // value 0 // legacy
     }
 }
 make_token_accessors! {
-    #[allow(non_camel_case_types)]
     #[non_exhaustive]
     pub enum DwordToken: {TokenEntryId::Dword} {
         // Memory Controller
 
-        mem_bus_frequency_limit(default 1600, id 0x3497_0a3c) : pub get MemBusFrequencyLimit : pub set MemBusFrequencyLimit,
-        mem_clock_value(default 0xffff_ffff, id 0xcc83_f65f) : pub get MemClockValue : pub set MemClockValue,
-        mem_user_timing_mode(default 0xff, id 0xfc56_0d7d) : pub get MemUserTimingMode : pub set MemUserTimingMode,
-        mem_self_heal_bist_timeout(default 1_0000, id 0xbe75_97d4) : pub get u32 : pub set u32, // in ms
-        mem_restore_valid_days(default 30, id 0x6bd7_0482) : pub get u32 : pub set u32,
+        MemBusFrequencyLimit(default 1600, id 0x3497_0a3c) : pub get MemBusFrequencyLimit : pub set MemBusFrequencyLimit,
+        MemClockValue(default 0xffff_ffff, id 0xcc83_f65f) : pub get MemClockValue : pub set MemClockValue,
+        MemUserTimingMode(default 0xff, id 0xfc56_0d7d) : pub get MemUserTimingMode : pub set MemUserTimingMode,
+        MemSelfHealBistTimeout(default 1_0000, id 0xbe75_97d4) : pub get u32 : pub set u32, // in ms
+        MemRestoreValidDays(default 30, id 0x6bd7_0482) : pub get u32 : pub set u32,
 
         // Ccx
 
-        ccx_min_sev_asid(default 1, id 0xa7c3_3753) : pub get u32 : pub set u32,
+        CcxMinSevAsid(default 1, id 0xa7c3_3753) : pub get u32 : pub set u32,
 
         // Fch
 
-        fch_rom3_base_high(default 0, id 0x3e7d_5274) : pub get u32 : pub set u32,
+        FchRom3BaseHigh(default 0, id 0x3e7d_5274) : pub get u32 : pub set u32,
 
         // Df
 
-        df_pci_mmio_size(default 0x1000_0000, id 0x3d9b_7d7b) : pub get u32 : pub set u32,
-        df_cake_crc_threshold_bounds(default 100, id 0x9258_cf45) : pub get DfCakeCrcThresholdBounds : pub set DfCakeCrcThresholdBounds, // default: 0.001%
+        DfPciMmioSize(default 0x1000_0000, id 0x3d9b_7d7b) : pub get u32 : pub set u32,
+        DfCakeCrcThresholdBounds(default 100, id 0x9258_cf45) : pub get DfCakeCrcThresholdBounds : pub set DfCakeCrcThresholdBounds, // default: 0.001%
 
         // Dxio
 
-        dxio_phy_param_vga(default 0xffff_ffff, id 0xde09_c43b) : pub get DxioPhyParamVga : pub set DxioPhyParamVga,
-        dxio_phy_param_pole(default 0xffff_ffff, id 0xb189_447e) : pub get DxioPhyParamPole : pub set DxioPhyParamPole,
-        dxio_phy_param_dc(default 0xffff_ffff, id 0x2066_7c30) : pub get DxioPhyParamDc : pub set DxioPhyParamDc,
-        dxio_phy_param_iqofc(default 0, id 0x7e60_69c5) : pub get DxioPhyParamIqofc : pub set DxioPhyParamIqofc, // TODO: Before using default, fix default.  It's possibly not correct.
+        DxioPhyParamVga(default 0xffff_ffff, id 0xde09_c43b) : pub get DxioPhyParamVga : pub set DxioPhyParamVga,
+        DxioPhyParamPole(default 0xffff_ffff, id 0xb189_447e) : pub get DxioPhyParamPole : pub set DxioPhyParamPole,
+        DxioPhyParamDc(default 0xffff_ffff, id 0x2066_7c30) : pub get DxioPhyParamDc : pub set DxioPhyParamDc,
+        DxioPhyParamIqofc(default 0, id 0x7e60_69c5) : pub get DxioPhyParamIqofc : pub set DxioPhyParamIqofc, // TODO: Before using default, fix default.  It's possibly not correct.
 
         // MBIST for Milan and Rome; defaults wrong!
 
-        mem_mbist_aggressor_static_lane_sel_lo(default 0, id 0x745218ad) : pub get u32 : pub set u32, // Rome
-        mem_mbist_aggressor_static_lane_sel_hi(default 0, id 0xfac9f48f) : pub get u32 : pub set u32, // Rome
-        mem_mbist_tgt_static_lane_sel_lo(default 0, id 0x81880d15) : pub get u32 : pub set u32, // value 0 // Rome
-        mem_mbist_tgt_static_lane_sel_hi(default 0, id 0xaf669f33) : pub get u32 : pub set u32, // value 0 // Rome
+        MemMbistAggressorStaticLaneSelLo(default 0, id 0x745218ad) : pub get u32 : pub set u32, // Rome
+        MemMbistAggressorStaticLaneSelHi(default 0, id 0xfac9f48f) : pub get u32 : pub set u32, // Rome
+        MemMbistTgtStaticLaneSelLo(default 0, id 0x81880d15) : pub get u32 : pub set u32, // value 0 // Rome
+        MemMbistTgtStaticLaneSelHi(default 0, id 0xaf669f33) : pub get u32 : pub set u32, // value 0 // Rome
 
         // Unsorted Milan; defaults wrong!
 
-        gnb_off_ramp_stall(default 0, id 0x88b3c0d4) : pub get u32 : pub set u32, // value 0xc8
-        psp_measure_config(default 0, id 0xdd3ad029) : pub get u32 : pub set u32, // Milan; reserved, must be 0
+        GnbOffRampStall(default 0, id 0x88b3c0d4) : pub get u32 : pub set u32, // value 0xc8
+        PspMeasureConfig(default 0, id 0xdd3ad029) : pub get u32 : pub set u32, // Milan; reserved, must be 0
 
         // Unsorted Rome; ungrouped; defaults wrong!
 
-        mem_power_down_mode(default 0, id 0x23dd2705) : pub get u32 : pub set u32, // power_down_mode; Rome
-        mem_uma_size(default 0, id 0x37b1f8cf) : pub get u32 : pub set u32, // uma_size; Rome // FIXME enum
-        mem_uma_alignment(default 0, id 0x57ddf512) : pub get u32 : pub set u32, // value 0xffffc0 // Rome // FIXME enum?
-        pcie_reset_gpio_pin(default 0, id 0x596663ac) : pub get u32 : pub set u32, // value 0xffffffff // Rome; FIXME: enum?
-        cpu_fetch_from_spi_ap_base(default 0, id 0xd403ea0e) : pub get u32 : pub set u32, // value 0xfff00000 // Rome
+        MemPowerDownMode(default 0, id 0x23dd2705) : pub get u32 : pub set u32, // power_down_mode; Rome
+        MemUmaSize(default 0, id 0x37b1f8cf) : pub get u32 : pub set u32, // uma_size; Rome // FIXME enum
+        MemUmaAlignment(default 0, id 0x57ddf512) : pub get u32 : pub set u32, // value 0xffffc0 // Rome // FIXME enum?
+        PcieResetGpioPin(default 0, id 0x596663ac) : pub get u32 : pub set u32, // value 0xffffffff // Rome; FIXME: enum?
+        CpuFetchFromSpiApBase(default 0, id 0xd403ea0e) : pub get u32 : pub set u32, // value 0xfff00000 // Rome
     }
 }
 make_token_accessors! {
-    #[allow(non_camel_case_types)]
     #[non_exhaustive]
     pub enum BoolToken: {TokenEntryId::Bool} {
         // PSP
 
-        psp_tp_port(default 1, id 0x0460_abe8) : pub get bool : pub set bool,
-        psp_error_display(default 1, id 0xdc33_ff21) : pub get bool : pub set bool,
-        psp_event_log_display(default 0, id 0x0c47_3e1c) : pub get bool : pub set bool,
-        psp_stop_on_error(default 0, id 0xe702_4a21) : pub get bool : pub set bool,
-        psp_psb_auto_fuse(default 1, id 0x2fcd_70c9) : pub get bool : pub set bool,
+        PspTpPort(default 1, id 0x0460_abe8) : pub get bool : pub set bool,
+        PspErrorDisplay(default 1, id 0xdc33_ff21) : pub get bool : pub set bool,
+        PspEventLogDisplay(default 0, id 0x0c47_3e1c) : pub get bool : pub set bool,
+        PspStopOnError(default 0, id 0xe702_4a21) : pub get bool : pub set bool,
+        PspPsbAutoFuse(default 1, id 0x2fcd_70c9) : pub get bool : pub set bool,
 
         // Memory Controller
 
-        mem_enable_chip_select_interleaving(default 1, id 0x6f81_a115) : pub get bool : pub set bool,
-        mem_enable_ecc_feature(default 1, id 0xfa35_f040) : pub get bool : pub set bool,
-        mem_enable_parity(default 1, id 0x3cb8_cbd2) : pub get bool : pub set bool,
-        mem_enable_bank_swizzle(default 1, id 0x6414_d160) : pub get bool : pub set bool,
-        mem_ignore_spd_checksum(default 0, id 0x7d36_9dbc) : pub get bool : pub set bool,
-        mem_spd_read_optimization_ddr4(default 1, id 0x6816_f949) : pub get bool : pub set bool,
-        cbs_mem_spd_read_optimization_ddr4(default 1, id 0x8d3a_b10e) : pub get bool : pub set bool,
-        mem_enable_power_down(default 1, id 0xbbb1_85a2) : pub get bool : pub set bool,
-        mem_temp_controlled_refresh_enable(default 0, id 0xf051_e1c4) : pub get bool : pub set bool,
-        mem_odts_cmd_throttle_enable(default 1, id 0xc073_6395) : pub get bool : pub set bool,
-        mem_sw_cmd_throttle_enable(default 0, id 0xa29c_1cf9) : pub get bool : pub set bool,
-        mem_force_power_down_throttle_enable(default 1, id 0x1084_9d6c) : pub get bool : pub set bool,
-        mem_hole_remapping(default 1, id 0x6a13_3ac5) : pub get bool : pub set bool,
-        mem_enable_bank_group_swap_alt(default 1, id 0xa89d_1be8) : pub get bool : pub set bool,
-        mem_enable_bank_group_swap(default 1, id 0x4692_0968) : pub get bool : pub set bool,
-        mem_ddr_route_balanced_tee(default 0, id 0xe68c_363d) : pub get bool : pub set bool,
-        cbs_mem_write_crc_retry_ddr4(default 0, id 0x25fb_6ea6) : pub get bool : pub set bool,
-        cbs_mem_controller_write_crc_enable_ddr4(default 0, id 0x9445_1a4b) : pub get bool : pub set bool,
-        mem_uncorrected_ecc_retry_ddr4(default 1, id 0xbff0_0125) : pub get bool : pub set bool,
-        mem_tsme_mode_milan(default 1, id 0xd1fa_6660) : pub get bool : pub set bool, // See Transparent Secure Memory Encryption in PPR
-        mem_ecc_sync_flood(default 0, id 0x88bd_40c2) : pub get bool : pub set bool,
-        mem_restore_control(default 0, id 0xfedb_01f8) : pub get bool : pub set bool,
-        mem_post_package_repair_enable(default 0, id 0xcdc0_3e4e) : pub get bool : pub set bool,
+        MemEnableChipSelectInterleaving(default 1, id 0x6f81_a115) : pub get bool : pub set bool,
+        MemEnableEccFeature(default 1, id 0xfa35_f040) : pub get bool : pub set bool,
+        MemEnableParity(default 1, id 0x3cb8_cbd2) : pub get bool : pub set bool,
+        MemEnableBankSwizzle(default 1, id 0x6414_d160) : pub get bool : pub set bool,
+        MemIgnoreSpdChecksum(default 0, id 0x7d36_9dbc) : pub get bool : pub set bool,
+        MemSpdReadOptimizationDdr4(default 1, id 0x6816_f949) : pub get bool : pub set bool,
+        CbsMemSpdReadOptimizationDdr4(default 1, id 0x8d3a_b10e) : pub get bool : pub set bool,
+        MemEnablePowerDown(default 1, id 0xbbb1_85a2) : pub get bool : pub set bool,
+        MemTempControlledRefreshEnable(default 0, id 0xf051_e1c4) : pub get bool : pub set bool,
+        MemOdtsCmdThrottleEnable(default 1, id 0xc073_6395) : pub get bool : pub set bool,
+        MemSwCmdThrottleEnable(default 0, id 0xa29c_1cf9) : pub get bool : pub set bool,
+        MemForcePowerDownThrottleEnable(default 1, id 0x1084_9d6c) : pub get bool : pub set bool,
+        MemHoleRemapping(default 1, id 0x6a13_3ac5) : pub get bool : pub set bool,
+        MemEnableBankGroupSwapAlt(default 1, id 0xa89d_1be8) : pub get bool : pub set bool,
+        MemEnableBankGroupSwap(default 1, id 0x4692_0968) : pub get bool : pub set bool,
+        MemDdrRouteBalancedTee(default 0, id 0xe68c_363d) : pub get bool : pub set bool,
+        CbsMemWriteCrcRetryDdr4(default 0, id 0x25fb_6ea6) : pub get bool : pub set bool,
+        CbsMemControllerWriteCrcEnableDdr4(default 0, id 0x9445_1a4b) : pub get bool : pub set bool,
+        MemUncorrectedEccRetryDdr4(default 1, id 0xbff0_0125) : pub get bool : pub set bool,
+        MemTsmeModeMilan(default 1, id 0xd1fa_6660) : pub get bool : pub set bool, // See Transparent Secure Memory Encryption in PPR
+        MemEccSyncFlood(default 0, id 0x88bd_40c2) : pub get bool : pub set bool,
+        MemRestoreControl(default 0, id 0xfedb_01f8) : pub get bool : pub set bool,
+        MemPostPackageRepairEnable(default 0, id 0xcdc0_3e4e) : pub get bool : pub set bool,
 
         // Ccx
 
-        ccx_ppin_opt_in(default 0, id 0x6a67_00fd) : pub get bool : pub set bool,
+        CcxPpinOptIn(default 0, id 0x6a67_00fd) : pub get bool : pub set bool,
 
         // Df
 
-        df_group_d_platform(default 0, id 0x6831_8493) : pub get bool : pub set bool, // [F17M30] needs it to be true
+        DfGroupDPlatform(default 0, id 0x6831_8493) : pub get bool : pub set bool, // [F17M30] needs it to be true
 
         // Dxio
 
-        dxio_vga_api_enable(default 0, id 0xbd5a_a3c6) : pub get bool : pub set bool, // Milan
+        DxioVgaApiEnable(default 0, id 0xbd5a_a3c6) : pub get bool : pub set bool, // Milan
 
         // Misc
 
-        configure_second_pcie_link(default 0, id 0x7142_8092) : pub get bool : pub set bool,
-        performance_tracing(default 0, id 0xf27a_10f0) : pub get bool : pub set bool, // Milan
-        display_pmu_training_results(default 0, id 0x9e36_a9d4) : pub get bool : pub set bool,
+        ConfigureSecondPcieLink(default 0, id 0x7142_8092) : pub get bool : pub set bool,
+        PerformanceTracing(default 0, id 0xf27a_10f0) : pub get bool : pub set bool, // Milan
+        DisplayPmuTrainingResults(default 0, id 0x9e36_a9d4) : pub get bool : pub set bool,
 
         // MBIST for Milan and Rome; defaults wrong!
 
-        mem_mbist_aggressor_static_lane_control(default 0, id 0x77e6f2c9) : pub get bool : pub set bool, // Rome
-        mem_mbist_tgt_static_lane_control(default 0, id 0xe1cc135e) : pub get bool : pub set bool, // Rome
+        MemMbistAggressorStaticLaneControl(default 0, id 0x77e6f2c9) : pub get bool : pub set bool, // Rome
+        MemMbistTgtStaticLaneControl(default 0, id 0xe1cc135e) : pub get bool : pub set bool, // Rome
 
         // Capabilities for Rome; defaults wrong!
 
-        mem_udimm_capable(default 0, id 0x3cf8a8ec) : pub get bool : pub set bool, // Rome
-        mem_sodimm_capable(default 0, id 0x7c61c187) : pub get bool : pub set bool, // Rome
-        mem_rdimm_capable(default 0, id 0x81726666) : pub get bool : pub set bool, // Rome
-        mem_lrdimm_capable(default 0, id 0x14fbf20) : pub get bool : pub set bool,
-        mem_dimm_type_lpddr3_capable(default 0, id 0xad96aa30) : pub get bool : pub set bool, // Rome
-        mem_dimm_type_ddr3_capable(default 0, id 0x789210c) : pub get bool : pub set bool, // Rome
-        mem_quad_rank_capable(default 0, id 0xe6dfd3dc) : pub get bool : pub set bool, // Rome
+        MemUdimmCapable(default 0, id 0x3cf8a8ec) : pub get bool : pub set bool, // Rome
+        MemSodimmCapable(default 0, id 0x7c61c187) : pub get bool : pub set bool, // Rome
+        MemRdimmCapable(default 0, id 0x81726666) : pub get bool : pub set bool, // Rome
+        MemLrdimmCapable(default 0, id 0x14fbf20) : pub get bool : pub set bool,
+        MemDimmTypeLpddr3Capable(default 0, id 0xad96aa30) : pub get bool : pub set bool, // Rome
+        MemDimmTypeDdr3Capable(default 0, id 0x789210c) : pub get bool : pub set bool, // Rome
+        MemQuadRankCapable(default 0, id 0xe6dfd3dc) : pub get bool : pub set bool, // Rome
 
         // Unsorted Milan; defaults wrong!
 
-        mem_mode_unganged(default 0, id 0x3ce1180) : pub get bool : pub set bool,
-        gnb_additional_features(default 0, id 0xf4c7789) : pub get bool : pub set bool, // Milan
-        gnb_additional_feature_dsm(default 0, id 0x31a6afad) : pub get bool : pub set bool, // Milan
-        vga_program(default 0, id 0x6570eace) : pub get bool : pub set bool, // Milan
-        mem_nvdimm_n_disable(default 0, id 0x941a92d4) : pub get bool : pub set bool, // Milan
-        gnb_additional_feature_l3_performance_bias(default 0, id 0xa003b37a) : pub get bool : pub set bool, // Milan
-        gnb_additional_feature_dsm_detector(default 0, id 0xf5768cee) : pub get bool : pub set bool, // Milan
+        MemModeUnganged(default 0, id 0x3ce1180) : pub get bool : pub set bool,
+        GnbAdditionalFeatures(default 0, id 0xf4c7789) : pub get bool : pub set bool, // Milan
+        GnbAdditionalFeatureDsm(default 0, id 0x31a6afad) : pub get bool : pub set bool, // Milan
+        VgaProgram(default 0, id 0x6570Eace) : pub get bool : pub set bool, // Milan
+        MemNvdimmNDisable(default 0, id 0x941a92d4) : pub get bool : pub set bool, // Milan
+        GnbAdditionalFeatureL3PerformanceBias(default 0, id 0xa003b37a) : pub get bool : pub set bool, // Milan
+        GnbAdditionalFeatureDsmDetector(default 0, id 0xf5768cee) : pub get bool : pub set bool, // Milan
 
         // Unsorted Rome; ungrouped; defaults wrong!
 
-        pcie_reset_control(default 0, id 0xf7bb3451) : pub get bool : pub set bool, // Rome (Obsolete)
-        mem_dqs_training_control(default 0, id 0x3caaa3fa) : pub get bool : pub set bool, // Rome
-        mem_channel_interleaving(default 0, id 0x48254f73) : pub get bool : pub set bool, // Rome
-        mem_pstate(default 0, id 0x56b93947) : pub get bool : pub set bool, // Rome
+        PcieResetControl(default 0, id 0xf7bb3451) : pub get bool : pub set bool, // Rome (Obsolete)
+        MemDqsTrainingControl(default 0, id 0x3caaa3fa) : pub get bool : pub set bool, // Rome
+        MemChannelInterleaving(default 0, id 0x48254f73) : pub get bool : pub set bool, // Rome
+        MemPstate(default 0, id 0x56b93947) : pub get bool : pub set bool, // Rome
         /// Average the time between refresh requests
-        mem_amp(default 0, id 0x592cb3ca) : pub get bool : pub set bool, // value 1 // amp_enable; Rome
-        mem_limit_memory_to_below_1_TiB(default 0, id 0x5e71e6d8) : pub get bool : pub set bool, // value 1 // Rome
-        mem_oc_vddio_control(default 0, id 0x6cd36dbe) : pub get bool : pub set bool, // value 0 // Rome
-        mem_uma_above_4_GiB(default 0, id 0x77e41d2a) : pub get bool : pub set bool, // value 1 // Rome
-        mem_auto_refreshs_count_for_throttling(default 0, id 0x8f84dcb4) : pub get MemAutoRefreshsCountForThrottling : pub set MemAutoRefreshsCountForThrottling, // value 0 // Rome
-        general_capsule_mode(default 0, id 0x96176308) : pub get bool : pub set bool, // value 1 // Rome
-        mem_on_die_thermal_sensor(default 0, id 0xaeb3f914) : pub get bool : pub set bool, // odts_en; Rome
-        mem_all_clocks(default 0, id 0xb95e0555) : pub get bool : pub set bool, // mem_all_clocks_on; Rome
-        mem_clear(default 0, id 0xc6acdb37) : pub get bool : pub set bool, // enable_mem_clr; Rome
-        mem_ddr4_force_data_mask_disable(default 0, id 0xd68482b3) : pub get bool : pub set bool, // Rome
-        mem_ecc_redirection(default 0, id 0xdede0e09) : pub get bool : pub set bool, // Rome
-        mem_temp_controlled_extended_refresh(default 0, id 0xf402f423) : pub get bool : pub set bool, // Rome (Obsolete)
-        mother_board_type_0(default 0, id 0x536464b) : pub get bool : pub set bool, // value 0
-        mctp_reroute_enable(default 0, id 0x79f2a8d5) : pub get bool : pub set bool, // value 0
-        iohc_mixed_rw_workaround(default 0, id 0xec3faf5a) : pub get bool : pub set bool, // value 0 // FIXME remove?
+        MemAmp(default 0, id 0x592cb3ca) : pub get bool : pub set bool, // value 1 // amp_enable; Rome
+        MemLimitMemoryToBelow1Tib(default 0, id 0x5e71e6d8) : pub get bool : pub set bool, // value 1 // Rome
+        MemOcVddioControl(default 0, id 0x6cd36dbe) : pub get bool : pub set bool, // value 0 // Rome
+        MemUmaAbove4GiB(default 0, id 0x77e41d2a) : pub get bool : pub set bool, // value 1 // Rome
+        MemAutoRefreshsCountForThrottling(default 0, id 0x8f84dcb4) : pub get MemAutoRefreshsCountForThrottling : pub set MemAutoRefreshsCountForThrottling, // value 0 // Rome
+        GeneralCapsuleMode(default 0, id 0x96176308) : pub get bool : pub set bool, // value 1 // Rome
+        MemOnDieThermalSensor(default 0, id 0xaeb3f914) : pub get bool : pub set bool, // odts_en; Rome
+        MemAllClocks(default 0, id 0xb95e0555) : pub get bool : pub set bool, // mem_all_clocks_on; Rome
+        MemClear(default 0, id 0xc6acdb37) : pub get bool : pub set bool, // enable_mem_clr; Rome
+        MemDdr4ForceDataMaskDisable(default 0, id 0xd68482b3) : pub get bool : pub set bool, // Rome
+        MemEccRedirection(default 0, id 0xdede0e09) : pub get bool : pub set bool, // Rome
+        MemTempControlledExtendedRefresh(default 0, id 0xf402f423) : pub get bool : pub set bool, // Rome (Obsolete)
+        MotherBoardType0(default 0, id 0x536464b) : pub get bool : pub set bool, // value 0
+        MctpRerouteEnable(default 0, id 0x79f2a8d5) : pub get bool : pub set bool, // value 0
+        IohcMixedRwWorkaround(default 0, id 0xec3faf5a) : pub get bool : pub set bool, // value 0 // FIXME remove?
 
         // BMC Rome
 
-        bmc_vga_io_enable(default 0, id 0x468d2cfa) : pub get bool : pub set bool, // value 0 // legacy
-        bmc_init_before_dram(default 0, id 0xfa94ee37) : pub get bool : pub set bool, // value 0
+        BmcVgaIoEnable(default 0, id 0x468d2cfa) : pub get bool : pub set bool, // value 0 // legacy
+        BmcInitBeforeDram(default 0, id 0xfa94ee37) : pub get bool : pub set bool, // value 0
     }
 }
 
