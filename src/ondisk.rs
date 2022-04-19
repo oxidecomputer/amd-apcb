@@ -6245,7 +6245,7 @@ make_token_accessors! {
         DfSaveRestoreMemEncrypt(default 1, id 0x7b3d_1f75) : pub get DfToggle : pub set DfToggle,
         /// Where the PCI MMIO hole will start (bits 31 to 24 inclusive)
         DfBottomIo(default 0xe0, id 0x8fb9_8529) : pub get u8 : pub set u8,
-        DfRemapAt1Tib(default 0, id 0x35ee_96f3) : pub get DfRemapAt1TiB : pub set DfRemapAt1TiB,
+        DfRemapAt1TiB(default 0, id 0x35ee_96f3) : pub get DfRemapAt1TiB : pub set DfRemapAt1TiB,
         DfXgmiTxEqMode(default 0xff, id 0xade7_9549) : pub get DfXgmiTxEqMode : pub set DfXgmiTxEqMode,
         DfInvertDramMap(default 0, id 0x6574_b2c0) : pub get DfToggle : pub set DfToggle,
 
@@ -6521,7 +6521,7 @@ make_token_accessors! {
         MemPstate(default 0, id 0x56b93947) : pub get bool : pub set bool, // Rome
         /// Average the time between refresh requests
         MemAmp(default 0, id 0x592cb3ca) : pub get bool : pub set bool, // value 1 // amp_enable; Rome
-        MemLimitMemoryToBelow1Tib(default 0, id 0x5e71e6d8) : pub get bool : pub set bool, // value 1 // Rome
+        MemLimitMemoryToBelow1TiB(default 0, id 0x5e71e6d8) : pub get bool : pub set bool, // value 1 // Rome
         MemOcVddioControl(default 0, id 0x6cd36dbe) : pub get bool : pub set bool, // value 0 // Rome
         MemUmaAbove4GiB(default 0, id 0x77e41d2a) : pub get bool : pub set bool, // value 1 // Rome
         MemAutoRefreshsCountForThrottling(default 0, id 0x8f84dcb4) : pub get MemAutoRefreshsCountForThrottling : pub set MemAutoRefreshsCountForThrottling, // value 0 // Rome
