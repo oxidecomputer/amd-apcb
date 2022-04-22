@@ -133,15 +133,17 @@ impl<'a, 'b> Tokens<'a, 'b> {
 /// Automatically impl getters (and setters) for the fields where there was
 /// "get" (and "set") specified. The getters and setters so generated are
 /// hardcoded as calling from_u32() and to_u32(), respectively. Variant syntax:
-/// NAME(TYPE, default DEFAULT_VALUE, id TOKEN_ID) = KEY[: pub get TYPE [: pub
-/// set TYPE]]
+/// [ATTRIBUTES]
+/// NAME(TYPE, default DEFAULT_VALUE, id TOKEN_ID) = KEY: pub get TYPE [: pub
+/// set TYPE]
+/// The ATTRIBUTES (`#`...) make it into the resulting enum variant.
 macro_rules! make_token_accessors {(
     $(#[$enum_meta:meta])*
     $enum_vis:vis enum $enum_name:ident: {$field_entry_id:expr} {
         $(
             $(#[$field_meta:meta])*
             $field_vis:vis
-            $field_name:ident(default $field_default_value:expr, id $field_key:expr) $(: $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
+            $field_name:ident(default $field_default_value:expr, id $field_key:expr) : $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?
         ),* $(,)?
     }
 ) => (
@@ -149,9 +151,8 @@ macro_rules! make_token_accessors {(
     #[derive(Debug)] // TODO: EnumString
     $enum_vis enum $enum_name {
         $(
-         $(
-            $field_name($field_user_ty),
-         )?
+         $(#[$field_meta])*
+         $field_name($field_user_ty),
         )*
     }
     impl core::convert::TryFrom<&TOKEN_ENTRY> for $enum_name {
@@ -160,12 +161,10 @@ macro_rules! make_token_accessors {(
           let tag = entry.key.get();
           let value = entry.value.get();
           $(
-           $(
             if ($field_key == tag) {
                 let value = <$field_user_ty>::from_u32(value).ok_or(Error::TokenRange)?;
                 Ok(Self::$field_name(value))
             } else
-           )?
           )*{
                 Err(Error::TokenNotFound)
             }
@@ -187,7 +186,6 @@ macro_rules! make_token_accessors {(
         }
     }
     $(
-        $(
             impl<'a, 'b> Tokens<'a, 'b> {
                 paste! {
                   #[allow(non_snake_case)]
@@ -224,7 +222,6 @@ macro_rules! make_token_accessors {(
               }
             )?
             }
-        )?
     )*
 )}
 
