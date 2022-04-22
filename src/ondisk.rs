@@ -154,6 +154,54 @@ pub fn take_body_from_collection<'a>(
     }
 }
 
+#[derive(Debug)]
+#[cfg_attr(
+    feature = "std",
+    derive(schemars::JsonSchema)
+)]
+pub struct SerdeHex16 {
+    pub value: u16
+}
+
+// serde_hex does not play nice with JsonSchema, for some reason we need to do
+// this.
+impl Serialize for SerdeHex16 {
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> core::result::Result<S::Ok, S::Error>
+    where
+        S: serde::ser::Serializer,
+    {
+        serde_hex::SerHex::<serde_hex::StrictPfx>::serialize(&self.value, serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for SerdeHex16 {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::de::Deserializer<'de>,
+    {
+        let value: u16 = serde_hex::SerHex::<serde_hex::StrictPfx>::deserialize(deserializer)?;
+        Ok(SerdeHex16{value: value})
+    }
+}
+
+impl ToPrimitive1 for SerdeHex16 {
+    fn to_u32(&self) -> Option<u32> {
+        Some(self.value as u32)
+    }
+}
+
+impl FromPrimitive1 for SerdeHex16 {
+    fn from_u32(value: u32) -> Option<Self> {
+        if value > 0x0000FFFF {
+            return None;
+        }
+        Some(Self{value: value as u16})
+    }
+}
+
 type LU16 = U16<LittleEndian>;
 //type LU32 = U32<LittleEndian>;
 //type LU64 = U64<LittleEndian>;
@@ -6933,7 +6981,7 @@ make_token_accessors! {
     pub enum WordToken: {TokenEntryId::Word} {
         // PSP
 
-        PspSyshubWatchdogTimerInterval(default 2600, id 0xedb5_e4c9) : pub get u16 : pub set u16, // in ms
+        PspSyshubWatchdogTimerInterval(default 2600, id 0xedb5_e4c9) : pub get SerdeHex16 : pub set SerdeHex16, // in ms
 
         // Memory Controller
 
