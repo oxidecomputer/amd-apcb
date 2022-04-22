@@ -64,7 +64,7 @@ to iterate over it.  This is only useful for structs whose name contains "Elemen
 
 In order to update the checksum (you should do that once after any insertion/deletion/mutation):
 
-    Apcb::update_checksum(&mut buffer[0..])?;
+    apcb.save()?;
 
 Note that this also changes unique_apcb_instance.
 
