@@ -22,9 +22,12 @@ use num_derive::ToPrimitive;
 use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use paste::paste;
-use serde::de::Deserialize as DeserializeTrait;
-use serde::{Deserialize, Serialize};
 use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32, U64};
+
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
+#[cfg(feature = "std")]
+use serde_hex::{SerHex, StrictPfx};
 
 /// Work around Rust issue# 51443, in case it ever will be phased out.
 /// (zerocopy 0.5.0 has a as_bytes_mut with a Self-where--which is not supposed
@@ -67,7 +70,9 @@ pub trait MutSequenceElementFromBytes<'a>: Sized {
 /// sequence.  Then, the header structs specify (in their impl) what the struct
 /// type of the sequence will be.
 pub trait HeaderWithTail {
-    type TailArrayItemType<'de>: AsBytes + FromBytes + DeserializeTrait<'de>;
+    type TailArrayItemType<'de>: AsBytes
+        + FromBytes
+        + serde::de::Deserialize<'de>;
 }
 
 /// Given *BUF (a collection of multiple items), retrieves the first of the
@@ -151,54 +156,6 @@ pub fn take_body_from_collection<'a>(
         Some(item)
     } else {
         None
-    }
-}
-
-#[derive(Debug)]
-#[cfg_attr(
-    feature = "std",
-    derive(schemars::JsonSchema)
-)]
-pub struct SerdeHex16 {
-    pub value: u16
-}
-
-// serde_hex does not play nice with JsonSchema, for some reason we need to do
-// this.
-impl Serialize for SerdeHex16 {
-    fn serialize<S>(
-        &self,
-        serializer: S,
-    ) -> core::result::Result<S::Ok, S::Error>
-    where
-        S: serde::ser::Serializer,
-    {
-        serde_hex::SerHex::<serde_hex::StrictPfx>::serialize(&self.value, serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for SerdeHex16 {
-    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
-    where
-        D: serde::de::Deserializer<'de>,
-    {
-        let value: u16 = serde_hex::SerHex::<serde_hex::StrictPfx>::deserialize(deserializer)?;
-        Ok(SerdeHex16{value: value})
-    }
-}
-
-impl ToPrimitive1 for SerdeHex16 {
-    fn to_u32(&self) -> Option<u32> {
-        Some(self.value as u32)
-    }
-}
-
-impl FromPrimitive1 for SerdeHex16 {
-    fn from_u32(value: u32) -> Option<Self> {
-        if value > 0x0000FFFF {
-            return None;
-        }
-        Some(Self{value: value as u16})
     }
 }
 
@@ -6981,7 +6938,8 @@ make_token_accessors! {
     pub enum WordToken: {TokenEntryId::Word} {
         // PSP
 
-        PspSyshubWatchdogTimerInterval(default 2600, id 0xedb5_e4c9) : pub get SerdeHex16 : pub set SerdeHex16, // in ms
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        PspSyshubWatchdogTimerInterval(default 2600, id 0xedb5_e4c9) : pub get u16 : pub set u16, // in ms
 
         // Memory Controller
 
@@ -6993,29 +6951,41 @@ make_token_accessors! {
 
         // Unsorted Milan; obsolete and ungrouped; defaults wrong!
 
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         Dimm3DsSensorCritical(default 0, id 0x16b77f73) : pub get u16 : pub set u16, // value 0x50 // (Obsolete; added in Milan)
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         Dimm3DsSensorUpper(default 0, id 0x2db877e4) : pub get u16 : pub set u16, // value 0x42 // (Obsolete; added in Milan)
 
         // Unsorted Rome; ungrouped; defaults wrong!
 
         EccSymbolSize(default 1, id 0x302d5c04) : pub get EccSymbolSize : pub set EccSymbolSize, // Rome (Obsolete)
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         ScrubDramRate(default 0, id 0x9adddd6b) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16; or 0xff
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         ScrubL2Rate(default 0, id 0x2266c144) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         ScrubL3Rate(default 0, id 0xc0279ae0) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16; maybe 00h disable; maybe otherwise x: (x * 20 ns)
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         ScrubIcacheRate(default 0, id 0x99639ee4) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         ScrubDcacheRate(default 0, id 0xb398daa0) : pub get u16 : pub set u16, // Rome (Obsolete); <= 0x16
         /// See for example MCP9843/98243
         /// DIMM temperature sensor register at address 1
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         DimmSensorConfig(default 0x408, id 0x51e7b610) : pub get u16 : pub set u16, // Rome (Obsolete)
         /// DIMM temperature sensor register at address 2
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         DimmSensorUpper(default 80, id 0xb5af557a) : pub get u16 : pub set u16, // Rome (Obsolete)
         /// DIMM temperature sensor register at address 3
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         DimmSensorLower(default 10, id 0xc5ea38a0) : pub get u16 : pub set u16, // Rome (Obsolete)
         /// DIMM temperature sensor register at address 4
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         DimmSensorCritical(default 95, id 0x38e9bf5d) : pub get u16 : pub set u16, // Rome (Obsolete)
 
         // BMC Rome
 
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         BmcVgaIoPort(default 0, id 0x6e06198) : pub get u16 : pub set u16, // value 0 // legacy
     }
 }
@@ -7028,19 +6998,24 @@ make_token_accessors! {
         MemBusFrequencyLimit(default 1600, id 0x3497_0a3c) : pub get MemBusFrequencyLimit : pub set MemBusFrequencyLimit,
         MemClockValue(default 0xffff_ffff, id 0xcc83_f65f) : pub get MemClockValue : pub set MemClockValue,
         MemUserTimingMode(default 0xff, id 0xfc56_0d7d) : pub get MemUserTimingMode : pub set MemUserTimingMode,
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemSelfHealBistTimeout(default 1_0000, id 0xbe75_97d4) : pub get u32 : pub set u32, // in ms
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemRestoreValidDays(default 30, id 0x6bd7_0482) : pub get u32 : pub set u32,
 
         // Ccx
 
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         CcxMinSevAsid(default 1, id 0xa7c3_3753) : pub get u32 : pub set u32,
 
         // Fch
 
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         FchRom3BaseHigh(default 0, id 0x3e7d_5274) : pub get u32 : pub set u32,
 
         // Df
 
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         DfPciMmioSize(default 0x1000_0000, id 0x3d9b_7d7b) : pub get u32 : pub set u32,
         DfCakeCrcThresholdBounds(default 100, id 0x9258_cf45) : pub get DfCakeCrcThresholdBounds : pub set DfCakeCrcThresholdBounds, // default: 0.001%
 
@@ -7053,22 +7028,33 @@ make_token_accessors! {
 
         // MBIST for Milan and Rome; defaults wrong!
 
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistAggressorStaticLaneSelLo(default 0, id 0x745218ad) : pub get u32 : pub set u32, // Rome
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistAggressorStaticLaneSelHi(default 0, id 0xfac9f48f) : pub get u32 : pub set u32, // Rome
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistTgtStaticLaneSelLo(default 0, id 0x81880d15) : pub get u32 : pub set u32, // value 0 // Rome
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistTgtStaticLaneSelHi(default 0, id 0xaf669f33) : pub get u32 : pub set u32, // value 0 // Rome
 
         // Unsorted Milan; defaults wrong!
 
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         GnbOffRampStall(default 0, id 0x88b3c0d4) : pub get u32 : pub set u32, // value 0xc8
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         PspMeasureConfig(default 0, id 0xdd3ad029) : pub get u32 : pub set u32, // Milan; reserved, must be 0
 
         // Unsorted Rome; ungrouped; defaults wrong!
 
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemPowerDownMode(default 0, id 0x23dd2705) : pub get u32 : pub set u32, // power_down_mode; Rome
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemUmaSize(default 0, id 0x37b1f8cf) : pub get u32 : pub set u32, // uma_size; Rome // FIXME enum
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemUmaAlignment(default 0, id 0x57ddf512) : pub get u32 : pub set u32, // value 0xffffc0 // Rome // FIXME enum?
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         PcieResetGpioPin(default 0, id 0x596663ac) : pub get u32 : pub set u32, // value 0xffffffff // Rome; FIXME: enum?
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         CpuFetchFromSpiApBase(default 0, id 0xd403ea0e) : pub get u32 : pub set u32, // value 0xfff00000 // Rome
     }
 }

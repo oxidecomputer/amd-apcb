@@ -277,12 +277,12 @@ impl<'a> Iterator for TokensEntryIterMut<'a> {
     }
 }
 
-pub struct TokensEntryItem<'a> {
-    pub(crate) entry_id: TokenEntryId,
-    pub(crate) entry: Ptr<'a, TOKEN_ENTRY>,
-}
+use serde_hex::{SerHex, StrictPfx};
 
-#[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+#[cfg_attr(
+    feature = "std",
+    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)
+)]
 enum SerdeTokensEntryItem {
     Bool(BoolToken),
     Byte(ByteToken),
@@ -290,9 +290,22 @@ enum SerdeTokensEntryItem {
     Dword(DwordToken),
     Unknown {
         entry_id: TokenEntryId,
+        #[serde(
+            serialize_with = "SerHex::<StrictPfx>::serialize",
+            deserialize_with = "SerHex::<StrictPfx>::deserialize"
+        )]
         tag: u32,
+        #[serde(
+            serialize_with = "SerHex::<StrictPfx>::serialize",
+            deserialize_with = "SerHex::<StrictPfx>::deserialize"
+        )]
         value: u32,
     },
+}
+
+pub struct TokensEntryItem<'a> {
+    pub(crate) entry_id: TokenEntryId,
+    pub(crate) entry: Ptr<'a, TOKEN_ENTRY>,
 }
 
 #[cfg(feature = "std")]
@@ -481,12 +494,8 @@ impl<'a, 'de: 'a> Deserialize<'de> for TokensEntryItem<'a> {
                     } => {
                         entry_id = e_id;
                         token_entry = TOKEN_ENTRY {
-                            key: zerocopy::U32::<zerocopy::LittleEndian>::new(
-                                tag,
-                            ),
-                            value: zerocopy::U32::<zerocopy::LittleEndian>::new(
-                                value,
-                            ),
+                            key: tag.into(),
+                            value: value.into(),
                         };
                     }
                 }
