@@ -159,35 +159,141 @@ pub fn take_body_from_collection<'a>(
     }
 }
 
-type LU16 = U16<LittleEndian>;
-//type LU32 = U32<LittleEndian>;
-//type LU64 = U64<LittleEndian>;
+#[derive(FromPrimitive, ToPrimitive, schemars::JsonSchema)]
+pub struct SerdeHex8(u8);
 
-#[derive(FromBytes, AsBytes, Unaligned, Serialize, Deserialize, Debug)]
-#[repr(C, packed)]
-pub struct V2_HEADER {
-    pub signature: [u8; 4],
-    pub header_size: U16<LittleEndian>, // == sizeof(V2_HEADER); but 128 for V3
-    pub version: U16<LittleEndian>,     // == 0x30
-    pub apcb_size: U32<LittleEndian>,
-    pub unique_apcb_instance: U32<LittleEndian>,
-    pub checksum_byte: u8,
-    reserved1: [u8; 3],                // 0
-    reserved2: [U32<LittleEndian>; 3], // 0
-}
-/*
-pub impl Serialize for V2_HEADER {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+#[cfg(feature = "std")]
+impl serde::ser::Serialize for SerdeHex8 {
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> core::result::Result<S::Ok, S::Error>
     where
-        S: Serializer,
+        S: serde::Serializer,
     {
-        let mut state = serializer.serialize_struct("V2_HEADER", 8)
-        state.serialize_field("signature", self.signature);
-        state.serialize_field("header_size", self.header_size)
-        (i*self.signature);
+        SerHex::<StrictPfx>::serialize(&self.0, serializer)
     }
 }
-*/
+
+#[cfg(feature = "std")]
+impl<'de> serde::de::Deserialize<'de> for SerdeHex8 {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        Ok(Self(SerHex::<StrictPfx>::deserialize(deserializer)?))
+    }
+}
+
+#[derive(FromPrimitive, ToPrimitive, schemars::JsonSchema)]
+pub struct SerdeHex16(u16);
+
+#[cfg(feature = "std")]
+impl serde::ser::Serialize for SerdeHex16 {
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> core::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        SerHex::<StrictPfx>::serialize(&self.0, serializer)
+    }
+}
+
+#[cfg(feature = "std")]
+impl<'de> serde::de::Deserialize<'de> for SerdeHex16 {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        Ok(Self(SerHex::<StrictPfx>::deserialize(deserializer)?))
+    }
+}
+
+#[derive(FromPrimitive, ToPrimitive, schemars::JsonSchema)]
+pub struct SerdeHex32(u32);
+
+#[cfg(feature = "std")]
+impl serde::ser::Serialize for SerdeHex32 {
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> core::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        SerHex::<StrictPfx>::serialize(&self.0, serializer)
+    }
+}
+
+#[cfg(feature = "std")]
+impl<'de> serde::de::Deserialize<'de> for SerdeHex32 {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        Ok(Self(SerHex::<StrictPfx>::deserialize(deserializer)?))
+    }
+}
+
+#[derive(FromPrimitive, ToPrimitive, schemars::JsonSchema)]
+pub struct SerdeHex64(u64);
+
+#[cfg(feature = "std")]
+impl serde::ser::Serialize for SerdeHex64 {
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> core::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        SerHex::<StrictPfx>::serialize(&self.0, serializer)
+    }
+}
+
+#[cfg(feature = "std")]
+impl<'de> serde::de::Deserialize<'de> for SerdeHex64 {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        Ok(Self(SerHex::<StrictPfx>::deserialize(deserializer)?))
+    }
+}
+
+type LU16 = U16<LittleEndian>;
+type LU32 = U32<LittleEndian>;
+type LU64 = U64<LittleEndian>;
+
+impl Getter<Result<[SerdeHex8; 4]>> for [u8; 4] {
+    fn get1(self) -> Result<[SerdeHex8; 4]> {
+        Ok(self.map(|v| SerdeHex8(v)))
+    }
+}
+
+impl Setter<[SerdeHex8; 4]> for [u8; 4] {
+    fn set1(&mut self, value: [SerdeHex8; 4]) {
+        // Wasteful?
+        *self = value.map(|v| v.0);
+    }
+}
+make_accessors! {
+    #[derive(FromBytes, AsBytes, Unaligned, Debug)]
+    #[repr(C, packed)]
+    pub struct V2_HEADER {
+        pub signature: [u8; 4]: pub get [SerdeHex8; 4] : pub set [SerdeHex8; 4],
+        pub header_size: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // == sizeof(V2_HEADER); but 128 for V3
+        pub version: LU16 : pub get SerdeHex16 : pub set SerdeHex16,     // == 0x30
+        pub apcb_size: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
+        pub unique_apcb_instance: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
+        pub checksum_byte: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+        reserved1: [u8; 3],                // 0
+        reserved2: [LU32; 3], // 0
+    }
+}
+
 impl Default for V2_HEADER {
     fn default() -> Self {
         Self {
@@ -203,6 +309,18 @@ impl Default for V2_HEADER {
     }
 }
 
+impl Getter<Result<[SerdeHex8; 32]>> for [u8; 32] {
+    fn get1(self) -> Result<[SerdeHex8; 32]> {
+        Ok(self.map(|v| SerdeHex8(v)))
+    }
+}
+
+impl Setter<[SerdeHex8; 32]> for [u8; 32] {
+    fn set1(&mut self, value: [SerdeHex8; 32]) {
+        // Wasteful?
+        *self = value.map(|v| v.0);
+    }
+}
 // The funny reserved values here were such that older firmware (which
 // expects a V2_HEADER and does not honor its header_size) can skip this
 // unknown struct.
@@ -211,35 +329,37 @@ impl Default for V2_HEADER {
 // ENTRY_HEADER].
 // The sizes have since diverged. Now it doesn't make much sense to have
 // them any more, except for bug compatibility.
-#[derive(
-    FromBytes, AsBytes, Unaligned, Clone, Copy, Serialize, Deserialize,
-)]
-#[repr(C, packed)]
-pub struct V3_HEADER_EXT {
-    pub signature: [u8; 4],                 // "ECB2"
-    reserved_1: U16<LittleEndian>,          // 0
-    reserved_2: U16<LittleEndian>, // 0x10 // GROUP_HEADER::header_size
-    pub struct_version: U16<LittleEndian>, // GROUP_HEADER::version
-    pub data_version: U16<LittleEndian>, // GROUP_HEADER::_reserved
-    pub ext_header_size: U32<LittleEndian>, // 96 // GROUP_HEADER::group_size
-    reserved_3: U16<LittleEndian>, // 0 // ENTRY_HEADER::group_id
-    reserved_4: U16<LittleEndian>, // 0xFFFF // ENTRY_HEADER::entry_id
-    // reserved_5 includes 0x10 for the entry header; that
-    // gives 48 Byte payload for the entry--which is inconsistent with the
-    // size of the fields following afterwards.
-    reserved_5: U16<LittleEndian>, // 0x40 // ENTRY_HEADER::entry_size
-    reserved_6: U16<LittleEndian>, // 0x00 // ENTRY_HEADER::instance_id
-    // ENTRY_HEADER::{context_type, context_format, unit_size, prority_mask,
-    // key_size, key_pos, board_instance_mask}.  Those are all of
-    // ENTRY_HEADER's fields.
-    reserved_7: [U32<LittleEndian>; 2], // 0 0
-    pub data_offset: U16<LittleEndian>, // 0x58
-    pub header_checksum: u8,
-    reserved_8: u8,                     // 0
-    reserved_9: [U32<LittleEndian>; 3], // 0 0 0
-    pub integrity_sign: [u8; 32],
-    reserved_10: [U32<LittleEndian>; 3], // 0 0 0
-    pub signature_ending: [u8; 4],       // "BCBA"
+make_accessors! {
+    #[derive(
+        FromBytes, AsBytes, Unaligned, Clone, Copy,
+    )]
+    #[repr(C, packed)]
+    pub struct V3_HEADER_EXT {
+        pub signature: [u8; 4] : pub get [SerdeHex8; 4] : pub set [SerdeHex8; 4],
+        reserved_1: LU16,          // 0
+        reserved_2: LU16, // 0x10 // GROUP_HEADER::header_size
+        pub struct_version: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // GROUP_HEADER::version
+        pub data_version: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // GROUP_HEADER::_reserved
+        pub ext_header_size: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // 96 // GROUP_HEADER::group_size
+        reserved_3: LU16, // 0 // ENTRY_HEADER::group_id
+        reserved_4: LU16, // 0xFFFF // ENTRY_HEADER::entry_id
+        // reserved_5 includes 0x10 for the entry header; that
+        // gives 48 Byte payload for the entry--which is inconsistent with the
+        // size of the fields following afterwards.
+        reserved_5: LU16, // 0x40 // ENTRY_HEADER::entry_size
+        reserved_6: LU16, // 0x00 // ENTRY_HEADER::instance_id
+        // ENTRY_HEADER::{context_type, context_format, unit_size, prority_mask,
+        // key_size, key_pos, board_instance_mask}.  Those are all of
+        // ENTRY_HEADER's fields.
+        reserved_7: [LU32; 2], // 0 0
+        pub data_offset: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // 0x58
+        pub header_checksum: u8: pub get SerdeHex8 : pub set SerdeHex8,
+        reserved_8: u8,                     // 0
+        reserved_9: [LU32; 3], // 0 0 0
+        pub integrity_sign: [u8; 32] : pub get [SerdeHex8; 32] : pub set [SerdeHex8; 32],
+        reserved_10: [LU32; 3], // 0 0 0
+        pub signature_ending: [u8; 4] : pub get [SerdeHex8; 4] : pub set [SerdeHex8; 4],       // "BCBA"
+    }
 }
 
 impl Default for V3_HEADER_EXT {
@@ -993,17 +1113,19 @@ impl EntryId {
     }
 }
 
-#[derive(
-    FromBytes, AsBytes, Unaligned, Clone, Debug, Serialize, Deserialize,
-)]
-#[repr(C, packed)]
-pub(crate) struct GROUP_HEADER {
-    pub(crate) signature: [u8; 4],
-    pub(crate) group_id: U16<LittleEndian>,
-    pub(crate) header_size: U16<LittleEndian>, // == sizeof(GROUP_HEADER)
-    pub(crate) version: U16<LittleEndian>,     // == 0 << 4 | 1
-    _reserved: U16<LittleEndian>,
-    pub(crate) group_size: U32<LittleEndian>, // including header!
+make_accessors! {
+    #[derive(
+        FromBytes, AsBytes, Unaligned, Clone, Debug,
+    )]
+    #[repr(C, packed)]
+    pub(crate) struct GROUP_HEADER {
+        pub(crate) signature: [u8; 4] : pub get [SerdeHex8; 4] : pub set [SerdeHex8; 4],
+        pub(crate) group_id: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
+        pub(crate) header_size: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // == sizeof(GROUP_HEADER)
+        pub(crate) version: LU16 : pub get SerdeHex16 : pub set SerdeHex16,     // == 0 << 4 | 1
+        _reserved: LU16,
+        pub(crate) group_size: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // including header!
+    }
 }
 
 #[derive(
@@ -1262,17 +1384,17 @@ make_accessors! {
     #[derive(FromBytes, AsBytes, Unaligned, Clone, Debug)]
     #[repr(C, packed)]
     pub(crate) struct ENTRY_HEADER {
-        pub(crate) group_id: LU16 : pub get u16: pub set u16, // should be equal to the group's group_id
-        pub(crate) entry_id: LU16 : pub get u16: pub set u16, // meaning depends on context_type
-        pub(crate) entry_size: LU16 : pub get u16: pub set u16, // including header
-        pub(crate) instance_id: LU16 : pub get u16: pub set u16,
+        pub(crate) group_id: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // should be equal to the group's group_id
+        pub(crate) entry_id: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // meaning depends on context_type
+        pub(crate) entry_size: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // including header
+        pub(crate) instance_id: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
         pub(crate) context_type: u8 : pub get ContextType : pub set ContextType,  // see ContextType enum
         pub(crate) context_format: u8 : pub get ContextFormat: pub set ContextFormat, // see ContextFormat enum
-        pub(crate) unit_size: u8 : pub get u8: pub set u8, // in Byte.  Applicable when ContextType == 2.  value should be 8
+        pub(crate) unit_size: u8 : pub get SerdeHex8 : pub set SerdeHex8, // in Byte.  Applicable when ContextType == 2.  value should be 8
         pub(crate) priority_mask: u8 : pub get PriorityLevels : pub set PriorityLevels,
-        pub(crate) key_size: u8 : pub get u8: pub set u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
-        pub(crate) key_pos: u8 : pub get u8: pub set u8, // Sorting key position of the unit specified of UnitSize
-        pub(crate) board_instance_mask: LU16 : pub get u16: pub set u16, // Board-specific Apcb instance mask
+        pub(crate) key_size: u8 : pub get SerdeHex8 : pub set SerdeHex8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
+        pub(crate) key_pos: u8 : pub get SerdeHex8 : pub set SerdeHex8, // Sorting key position of the unit specified of UnitSize
+        pub(crate) board_instance_mask: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // Board-specific Apcb instance mask
     }
 }
 
@@ -1296,11 +1418,11 @@ impl Default for ENTRY_HEADER {
 
 pub const ENTRY_ALIGNMENT: usize = 4;
 
-#[derive(FromBytes, AsBytes, Serialize, Deserialize, Clone)]
+#[derive(FromBytes, AsBytes, Clone)]
 #[repr(C, packed)]
 pub struct TOKEN_ENTRY {
-    pub key: U32<LittleEndian>,
-    pub value: U32<LittleEndian>,
+    pub key: LU32,
+    pub value: LU32,
 }
 
 impl core::fmt::Debug for TOKEN_ENTRY {
@@ -1521,7 +1643,7 @@ pub mod df {
     Serialize, Deserialize)]
             #[repr(C, packed)]
             pub struct SlinkRegion {
-                size: U64<LittleEndian> : pub get u64 : pub set u64,
+                size: LU64 : pub get SerdeHex64 : pub set SerdeHex64,
                 alignment: u8 : pub get u8 : pub set u8,
                 socket: u8 : pub get u8 : pub set u8, // 0|1
                 phys_nbio_map: u8 : pub get u8 : pub set u8, // bitmap
@@ -1793,8 +1915,8 @@ pub mod memory {
                 enable_mem_pmu_sram_write_logging: BU8 : pub get bool : pub set bool,
                 enable_mem_test_verbose_logging: BU8 : pub get bool : pub set bool,
                 enable_mem_basic_output_logging: BU8 : pub get bool : pub set bool,
-                _reserved: U16<LittleEndian>,
-                abl_console_port: U32<LittleEndian> : pub get u32 : pub set u32,
+                _reserved: LU16: pub get u16 : pub set u16,
+                abl_console_port: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
             }
         }
     impl Default for AblConsoleOutControl {
@@ -1867,7 +1989,7 @@ pub mod memory {
     pub struct ConsoleOutControl {
         pub abl_console_out_control: AblConsoleOutControl,
         pub abl_breakpoint_control: AblBreakpointControl,
-        _reserved: U16<LittleEndian>,
+        _reserved: LU16,
     }
 
     impl Default for ConsoleOutControl {
@@ -1949,12 +2071,12 @@ pub mod memory {
             pub struct ExtVoltageControl {
                 enabled: BU8 : pub get bool : pub set bool,
                 _reserved: [u8; 3],
-                input_port: U32<LittleEndian> : pub get u32 : pub set u32,
-                output_port: U32<LittleEndian> : pub get u32 : pub set u32,
-                input_port_size: U32<LittleEndian> : pub get PortSize : pub set PortSize,
-                output_port_size: U32<LittleEndian> : pub get PortSize : pub set PortSize,
-                input_port_type: U32<LittleEndian> : pub get PortType : pub set PortType, // default: 6 (FCH)
-                output_port_type: U32<LittleEndian> : pub get PortType : pub set PortType, // default: 6 (FCH)
+                input_port: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
+                output_port: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
+                input_port_size: LU32 : pub get PortSize : pub set PortSize,
+                output_port_size: LU32 : pub get PortSize : pub set PortSize,
+                input_port_type: LU32 : pub get PortType : pub set PortType, // default: 6 (FCH)
+                output_port_type: LU32 : pub get PortType : pub set PortType, // default: 6 (FCH)
                 clear_acknowledgement: BU8 : pub get bool : pub set bool,
                 _reserved_2: [u8; 3],
             }
@@ -1994,10 +2116,10 @@ pub mod memory {
         /// "input", "output": From the point of view of the PSP.
         pub fn new_enabled(
             input_port_type: PortType,
-            input_port: u32,
+            input_port: SerdeHex32,
             input_port_size: PortSize,
             output_port_type: PortType,
-            output_port: u32,
+            output_port: SerdeHex32,
             output_port_size: PortSize,
             clear_acknowledgement: bool,
         ) -> Self {
@@ -2321,17 +2443,17 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct RdimmDdr4CadBusElement {
-            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
-            ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get RdimmDdr4Voltages : pub set RdimmDdr4Voltages,
-            dimm0_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
-            dimm1_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
+            dimm_slots_per_channel: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
+            ddr_rates: LU32 : pub get DdrRates : pub set DdrRates,
+            vdd_io: LU32 : pub get RdimmDdr4Voltages : pub set RdimmDdr4Voltages,
+            dimm0_ranks: LU32 : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
+            dimm1_ranks: LU32 : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
 
             gear_down_mode: BLU16 : pub get bool : pub set bool,
-            _reserved: U16<LittleEndian>,
+            _reserved: LU16,
             slow_mode: BLU16 : pub get bool : pub set bool, // (probably) 2T is slow, 1T is fast
-            _reserved_2: U16<LittleEndian>,
-            address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
+            _reserved_2: LU16,
+            address_command_control: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // 24 bit; often all used bytes are equal
 
             cke_drive_strength: u8 : pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
             cs_odt_drive_strength: u8 : pub get CadBusCsOdtDriveStrength : pub set CadBusCsOdtDriveStrength,
@@ -2439,17 +2561,17 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct UdimmDdr4CadBusElement {
-            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
-            ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get UdimmDdr4Voltages : pub set UdimmDdr4Voltages,
-            dimm0_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
-            dimm1_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
+            dimm_slots_per_channel: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
+            ddr_rates: LU32 : pub get DdrRates : pub set DdrRates,
+            vdd_io: LU32 : pub get UdimmDdr4Voltages : pub set UdimmDdr4Voltages,
+            dimm0_ranks: LU32 : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
+            dimm1_ranks: LU32 : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
 
-            gear_down_mode: U16<LittleEndian> : pub get u16 : pub set u16,
-            _reserved: U16<LittleEndian>,
-            slow_mode: U16<LittleEndian> : pub get u16 : pub set u16,
-            _reserved_2: U16<LittleEndian>,
-            address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
+            gear_down_mode: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
+            _reserved: LU16,
+            slow_mode: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
+            _reserved_2: LU16,
+            address_command_control: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // 24 bit; often all used bytes are equal
 
             cke_drive_strength: u8 : pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
             cs_odt_drive_strength: u8 : pub get CadBusCsOdtDriveStrength : pub set CadBusCsOdtDriveStrength,
@@ -2531,17 +2653,17 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4CadBusElement {
-            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
-            ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get LrdimmDdr4Voltages : pub set LrdimmDdr4Voltages,
-            dimm0_ranks: U32<LittleEndian> : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
-            dimm1_ranks: U32<LittleEndian> : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
+            dimm_slots_per_channel: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
+            ddr_rates: LU32 : pub get DdrRates : pub set DdrRates,
+            vdd_io: LU32 : pub get LrdimmDdr4Voltages : pub set LrdimmDdr4Voltages,
+            dimm0_ranks: LU32 : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
+            dimm1_ranks: LU32 : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
 
-            gear_down_mode: U16<LittleEndian> : pub get u16 : pub set u16,
-            _reserved: U16<LittleEndian>,
-            slow_mode: U16<LittleEndian> : pub get u16 : pub set u16,
-            _reserved_2: U16<LittleEndian>,
-            address_command_control: U32<LittleEndian> : pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
+            gear_down_mode: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
+            _reserved: LU16,
+            slow_mode: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
+            _reserved_2: LU16,
+            address_command_control: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // 24 bit; often all used bytes are equal
 
             cke_drive_strength: u8 : pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
             cs_odt_drive_strength: u8 : pub get CadBusCsOdtDriveStrength : pub set CadBusCsOdtDriveStrength,
@@ -2832,22 +2954,22 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct Ddr4DataBusElement {
-            dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
-            ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
-            vdd_io: U32<LittleEndian> : pub get RdimmDdr4Voltages : pub set RdimmDdr4Voltages,
-            dimm0_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
-            dimm1_ranks: U32<LittleEndian> : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
+            dimm_slots_per_channel: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
+            ddr_rates: LU32 : pub get DdrRates : pub set DdrRates,
+            vdd_io: LU32 : pub get RdimmDdr4Voltages : pub set RdimmDdr4Voltages,
+            dimm0_ranks: LU32 : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
+            dimm1_ranks: LU32 : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
 
-            rtt_nom: U32<LittleEndian> : pub get RttNom : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
-            rtt_wr: U32<LittleEndian> : pub get RttWr : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
-            rtt_park: U32<LittleEndian> : pub get RttPark : pub set RttPark, // contains ODT termination resistor to be used when ODT is low
-            dq_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data
-            dqs_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data strobe (bit clock)
-            odt_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for on-die termination
-            pmu_phy_vref: U32<LittleEndian> : pub get u32 : pub set u32,
+            rtt_nom: LU32 : pub get RttNom : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
+            rtt_wr: LU32 : pub get RttWr : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
+            rtt_park: LU32 : pub get RttPark : pub set RttPark, // contains ODT termination resistor to be used when ODT is low
+            dq_drive_strength: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // for data
+            dqs_drive_strength: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // for data strobe (bit clock)
+            odt_drive_strength: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // for on-die termination
+            pmu_phy_vref: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
             // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
             // See <https://github.com/LongJohnCoder/ddr-doc/blob/gh-pages/jedec/JESD79-4.pdf> Table 15
-            pub(crate) vref_dq: U32<LittleEndian> : pub get VrefDq : pub set VrefDq, // MR6 vref calibration value; 23|30|32
+            pub(crate) vref_dq: LU32 : pub get VrefDq : pub set VrefDq, // MR6 vref calibration value; 23|30|32
         }
     }
 
@@ -2939,21 +3061,21 @@ pub mod memory {
     Serialize, Deserialize)]
             #[repr(C, packed)]
             pub struct LrdimmDdr4DataBusElement {
-                dimm_slots_per_channel: U32<LittleEndian> : pub get u32 : pub set u32,
-                ddr_rates: U32<LittleEndian> : pub get DdrRates : pub set DdrRates,
-                vdd_io: U32<LittleEndian> : pub get LrdimmDdr4Voltages : pub set LrdimmDdr4Voltages,
-                dimm0_ranks: U32<LittleEndian> : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
-                dimm1_ranks: U32<LittleEndian> : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
+                dimm_slots_per_channel: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
+                ddr_rates: LU32 : pub get DdrRates : pub set DdrRates,
+                vdd_io: LU32 : pub get LrdimmDdr4Voltages : pub set LrdimmDdr4Voltages,
+                dimm0_ranks: LU32 : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
+                dimm1_ranks: LU32 : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
 
-                rtt_nom: U32<LittleEndian> : pub get RttNom : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
-                rtt_wr: U32<LittleEndian> : pub get RttWr : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
-                rtt_park: U32<LittleEndian> : pub get RttPark : pub set RttPark, // contains ODT termination resistor to be used when ODT is low
-                dq_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data
-                dqs_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for data strobe (bit clock)
-                odt_drive_strength: U32<LittleEndian> : pub get u32 : pub set u32, // for on-die termination
-                pmu_phy_vref: U32<LittleEndian> : pub get u32 : pub set u32,
+                rtt_nom: LU32 : pub get RttNom : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
+                rtt_wr: LU32 : pub get RttWr : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
+                rtt_park: LU32 : pub get RttPark : pub set RttPark, // contains ODT termination resistor to be used when ODT is low
+                dq_drive_strength: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // for data
+                dqs_drive_strength: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // for data strobe (bit clock)
+                odt_drive_strength: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // for on-die termination
+                pmu_phy_vref: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
                 // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
-                vref_dq: U32<LittleEndian> : pub get u32 : pub set u32, // MR6 vref calibration value; 23|30|32
+                vref_dq: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // MR6 vref calibration value; 23|30|32
             }
         }
 
@@ -3083,8 +3205,8 @@ pub mod memory {
             pub struct MaxFreqElement {
                 dimm_slots_per_channel: u8 : pub get DimmsPerChannel : pub set DimmsPerChannel,
                 _reserved: u8,
-                conditions: [U16<LittleEndian>; 4], // number of dimm on a channel, number of single-rank dimm, number of dual-rank dimm, number of quad-rank dimm
-                speeds: [U16<LittleEndian>; 3], // speed limit with voltage 1.5 V, 1.35 V, 1.25 V // FIXME make accessible
+                conditions: [LU16; 4], // number of dimm on a channel, number of single-rank dimm, number of dual-rank dimm, number of quad-rank dimm
+                speeds: [LU16; 3], // speed limit with voltage 1.5 V, 1.35 V, 1.25 V // FIXME make accessible
             }
         }
     impl MaxFreqElement {
@@ -3191,8 +3313,8 @@ pub mod memory {
             pub struct LrMaxFreqElement {
                 dimm_slots_per_channel: u8 : pub get u8 : pub set u8,
                 _reserved: u8,
-                pub conditions: [U16<LittleEndian>; 4], // maybe: number of dimm on a channel, 0, number of lr dimm, 0 // FIXME: Make accessible
-                pub speeds: [U16<LittleEndian>; 3], // maybe: speed limit with voltage 1.5 V, 1.35 V, 1.25 V; FIXME: Make accessible
+                pub conditions: [LU16; 4], // maybe: number of dimm on a channel, 0, number of lr dimm, 0 // FIXME: Make accessible
+                pub speeds: [LU16; 3], // maybe: speed limit with voltage 1.5 V, 1.35 V, 1.25 V; FIXME: Make accessible
             }
         }
 
@@ -3300,9 +3422,9 @@ pub mod memory {
     Serialize, Deserialize)]
             #[repr(C, packed)]
             pub struct ErrorOutControlBeepCode {
-                error_type: U16<LittleEndian>,
-                peak_map: U16<LittleEndian> : pub get u16 : pub set u16,
-                peak_attr: U32<LittleEndian> : pub get ErrorOutControlBeepCodePeakAttr : pub set ErrorOutControlBeepCodePeakAttr,
+                error_type: LU16,
+                peak_map: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
+                peak_attr: LU32 : pub get ErrorOutControlBeepCodePeakAttr : pub set ErrorOutControlBeepCodePeakAttr,
             }
         }
     impl ErrorOutControlBeepCode {
@@ -3346,15 +3468,15 @@ Clone, Serialize, Deserialize)]
                 enable_error_reporting_beep_codes: BU8 : pub get bool : pub set bool,
                 /// Note: Receiver of the error log: Send 0xDEAD5555 to the INPUT_PORT to acknowledge.
                 enable_using_handshake: BU8 : pub get bool : pub set bool, // otherwise see output_delay
-                input_port: U32<LittleEndian> : pub get u32 : pub set u32, // for handshake
-                output_delay: U32<LittleEndian> : pub get u32 : pub set u32, // if no handshake; in units of 10 ns.
-                output_port: U32<LittleEndian> : pub get u32 : pub set u32,
+                input_port: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // for handshake
+                output_delay: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // if no handshake; in units of 10 ns.
+                output_port: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
                 stop_on_first_fatal_error: BU8: pub get bool : pub set bool,
                 _reserved: [u8; 3],
-                input_port_size: U32<LittleEndian> : pub get PortSize : pub set PortSize,
-                output_port_size: U32<LittleEndian> : pub get PortSize : pub set PortSize,
-                input_port_type: U32<LittleEndian> : pub get PortType : pub set PortType, // PortType; default: 6
-                output_port_type: U32<LittleEndian> : pub get PortType : pub set PortType, // PortType; default: 6
+                input_port_size: LU32 : pub get PortSize : pub set PortSize,
+                output_port_size: LU32 : pub get PortSize : pub set PortSize,
+                input_port_type: LU32 : pub get PortType : pub set PortType, // PortType; default: 6
+                output_port_type: LU32 : pub get PortType : pub set PortType, // PortType; default: 6
                 clear_acknowledgement: BU8 : pub get bool : pub set bool,
                 _reserved_before_gpio: [u8; $padding_before_gpio],
                 error_reporting_gpio: Gpio,
@@ -3564,11 +3686,11 @@ Clone, Serialize, Deserialize)]
     Serialize, Deserialize)]
             #[repr(C, packed)]
             pub struct Ddr4OdtPatElement {
-                dimm_rank_bitmaps: U32<LittleEndian> : pub get Ddr4OdtPatDimmRankBitmaps : pub set Ddr4OdtPatDimmRankBitmaps,
-                cs0_odt_patterns: U32<LittleEndian> : pub get OdtPatPatterns : pub set OdtPatPatterns,
-                cs1_odt_patterns: U32<LittleEndian> : pub get OdtPatPatterns : pub set OdtPatPatterns,
-                cs2_odt_patterns: U32<LittleEndian> : pub get OdtPatPatterns : pub set OdtPatPatterns,
-                cs3_odt_patterns: U32<LittleEndian> : pub get OdtPatPatterns : pub set OdtPatPatterns,
+                dimm_rank_bitmaps: LU32 : pub get Ddr4OdtPatDimmRankBitmaps : pub set Ddr4OdtPatDimmRankBitmaps,
+                cs0_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
+                cs1_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
+                cs2_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
+                cs3_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
             }
         }
 
@@ -3636,11 +3758,11 @@ Clone, Serialize, Deserialize)]
     Serialize, Deserialize)]
             #[repr(C, packed)]
             pub struct LrdimmDdr4OdtPatElement {
-                dimm_rank_bitmaps: U32<LittleEndian> : pub get LrdimmDdr4OdtPatDimmRankBitmaps : pub set LrdimmDdr4OdtPatDimmRankBitmaps,
-                cs0_odt_patterns: U32<LittleEndian> : pub get OdtPatPatterns : pub set OdtPatPatterns,
-                cs1_odt_patterns: U32<LittleEndian> : pub get OdtPatPatterns : pub set OdtPatPatterns,
-                cs2_odt_patterns: U32<LittleEndian> : pub get OdtPatPatterns : pub set OdtPatPatterns,
-                cs3_odt_patterns: U32<LittleEndian> : pub get OdtPatPatterns : pub set OdtPatPatterns,
+                dimm_rank_bitmaps: LU32 : pub get LrdimmDdr4OdtPatDimmRankBitmaps : pub set LrdimmDdr4OdtPatDimmRankBitmaps,
+                cs0_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
+                cs1_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
+                cs2_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
+                cs3_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
             }
         }
 
@@ -4312,8 +4434,8 @@ Clone, Serialize, Deserialize)]
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
                                 channels: u8 : pub get ChannelIds : pub set ChannelIds,
                                 dimms: u8 : pub get DimmSlots, // Note: must always be "all"
-                                timing_mode: U32<LittleEndian> : pub get TimingMode : pub set TimingMode,
-                                bus_speed: U32<LittleEndian> : pub get MemBusSpeedType : pub set MemBusSpeedType,
+                                timing_mode: LU32 : pub get TimingMode : pub set TimingMode,
+                                bus_speed: LU32 : pub get MemBusSpeedType : pub set MemBusSpeedType,
                             }
                         }
                         impl_EntryCompatible!(MemBusSpeed, 9, 11);
@@ -4408,7 +4530,7 @@ Clone, Serialize, Deserialize)]
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
                                 channels: u8 : pub get ChannelIds, // Note: must always be "any" here
                                 dimms: u8 : pub get DimmSlots, // Note: must always be "any" here
-                                technology_type: U32<LittleEndian> : pub get MemTechnologyType : pub set MemTechnologyType,
+                                technology_type: LU32 : pub get MemTechnologyType : pub set MemTechnologyType,
                             }
                         }
                         impl_EntryCompatible!(MemTechnology, 11, 7);
@@ -4479,8 +4601,8 @@ Clone, Serialize, Deserialize)]
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
                                 channels: u8 : pub get ChannelIds : pub set ChannelIds,
                                 dimms: u8 : pub get DimmSlots : pub set DimmSlots,
-                                seed: [U16<LittleEndian>; 8],
-                                ecc_seed: U16<LittleEndian>,
+                                seed: [LU16; 8],
+                                ecc_seed: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
                             }
                         }
                         impl_EntryCompatible!(RxEnSeed, 13, 21);
@@ -4669,7 +4791,7 @@ Clone, Serialize, Deserialize)]
                             pub struct CpuFamilyFilter {
                                 type_: u8,
                                 payload_size: u8,
-                                cpu_family_revision: U32<LittleEndian> : pub get u32 : pub set u32,
+                                cpu_family_revision: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
                             }
                         }
                         impl_EntryCompatible!(CpuFamilyFilter, 18, 4);
@@ -4978,7 +5100,7 @@ Clone, Serialize, Deserialize)]
         Serialize, Deserialize, Clone, Copy)]
                         #[repr(C, packed)]
                         pub struct Terminator {
-                            type_: U16<LittleEndian>,
+                            type_: LU16,
                         }
                         impl_EntryCompatible!(Terminator, 0xfeef, 2);
 
@@ -5331,16 +5453,15 @@ pub mod psp {
     }
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
-            #[repr(C, packed)]
-            pub struct IdRevApcbMapping {
-                id_and_rev_and_feature_mask: u8 : pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
-                id_and_feature_value: u8 : pub get u8 : pub set u8,
-                rev_and_feature_value: u8 : pub get RevAndFeatureValue : pub set RevAndFeatureValue,
-                board_instance_index: u8 : pub get u8 : pub set u8,
-            }
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct IdRevApcbMapping {
+            id_and_rev_and_feature_mask: u8 : pub get SerdeHex8 : pub set SerdeHex8, // bit 7: normal or feature-controlled?  other bits: mask
+            id_and_feature_value: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+            rev_and_feature_value: u8 : pub get RevAndFeatureValue : pub set RevAndFeatureValue,
+            board_instance_index: u8 : pub get SerdeHex8 : pub set SerdeHex8,
         }
+    }
 
     impl IdRevApcbMapping {
         pub fn new(
@@ -5358,6 +5479,14 @@ pub mod psp {
                 board_instance_index,
             })
         }
+        pub fn default() -> Self {
+            Self {
+                id_and_rev_and_feature_mask: 0x80,
+                id_and_feature_value: 0,
+                rev_and_feature_value: 0,
+                board_instance_index: 0,
+            }
+        }
         pub fn board_instance_mask(&self) -> Result<u16> {
             if self.board_instance_index <= 15 {
                 Ok(1u16 << self.board_instance_index)
@@ -5372,8 +5501,8 @@ pub mod psp {
     Serialize, Deserialize)]
             #[repr(C, packed)]
             pub struct BoardIdGettingMethodCustom {
-                access_method: U16<LittleEndian>, // 0xF for BoardIdGettingMethodCustom
-                feature_mask: U16<LittleEndian> : pub get u16 : pub set u16,
+                access_method: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // 0xF for BoardIdGettingMethodCustom
+                feature_mask: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
             }
         }
 
@@ -5416,7 +5545,7 @@ pub mod psp {
     Serialize, Deserialize)]
             #[repr(C, packed)]
             pub struct BoardIdGettingMethodGpio {
-                access_method: U16<LittleEndian>, // 3 for BoardIdGettingMethodGpio
+                access_method: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // 3 for BoardIdGettingMethodGpio
                 pub bit_locations: [Gpio; 4], // for the board id
             }
         }
@@ -5461,17 +5590,16 @@ pub mod psp {
     }
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
-            #[repr(C, packed)]
-            pub struct BoardIdGettingMethodEeprom {
-                access_method: U16<LittleEndian>, // 2 for BoardIdGettingMethodEeprom
-                i2c_controller_index: U16<LittleEndian> : pub get u16 : pub set u16,
-                device_address: U16<LittleEndian> : pub get u16 : pub set u16,
-                board_id_offset: U16<LittleEndian> : pub get u16 : pub set u16, // Byte offset
-                board_rev_offset: U16<LittleEndian> : pub get u16 : pub set u16, // Byte offset
-            }
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct BoardIdGettingMethodEeprom {
+            access_method: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // 2 for BoardIdGettingMethodEeprom
+            i2c_controller_index: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
+            device_address: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
+            board_id_offset: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // Byte offset
+            board_rev_offset: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // Byte offset
         }
+    }
 
     impl Default for BoardIdGettingMethodEeprom {
         fn default() -> Self {
@@ -5523,13 +5651,13 @@ pub mod psp {
     Serialize, Deserialize)]
             #[repr(C, packed)]
             pub struct BoardIdGettingMethodSmbus {
-                access_method: U16<LittleEndian>, // 1 for BoardIdGettingMethodSmbus
-                i2c_controller_index: U16<LittleEndian> : pub get u16 : pub set u16,
+                access_method: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // 1 for BoardIdGettingMethodSmbus
+                i2c_controller_index: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
                 i2c_mux_address: u8 : pub get u8 : pub set u8,
                 mux_control_address: u8 : pub get u8 : pub set u8,
                 mux_channel: u8 : pub get u8 : pub set u8,
-                smbus_address: U16<LittleEndian> : pub get u16 : pub set u16,
-                register_index: U16<LittleEndian> : pub get u16 : pub set u16,
+                smbus_address: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
+                register_index: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
             }
         }
 

@@ -20,16 +20,6 @@ impl Getter<u32> for U32<LittleEndian> {
         self.get()
     }
 }
-impl Getter<Result<u16>> for U16<LittleEndian> {
-    fn get1(self) -> Result<u16> {
-        Ok(self.get())
-    }
-}
-impl Getter<Result<u64>> for U64<LittleEndian> {
-    fn get1(self) -> Result<u64> {
-        Ok(self.get())
-    }
-}
 impl Getter<u8> for u8 {
     fn get1(self) -> u8 {
         self
@@ -45,9 +35,19 @@ impl<T: FromPrimitive> Getter<Result<T>> for u8 {
         T::from_u8(self).ok_or(Error::EntryTypeMismatch)
     }
 }
+impl<T: FromPrimitive> Getter<Result<T>> for U16<LittleEndian> {
+    fn get1(self) -> Result<T> {
+        T::from_u16(self.get()).ok_or(Error::EntryTypeMismatch)
+    }
+}
 impl<T: FromPrimitive> Getter<Result<T>> for U32<LittleEndian> {
     fn get1(self) -> Result<T> {
         T::from_u32(self.get()).ok_or(Error::EntryTypeMismatch)
+    }
+}
+impl<T: FromPrimitive> Getter<Result<T>> for U64<LittleEndian> {
+    fn get1(self) -> Result<T> {
+        T::from_u64(self.get()).ok_or(Error::EntryTypeMismatch)
     }
 }
 // For Token

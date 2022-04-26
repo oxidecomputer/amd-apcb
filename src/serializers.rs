@@ -7,6 +7,7 @@
 
 use crate::memory::*;
 use crate::ondisk::*;
+use crate::psp::*;
 use crate::struct_accessors::DummyErrorChecks;
 
 // Note: This is written such that it will fail if the underlying struct has
@@ -169,5 +170,58 @@ make_serde!(
         cs_odt_drive_strength,
         address_command_drive_strength,
         clk_drive_strength,
+    ]
+);
+
+make_serde!(
+    V2_HEADER,
+    SerdeV2_HEADER,
+    [
+        signature,
+        header_size,
+        version,
+        apcb_size,
+        unique_apcb_instance,
+        checksum_byte,
+    ]
+);
+make_serde!(
+    V3_HEADER_EXT,
+    SerdeV3_HEADER_EXT,
+    [
+        signature,
+        struct_version,
+        data_version,
+        ext_header_size,
+        data_offset,
+        header_checksum,
+        integrity_sign,
+        signature_ending,
+    ]
+);
+make_serde!(
+    GROUP_HEADER,
+    SerdeGROUP_HEADER,
+    [signature, group_id, header_size, version, group_size,]
+);
+make_serde!(
+    BoardIdGettingMethodEeprom,
+    SerdeBoardIdGettingMethodEeprom,
+    [
+        access_method,
+        i2c_controller_index,
+        device_address,
+        board_id_offset,
+        board_rev_offset,
+    ]
+);
+make_serde!(
+    IdRevApcbMapping,
+    SerdeIdRevApcbMapping,
+    [
+        id_and_rev_and_feature_mask,
+        id_and_feature_value,
+        rev_and_feature_value,
+        board_instance_index,
     ]
 );
