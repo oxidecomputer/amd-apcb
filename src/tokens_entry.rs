@@ -317,7 +317,6 @@ impl<'a> Serialize for TokensEntryItem<'a> {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("TokensEntryItem", 1)?;
         let entry = &*self.entry;
         let key = entry.key.get();
         let mut st = SerdeTokensEntryItem::Unknown {
@@ -348,8 +347,7 @@ impl<'a> Serialize for TokensEntryItem<'a> {
             }
             TokenEntryId::Unknown(_) => {}
         }
-        state.serialize_field("SerdeTokensEntryItem", &st)?;
-        state.end()
+        st.serialize(serializer)
     }
 }
 
@@ -359,158 +357,81 @@ impl<'a, 'de: 'a> Deserialize<'de> for TokensEntryItem<'a> {
     where
         D: Deserializer<'de>,
     {
-        enum Field {
-            SerdeTokensEntryItem,
-        }
-        const FIELDS: &'static [&'static str] = &["SerdeTokensEntryItem"];
-
-        impl<'de> Deserialize<'de> for Field {
-            fn deserialize<D>(
-                deserializer: D,
-            ) -> core::result::Result<Field, D::Error>
-            where
-                D: Deserializer<'de>,
-            {
-                struct FieldVisitor;
-
-                impl<'de> Visitor<'de> for FieldVisitor {
-                    type Value = Field;
-
-                    fn expecting(
-                        &self,
-                        formatter: &mut fmt::Formatter<'_>,
-                    ) -> fmt::Result {
-                        formatter.write_str("`SerdeTokensEntryItem`")
-                    }
-
-                    fn visit_str<E>(
-                        self,
-                        value: &str,
-                    ) -> core::result::Result<Field, E>
-                    where
-                        E: de::Error,
-                    {
-                        match value {
-                            "SerdeTokensEntryItem" => {
-                                Ok(Field::SerdeTokensEntryItem)
-                            }
-                            _ => Err(de::Error::unknown_field(value, FIELDS)),
-                        }
-                    }
+        let st = SerdeTokensEntryItem::deserialize(deserializer)?;
+        let entry_id: TokenEntryId;
+        match st {
+            SerdeTokensEntryItem::Bool(t) => {
+                entry_id = TokenEntryId::Bool;
+                if let Ok(te) = TOKEN_ENTRY::try_from(t) {
+                    return Ok(Self {
+                        entry_id,
+                        entry: Cow::Owned(te),
+                    });
+                } else {
+                    return Err(de::Error::invalid_value(
+                        serde::de::Unexpected::Enum,
+                        &"a valid Token Entry",
+                    ));
                 }
-
-                deserializer.deserialize_identifier(FieldVisitor)
+            }
+            SerdeTokensEntryItem::Byte(t) => {
+                entry_id = TokenEntryId::Byte;
+                if let Ok(te) = TOKEN_ENTRY::try_from(t) {
+                    return Ok(Self {
+                        entry_id,
+                        entry: Cow::Owned(te),
+                    });
+                } else {
+                    return Err(de::Error::invalid_value(
+                        serde::de::Unexpected::Enum,
+                        &"a valid Token Entry",
+                    ));
+                }
+            }
+            SerdeTokensEntryItem::Word(t) => {
+                entry_id = TokenEntryId::Word;
+                if let Ok(te) = TOKEN_ENTRY::try_from(t) {
+                    return Ok(Self {
+                        entry_id,
+                        entry: Cow::Owned(te),
+                    });
+                } else {
+                    return Err(de::Error::invalid_value(
+                        serde::de::Unexpected::Enum,
+                        &"a valid Token Entry",
+                    ));
+                }
+            }
+            SerdeTokensEntryItem::Dword(t) => {
+                entry_id = TokenEntryId::Dword;
+                if let Ok(te) = TOKEN_ENTRY::try_from(t) {
+                    return Ok(Self {
+                        entry_id,
+                        entry: Cow::Owned(te),
+                    });
+                } else {
+                    return Err(de::Error::invalid_value(
+                        serde::de::Unexpected::Enum,
+                        &"a valid Token Entry",
+                    ));
+                }
+            }
+            SerdeTokensEntryItem::Unknown {
+                entry_id: e_id,
+                tag,
+                value,
+            } => {
+                entry_id = e_id;
+                let te = TOKEN_ENTRY {
+                    key: tag.into(),
+                    value: value.into(),
+                };
+                return Ok(Self {
+                    entry_id,
+                    entry: Cow::Owned(te),
+                });
             }
         }
-
-        struct TokensEntryItemVisitor;
-
-        impl<'de> Visitor<'de> for TokensEntryItemVisitor {
-            type Value = TokensEntryItem<'de>;
-
-            fn expecting(
-                &self,
-                formatter: &mut fmt::Formatter<'_>,
-            ) -> fmt::Result {
-                formatter.write_str("struct TokensEntryItem")
-            }
-
-            fn visit_map<V>(
-                self,
-                mut map: V,
-            ) -> core::result::Result<TokensEntryItem<'static>, V::Error>
-            where
-                V: MapAccess<'de>,
-            {
-                let mut token: Option<SerdeTokensEntryItem> = None;
-                let entry_id: TokenEntryId;
-                let token_entry: TOKEN_ENTRY;
-                while let Some(key) = map.next_key()? {
-                    match key {
-                        Field::SerdeTokensEntryItem => {
-                            if token.is_some() {
-                                return Err(de::Error::duplicate_field(
-                                    "Multiple tags specified",
-                                ));
-                            }
-                            token = map.next_value()?;
-                        }
-                    }
-                }
-                let token = token.ok_or_else(|| {
-                    de::Error::missing_field("SerdeTokensEntryItem")
-                })?;
-
-                match token {
-                    SerdeTokensEntryItem::Bool(t) => {
-                        entry_id = TokenEntryId::Bool;
-                        if let Ok(te) = TOKEN_ENTRY::try_from(t) {
-                            token_entry = te;
-                        } else {
-                            // TODO: Implement better error message!
-                            return Err(de::Error::invalid_value(
-                                serde::de::Unexpected::Enum,
-                                &self,
-                            ));
-                        }
-                    }
-                    SerdeTokensEntryItem::Byte(t) => {
-                        entry_id = TokenEntryId::Byte;
-                        if let Ok(te) = TOKEN_ENTRY::try_from(t) {
-                            token_entry = te;
-                        } else {
-                            return Err(de::Error::invalid_value(
-                                serde::de::Unexpected::Enum,
-                                &self,
-                            ));
-                        }
-                    }
-                    SerdeTokensEntryItem::Word(t) => {
-                        entry_id = TokenEntryId::Word;
-                        if let Ok(te) = TOKEN_ENTRY::try_from(t) {
-                            token_entry = te;
-                        } else {
-                            return Err(de::Error::invalid_value(
-                                serde::de::Unexpected::Enum,
-                                &self,
-                            ));
-                        }
-                    }
-                    SerdeTokensEntryItem::Dword(t) => {
-                        entry_id = TokenEntryId::Dword;
-                        if let Ok(te) = TOKEN_ENTRY::try_from(t) {
-                            token_entry = te;
-                        } else {
-                            return Err(de::Error::invalid_value(
-                                serde::de::Unexpected::Enum,
-                                &self,
-                            ));
-                        }
-                    }
-                    SerdeTokensEntryItem::Unknown {
-                        entry_id: e_id,
-                        tag,
-                        value,
-                    } => {
-                        entry_id = e_id;
-                        token_entry = TOKEN_ENTRY {
-                            key: tag.into(),
-                            value: value.into(),
-                        };
-                    }
-                }
-                let buf = Cow::Owned(token_entry);
-                Ok(TokensEntryItem {
-                    entry_id: entry_id,
-                    entry: buf,
-                })
-            }
-        }
-        deserializer.deserialize_struct(
-            "TokensEntryItem",
-            FIELDS,
-            TokensEntryItemVisitor,
-        )
     }
 }
 
