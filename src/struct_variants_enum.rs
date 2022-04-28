@@ -167,7 +167,7 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
         }
         $($tail:tt)*
     ) => {
-        make_bitfield_serde_int! {
+        make_bitfield_serde! {
             $(#[$struct_meta])*
             $struct_vis
             struct $struct_name { $($struct_body)* }

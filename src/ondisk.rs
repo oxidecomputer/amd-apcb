@@ -1237,14 +1237,6 @@ macro_rules! make_bitfield_serde {(
     }
 }}
 
-macro_rules! make_bitfield_serde_int {(
-    ($q:tt)*
-) => {
-    make_bitfield_serde! {
-        ($q)*
-    }
-}}
-
 make_bitfield_serde! {
     #[bitfield(bits = 8)]
     #[repr(u8)]
