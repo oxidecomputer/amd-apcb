@@ -1330,26 +1330,28 @@ impl PriorityLevels {
     }
 }
 
-#[bitfield(bits = 16)]
-#[repr(u16)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct BoardInstances {
-    pub instance_0: bool,
-    pub instance_1: bool,
-    pub instance_2: bool,
-    pub instance_3: bool,
-    pub instance_4: bool,
-    pub instance_5: bool,
-    pub instance_6: bool,
-    pub instance_7: bool,
-    pub instance_8: bool,
-    pub instance_9: bool,
-    pub instance_10: bool,
-    pub instance_11: bool,
-    pub instance_12: bool,
-    pub instance_13: bool,
-    pub instance_14: bool,
-    pub instance_15: bool,
+make_bitfield_serde! {
+    #[bitfield(bits = 16)]
+    #[repr(u16)]
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    pub struct BoardInstances {
+        pub instance_0: bool : pub get bool : pub set bool,
+        pub instance_1: bool : pub get bool : pub set bool,
+        pub instance_2: bool : pub get bool : pub set bool,
+        pub instance_3: bool : pub get bool : pub set bool,
+        pub instance_4: bool : pub get bool : pub set bool,
+        pub instance_5: bool : pub get bool : pub set bool,
+        pub instance_6: bool : pub get bool : pub set bool,
+        pub instance_7: bool : pub get bool : pub set bool,
+        pub instance_8: bool : pub get bool : pub set bool,
+        pub instance_9: bool : pub get bool : pub set bool,
+        pub instance_10: bool : pub get bool : pub set bool,
+        pub instance_11: bool : pub get bool : pub set bool,
+        pub instance_12: bool : pub get bool : pub set bool,
+        pub instance_13: bool : pub get bool : pub set bool,
+        pub instance_14: bool : pub get bool : pub set bool,
+        pub instance_15: bool : pub get bool : pub set bool,
+    }
 }
 pub type BoardInstance = u8;
 
@@ -1762,7 +1764,7 @@ pub mod df {
 
 pub mod memory {
     use super::*;
-    use crate::struct_accessors::{make_accessors, Getter, Setter, BLU16, BU8};
+    use crate::struct_accessors::{make_accessors, Getter, Setter, BLU16, BU8, DummyErrorChecks};
     use crate::types::Result;
 
     make_accessors! {
@@ -2188,6 +2190,7 @@ pub mod memory {
             pub quad_rank: bool : pub get bool : pub set bool,
         }
     );
+    impl DummyErrorChecks for Ddr4DimmRanks {}
     impl Default for Ddr4DimmRanks {
         fn default() -> Self {
             Self::new()
@@ -2219,11 +2222,11 @@ pub mod memory {
     impl_bitfield_primitive_conversion!(Ddr4DimmRanks, 0b1111, u32);
 
     make_bitfield_serde!(
-    #[bitfield(bits = 4)]
-    #[derive(
-        Clone, Copy, PartialEq, BitfieldSpecifier,
-    )]
-    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+        #[bitfield(bits = 4)]
+        #[derive(
+            Clone, Copy, PartialEq, BitfieldSpecifier,
+        )]
+        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
         pub struct LrdimmDdr4DimmRanks {
             pub unpopulated: bool : pub get bool : pub set bool,
             pub lr: bool : pub get bool : pub set bool,
@@ -2232,6 +2235,7 @@ pub mod memory {
         }
     );
 
+    impl DummyErrorChecks for LrdimmDdr4DimmRanks {}
     impl Default for LrdimmDdr4DimmRanks {
         fn default() -> Self {
             Self::new()
@@ -2373,18 +2377,27 @@ pub mod memory {
         u32
     );
 
-    #[bitfield(bits = 32)]
-    #[repr(u32)]
-    #[derive(Clone, Copy, Serialize, Deserialize)]
-    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-    pub struct DimmsPerChannelSelector {
-        pub one_dimm: bool,
-        pub two_dimms: bool,
-        pub three_dimms: bool,
-        pub four_dimms: bool,
-        #[skip]
-        __: B28,
+    make_bitfield_serde! {
+        #[bitfield(bits = 32)]
+        #[repr(u32)]
+        #[derive(Clone, Copy)]
+        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+        pub struct DimmsPerChannelSelector {
+            pub one_dimm: bool,
+            pub two_dimms: bool,
+            pub three_dimms: bool,
+            pub four_dimms: bool,
+            #[skip]
+            __: B28,
+        }
     }
+
+    impl Default for DimmsPerChannelSelector {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+
     impl_bitfield_primitive_conversion!(DimmsPerChannelSelector, 0b1111, u32);
     impl DimmsPerChannelSelector {
         pub fn builder() -> Self {
@@ -3428,17 +3441,19 @@ pub mod memory {
         }
     }
 
-    #[bitfield(bits = 32)]
-    #[derive(PartialEq, Debug, Copy, Clone, Serialize, Deserialize)]
-    #[repr(u32)]
-    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-    pub struct ErrorOutControlBeepCodePeakAttr {
-        pub peak_count: B5,
-        /// PULSE_WIDTH: in units of 0.1 s
-        pub pulse_width: B3,
-        pub repeat_count: B4,
-        #[skip]
-        __: B20,
+    make_bitfield_serde! {
+        #[bitfield(bits = 32)]
+        #[derive(PartialEq, Debug, Copy, Clone)]
+        #[repr(u32)]
+        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+        pub struct ErrorOutControlBeepCodePeakAttr {
+            pub peak_count: B5 : pub get u8 : pub set u8,
+            /// PULSE_WIDTH: in units of 0.1 s
+            pub pulse_width: B3 : pub get u8 : pub set u8,
+            pub repeat_count: B4 : pub get u8 : pub set u8,
+            #[skip]
+            __: B20,
+        }
     }
     impl_bitfield_primitive_conversion!(
         ErrorOutControlBeepCodePeakAttr,
@@ -3781,19 +3796,21 @@ Clone)]
     define_ErrorOutControl!(ErrorOutControl116, 3, 1); // Milan
     define_ErrorOutControl!(ErrorOutControl112, 0, 0);
 
-    #[bitfield(bits = 32)]
-    #[repr(u32)]
-    #[derive(Clone, Copy, BitfieldSpecifier, Serialize, Deserialize)]
-    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-    pub struct Ddr4OdtPatDimmRankBitmaps {
-        #[bits = 4]
-        pub dimm0: Ddr4DimmRanks, // @0
-        #[bits = 4]
-        pub dimm1: Ddr4DimmRanks, // @4
-        #[bits = 4]
-        pub dimm2: Ddr4DimmRanks, // @8
-        #[skip]
-        __: B20,
+    make_bitfield_serde! {
+        #[bitfield(bits = 32)]
+        #[repr(u32)]
+        #[derive(Clone, Copy, BitfieldSpecifier)]
+        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+        pub struct Ddr4OdtPatDimmRankBitmaps {
+            #[bits = 4]
+            pub dimm0: Ddr4DimmRanks : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks, // @0
+            #[bits = 4]
+            pub dimm1: Ddr4DimmRanks : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks, // @4
+            #[bits = 4]
+            pub dimm2: Ddr4DimmRanks : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks, // @8
+            #[skip]
+            __: B20,
+        }
     }
     impl_bitfield_primitive_conversion!(
         Ddr4OdtPatDimmRankBitmaps,
@@ -3808,19 +3825,26 @@ Clone)]
             self.clone()
         }
     }
+    impl Default for Ddr4OdtPatDimmRankBitmaps {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
     type OdtPatPattern = B4; // TODO: Meaning
 
-    #[bitfield(bits = 32)]
-    #[repr(u32)]
-    #[derive(Clone, Copy, Serialize, Deserialize)]
-    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-    pub struct OdtPatPatterns {
-        pub reading_pattern: OdtPatPattern, // @bit 0
-        #[skip]
-        __: B4,             // @bit 4
-        pub writing_pattern: OdtPatPattern, // @bit 8
-        #[skip]
-        __: B20,
+    make_bitfield_serde! {
+        #[bitfield(bits = 32)]
+        #[repr(u32)]
+        #[derive(Clone, Copy)]
+        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+        pub struct OdtPatPatterns {
+            pub reading_pattern: OdtPatPattern : pub get OdtPatPattern : pub set OdtPatPattern, // @bit 0
+            #[skip]
+            __: B4,             // @bit 4
+            pub writing_pattern: OdtPatPattern : pub get OdtPatPattern : pub set OdtPatPattern, // @bit 8
+            #[skip]
+            __: B20,
+        }
     }
     impl_bitfield_primitive_conversion!(OdtPatPatterns, 0b1111_0000_1111, u32);
     impl OdtPatPatterns {
@@ -3829,6 +3853,11 @@ Clone)]
         }
         pub fn build(&self) -> Self {
             self.clone()
+        }
+    }
+    impl Default for OdtPatPatterns {
+        fn default() -> Self {
+            Self::new()
         }
     }
 
@@ -3887,22 +3916,29 @@ Clone)]
         }
     }
 
-    #[bitfield(bits = 32)]
-    #[repr(u32)]
-    #[derive(Clone, Copy, BitfieldSpecifier, Serialize, Deserialize)]
-    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-    pub struct LrdimmDdr4OdtPatDimmRankBitmaps {
-        pub dimm0: LrdimmDdr4DimmRanks, // @bit 0
-        pub dimm1: LrdimmDdr4DimmRanks, // @bit 4
-        pub dimm2: LrdimmDdr4DimmRanks, // @bit 8
-        #[skip]
-        __: B20,
+    make_bitfield_serde! {
+        #[bitfield(bits = 32)]
+        #[repr(u32)]
+        #[derive(Clone, Copy, BitfieldSpecifier)]
+        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+        pub struct LrdimmDdr4OdtPatDimmRankBitmaps {
+            pub dimm0: LrdimmDdr4DimmRanks : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks, // @bit 0
+            pub dimm1: LrdimmDdr4DimmRanks : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks, // @bit 4
+            pub dimm2: LrdimmDdr4DimmRanks : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks, // @bit 8
+            #[skip]
+            __: B20,
+        }
     }
     impl_bitfield_primitive_conversion!(
         LrdimmDdr4OdtPatDimmRankBitmaps,
         0b0011_0011_0011,
         u32
     );
+    impl Default for LrdimmDdr4OdtPatDimmRankBitmaps {
+        fn default() -> Self{
+            Self::new()
+        }
+    }
 
     make_accessors! {
             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
@@ -3967,6 +4003,7 @@ Clone)]
         }
     */
 
+    make_bitfield_serde! {
     #[bitfield(bits = 64)]
     #[repr(u64)]
     #[derive(Clone, Copy)]
@@ -3985,6 +4022,7 @@ Clone)]
         pub channel: B3,
         #[skip]
         __: B8,
+    }
     }
 
     impl DdrPostPackageRepairBody {
@@ -4069,10 +4107,9 @@ Clone)]
         crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum! {
                         // See AMD #44065
 
-                        use byteorder::LittleEndian;
                         use core::mem::size_of;
                         use static_assertions::const_assert;
-                        use zerocopy::{AsBytes, FromBytes, Unaligned, U16, U32};
+                        use zerocopy::{AsBytes, FromBytes, Unaligned};
                         use super::super::*;
                         use crate::struct_accessors::{Getter, Setter, make_accessors};
                         use crate::types::Result;
@@ -5173,10 +5210,9 @@ Clone)]
     pub mod platform_tuning {
         use super::{EntryId, Error, MemoryEntryId};
         crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum! {
-                        use byteorder::LittleEndian;
                         use core::mem::size_of;
                         use static_assertions::const_assert;
-                        use zerocopy::{AsBytes, FromBytes, Unaligned, U16};
+                        use zerocopy::{AsBytes, FromBytes, Unaligned};
                         use super::super::*;
                         //use crate::struct_accessors::{Getter, Setter, make_accessors};
                         //use crate::types::Result;
