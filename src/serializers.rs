@@ -379,3 +379,53 @@ make_serde!(
         power_good_gpio,
     ]
 );
+
+make_serde!(
+    DimmsPerChannelSelector,
+    SerdeDimmsPerChannelSelector,
+    [
+        one_dimm,
+        two_dimms,
+        three_dimms,
+        four_dimms,
+    ]
+);
+
+make_serde!(
+    ErrorOutControlBeepCodePeakAttr,
+    SerdeErrorOutControlBeepCodePeakAttr,
+    [
+        peak_count,
+        pulse_width,
+        repeat_count,
+    ]
+);
+
+make_serde!(
+    OdtPatPatterns,
+    SerdeOdtPatPatterns,
+    [
+        reading_pattern,
+        writing_pattern,
+    ]
+);
+
+make_serde!(
+    LrdimmDdr4OdtPatDimmRankBitmaps,
+    SerdeLrdimmDdr4OdtPatDimmRankBitmaps,
+    [
+        dimm0,
+        dimm1,
+        dimm2,
+    ]
+);
+make_serde!(
+    Ddr4OdtPatDimmRankBitmaps,
+    SerdeDdr4OdtPatDimmRankBitmaps,
+    [
+        dimm0,
+        dimm1,
+        dimm2,
+    ]
+);
+

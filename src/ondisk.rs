@@ -2383,10 +2383,10 @@ pub mod memory {
         #[derive(Clone, Copy)]
         #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
         pub struct DimmsPerChannelSelector {
-            pub one_dimm: bool,
-            pub two_dimms: bool,
-            pub three_dimms: bool,
-            pub four_dimms: bool,
+            pub one_dimm: bool : pub get bool : pub set bool,
+            pub two_dimms: bool : pub get bool : pub set bool,
+            pub three_dimms: bool : pub get bool : pub set bool,
+            pub four_dimms: bool : pub get bool : pub set bool,
             #[skip]
             __: B28,
         }
