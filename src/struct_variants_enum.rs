@@ -156,6 +156,25 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
         $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$($deserializer)*}{$($state)*}{$($state_mut)*}{$($state_obj)*}{$($as_bytes)*}
         $($tail)*);
     };
+    // Who could possibly want non-eager evaluation here?  Sigh.
+    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}{$($state_obj:tt)*}{$($as_bytes:tt)*}
+        make_bitfield_serde! {
+            $(#[$struct_meta:meta])*
+            $struct_vis:vis
+            struct $struct_name:ident {
+                $($struct_body:tt)*
+            }
+        }
+        $($tail:tt)*
+    ) => {
+        make_bitfield_serde_int! {
+            $(#[$struct_meta])*
+            $struct_vis
+            struct $struct_name { $($struct_body)* }
+        }
+        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$($deserializer)*}{$($state)*}{$($state_mut)*}{$($state_obj)*}{$($as_bytes)*}
+        $($tail)*);
+    };
     (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}{$($state_obj:tt)*}{$($as_bytes:tt)*}
         $head:item
         $($tail:tt)*
