@@ -3488,6 +3488,7 @@ pub mod memory {
         }
     }
     #[derive(Serialize, Deserialize)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub struct CustomSerdeErrorOutControlBeepCode {
         pub error_type: ErrorOutControlBeepCodeErrorType,
         pub peak_map: SerdeHex16,
@@ -3589,6 +3590,7 @@ Clone)]
         paste::paste!{
             #[doc(hidden)]
             #[derive(Serialize, Deserialize)]
+            #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
             #[repr(C, packed)]
             pub struct [<CustomSerde $struct_name>] {
                 #[serde(default = "def_false")]
@@ -4103,18 +4105,20 @@ Clone)]
                         use crate::struct_accessors::{Getter, Setter, make_accessors};
                         use crate::types::Result;
 
-                        #[bitfield(filled = true, bits = 8)]
-                        #[repr(u8)]
-                        #[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
-                        pub struct ChannelIdsSelection {
-                            pub a: bool,
-                            pub b: bool,
-                            pub c: bool,
-                            pub d: bool,
-                            pub e: bool,
-                            pub f: bool,
-                            pub g: bool,
-                            pub h: bool,
+                        make_bitfield_serde! {
+                            #[bitfield(filled = true, bits = 8)]
+                            #[repr(u8)]
+                            #[derive(Clone, Copy, PartialEq)]
+                            pub struct ChannelIdsSelection {
+                                pub a: bool : pub get bool : pub set bool,
+                                pub b: bool : pub get bool : pub set bool,
+                                pub c: bool : pub get bool : pub set bool,
+                                pub d: bool : pub get bool : pub set bool,
+                                pub e: bool : pub get bool : pub set bool,
+                                pub f: bool : pub get bool : pub set bool,
+                                pub g: bool : pub get bool : pub set bool,
+                                pub h: bool : pub get bool : pub set bool,
+                            }
                         }
                         impl_bitfield_primitive_conversion!(ChannelIdsSelection, 0b1111_1111, u8);
                         impl ChannelIdsSelection {
@@ -4123,6 +4127,11 @@ Clone)]
                             }
                             pub fn build(&self) -> Self {
                                 self.clone()
+                            }
+                        }
+                        impl Default for ChannelIdsSelection {
+                            fn default() -> Self {
+                                Self::new()
                             }
                         }
 
@@ -4177,18 +4186,20 @@ Clone)]
                             }
                         }
 
-                        #[bitfield(filled = true, bits = 8)]
-                        #[repr(u8)]
-                        #[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
-                        pub struct SocketIds {
-                            pub socket_0: bool,
-                            pub socket_1: bool,
-                            pub socket_2: bool,
-                            pub socket_3: bool,
-                            pub socket_4: bool,
-                            pub socket_5: bool,
-                            pub socket_6: bool,
-                            pub socket_7: bool,
+                        make_bitfield_serde! {
+                            #[bitfield(filled = true, bits = 8)]
+                            #[repr(u8)]
+                            #[derive(Clone, Copy, PartialEq)]
+                            pub struct SocketIds {
+                                pub socket_0: bool : pub get bool : pub set bool,
+                                pub socket_1: bool : pub get bool : pub set bool,
+                                pub socket_2: bool : pub get bool : pub set bool,
+                                pub socket_3: bool : pub get bool : pub set bool,
+                                pub socket_4: bool : pub get bool : pub set bool,
+                                pub socket_5: bool : pub get bool : pub set bool,
+                                pub socket_6: bool : pub get bool : pub set bool,
+                                pub socket_7: bool : pub get bool : pub set bool,
+                            }
                         }
                         impl_bitfield_primitive_conversion!(SocketIds, 0b1111_1111, u8);
                         impl SocketIds {
@@ -4201,15 +4212,17 @@ Clone)]
                             }
                         }
 
-                        #[bitfield(bits = 8)]
-                        #[repr(u8)]
-                        #[derive(Clone, Copy, Serialize, Deserialize)]
-                        pub struct DimmSlotsSelection {
-                            pub dimm_slot_0: bool, // @0
-                            pub dimm_slot_1: bool, // @1
-                            pub dimm_slot_2: bool, // @2
-                            pub dimm_slot_3: bool, // @3
-                            #[skip] __: B4,
+                        make_bitfield_serde! {
+                            #[bitfield(bits = 8)]
+                            #[repr(u8)]
+                            #[derive(Clone, Copy)]
+                            pub struct DimmSlotsSelection {
+                                pub dimm_slot_0: bool : pub get bool : pub set bool, // @0
+                                pub dimm_slot_1: bool : pub get bool : pub set bool, // @1
+                                pub dimm_slot_2: bool : pub get bool : pub set bool, // @2
+                                pub dimm_slot_3: bool : pub get bool : pub set bool, // @3
+                                #[skip] __: B4,
+                            }
                         }
                         impl_bitfield_primitive_conversion!(DimmSlotsSelection, 0b1111, u8);
                         impl DimmSlotsSelection {
@@ -4218,6 +4231,11 @@ Clone)]
                             }
                             pub fn build(&self) -> Self {
                                 self.clone()
+                            }
+                        }
+                        impl Default for DimmSlotsSelection {
+                            fn default() -> Self {
+                                Self::new()
                             }
                         }
                         #[derive(Clone, Copy, Serialize, Deserialize)]

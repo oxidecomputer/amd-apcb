@@ -10,6 +10,7 @@ use crate::ondisk::*;
 use crate::psp::*;
 use crate::df::*;
 use crate::struct_accessors::DummyErrorChecks;
+use crate::ondisk::memory::platform_specific_override::*;
 
 // Note: This is written such that it will fail if the underlying struct has
 // fields added/removed/renamed--if those have a public setter.
@@ -36,7 +37,7 @@ macro_rules! make_serde{($StructName:ident, $SerdeStructName:ident, [$($field_na
                 }.serialize(serializer)
             }
         }
-        #[cfg(std)]
+   //     #[cfg(std)]
         impl schemars::JsonSchema for $StructName {
             fn schema_name() -> String {
                 $SerdeStructName::schema_name()
@@ -429,3 +430,42 @@ make_serde!(
     ]
 );
 
+make_serde!(
+    DimmSlotsSelection,
+    SerdeDimmSlotsSelection,
+    [
+        dimm_slot_0,
+        dimm_slot_1,
+        dimm_slot_2,
+        dimm_slot_3,
+    ]
+);
+make_serde!(
+    ChannelIdsSelection,
+    SerdeChannelIdsSelection,
+    [
+        a,
+        b,
+        c,
+        d,
+        e,
+        f,
+        g,
+        h,
+    ]
+);
+
+make_serde!(
+    SocketIds,
+    SerdeSocketIds,
+    [
+        socket_0,
+        socket_1,
+        socket_2,
+        socket_3,
+        socket_4,
+        socket_5,
+        socket_6,
+        socket_7,
+    ]
+);
