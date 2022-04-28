@@ -2179,7 +2179,7 @@ pub mod memory {
     make_bitfield_serde!(
         #[bitfield(bits = 4)]
         #[derive(
-            Clone, Copy, PartialEq, BitfieldSpecifier,
+            Default, Clone, Copy, PartialEq, BitfieldSpecifier,
         )]
         pub struct Ddr4DimmRanks {
             pub unpopulated: bool : pub get bool : pub set bool,
@@ -2189,11 +2189,6 @@ pub mod memory {
         }
     );
     impl DummyErrorChecks for Ddr4DimmRanks {}
-    impl Default for Ddr4DimmRanks {
-        fn default() -> Self {
-            Self::new()
-        }
-    }
     impl Ddr4DimmRanks {
         pub fn builder() -> Self {
             Self::new()
@@ -3538,10 +3533,6 @@ pub mod memory {
         }
     }
 
-    fn def_false() -> bool {
-        return false
-    }
-
     impl Getter<Result<[ErrorOutControlBeepCode; 8]>> for [ErrorOutControlBeepCode; 8] {
         fn get1(self) -> Result<[ErrorOutControlBeepCode; 8]> {
             Ok(self.map(|v| v))
@@ -3593,42 +3584,24 @@ Clone)]
             #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
             #[repr(C, packed)]
             pub struct [<CustomSerde $struct_name>] {
-                #[serde(default = "def_false")]
                 pub enable_error_reporting: bool,
-                #[serde(default = "def_false")]
                 pub enable_error_reporting_gpio: bool,
-                #[serde(default = "def_false")]
                 pub enable_error_reporting_beep_codes: bool,
                 /// Note: Receiver of the error log: Send 0xDEAD5555 to the INPUT_PORT to acknowledge.
-                #[serde(default = "def_false")]
                 pub enable_using_handshake: bool,
-                #[serde(default)]
                 pub input_port: SerdeHex32,
-                #[serde(default)]
                 pub output_delay: SerdeHex32,
-                #[serde(default)]
                 pub output_port: SerdeHex32,
-                #[serde(default = "def_false")]
                 pub stop_on_first_fatal_error: bool,
-                #[serde(default)]
                 pub input_port_size: PortSize,
-                #[serde(default)]
                 pub output_port_size: PortSize,
-                #[serde(default)]
                 pub input_port_type: PortType,
-                #[serde(default)]
                 pub output_port_type: PortType,
-                #[serde(default = "def_false")]
                 pub clear_acknowledgement: bool,
-                #[serde(default)]
                 pub error_reporting_gpio: Option<Gpio>,
-                #[serde(default)]
                 pub beep_code_table: [ErrorOutControlBeepCode; 8],
-                #[serde(default = "def_false")]
                 pub enable_heart_beat: bool,
-                #[serde(default = "def_false")]
                 pub enable_power_good_gpio: bool,
-                #[serde(default)]
                 pub power_good_gpio: Option<Gpio>,
             }
         }
@@ -3793,7 +3766,7 @@ Clone)]
     make_bitfield_serde! {
         #[bitfield(bits = 32)]
         #[repr(u32)]
-        #[derive(Clone, Copy, BitfieldSpecifier)]
+        #[derive(Default, Clone, Copy, BitfieldSpecifier)]
         pub struct Ddr4OdtPatDimmRankBitmaps {
             #[bits = 4]
             pub dimm0: Ddr4DimmRanks : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks, // @0
