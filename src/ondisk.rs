@@ -3480,6 +3480,7 @@ pub mod memory {
         Gnb = 7,
         Psp = 8,
         Smu = 9,
+        Unknown = 0xf, // that's specified as "Unknown".
     }
     impl Default for ErrorOutControlBeepCodeErrorType {
         fn default() -> Self {
