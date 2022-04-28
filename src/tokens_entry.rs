@@ -9,13 +9,11 @@ use num_traits::FromPrimitive;
 use pre::pre;
 
 #[cfg(feature = "std")]
-use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
+use serde::de::{self, Deserialize, Deserializer};
 #[cfg(feature = "std")]
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 #[cfg(feature = "std")]
 use std::borrow::Cow;
-#[cfg(feature = "std")]
-use std::fmt;
 
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct TokensEntryBodyItem<BufferType> {
