@@ -159,7 +159,7 @@ pub fn take_body_from_collection<'a>(
     }
 }
 
-#[derive(FromPrimitive, ToPrimitive, schemars::JsonSchema)]
+#[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive, schemars::JsonSchema)]
 pub struct SerdeHex8(u8);
 
 #[cfg(feature = "std")]
@@ -185,7 +185,7 @@ impl<'de> serde::de::Deserialize<'de> for SerdeHex8 {
     }
 }
 
-#[derive(FromPrimitive, ToPrimitive, schemars::JsonSchema)]
+#[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive, schemars::JsonSchema)]
 pub struct SerdeHex16(u16);
 
 #[cfg(feature = "std")]
@@ -211,7 +211,7 @@ impl<'de> serde::de::Deserialize<'de> for SerdeHex16 {
     }
 }
 
-#[derive(FromPrimitive, ToPrimitive, schemars::JsonSchema)]
+#[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive, schemars::JsonSchema)]
 pub struct SerdeHex32(u32);
 
 #[cfg(feature = "std")]
@@ -237,7 +237,7 @@ impl<'de> serde::de::Deserialize<'de> for SerdeHex32 {
     }
 }
 
-#[derive(FromPrimitive, ToPrimitive, schemars::JsonSchema)]
+#[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive, schemars::JsonSchema)]
 pub struct SerdeHex64(u64);
 
 #[cfg(feature = "std")]
@@ -279,11 +279,34 @@ impl Setter<[SerdeHex8; 4]> for [u8; 4] {
         *self = value.map(|v| v.0);
     }
 }
+
+impl Getter<Result<[SerdeHex16; 4]>> for [LU16; 4] {
+    fn get1(self) -> Result<[SerdeHex16; 4]> {
+        Ok(self.map(|v| SerdeHex16(v.get())))
+    }
+}
+
+impl Setter<[SerdeHex16; 4]> for [LU16; 4] {
+    fn set1(&mut self, value: [SerdeHex16; 4]) {
+        *self = value.map(|v| LU16::new(v.0));
+    }
+}
+impl Getter<Result<[SerdeHex16; 3]>> for [LU16; 3] {
+    fn get1(self) -> Result<[SerdeHex16; 3]> {
+        Ok(self.map(|v| SerdeHex16(v.get())))
+    }
+}
+
+impl Setter<[SerdeHex16; 3]> for [LU16; 3] {
+    fn set1(&mut self, value: [SerdeHex16; 3]) {
+        *self = value.map(|v| LU16::new(v.0));
+    }
+}
 make_accessors! {
     #[derive(FromBytes, AsBytes, Unaligned, Debug)]
     #[repr(C, packed)]
     pub struct V2_HEADER {
-        pub signature: [u8; 4]: pub get [SerdeHex8; 4] : pub set [SerdeHex8; 4],
+        pub signature: [u8; 4] : pub get [SerdeHex8; 4] : pub set [SerdeHex8; 4],
         pub header_size: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // == sizeof(V2_HEADER); but 128 for V3
         pub version: LU16 : pub get SerdeHex16 : pub set SerdeHex16,     // == 0x30
         pub apcb_size: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
@@ -1639,14 +1662,13 @@ pub mod df {
     }
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
+            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
             #[repr(C, packed)]
             pub struct SlinkRegion {
                 size: LU64 : pub get SerdeHex64 : pub set SerdeHex64,
-                alignment: u8 : pub get u8 : pub set u8,
-                socket: u8 : pub get u8 : pub set u8, // 0|1
-                phys_nbio_map: u8 : pub get u8 : pub set u8, // bitmap
+                alignment: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                socket: u8 : pub get SerdeHex8 : pub set SerdeHex8, // 0|1
+                phys_nbio_map: u8 : pub get SerdeHex8 : pub set SerdeHex8, // bitmap
                 interleaving: u8 : pub get SlinkRegionInterleavingSize : pub set SlinkRegionInterleavingSize,
                 _reserved: [u8; 4],
             }
@@ -1749,13 +1771,20 @@ pub mod memory {
             #[repr(C, packed)]
             pub struct DimmInfoSmbusElement {
                 dimm_slot_present: BU8 : pub get bool, // if false, it's soldered-down and not a slot
+                #[serde(with = "SerHex::<StrictPfx>")]
                 socket_id: u8 : pub get u8 : pub set u8,
+                #[serde(with = "SerHex::<StrictPfx>")]
                 channel_id: u8 : pub get u8 : pub set u8,
+                #[serde(with = "SerHex::<StrictPfx>")]
                 dimm_id: u8 : pub get u8 : pub set u8,
                 // For soldered-down DIMMs, SPD data is hardcoded in APCB (in entry MemoryEntryId::SpdInfo), and DIMM_SMBUS_ADDRESS here is the index in the structure for SpdInfo.
+                #[serde(with = "SerHex::<StrictPfx>")]
                 dimm_smbus_address: u8,
+                #[serde(with = "SerHex::<StrictPfx>")]
                 i2c_mux_address: u8,
+                #[serde(with = "SerHex::<StrictPfx>")]
                 mux_control_address: u8,
+                #[serde(with = "SerHex::<StrictPfx>")]
                 mux_channel: u8,
             }
         }
@@ -1901,8 +1930,7 @@ pub mod memory {
     }
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
+            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
             #[repr(C, packed)]
             pub struct AblConsoleOutControl {
                 enable_console_logging: BU8 : pub get bool : pub set bool,
@@ -1915,7 +1943,7 @@ pub mod memory {
                 enable_mem_pmu_sram_write_logging: BU8 : pub get bool : pub set bool,
                 enable_mem_test_verbose_logging: BU8 : pub get bool : pub set bool,
                 enable_mem_basic_output_logging: BU8 : pub get bool : pub set bool,
-                _reserved: LU16: pub get u16 : pub set u16,
+                _reserved: LU16,
                 abl_console_port: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
             }
         }
@@ -1948,8 +1976,7 @@ pub mod memory {
     }
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
+            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
             #[repr(C, packed)]
             pub struct AblBreakpointControl {
                 enable_breakpoint: BU8 : pub get bool : pub set bool,
@@ -2046,6 +2073,11 @@ pub mod memory {
         FchHtIo = 6,
         FchMmio = 7,
     }
+    impl Default for PortType {
+        fn default() -> Self {
+            PortType::FchHtIo
+        }
+    }
 
     #[derive(
         Debug,
@@ -2063,10 +2095,14 @@ pub mod memory {
         _16Bit = 2,
         _32Bit = 4,
     }
+    impl Default for PortSize {
+        fn default() -> Self {
+            PortSize::_32Bit
+        }
+    }
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
+            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
             #[repr(C, packed)]
             pub struct ExtVoltageControl {
                 enabled: BU8 : pub get bool : pub set bool,
@@ -3057,8 +3093,7 @@ pub mod memory {
     }
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
+            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
             #[repr(C, packed)]
             pub struct LrdimmDdr4DataBusElement {
                 dimm_slots_per_channel: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
@@ -3199,14 +3234,13 @@ pub mod memory {
     // Usually an array of those is used
     // Note: This structure is not used for LR DRAM
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
+            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
             #[repr(C, packed)]
             pub struct MaxFreqElement {
                 dimm_slots_per_channel: u8 : pub get DimmsPerChannel : pub set DimmsPerChannel,
                 _reserved: u8,
-                conditions: [LU16; 4], // number of dimm on a channel, number of single-rank dimm, number of dual-rank dimm, number of quad-rank dimm
-                speeds: [LU16; 3], // speed limit with voltage 1.5 V, 1.35 V, 1.25 V // FIXME make accessible
+                conditions: [LU16; 4] : pub get [SerdeHex16; 4] : pub set [SerdeHex16; 4], // number of dimm on a channel, number of single-rank dimm, number of dual-rank dimm, number of quad-rank dimm
+                speeds: [LU16; 3] : pub get [SerdeHex16; 3] : pub set [SerdeHex16; 3], // speed limit with voltage 1.5 V, 1.35 V, 1.25 V // FIXME make accessible
             }
         }
     impl MaxFreqElement {
@@ -3307,14 +3341,13 @@ pub mod memory {
 
     // Usually an array of those is used
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
+            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
             #[repr(C, packed)]
             pub struct LrMaxFreqElement {
-                dimm_slots_per_channel: u8 : pub get u8 : pub set u8,
+                dimm_slots_per_channel: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                 _reserved: u8,
-                pub conditions: [LU16; 4], // maybe: number of dimm on a channel, 0, number of lr dimm, 0 // FIXME: Make accessible
-                pub speeds: [LU16; 3], // maybe: speed limit with voltage 1.5 V, 1.35 V, 1.25 V; FIXME: Make accessible
+                pub conditions: [LU16; 4] : pub get [SerdeHex16; 4] : pub set [SerdeHex16; 4], // maybe: number of dimm on a channel, 0, number of lr dimm, 0 // FIXME: Make accessible
+                pub speeds: [LU16; 3] : pub get [SerdeHex16; 3] : pub set [SerdeHex16; 3], // maybe: speed limit with voltage 1.5 V, 1.35 V, 1.25 V; FIXME: Make accessible
             }
         }
 
@@ -3369,13 +3402,12 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Clone, Copy,
-    Serialize, Deserialize)]
+        #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Clone, Copy)]
         #[repr(C, packed)]
         pub struct Gpio {
-            pin: u8 : pub get u8 : pub set u8, // in FCH
-            iomux_control: u8 : pub get u8 : pub set u8, // how to configure that pin
-            bank_control: u8 : pub get u8 : pub set u8, // how to configure bank control
+            pin: u8 : pub get SerdeHex8 : pub set SerdeHex8, // in FCH
+            iomux_control: u8 : pub get SerdeHex8 : pub set SerdeHex8, // how to configure that pin
+            bank_control: u8 : pub get SerdeHex8 : pub set SerdeHex8, // how to configure bank control
         }
     }
 
@@ -3385,6 +3417,13 @@ pub mod memory {
                 pin,
                 iomux_control,
                 bank_control,
+            }
+        }
+        pub fn default() -> Self {
+            Self {
+                pin: 0,
+                iomux_control: 0,
+                bank_control: 0,
             }
         }
     }
@@ -3407,7 +3446,17 @@ pub mod memory {
         u32
     );
 
-    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    impl Default for ErrorOutControlBeepCodePeakAttr {
+        fn default() -> Self {
+            ErrorOutControlBeepCodePeakAttr {
+                bytes: [0, 0, 0, 0],
+            }
+        }
+    }
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone,
+        Serialize, Deserialize)]
+    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+    #[non_exhaustive]
     pub enum ErrorOutControlBeepCodeErrorType {
         General = 3,
         Memory = 4,
@@ -3417,16 +3466,35 @@ pub mod memory {
         Psp = 8,
         Smu = 9,
     }
-    make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
-            #[repr(C, packed)]
-            pub struct ErrorOutControlBeepCode {
-                error_type: LU16,
-                peak_map: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
-                peak_attr: LU32 : pub get ErrorOutControlBeepCodePeakAttr : pub set ErrorOutControlBeepCodePeakAttr,
-            }
+    impl Default for ErrorOutControlBeepCodeErrorType {
+        fn default() -> Self {
+            ErrorOutControlBeepCodeErrorType::General
         }
+    }
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct ErrorOutControlBeepCode {
+            error_type: LU16,
+            peak_map: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
+            peak_attr: LU32 : pub get ErrorOutControlBeepCodePeakAttr : pub set ErrorOutControlBeepCodePeakAttr,
+        }
+    }
+    #[derive(Serialize, Deserialize)]
+    pub struct CustomSerdeErrorOutControlBeepCode {
+        pub error_type: ErrorOutControlBeepCodeErrorType,
+        pub peak_map: SerdeHex16,
+        pub peak_attr: ErrorOutControlBeepCodePeakAttr,
+    }
+    impl Default for ErrorOutControlBeepCode {
+        fn default() -> Self {
+            ErrorOutControlBeepCode::new(
+                ErrorOutControlBeepCodeErrorType::default(),
+                0,
+                ErrorOutControlBeepCodePeakAttr::default()
+            )
+        }
+    }
     impl ErrorOutControlBeepCode {
         pub fn error_type(&self) -> Result<ErrorOutControlBeepCodeErrorType> {
             ErrorOutControlBeepCodeErrorType::from_u16(
@@ -3443,6 +3511,11 @@ pub mod memory {
                     | (value.to_u16().unwrap() << 12),
             );
         }
+        pub fn with_error_type(self, value: ErrorOutControlBeepCodeErrorType) -> Self {
+            let mut result = self;
+            result.set_error_type(value);
+            result
+        }
         pub fn new(
             error_type: ErrorOutControlBeepCodeErrorType,
             peak_map: u16,
@@ -3457,10 +3530,26 @@ pub mod memory {
         }
     }
 
+    fn def_false() -> bool {
+        return false
+    }
+
+    impl Getter<Result<[ErrorOutControlBeepCode; 8]>> for [ErrorOutControlBeepCode; 8] {
+        fn get1(self) -> Result<[ErrorOutControlBeepCode; 8]> {
+            Ok(self.map(|v| v))
+        }
+    }
+
+    impl Setter<[ErrorOutControlBeepCode; 8]> for [ErrorOutControlBeepCode; 8] {
+        fn set1(&mut self, value: [ErrorOutControlBeepCode; 8]) {
+            *self = value.map(|v| v);
+        }
+    }
+
     macro_rules! define_ErrorOutControl {($struct_name:ident, $padding_before_gpio:expr, $padding_after_gpio: expr) => (
         make_accessors! {
             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy,
-Clone, Serialize, Deserialize)]
+Clone)]
             #[repr(C, packed)]
             pub struct $struct_name {
                 enable_error_reporting: BU8 : pub get bool : pub set bool,
@@ -3479,13 +3568,59 @@ Clone, Serialize, Deserialize)]
                 output_port_type: LU32 : pub get PortType : pub set PortType, // PortType; default: 6
                 clear_acknowledgement: BU8 : pub get bool : pub set bool,
                 _reserved_before_gpio: [u8; $padding_before_gpio],
-                error_reporting_gpio: Gpio,
+                pub error_reporting_gpio: Gpio,
                 _reserved_after_gpio: [u8; $padding_after_gpio],
-                pub beep_code_table: [ErrorOutControlBeepCode; 8], // FIXME: Make accessible
+                beep_code_table: [ErrorOutControlBeepCode; 8], // FIXME: Make accessible
+                //beep_code_table: [ErrorOutControlBeepCode; 8] : pub get
+                //    [ErrorOutControlBeepCode; 8] : pub set [ErrorOutControlBeepCode; 8], // FIXME: Make accessible
                 enable_heart_beat: BU8 : pub get bool : pub set bool,
-                enable_power_good_gpio: BU8,
-                power_good_gpio: Gpio,
+                enable_power_good_gpio: BU8 : pub get bool : pub set bool,
+                pub power_good_gpio: Gpio,
                 _reserved_end: [u8; 3], // pad
+            }
+        }
+        paste::paste!{
+            #[doc(hidden)]
+            #[derive(Serialize, Deserialize)]
+            #[repr(C, packed)]
+            pub struct [<CustomSerde $struct_name>] {
+                #[serde(default = "def_false")]
+                pub enable_error_reporting: bool,
+                #[serde(default = "def_false")]
+                pub enable_error_reporting_gpio: bool,
+                #[serde(default = "def_false")]
+                pub enable_error_reporting_beep_codes: bool,
+                /// Note: Receiver of the error log: Send 0xDEAD5555 to the INPUT_PORT to acknowledge.
+                #[serde(default = "def_false")]
+                pub enable_using_handshake: bool,
+                #[serde(default)]
+                pub input_port: SerdeHex32,
+                #[serde(default)]
+                pub output_delay: SerdeHex32,
+                #[serde(default)]
+                pub output_port: SerdeHex32,
+                #[serde(default = "def_false")]
+                pub stop_on_first_fatal_error: bool,
+                #[serde(default)]
+                pub input_port_size: PortSize,
+                #[serde(default)]
+                pub output_port_size: PortSize,
+                #[serde(default)]
+                pub input_port_type: PortType,
+                #[serde(default)]
+                pub output_port_type: PortType,
+                #[serde(default = "def_false")]
+                pub clear_acknowledgement: bool,
+                #[serde(default)]
+                pub error_reporting_gpio: Option<Gpio>,
+                #[serde(default)]
+                pub beep_code_table: [ErrorOutControlBeepCode; 8],
+                #[serde(default = "def_false")]
+                pub enable_heart_beat: bool,
+                #[serde(default = "def_false")]
+                pub enable_power_good_gpio: bool,
+                #[serde(default)]
+                pub power_good_gpio: Option<Gpio>,
             }
         }
 
@@ -3517,6 +3652,17 @@ Clone, Serialize, Deserialize)]
                 result.set_error_reporting_gpio(value);
                 result
             }
+            pub fn beep_code_table(&self) -> Result<[ErrorOutControlBeepCode; 8]> {
+                self.beep_code_table.get1()
+            }
+            pub fn set_beep_code_table(&mut self, value: [ErrorOutControlBeepCode; 8]) {
+                self.beep_code_table.set1(value);
+            }
+            pub fn with_beep_code_table(self, value: [ErrorOutControlBeepCode; 8]) -> Self {
+                let mut result = self;
+                result.set_beep_code_table(value);
+                result
+            }
             pub fn power_good_gpio(&self) -> Result<Option<Gpio>> {
                 match self.enable_power_good_gpio {
                     BU8(1) => Ok(Some(self.power_good_gpio)),
@@ -3535,6 +3681,11 @@ Clone, Serialize, Deserialize)]
                         self.power_good_gpio = Gpio::new(0, 0, 0);
                     },
                 }
+            }
+            pub fn with_power_good_gpio(self, value: Option<Gpio>) -> Self {
+                let mut result = self;
+                result.set_power_good_gpio(value);
+                result
             }
         }
 
@@ -6920,15 +7071,19 @@ make_token_accessors! {
         MemRcwWeakDriveDisable(default 1, id 0xa30d_781a) : pub get MemRcwWeakDriveDisable : pub set MemRcwWeakDriveDisable, // FIXME is it u32 ?
         MemSelfRefreshExitStaggering(default 0, id 0xbc52_e5f7) : pub get MemSelfRefreshExitStaggering : pub set MemSelfRefreshExitStaggering,
         CbsMemAddrCmdParityRetryDdr4(default 0, id 0xbe8b_ebce) : pub get CbsMemAddrCmdParityRetryDdr4 : pub set CbsMemAddrCmdParityRetryDdr4, // FIXME: Is it u32 ?
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         CbsMemAddrCmdParityErrorMaxReplayDdr4(default 8, id 0x04e6_a482) : pub get u8 : pub set u8, // 0...0x3f
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         CbsMemWriteCrcErrorMaxReplayDdr4(default 8, id 0x74a0_8bec) : pub get u8 : pub set u8,
         // Byte just like AMD
         MemRcdParity(default 1, id 0x647d7662) : pub get bool : pub set bool,
         // Byte just like AMD
         CbsMemUncorrectedEccRetryDdr4(default 1, id 0xbff0_0125) : pub get bool : pub set bool,
         /// UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first)
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemUrgRefLimit(default 6, id 0x1333_32df) : pub get u8 : pub set u8,
         /// UMC::CH::SpazCtrl::SubUrgRefLowerBound; value: 1...6 (as in register mentioned first)
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemSubUrgRefLowerBound(default 4, id 0xe756_2ab6) : pub get u8 : pub set u8,
         MemControllerPmuTrainFfeDdr4(default 0xff, id 0x0d46_186d) : pub get MemControllerPmuTrainFfeDdr4 : pub set MemControllerPmuTrainFfeDdr4, // FIXME: is it bool ?
         MemControllerPmuTrainDfeDdr4(default 0xff, id 0x36a4_bb5b) : pub get MemControllerPmuTrainDfeDdr4 : pub set MemControllerPmuTrainDfeDdr4, // FIXME: is it bool ?
@@ -6936,10 +7091,13 @@ make_token_accessors! {
         MemTsmeModeRome(default 1, id 0xd1fa_6660) : pub get MemTsmeMode : pub set MemTsmeMode,
         MemTrainingHdtControl(default 200, id 0xaf6d_3a6f) : pub get MemTrainingHdtControl : pub set MemTrainingHdtControl, // TODO: Before using default, fix default.  It's possibly not correct.
         MemHealBistEnable(default 0, id 0xfba2_3a28) : pub get MemHealBistEnable : pub set MemHealBistEnable,
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemSelfHealBistEnable(default 0, id 0x2c23_924c) : pub get u8 : pub set u8, // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemPmuBistTestSelect(default 0, id 0x7034_fbfb) : pub get u8 : pub set u8, // TODO: Before using default, fix default.  It's possibly not correct.; note: range 1...7
         MemHealTestSelect(default 0, id 0x5908_2cf2) : pub get MemHealTestSelect : pub set MemHealTestSelect,
         MemHealPprType(default 0, id 0x5418_1a61) : pub get MemHealPprType : pub set MemHealPprType,
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemHealMaxBankFails(default 3, id 0x632e_55d8) : pub get u8 : pub set u8, // per bank
 
         // Ccx
@@ -6948,7 +7106,9 @@ make_token_accessors! {
 
         // Fch
 
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         FchConsoleOutMode(default 0, id 0xddb7_59da) : pub get u8 : pub set u8,
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         FchConsoleOutBasicEnable(default 0, id 0xa0903f98) : pub get u8 : pub set u8, // Rome (Obsolete)
         FchConsoleOutSerialPort(default 0, id 0xfff9_f34d) : pub get FchConsoleSerialPort : pub set FchConsoleSerialPort,
         FchSmbusSpeed(default 42, id 0x2447_3329) : pub get FchSmbusSpeed : pub set FchSmbusSpeed,
@@ -6968,6 +7128,7 @@ make_token_accessors! {
         DfXgmiEncrypt(default 0, id 0x6bd3_2f1c) : pub get DfToggle : pub set DfToggle,
         DfSaveRestoreMemEncrypt(default 1, id 0x7b3d_1f75) : pub get DfToggle : pub set DfToggle,
         /// Where the PCI MMIO hole will start (bits 31 to 24 inclusive)
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         DfBottomIo(default 0xe0, id 0x8fb9_8529) : pub get u8 : pub set u8,
         DfRemapAt1TiB(default 0, id 0x35ee_96f3) : pub get DfRemapAt1TiB : pub set DfRemapAt1TiB,
         DfXgmiTxEqMode(default 0xff, id 0xade7_9549) : pub get DfXgmiTxEqMode : pub set DfXgmiTxEqMode,
@@ -6984,20 +7145,33 @@ make_token_accessors! {
         MemMbistDataEyeType(default 3, id 0x4e2e_dc1b) : pub get MemMbistDataEyeType : pub set MemMbistDataEyeType,
         // Byte just like AMD
         MemMbistDataEyeSilentExecution(default 0, id 0x3f74_c7e7) : pub get bool : pub set bool, // Milan
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistWorseCasGranularity(default 0, id 0x23b0b6a1) : pub get u8 : pub set u8, // Rome
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistReadDataEyeVoltageStep(default 0, id 0x35d6a4f8) : pub get u8 : pub set u8, // Rome
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistAggressorStaticLaneVal(default 0, id 0x4474d416) : pub get u8 : pub set u8, // Rome
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistTgtStaticLaneVal(default 0, id 0x4d7e0206) : pub get u8 : pub set u8, // Rome
         MemMbistTestMode(default 0, id 0x567a1fc0) : pub get MemMbistTestMode : pub set MemMbistTestMode, // Rome (Obsolete)
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistAggressorStaticLaneSelEcc(default 0, id 0x57122e99) : pub get u8 : pub set u8, // Rome
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistReadDataEyeTimingStep(default 0, id 0x58ccd28a) : pub get u8 : pub set u8, // Rome
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistDataEyeExecutionRepeatCount(default 0, id 0x8e4bdad7) : pub get u8 : pub set u8, // Rome; 0..=10
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistTgtStaticLaneSelEcc(default 0, id 0xa6e92cee) : pub get u8 : pub set u8, // Rome
         /// in powers of ten; 3..=12
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistPatternLength(default 0, id 0xae7baedd) : pub get u8 : pub set u8, // Rome;
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistHaltOnError(default 0, id 0xb1940f25) : pub get u8 : pub set u8, // Rome (Obsolete)
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistWriteDataEyeVoltageStep(default 0, id 0xcda61022) : pub get u8 : pub set u8, // Rome
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistPerBitSlaveDieReport(default 0, id 0xcff56411) : pub get u8 : pub set u8, // Rome
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistWriteDataEyeTimingStep(default 0, id 0xd9025142) : pub get u8 : pub set u8, // Rome
         MemMbistAggressorsChannels(default 0, id 0xdcd1444a) : pub get MemMbistAggressorsChannels : pub set MemMbistAggressorsChannels, // Rome
         MemMbistTest(default 0, id 0xdf5502c8) : pub get MemMbistTest : pub set MemMbistTest, // (obsolete)
@@ -7013,13 +7187,18 @@ make_token_accessors! {
 
         /// I doubt that AMD converts those, but the 2 lowest bits usually set up the resolution. 0: 0.5 ºC; 1: 0.25 ºC; 2: 0.125 ºC; 3: 0.0625 ºC; higher resolution is slower.
         /// DIMM temperature sensor register at address 8
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         DimmSensorResolution(default 0, id 0x831af313) : pub get u8 : pub set u8, // Rome (Obsolete)
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         PcieResetPinSelect(default 0, id 0x8c0b2de9) : pub get u8 : pub set u8, // value 2 // Rome; 0..=4; FIXME: enum?
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemDramAddressCommandParityRetryCount(default 0, id 0x3e7c51f8) : pub get u8 : pub set u8, // value 1 // Rome
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemParityErrorMaxReplayDdr4(default 0, id 0xc9e9a1c9) : pub get u8 : pub set u8, // value 8 // Rome // 0..=0x3f (6 bit)
         Df2LinkMaxXgmiSpeed(default 0, id 0xd19c_6e80): pub get DfXgmi2LinkMaxSpeed : pub set DfXgmi2LinkMaxSpeed, // Genoa
         Df3LinkMaxXgmiSpeed(default 0, id 0x53ba449b) : pub get DfXgmi3LinkMaxSpeed : pub set DfXgmi3LinkMaxSpeed, // value 0xff // Rome
         Df4LinkMaxXgmiSpeed(default 0, id 0x3f307cb3) : pub get DfXgmi4LinkMaxSpeed : pub set DfXgmi4LinkMaxSpeed, // value 0xff //  Rome
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemDramDoubleRefreshRate(default 0, id 0x44d40026) : pub get u8 : pub set u8, // value 0 // Rome
         /// See UMC::CH::ThrottleCtrl RollWindowDepth
         MemRollWindowDepth(default 0xff, id 0x5985083a) : pub get MemThrottleCtrlRollWindowDepth : pub set MemThrottleCtrlRollWindowDepth, // Rome
@@ -7029,30 +7208,44 @@ make_token_accessors! {
         /// See also JESD82-31A DDR4 REGISTERING CLOCK DRIVER.
         /// See also <https://github.com/enjoy-digital/litedram/blob/master/litedram/init.py#L460>.
         MemRdimmTimingRcdF0Rc0FAdditionalLatency(default 0xff, id 0xd155798a) : pub get MemRdimmTimingCmdParLatency : pub set MemRdimmTimingCmdParLatency, // Rome
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemDataScramble(default 0, id 0x98aca5b4) : pub get u8 : pub set u8, // Rome (Obsolete)
         MemAutoRefreshFineGranMode(default 0, id 0x190305df) : pub get MemAutoRefreshFineGranMode : pub set MemAutoRefreshFineGranMode, // value 0 // Rome (Obsolete)
         UmaMode(default 0, id 0x1fb35295) : pub get UmaMode : pub set UmaMode, // value 2 // Rome (Obsolete)
         MemNvdimmPowerSource(default 0, id 0x286d0075) : pub get MemNvdimmPowerSource : pub set MemNvdimmPowerSource, // value 1 // Rome (Obsolete)
         MemDataPoison(default 0, id 0x48959473) : pub get MemDataPoison : pub set MemDataPoison, // value 1 // Rome (Obsolete)
         /// See PPR SwCmdThrotCyc
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         SwCmdThrotCycles(default 0, id 0xdcec8fcb) : pub get u8 : pub set u8, // value 0 // (Obsolete)
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         OdtsCmdThrottleCycles(default 0, id 0x69318e90) : pub get u8 : pub set u8, // value 0x57 // Rome (Obsolete); TODO: Auto?
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemDramVrefRange(default 0, id 0xa8769655) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemCpuVrefRange(default 0, id 0x7627cb6d) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
         MemControllerWritingCrcMode(default 0, id 0x7d1c6e46) : pub get MemControllerWritingCrcMode : pub set MemControllerWritingCrcMode, // value 0 // Rome
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemControllerWritingCrcMaxReplay(default 0, id 0x6bb1acf9) : pub get u8 : pub set u8, // value 8 // Rome
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemControllerWritingCrcLimit(default 0, id 0xc73a7692) : pub get u8 : pub set u8, // 0..=1 // Rome
         PmuTrainingMode(default 0xff, id 0xbd4a6afc) : pub get MemControllerPmuTrainingMode : pub set MemControllerPmuTrainingMode, // Rome (Obsolete)
         DfSysStorageAtTopOfMem(default 0xff, id 0x249e08d5) : pub get DfSysStorageAtTopOfMem : pub set DfSysStorageAtTopOfMem,
 
         // BMC Rome
 
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         BmcSocket(default 0, id 0x846573f9) : pub get u8 : pub set u8, // value 0 // Rome (Obsolete)
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         BmcDevice(default 0, id 0xd5bc5fc9) : pub get u8 : pub set u8, // value 5 // Rome (Obsolete)
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         BmcFunction(default 0, id 0x1de4dd61) : pub get u8 : pub set u8, // value 2 // Rome (Obsolete)
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         BmcStartLane(default 0, id 0xb88d87df) : pub get u8 : pub set u8, // value 0x81 // Rome (Obsolete)
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         BmcEndLane(default 0, id 0x143f3963) : pub get u8 : pub set u8, // value 0x81 // Rome (Obsolete)
-        BmcVgaIoPortSize(default 0, id 0xfc3f2520) : pub get u16 : pub set u16, // value 0 // legacy
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        BmcVgaIoPortSize(default 0, id 0xfc3f2520) : pub get u8 : pub set u8, // value 0 // legacy
+        #[cfg_attr(feature = "std", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         BmcVgaIoBarToReplace(default 0, id 0x2c81a37f) : pub get u8 : pub set u8, // value 0; 0 to 6 // legacy
         BmcGen2TxDeemphasis(default 0xff, id 0xf30d142d) : pub get BmcGen2TxDeemphasis : pub set BmcGen2TxDeemphasis, // value 0xff
         BmcLinkSpeed(default 0, id 0x9c790f4b) : pub get BmcLinkSpeed : pub set BmcLinkSpeed, // value 1

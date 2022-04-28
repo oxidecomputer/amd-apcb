@@ -8,6 +8,7 @@
 use crate::memory::*;
 use crate::ondisk::*;
 use crate::psp::*;
+use crate::df::*;
 use crate::struct_accessors::DummyErrorChecks;
 
 // Note: This is written such that it will fail if the underlying struct has
@@ -223,5 +224,158 @@ make_serde!(
         id_and_feature_value,
         rev_and_feature_value,
         board_instance_index,
+    ]
+);
+make_serde!(
+    SlinkRegion,
+    SerdeSlinkRegion,
+    [
+        size,
+        alignment,
+        socket,
+        phys_nbio_map,
+        interleaving,
+    ]
+);
+make_serde!(
+    AblConsoleOutControl,
+    SerdeAblConsoleOutControl,
+    [
+        enable_console_logging,
+        enable_mem_flow_logging,
+        enable_mem_setreg_logging,
+        enable_mem_getreg_logging,
+        enable_mem_status_logging,
+        enable_mem_pmu_logging,
+        enable_mem_pmu_sram_read_logging,
+        enable_mem_pmu_sram_write_logging,
+        enable_mem_test_verbose_logging,
+        enable_mem_basic_output_logging,
+        abl_console_port,
+    ]
+);
+make_serde!(
+    AblBreakpointControl,
+    SerdeAblBreakpointControl,
+    [
+        enable_breakpoint,
+        break_on_all_dies,
+    ]
+);
+make_serde!(
+    ExtVoltageControl,
+    SerdeExtVoltageControl,
+    [
+        enabled,
+        input_port,
+        output_port,
+        input_port_size,
+        output_port_size,
+        input_port_type,
+        output_port_type,
+        clear_acknowledgement,
+    ]
+);
+make_serde!(
+    LrdimmDdr4DataBusElement,
+    SerdeLrdimmDdr4DataBusElement,
+    [
+        dimm_slots_per_channel,
+        ddr_rates,
+        vdd_io,
+        dimm0_ranks,
+        dimm1_ranks,
+        rtt_nom,
+        rtt_wr,
+        rtt_park,
+        dq_drive_strength,
+        dqs_drive_strength,
+        odt_drive_strength,
+        pmu_phy_vref,
+        vref_dq,
+    ]
+);
+make_serde!(
+    MaxFreqElement,
+    SerdeMaxFreqElement,
+    [
+        dimm_slots_per_channel,
+        conditions,
+        speeds,
+    ]
+);
+make_serde!(
+    LrMaxFreqElement,
+    SerdeLrMaxFreqElement,
+    [
+        dimm_slots_per_channel,
+        conditions,
+        speeds,
+    ]
+);
+make_serde!(
+    Gpio,
+    SerdeGpio,
+    [
+        pin,
+        iomux_control,
+        bank_control,
+    ]
+);
+make_serde!(
+    ErrorOutControlBeepCode,
+    CustomSerdeErrorOutControlBeepCode,
+    [
+        error_type,
+        peak_map,
+        peak_attr,
+    ]
+);
+make_serde!(
+    ErrorOutControl116,
+    CustomSerdeErrorOutControl116,
+    [
+        enable_error_reporting,
+        enable_error_reporting_gpio,
+        enable_error_reporting_beep_codes,
+        enable_using_handshake,
+        input_port,
+        output_delay,
+        output_port,
+        stop_on_first_fatal_error,
+        input_port_size,
+        output_port_size,
+        input_port_type,
+        output_port_type,
+        clear_acknowledgement,
+        error_reporting_gpio,
+        beep_code_table,
+        enable_heart_beat,
+        enable_power_good_gpio,
+        power_good_gpio,
+    ]
+);
+make_serde!(
+    ErrorOutControl112,
+    CustomSerdeErrorOutControl112,
+    [
+        enable_error_reporting,
+        enable_error_reporting_gpio,
+        enable_error_reporting_beep_codes,
+        enable_using_handshake,
+        input_port,
+        output_delay,
+        output_port,
+        stop_on_first_fatal_error,
+        input_port_size,
+        output_port_size,
+        input_port_type,
+        output_port_type,
+        clear_acknowledgement,
+        error_reporting_gpio,
+        beep_code_table,
+        enable_heart_beat,
+        enable_power_good_gpio,
+        power_good_gpio,
     ]
 );

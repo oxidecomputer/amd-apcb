@@ -218,6 +218,7 @@ macro_rules! make_accessors {(
     // for serde
     paste::paste!{
         #[doc(hidden)]
+        #[allow(non_camel_case_types)]
         #[derive(serde::Serialize, serde::Deserialize)]
         #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
         // Doing remoting automatically would make it impossible for the user to use another one.
@@ -226,9 +227,9 @@ macro_rules! make_accessors {(
         //#[serde(remote = "" $StructName)]
         pub(crate) struct [<Serde $StructName>] {
             $(
-                $($(
-                    pub $field_name: $field_setter_user_ty,
-                )?)?
+                $(
+                    pub $field_name: $field_user_ty,
+                )?
             )*
         }
     }
