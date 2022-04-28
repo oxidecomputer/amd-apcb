@@ -1241,7 +1241,6 @@ make_bitfield_serde! {
     #[bitfield(bits = 8)]
     #[repr(u8)]
     #[derive(Copy, Clone)]
-    #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     pub struct PriorityLevels {
         pub hard_force: bool : pub get bool : pub set bool,
         pub high: bool : pub get bool : pub set bool,
@@ -2182,7 +2181,6 @@ pub mod memory {
         #[derive(
             Clone, Copy, PartialEq, BitfieldSpecifier,
         )]
-        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
         pub struct Ddr4DimmRanks {
             pub unpopulated: bool : pub get bool : pub set bool,
             pub single_rank: bool : pub get bool : pub set bool,
@@ -2226,7 +2224,6 @@ pub mod memory {
         #[derive(
             Clone, Copy, PartialEq, BitfieldSpecifier,
         )]
-        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
         pub struct LrdimmDdr4DimmRanks {
             pub unpopulated: bool : pub get bool : pub set bool,
             pub lr: bool : pub get bool : pub set bool,
@@ -2292,7 +2289,6 @@ pub mod memory {
         #[bitfield(bits = 32)]
         #[repr(u32)]
         #[derive(Clone, Copy, PartialEq)]
-        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
         pub struct DdrRates {
             // Note: Bit index is (x/2)//66 of ddrx
             #[skip]
@@ -2381,7 +2377,6 @@ pub mod memory {
         #[bitfield(bits = 32)]
         #[repr(u32)]
         #[derive(Clone, Copy)]
-        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
         pub struct DimmsPerChannelSelector {
             pub one_dimm: bool : pub get bool : pub set bool,
             pub two_dimms: bool : pub get bool : pub set bool,
@@ -2466,7 +2461,6 @@ pub mod memory {
         #[bitfield(bits = 32)]
         #[repr(u32)]
         #[derive(Clone, Copy)]
-        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
         pub struct RdimmDdr4Voltages {
             pub v_1_2: bool : pub get bool : pub set bool,
             #[skip]
@@ -2584,7 +2578,6 @@ pub mod memory {
         #[bitfield(bits = 32)]
         #[repr(u32)]
         #[derive(Clone, Copy)]
-        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
         pub struct UdimmDdr4Voltages {
             pub v_1_5: bool : pub get bool : pub set bool,
             pub v_1_35: bool : pub get bool : pub set bool,
@@ -2676,7 +2669,6 @@ pub mod memory {
         #[bitfield(bits = 32)]
         #[repr(u32)]
         #[derive(Clone, Copy)]
-        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
         pub struct LrdimmDdr4Voltages {
             pub v_1_2: bool: pub get bool : pub set bool,
             // all = 7
@@ -3445,7 +3437,6 @@ pub mod memory {
         #[bitfield(bits = 32)]
         #[derive(PartialEq, Debug, Copy, Clone)]
         #[repr(u32)]
-        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
         pub struct ErrorOutControlBeepCodePeakAttr {
             pub peak_count: B5 : pub get u8 : pub set u8,
             /// PULSE_WIDTH: in units of 0.1 s
@@ -3801,7 +3792,6 @@ Clone)]
         #[bitfield(bits = 32)]
         #[repr(u32)]
         #[derive(Clone, Copy, BitfieldSpecifier)]
-        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
         pub struct Ddr4OdtPatDimmRankBitmaps {
             #[bits = 4]
             pub dimm0: Ddr4DimmRanks : pub get Ddr4DimmRanks : pub set Ddr4DimmRanks, // @0
@@ -3837,7 +3827,6 @@ Clone)]
         #[bitfield(bits = 32)]
         #[repr(u32)]
         #[derive(Clone, Copy)]
-        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
         pub struct OdtPatPatterns {
             pub reading_pattern: OdtPatPattern : pub get OdtPatPattern : pub set OdtPatPattern, // @bit 0
             #[skip]
@@ -3921,7 +3910,6 @@ Clone)]
         #[bitfield(bits = 32)]
         #[repr(u32)]
         #[derive(Clone, Copy, BitfieldSpecifier)]
-        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
         pub struct LrdimmDdr4OdtPatDimmRankBitmaps {
             pub dimm0: LrdimmDdr4DimmRanks : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks, // @bit 0
             pub dimm1: LrdimmDdr4DimmRanks : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks, // @bit 4
@@ -4118,7 +4106,6 @@ Clone)]
                         #[bitfield(filled = true, bits = 8)]
                         #[repr(u8)]
                         #[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
-                        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
                         pub struct ChannelIdsSelection {
                             pub a: bool,
                             pub b: bool,
@@ -4193,7 +4180,6 @@ Clone)]
                         #[bitfield(filled = true, bits = 8)]
                         #[repr(u8)]
                         #[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
-                        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
                         pub struct SocketIds {
                             pub socket_0: bool,
                             pub socket_1: bool,
@@ -4218,7 +4204,6 @@ Clone)]
                         #[bitfield(bits = 8)]
                         #[repr(u8)]
                         #[derive(Clone, Copy, Serialize, Deserialize)]
-                        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
                         pub struct DimmSlotsSelection {
                             pub dimm_slot_0: bool, // @0
                             pub dimm_slot_1: bool, // @1
