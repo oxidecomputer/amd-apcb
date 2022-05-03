@@ -2051,6 +2051,7 @@ pub mod memory {
     pub struct ConsoleOutControl {
         pub abl_console_out_control: AblConsoleOutControl,
         pub abl_breakpoint_control: AblBreakpointControl,
+        #[serde(skip)]
         _reserved: LU16,
     }
 
@@ -4916,15 +4917,15 @@ Clone)]
 
                         make_accessors! {
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+        Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct LvDimmForce1V5 {
-                                type_: u8,
-                                payload_size: u8,
-                                sockets: u8 : pub get SocketIds, // Note: always "all"
-                                channels: u8 : pub get ChannelIds, // Note: always "all"
-                                dimms: u8 : pub get DimmSlots, // Note: always "all"
-                                value: u8, // Note: always 1
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                sockets: u8 : pub get SocketIds : pub set SocketIds, // Note: always "all"
+                                channels: u8 : pub get ChannelIds : pub set ChannelIds, // Note: always "all"
+                                dimms: u8 : pub get DimmSlots : pub set DimmSlots, // Note: always "all"
+                                value: u8 : pub get SerdeHex8 : pub set SerdeHex8, // Note: always 1
                             }
                         }
                         impl_EntryCompatible!(LvDimmForce1V5, 16, 4);
@@ -4953,16 +4954,16 @@ Clone)]
 
                         make_accessors! {
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+        Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MinimumRwDataEyeWidth {
-                                type_: u8,
-                                payload_size: u8,
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
                                 channels: u8 : pub get ChannelIds : pub set ChannelIds,
-                                dimms: u8 : pub get DimmSlots, // Note: always "all"
-                                min_read_data_eye_width: u8 : pub get u8 : pub set u8,
-                                min_write_data_eye_width: u8 : pub get u8 : pub set u8,
+                                dimms: u8 : pub get DimmSlots : pub set DimmSlots, // Note: always "all"
+                                min_read_data_eye_width: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                min_write_data_eye_width: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                             }
                         }
                         impl_EntryCompatible!(MinimumRwDataEyeWidth, 17, 5);
@@ -4994,11 +4995,11 @@ Clone)]
 
                         make_accessors! {
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+        Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct CpuFamilyFilter {
-                                type_: u8,
-                                payload_size: u8,
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                                 cpu_family_revision: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
                             }
                         }
@@ -5023,15 +5024,15 @@ Clone)]
 
                         make_accessors! {
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+        Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct SolderedDownDimmsPerChannel {
-                                type_: u8,
-                                payload_size: u8,
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
                                 channels: u8 : pub get ChannelIds : pub set ChannelIds,
-                                dimms: u8 : pub get DimmSlots, // Note: always "all"
-                                value: u8 : pub get u8 : pub set u8,
+                                dimms: u8 : pub get DimmSlots : pub set DimmSlots, // Note: always "all"
+                                value: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                             }
                         }
                         impl_EntryCompatible!(SolderedDownDimmsPerChannel, 19, 4);
@@ -5068,14 +5069,14 @@ Clone)]
 
                         make_accessors! {
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+        Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MemPowerPolicy {
-                                type_: u8,
-                                payload_size: u8,
-                                sockets: u8 : pub get SocketIds, // Note: always "all"
-                                channels: u8 : pub get ChannelIds, // Note: always "all"
-                                dimms: u8 : pub get DimmSlots, // Note: always "all"
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                sockets: u8 : pub get SocketIds : pub set SocketIds, // Note: always "all"
+                                channels: u8 : pub get ChannelIds : pub set ChannelIds, // Note: always "all"
+                                dimms: u8 : pub get DimmSlots : pub set DimmSlots, // Note: always "all"
                                 value: u8 : pub get MemPowerPolicyType : pub set MemPowerPolicyType,
                             }
                         }
@@ -5113,14 +5114,14 @@ Clone)]
 
                         make_accessors! {
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+        Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MotherboardLayers {
-                                type_: u8,
-                                payload_size: u8,
-                                sockets: u8 : pub get SocketIds, // Note: always "all"
-                                channels: u8 : pub get ChannelIds, // Note: always "all"
-                                dimms: u8 : pub get DimmSlots, // Note: always "all"
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                sockets: u8 : pub get SocketIds : pub set SocketIds, // Note: always "all"
+                                channels: u8 : pub get ChannelIds : pub set ChannelIds, // Note: always "all"
+                                dimms: u8 : pub get DimmSlots : pub set DimmSlots, // Note: always "all"
                                 value: u8 : pub get MotherboardLayerCount : pub set MotherboardLayerCount,
                             }
                         }
@@ -5303,11 +5304,13 @@ Clone)]
                             //            }
                         )}
 
-                        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Serialize, Deserialize, Clone, Copy)]
-                        #[repr(C, packed)]
-                        pub struct Terminator {
-                            type_: LU16,
+                        make_accessors!{
+                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+        Clone, Copy)]
+                            #[repr(C, packed)]
+                            pub struct Terminator {
+                                type_: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
+                            }
                         }
                         impl_EntryCompatible!(Terminator, 0xfeef, 2);
 
@@ -5585,15 +5588,14 @@ pub mod psp {
     use crate::struct_accessors::{make_accessors, Getter, Setter};
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
-            #[repr(C, packed)]
-            pub struct IdApcbMapping {
-                id_and_feature_mask: u8 : pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
-                id_and_feature_value: u8 : pub get u8 : pub set u8,
-                board_instance_index: u8 : pub get u8 : pub set u8,
-            }
+        #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct IdApcbMapping {
+            id_and_feature_mask: u8 : pub get SerdeHex8 : pub set SerdeHex8, // bit 7: normal or feature-controlled?  other bits: mask
+            id_and_feature_value: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+            board_instance_index: u8 : pub get SerdeHex8 : pub set SerdeHex8,
         }
+    }
     impl IdApcbMapping {
         pub fn new(
             id_and_feature_mask: u8,
@@ -5704,14 +5706,13 @@ pub mod psp {
     }
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
-            #[repr(C, packed)]
-            pub struct BoardIdGettingMethodCustom {
-                access_method: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // 0xF for BoardIdGettingMethodCustom
-                feature_mask: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
-            }
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct BoardIdGettingMethodCustom {
+            access_method: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // 0xF for BoardIdGettingMethodCustom
+            feature_mask: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
         }
+    }
 
     impl Default for BoardIdGettingMethodCustom {
         fn default() -> Self {
@@ -5747,15 +5748,15 @@ pub mod psp {
         type TailArrayItemType<'de> = IdApcbMapping;
     }
 
+    make_array_accessors!(Gpio, Gpio);
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
-            #[repr(C, packed)]
-            pub struct BoardIdGettingMethodGpio {
-                access_method: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // 3 for BoardIdGettingMethodGpio
-                pub bit_locations: [Gpio; 4], // for the board id
-            }
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct BoardIdGettingMethodGpio {
+            access_method: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // 3 for BoardIdGettingMethodGpio
+            pub bit_locations: [Gpio; 4] : pub get [Gpio; 4] : pub set [Gpio; 4], // for the board id
         }
+    }
 
     impl Default for BoardIdGettingMethodGpio {
         fn default() -> Self {
@@ -5854,19 +5855,18 @@ pub mod psp {
     }
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
-            #[repr(C, packed)]
-            pub struct BoardIdGettingMethodSmbus {
-                access_method: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // 1 for BoardIdGettingMethodSmbus
-                i2c_controller_index: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
-                i2c_mux_address: u8 : pub get u8 : pub set u8,
-                mux_control_address: u8 : pub get u8 : pub set u8,
-                mux_channel: u8 : pub get u8 : pub set u8,
-                smbus_address: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
-                register_index: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
-            }
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct BoardIdGettingMethodSmbus {
+            access_method: LU16 : pub get SerdeHex16 : pub set SerdeHex16, // 1 for BoardIdGettingMethodSmbus
+            i2c_controller_index: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
+            i2c_mux_address: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+            mux_control_address: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+            mux_channel: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+            smbus_address: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
+            register_index: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
         }
+    }
 
     impl Default for BoardIdGettingMethodSmbus {
         fn default() -> Self {
@@ -7024,29 +7024,27 @@ pub enum PspEnableDebugMode {
     Enabled = 1,
 }
 
-#[bitfield(bits = 16)]
-#[repr(u16)]
-#[derive(Debug, Copy, Clone, PartialEq)]
-#[cfg_attr(
-    feature = "std",
-    derive(Serialize, Deserialize, schemars::JsonSchema)
-)]
-pub struct FchGppClkMapSelection {
-    pub s0_gpp0_off: B1,
-    pub s0_gpp1_off: B1,
-    pub s0_gpp4_off: B1,
-    pub s0_gpp2_off: B1,
-    pub s0_gpp3_off: B1,
-    #[skip]
-    __: B3,
+make_bitfield_serde! {
+    #[bitfield(bits = 16)]
+    #[repr(u16)]
+    #[derive(Default, Debug, Copy, Clone, PartialEq)]
+    pub struct FchGppClkMapSelection {
+        pub s0_gpp0_off: B1 : pub get bool : pub set bool,
+        pub s0_gpp1_off: B1 : pub get bool : pub set bool,
+        pub s0_gpp4_off: B1 : pub get bool : pub set bool,
+        pub s0_gpp2_off: B1 : pub get bool : pub set bool,
+        pub s0_gpp3_off: B1 : pub get bool : pub set bool,
+        #[skip]
+        __: B3,
 
-    pub s1_gpp0_off: B1,
-    pub s1_gpp1_off: B1,
-    pub s1_gpp4_off: B1,
-    pub s1_gpp2_off: B1,
-    pub s1_gpp3_off: B1,
-    #[skip]
-    __: B3,
+        pub s1_gpp0_off: B1 : pub get bool : pub set bool,
+        pub s1_gpp1_off: B1 : pub get bool : pub set bool,
+        pub s1_gpp4_off: B1 : pub get bool : pub set bool,
+        pub s1_gpp2_off: B1 : pub get bool : pub set bool,
+        pub s1_gpp3_off: B1 : pub get bool : pub set bool,
+        #[skip]
+        __: B3,
+    }
 }
 impl FchGppClkMapSelection {
     pub fn builder() -> Self {

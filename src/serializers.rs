@@ -6,6 +6,7 @@
 // fail if the nice simple user-visible type cannot represent what we are doing.
 
 use crate::df::*;
+use crate::memory::platform_tuning::*;
 use crate::memory::*;
 use crate::ondisk::memory::platform_specific_override::*;
 use crate::ondisk::*;
@@ -519,3 +520,90 @@ make_serde!(
     SerdeSolderedDownSodimm,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
+make_serde!(
+    LvDimmForce1V5,
+    SerdeLvDimmForce1V5,
+    [type_, payload_size, sockets, channels, dimms, value,]
+);
+make_serde!(
+    MinimumRwDataEyeWidth,
+    SerdeMinimumRwDataEyeWidth,
+    [
+        type_,
+        payload_size,
+        sockets,
+        channels,
+        dimms,
+        min_read_data_eye_width,
+        min_write_data_eye_width,
+    ]
+);
+make_serde!(
+    CpuFamilyFilter,
+    SerdeCpuFamilyFilter,
+    [type_, payload_size, cpu_family_revision,]
+);
+make_serde!(
+    SolderedDownDimmsPerChannel,
+    SerdeSolderedDownDimmsPerChannel,
+    [type_, payload_size, sockets, channels, dimms, value,]
+);
+make_serde!(
+    MemPowerPolicy,
+    SerdeMemPowerPolicy,
+    [type_, payload_size, sockets, channels, dimms, value,]
+);
+make_serde!(
+    MotherboardLayers,
+    SerdeMotherboardLayers,
+    [type_, payload_size, sockets, channels, dimms, value,]
+);
+make_serde!(
+    IdApcbMapping,
+    SerdeIdApcbMapping,
+    [
+        id_and_feature_mask,
+        id_and_feature_value,
+        board_instance_index,
+    ]
+);
+make_serde!(
+    BoardIdGettingMethodCustom,
+    SerdeBoardIdGettingMethodCustom,
+    [access_method, feature_mask,]
+);
+make_serde!(
+    BoardIdGettingMethodGpio,
+    SerdeBoardIdGettingMethodGpio,
+    [access_method, bit_locations,]
+);
+make_serde!(
+    BoardIdGettingMethodSmbus,
+    SerdeBoardIdGettingMethodSmbus,
+    [
+        access_method,
+        i2c_controller_index,
+        i2c_mux_address,
+        mux_control_address,
+        mux_channel,
+        smbus_address,
+        register_index,
+    ]
+);
+make_serde!(
+    FchGppClkMapSelection,
+    SerdeFchGppClkMapSelection,
+    [
+        s0_gpp0_off,
+        s0_gpp1_off,
+        s0_gpp4_off,
+        s0_gpp2_off,
+        s0_gpp3_off,
+        s1_gpp0_off,
+        s1_gpp1_off,
+        s1_gpp4_off,
+        s1_gpp2_off,
+        s1_gpp3_off,
+    ]
+);
+make_serde!(Terminator, SerdeTerminator, [type_,]);

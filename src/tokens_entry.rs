@@ -11,7 +11,7 @@ use pre::pre;
 #[cfg(feature = "std")]
 use serde::de::{self, Deserialize, Deserializer};
 #[cfg(feature = "std")]
-use serde::ser::{Serialize, SerializeStruct, Serializer};
+use serde::ser::{Serialize, Serializer};
 #[cfg(feature = "std")]
 use std::borrow::Cow;
 

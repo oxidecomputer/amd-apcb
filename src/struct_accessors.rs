@@ -80,9 +80,7 @@ impl From<bool> for BU8 {
     }
 }
 
-#[derive(
-    Debug, PartialEq, FromBytes, AsBytes, Clone, Copy, Serialize, Deserialize,
-)]
+#[derive(Debug, PartialEq, FromBytes, AsBytes, Clone, Copy)]
 #[repr(C, packed)]
 pub(crate) struct BLU16(pub(crate) U16<LittleEndian>);
 impl Getter<Result<bool>> for BLU16 {
