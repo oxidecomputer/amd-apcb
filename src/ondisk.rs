@@ -159,7 +159,13 @@ pub fn take_body_from_collection<'a>(
     }
 }
 
-#[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive, schemars::JsonSchema)]
+type LU16 = U16<LittleEndian>;
+type LU32 = U32<LittleEndian>;
+type LU64 = U64<LittleEndian>;
+
+#[derive(
+    Default, Copy, Clone, FromPrimitive, ToPrimitive, schemars::JsonSchema,
+)]
 pub struct SerdeHex8(u8);
 
 #[cfg(feature = "std")]
@@ -185,7 +191,9 @@ impl<'de> serde::de::Deserialize<'de> for SerdeHex8 {
     }
 }
 
-#[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive, schemars::JsonSchema)]
+#[derive(
+    Default, Copy, Clone, FromPrimitive, ToPrimitive, schemars::JsonSchema,
+)]
 pub struct SerdeHex16(u16);
 
 #[cfg(feature = "std")]
@@ -211,7 +219,9 @@ impl<'de> serde::de::Deserialize<'de> for SerdeHex16 {
     }
 }
 
-#[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive, schemars::JsonSchema)]
+#[derive(
+    Default, Copy, Clone, FromPrimitive, ToPrimitive, schemars::JsonSchema,
+)]
 pub struct SerdeHex32(u32);
 
 #[cfg(feature = "std")]
@@ -237,7 +247,9 @@ impl<'de> serde::de::Deserialize<'de> for SerdeHex32 {
     }
 }
 
-#[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive, schemars::JsonSchema)]
+#[derive(
+    Default, Copy, Clone, FromPrimitive, ToPrimitive, schemars::JsonSchema,
+)]
 pub struct SerdeHex64(u64);
 
 #[cfg(feature = "std")]
@@ -263,45 +275,77 @@ impl<'de> serde::de::Deserialize<'de> for SerdeHex64 {
     }
 }
 
-type LU16 = U16<LittleEndian>;
-type LU32 = U32<LittleEndian>;
-type LU64 = U64<LittleEndian>;
-
-impl Getter<Result<[SerdeHex8; 4]>> for [u8; 4] {
-    fn get1(self) -> Result<[SerdeHex8; 4]> {
-        Ok(self.map(|v| SerdeHex8(v)))
+impl From<u8> for SerdeHex8 {
+    fn from(lu: u8) -> Self {
+        Self(lu)
     }
 }
 
-impl Setter<[SerdeHex8; 4]> for [u8; 4] {
-    fn set1(&mut self, value: [SerdeHex8; 4]) {
-        // Wasteful?
-        *self = value.map(|v| v.0);
+impl From<SerdeHex8> for u8 {
+    fn from(sh: SerdeHex8) -> Self {
+        sh.0
     }
 }
 
-impl Getter<Result<[SerdeHex16; 4]>> for [LU16; 4] {
-    fn get1(self) -> Result<[SerdeHex16; 4]> {
-        Ok(self.map(|v| SerdeHex16(v.get())))
+impl From<LU16> for SerdeHex16 {
+    fn from(lu: LU16) -> Self {
+        Self(lu.get())
     }
 }
 
-impl Setter<[SerdeHex16; 4]> for [LU16; 4] {
-    fn set1(&mut self, value: [SerdeHex16; 4]) {
-        *self = value.map(|v| LU16::new(v.0));
-    }
-}
-impl Getter<Result<[SerdeHex16; 3]>> for [LU16; 3] {
-    fn get1(self) -> Result<[SerdeHex16; 3]> {
-        Ok(self.map(|v| SerdeHex16(v.get())))
+impl From<SerdeHex16> for LU16 {
+    fn from(sh: SerdeHex16) -> Self {
+        Self::new(sh.0)
     }
 }
 
-impl Setter<[SerdeHex16; 3]> for [LU16; 3] {
-    fn set1(&mut self, value: [SerdeHex16; 3]) {
-        *self = value.map(|v| LU16::new(v.0));
+impl From<LU32> for SerdeHex32 {
+    fn from(lu: LU32) -> Self {
+        Self(lu.get())
     }
 }
+
+impl From<SerdeHex32> for LU32 {
+    fn from(sh: SerdeHex32) -> Self {
+        Self::new(sh.0)
+    }
+}
+
+impl From<LU64> for SerdeHex64 {
+    fn from(lu: LU64) -> Self {
+        Self(lu.get())
+    }
+}
+
+impl From<SerdeHex64> for LU64 {
+    fn from(sh: SerdeHex64) -> Self {
+        Self::new(sh.0)
+    }
+}
+
+macro_rules! make_array_accessors {
+    ($res_ty:ty, $array_ty:ty) => {
+        impl<const SIZE: usize> Getter<Result<[$res_ty; SIZE]>>
+            for [$array_ty; SIZE]
+        {
+            fn get1(self) -> Result<[$res_ty; SIZE]> {
+                Ok(self.map(|v| <$res_ty>::from(v)))
+            }
+        }
+
+        impl<const SIZE: usize> Setter<[$res_ty; SIZE]> for [$array_ty; SIZE] {
+            fn set1(&mut self, value: [$res_ty; SIZE]) {
+                *self = value.map(|v| <$array_ty>::from(v));
+            }
+        }
+    };
+}
+
+make_array_accessors!(SerdeHex8, u8);
+make_array_accessors!(SerdeHex16, LU16);
+make_array_accessors!(SerdeHex32, LU32);
+make_array_accessors!(SerdeHex64, LU64);
+
 make_accessors! {
     #[derive(FromBytes, AsBytes, Unaligned, Debug)]
     #[repr(C, packed)]
@@ -332,18 +376,6 @@ impl Default for V2_HEADER {
     }
 }
 
-impl Getter<Result<[SerdeHex8; 32]>> for [u8; 32] {
-    fn get1(self) -> Result<[SerdeHex8; 32]> {
-        Ok(self.map(|v| SerdeHex8(v)))
-    }
-}
-
-impl Setter<[SerdeHex8; 32]> for [u8; 32] {
-    fn set1(&mut self, value: [SerdeHex8; 32]) {
-        // Wasteful?
-        *self = value.map(|v| v.0);
-    }
-}
 // The funny reserved values here were such that older firmware (which
 // expects a V2_HEADER and does not honor its header_size) can skip this
 // unknown struct.
@@ -1663,17 +1695,17 @@ pub mod df {
     }
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
-            #[repr(C, packed)]
-            pub struct SlinkRegion {
-                size: LU64 : pub get SerdeHex64 : pub set SerdeHex64,
-                alignment: u8 : pub get SerdeHex8 : pub set SerdeHex8,
-                socket: u8 : pub get SerdeHex8 : pub set SerdeHex8, // 0|1
-                phys_nbio_map: u8 : pub get SerdeHex8 : pub set SerdeHex8, // bitmap
-                interleaving: u8 : pub get SlinkRegionInterleavingSize : pub set SlinkRegionInterleavingSize,
-                _reserved: [u8; 4],
-            }
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct SlinkRegion {
+            size: LU64 : pub get SerdeHex64 : pub set SerdeHex64,
+            alignment: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+            socket: u8 : pub get SerdeHex8 : pub set SerdeHex8, // 0|1
+            phys_nbio_map: u8 : pub get SerdeHex8 : pub set SerdeHex8, // bitmap
+            interleaving: u8 : pub get SlinkRegionInterleavingSize : pub set SlinkRegionInterleavingSize,
+            _reserved: [u8; 4],
         }
+    }
     impl Default for SlinkRegion {
         fn default() -> Self {
             Self {
@@ -1763,7 +1795,9 @@ pub mod df {
 
 pub mod memory {
     use super::*;
-    use crate::struct_accessors::{make_accessors, Getter, Setter, BLU16, BU8, DummyErrorChecks};
+    use crate::struct_accessors::{
+        make_accessors, DummyErrorChecks, Getter, Setter, BLU16, BU8,
+    };
     use crate::types::Result;
 
     make_accessors! {
@@ -1931,23 +1965,23 @@ pub mod memory {
     }
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
-            #[repr(C, packed)]
-            pub struct AblConsoleOutControl {
-                enable_console_logging: BU8 : pub get bool : pub set bool,
-                enable_mem_flow_logging: BU8 : pub get bool : pub set bool,
-                enable_mem_setreg_logging: BU8 : pub get bool : pub set bool,
-                enable_mem_getreg_logging: BU8 : pub get bool : pub set bool,
-                enable_mem_status_logging: BU8 : pub get bool : pub set bool,
-                enable_mem_pmu_logging: BU8 : pub get bool : pub set bool,
-                enable_mem_pmu_sram_read_logging: BU8 : pub get bool : pub set bool,
-                enable_mem_pmu_sram_write_logging: BU8 : pub get bool : pub set bool,
-                enable_mem_test_verbose_logging: BU8 : pub get bool : pub set bool,
-                enable_mem_basic_output_logging: BU8 : pub get bool : pub set bool,
-                _reserved: LU16,
-                abl_console_port: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
-            }
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct AblConsoleOutControl {
+            enable_console_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_flow_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_setreg_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_getreg_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_status_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_pmu_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_pmu_sram_read_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_pmu_sram_write_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_test_verbose_logging: BU8 : pub get bool : pub set bool,
+            enable_mem_basic_output_logging: BU8 : pub get bool : pub set bool,
+            _reserved: LU16,
+            abl_console_port: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
         }
+    }
     impl Default for AblConsoleOutControl {
         fn default() -> Self {
             Self {
@@ -1977,13 +2011,13 @@ pub mod memory {
     }
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
-            #[repr(C, packed)]
-            pub struct AblBreakpointControl {
-                enable_breakpoint: BU8 : pub get bool : pub set bool,
-                break_on_all_dies: BU8 : pub get bool : pub set bool,
-            }
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct AblBreakpointControl {
+            enable_breakpoint: BU8 : pub get bool : pub set bool,
+            break_on_all_dies: BU8 : pub get bool : pub set bool,
         }
+    }
     impl Default for AblBreakpointControl {
         fn default() -> Self {
             Self {
@@ -2103,21 +2137,21 @@ pub mod memory {
     }
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
-            #[repr(C, packed)]
-            pub struct ExtVoltageControl {
-                enabled: BU8 : pub get bool : pub set bool,
-                _reserved: [u8; 3],
-                input_port: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
-                output_port: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
-                input_port_size: LU32 : pub get PortSize : pub set PortSize,
-                output_port_size: LU32 : pub get PortSize : pub set PortSize,
-                input_port_type: LU32 : pub get PortType : pub set PortType, // default: 6 (FCH)
-                output_port_type: LU32 : pub get PortType : pub set PortType, // default: 6 (FCH)
-                clear_acknowledgement: BU8 : pub get bool : pub set bool,
-                _reserved_2: [u8; 3],
-            }
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct ExtVoltageControl {
+            enabled: BU8 : pub get bool : pub set bool,
+            _reserved: [u8; 3],
+            input_port: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
+            output_port: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
+            input_port_size: LU32 : pub get PortSize : pub set PortSize,
+            output_port_size: LU32 : pub get PortSize : pub set PortSize,
+            input_port_type: LU32 : pub get PortType : pub set PortType, // default: 6 (FCH)
+            output_port_type: LU32 : pub get PortType : pub set PortType, // default: 6 (FCH)
+            clear_acknowledgement: BU8 : pub get bool : pub set bool,
+            _reserved_2: [u8; 3],
         }
+    }
 
     impl EntryCompatible for ExtVoltageControl {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
@@ -3093,26 +3127,26 @@ pub mod memory {
     }
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
-            #[repr(C, packed)]
-            pub struct LrdimmDdr4DataBusElement {
-                dimm_slots_per_channel: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
-                ddr_rates: LU32 : pub get DdrRates : pub set DdrRates,
-                vdd_io: LU32 : pub get LrdimmDdr4Voltages : pub set LrdimmDdr4Voltages,
-                dimm0_ranks: LU32 : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
-                dimm1_ranks: LU32 : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct LrdimmDdr4DataBusElement {
+            dimm_slots_per_channel: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
+            ddr_rates: LU32 : pub get DdrRates : pub set DdrRates,
+            vdd_io: LU32 : pub get LrdimmDdr4Voltages : pub set LrdimmDdr4Voltages,
+            dimm0_ranks: LU32 : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
+            dimm1_ranks: LU32 : pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
 
-                rtt_nom: LU32 : pub get RttNom : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
-                rtt_wr: LU32 : pub get RttWr : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
-                rtt_park: LU32 : pub get RttPark : pub set RttPark, // contains ODT termination resistor to be used when ODT is low
-                dq_drive_strength: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // for data
-                dqs_drive_strength: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // for data strobe (bit clock)
-                odt_drive_strength: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // for on-die termination
-                pmu_phy_vref: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
-                // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
-                vref_dq: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // MR6 vref calibration value; 23|30|32
-            }
+            rtt_nom: LU32 : pub get RttNom : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
+            rtt_wr: LU32 : pub get RttWr : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
+            rtt_park: LU32 : pub get RttPark : pub set RttPark, // contains ODT termination resistor to be used when ODT is low
+            dq_drive_strength: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // for data
+            dqs_drive_strength: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // for data strobe (bit clock)
+            odt_drive_strength: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // for on-die termination
+            pmu_phy_vref: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
+            // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
+            vref_dq: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // MR6 vref calibration value; 23|30|32
         }
+    }
 
     impl Default for LrdimmDdr4DataBusElement {
         fn default() -> Self {
@@ -3234,15 +3268,15 @@ pub mod memory {
     // Usually an array of those is used
     // Note: This structure is not used for LR DRAM
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
-            #[repr(C, packed)]
-            pub struct MaxFreqElement {
-                dimm_slots_per_channel: u8 : pub get DimmsPerChannel : pub set DimmsPerChannel,
-                _reserved: u8,
-                conditions: [LU16; 4] : pub get [SerdeHex16; 4] : pub set [SerdeHex16; 4], // number of dimm on a channel, number of single-rank dimm, number of dual-rank dimm, number of quad-rank dimm
-                speeds: [LU16; 3] : pub get [SerdeHex16; 3] : pub set [SerdeHex16; 3], // speed limit with voltage 1.5 V, 1.35 V, 1.25 V // FIXME make accessible
-            }
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct MaxFreqElement {
+            dimm_slots_per_channel: u8 : pub get DimmsPerChannel : pub set DimmsPerChannel,
+            _reserved: u8,
+            conditions: [LU16; 4] : pub get [SerdeHex16; 4] : pub set [SerdeHex16; 4], // number of dimm on a channel, number of single-rank dimm, number of dual-rank dimm, number of quad-rank dimm
+            speeds: [LU16; 3] : pub get [SerdeHex16; 3] : pub set [SerdeHex16; 3], // speed limit with voltage 1.5 V, 1.35 V, 1.25 V // FIXME make accessible
         }
+    }
     impl MaxFreqElement {
         pub fn dimm_count(&self) -> Result<u16> {
             Ok(self.conditions[0].get())
@@ -3341,15 +3375,15 @@ pub mod memory {
 
     // Usually an array of those is used
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
-            #[repr(C, packed)]
-            pub struct LrMaxFreqElement {
-                dimm_slots_per_channel: u8 : pub get SerdeHex8 : pub set SerdeHex8,
-                _reserved: u8,
-                pub conditions: [LU16; 4] : pub get [SerdeHex16; 4] : pub set [SerdeHex16; 4], // maybe: number of dimm on a channel, 0, number of lr dimm, 0 // FIXME: Make accessible
-                pub speeds: [LU16; 3] : pub get [SerdeHex16; 3] : pub set [SerdeHex16; 3], // maybe: speed limit with voltage 1.5 V, 1.35 V, 1.25 V; FIXME: Make accessible
-            }
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct LrMaxFreqElement {
+            dimm_slots_per_channel: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+            _reserved: u8,
+            pub conditions: [LU16; 4] : pub get [SerdeHex16; 4] : pub set [SerdeHex16; 4], // maybe: number of dimm on a channel, 0, number of lr dimm, 0 // FIXME: Make accessible
+            pub speeds: [LU16; 3] : pub get [SerdeHex16; 3] : pub set [SerdeHex16; 3], // maybe: speed limit with voltage 1.5 V, 1.35 V, 1.25 V; FIXME: Make accessible
         }
+    }
 
     impl Default for LrMaxFreqElement {
         fn default() -> Self {
@@ -3454,8 +3488,16 @@ pub mod memory {
             }
         }
     }
-    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone,
-        Serialize, Deserialize)]
+    #[derive(
+        Debug,
+        PartialEq,
+        FromPrimitive,
+        ToPrimitive,
+        Copy,
+        Clone,
+        Serialize,
+        Deserialize,
+    )]
     #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
     #[non_exhaustive]
     pub enum ErrorOutControlBeepCodeErrorType {
@@ -3494,7 +3536,7 @@ pub mod memory {
             ErrorOutControlBeepCode::new(
                 ErrorOutControlBeepCodeErrorType::default(),
                 0,
-                ErrorOutControlBeepCodePeakAttr::default()
+                ErrorOutControlBeepCodePeakAttr::default(),
             )
         }
     }
@@ -3514,7 +3556,10 @@ pub mod memory {
                     | (value.to_u16().unwrap() << 12),
             );
         }
-        pub fn with_error_type(self, value: ErrorOutControlBeepCodeErrorType) -> Self {
+        pub fn with_error_type(
+            self,
+            value: ErrorOutControlBeepCodeErrorType,
+        ) -> Self {
             let mut result = self;
             result.set_error_type(value);
             result
@@ -3533,7 +3578,9 @@ pub mod memory {
         }
     }
 
-    impl Getter<Result<[ErrorOutControlBeepCode; 8]>> for [ErrorOutControlBeepCode; 8] {
+    impl Getter<Result<[ErrorOutControlBeepCode; 8]>>
+        for [ErrorOutControlBeepCode; 8]
+    {
         fn get1(self) -> Result<[ErrorOutControlBeepCode; 8]> {
             Ok(self.map(|v| v))
         }
@@ -3791,11 +3838,6 @@ Clone)]
             self.clone()
         }
     }
-    impl Default for Ddr4OdtPatDimmRankBitmaps {
-        fn default() -> Self {
-            Self::new()
-        }
-    }
     type OdtPatPattern = B4; // TODO: Meaning
 
     make_bitfield_serde! {
@@ -3827,17 +3869,16 @@ Clone)]
     }
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
-            #[repr(C, packed)]
-            pub struct Ddr4OdtPatElement {
-                dimm_rank_bitmaps: LU32 : pub get Ddr4OdtPatDimmRankBitmaps : pub set Ddr4OdtPatDimmRankBitmaps,
-                cs0_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
-                cs1_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
-                cs2_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
-                cs3_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
-            }
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct Ddr4OdtPatElement {
+            dimm_rank_bitmaps: LU32 : pub get Ddr4OdtPatDimmRankBitmaps : pub set Ddr4OdtPatDimmRankBitmaps,
+            cs0_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
+            cs1_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
+            cs2_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
+            cs3_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
         }
+    }
 
     impl Default for Ddr4OdtPatElement {
         fn default() -> Self {
@@ -3899,23 +3940,22 @@ Clone)]
         u32
     );
     impl Default for LrdimmDdr4OdtPatDimmRankBitmaps {
-        fn default() -> Self{
+        fn default() -> Self {
             Self::new()
         }
     }
 
     make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone,
-    Serialize, Deserialize)]
-            #[repr(C, packed)]
-            pub struct LrdimmDdr4OdtPatElement {
-                dimm_rank_bitmaps: LU32 : pub get LrdimmDdr4OdtPatDimmRankBitmaps : pub set LrdimmDdr4OdtPatDimmRankBitmaps,
-                cs0_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
-                cs1_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
-                cs2_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
-                cs3_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
-            }
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct LrdimmDdr4OdtPatElement {
+            dimm_rank_bitmaps: LU32 : pub get LrdimmDdr4OdtPatDimmRankBitmaps : pub set LrdimmDdr4OdtPatDimmRankBitmaps,
+            cs0_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
+            cs1_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
+            cs2_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
+            cs3_odt_patterns: LU32 : pub get OdtPatPatterns : pub set OdtPatPatterns,
         }
+    }
 
     impl Default for LrdimmDdr4OdtPatElement {
         fn default() -> Self {
@@ -4021,6 +4061,7 @@ Clone)]
     Deserialize)]
             #[repr(C, packed)]
             pub struct DdrPostPackageRepairElement {
+                #[serde(with = "SerHex::<StrictPfx>")]
                 body: [u8; 8], // no: pub get DdrPostPackageRepairBody : pub set DdrPostPackageRepairBody,
             }
         }
@@ -4325,17 +4366,16 @@ Clone)]
                         )}
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-                Serialize, Deserialize, Clone)]
+                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Clone)]
                             #[repr(C, packed)]
                             pub struct CkeTristateMap {
-                                type_: u8,
-                                payload_size: u8,
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
                                 channels: u8 : pub get ChannelIds : pub set ChannelIds,
                                 dimms: u8 : pub get DimmSlots : pub set DimmSlots,
                                 /// index i = CPU package's clock enable (CKE) pin, value = memory rank's CKE pin mask
-                                pub connections: [u8; 4],
+                                pub connections: [u8; 4] : pub get [SerdeHex8; 4] : pub set [SerdeHex8; 4],
                             }
                         }
                         impl_EntryCompatible!(CkeTristateMap, 1, 7);
@@ -4365,16 +4405,16 @@ Clone)]
 
                         make_accessors! {
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+        Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct OdtTristateMap {
-                                type_: u8,
-                                payload_size: u8,
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
                                 channels: u8 : pub get ChannelIds : pub set ChannelIds,
                                 dimms: u8 : pub get DimmSlots : pub set DimmSlots,
                                 /// index i = CPU package's ODT pin (MA_ODT\[i\]), value = memory rank's ODT pin mask
-                                pub connections: [u8; 4],
+                                pub connections: [u8; 4] : pub get [SerdeHex8; 4] : pub set [SerdeHex8; 4],
                             }
                         }
                         impl_EntryCompatible!(OdtTristateMap, 2, 7);
@@ -4403,17 +4443,16 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct CsTristateMap {
-                                type_: u8,
-                                payload_size: u8,
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
                                 channels: u8 : pub get ChannelIds : pub set ChannelIds,
                                 dimms: u8 : pub get DimmSlots : pub set DimmSlots,
                                 /// index i = CPU package CS pin (MA_CS_L\[i\]), value = memory rank's CS pin
-                                pub connections: [u8; 8],
+                                pub connections: [u8; 8] : pub get [SerdeHex8; 8] : pub set [SerdeHex8; 8],
                             }
                         }
                         impl_EntryCompatible!(CsTristateMap, 3, 11);
@@ -4442,16 +4481,15 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MaxDimmsPerChannel {
-                                type_: u8,
-                                payload_size: u8,
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
                                 channels: u8 : pub get ChannelIds : pub set ChannelIds,
                                 dimms: u8 : pub get DimmSlots : pub set DimmSlots, // Note: must always be "any"
-                                value: u8 : pub get u8 : pub set u8,
+                                value: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                             }
                         }
                         impl_EntryCompatible!(MaxDimmsPerChannel, 4, 4);
@@ -4481,15 +4519,15 @@ Clone)]
 
                         make_accessors! {
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+        Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MemclkMap {
-                                type_: u8,
-                                payload_size: u8,
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
                                 channels: u8 : pub get ChannelIds : pub set ChannelIds,
-                                dimms: u8 : pub get DimmSlots, // Note: must always be "all"
-                                pub connections: [u8; 8], // index: memory clock pin; value: Connected CS pin on DIMM
+                                dimms: u8 : pub get DimmSlots : pub set DimmSlots, // Note: must always be "all"
+                                pub connections: [u8; 8] : pub get [SerdeHex8; 8] : pub set [SerdeHex8; 8],
                             }
                         }
                         impl_EntryCompatible!(MemclkMap, 7, 11);
@@ -4519,15 +4557,15 @@ Clone)]
 
                         make_accessors! {
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+        Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MaxChannelsPerSocket {
-                                type_: u8,
-                                payload_size: u8,
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
-                                channels: u8 : pub get ChannelIds,  // Note: must always be "any"
-                                dimms: u8 : pub get DimmSlots, // Note: must always be "any" here
-                                value: u8 : pub get u8 : pub set u8,
+                                channels: u8 : pub get ChannelIds : pub set ChannelIds,  // Note: must always be "any"
+                                dimms: u8 : pub get DimmSlots : pub set DimmSlots, // Note: must always be "any" here
+                                value: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                             }
                         }
                         impl_EntryCompatible!(MaxChannelsPerSocket, 8, 4);
@@ -4596,14 +4634,14 @@ Clone)]
 
                         make_accessors! {
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+        Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MemBusSpeed {
-                                type_: u8,
-                                payload_size: u8,
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
                                 channels: u8 : pub get ChannelIds : pub set ChannelIds,
-                                dimms: u8 : pub get DimmSlots, // Note: must always be "all"
+                                dimms: u8 : pub get DimmSlots : pub set DimmSlots, // Note: must always be "all"
                                 timing_mode: LU32 : pub get TimingMode : pub set TimingMode,
                                 bus_speed: LU32 : pub get MemBusSpeedType : pub set MemBusSpeedType,
                             }
@@ -4638,15 +4676,15 @@ Clone)]
                         make_accessors! {
                             /// Max. Chip Selects per channel
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+        Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MaxCsPerChannel {
-                                type_: u8,
-                                payload_size: u8,
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
                                 channels: u8 : pub get ChannelIds : pub set ChannelIds,
-                                dimms: u8 : pub get DimmSlots, // Note: must always be "Any"
-                                value: u8,
+                                dimms: u8 : pub get DimmSlots : pub set DimmSlots, // Note: must always be "Any"
+                                value: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                             }
                         }
                         impl_EntryCompatible!(MaxCsPerChannel, 10, 4);
@@ -4692,14 +4730,14 @@ Clone)]
 
                         make_accessors! {
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+        Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MemTechnology {
-                                type_: u8,
-                                payload_size: u8,
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
-                                channels: u8 : pub get ChannelIds, // Note: must always be "any" here
-                                dimms: u8 : pub get DimmSlots, // Note: must always be "any" here
+                                channels: u8 : pub get ChannelIds : pub set ChannelIds, // Note: must always be "any" here
+                                dimms: u8 : pub get DimmSlots : pub set DimmSlots, // Note: must always be "any" here
                                 technology_type: LU32 : pub get MemTechnologyType : pub set MemTechnologyType,
                             }
                         }
@@ -4730,16 +4768,16 @@ Clone)]
 
                         make_accessors! {
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+        Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct WriteLevellingSeedDelay {
-                                type_: u8,
-                                payload_size: u8,
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
                                 channels: u8 : pub get ChannelIds : pub set ChannelIds,
                                 dimms: u8 : pub get DimmSlots : pub set DimmSlots,
-                                seed: [u8; 8],
-                                ecc_seed: u8,
+                                seed: [u8; 8] : pub get [SerdeHex8; 8] : pub set [SerdeHex8; 8],
+                                ecc_seed: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                             }
                         }
                         impl_EntryCompatible!(WriteLevellingSeedDelay, 12, 12);
@@ -4763,15 +4801,15 @@ Clone)]
                         make_accessors! {
                             /// See <https://www.amd.com/system/files/TechDocs/43170_14h_Mod_00h-0Fh_BKDG.pdf> section 2.9.3.7.2.1
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+        Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct RxEnSeed {
-                                type_: u8,
-                                payload_size: u8,
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
                                 channels: u8 : pub get ChannelIds : pub set ChannelIds,
                                 dimms: u8 : pub get DimmSlots : pub set DimmSlots,
-                                seed: [LU16; 8],
+                                seed: [LU16; 8] : pub get [SerdeHex16; 8] : pub set [SerdeHex16; 8],
                                 ecc_seed: LU16 : pub get SerdeHex16 : pub set SerdeHex16,
                             }
                         }
@@ -4804,15 +4842,15 @@ Clone)]
 
                         make_accessors! {
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+        Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct LrDimmNoCs6Cs7Routing {
-                                type_: u8,
-                                payload_size: u8,
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
                                 channels: u8 : pub get ChannelIds : pub set ChannelIds,
                                 dimms: u8 : pub get DimmSlots : pub set DimmSlots,
-                                value: u8, // Note: always 1
+                                value: u8 : pub get SerdeHex8 : pub set SerdeHex8, // Note: always 1
                             }
                         }
                         impl_EntryCompatible!(LrDimmNoCs6Cs7Routing, 14, 4);
@@ -4841,15 +4879,15 @@ Clone)]
 
                         make_accessors! {
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
-        Copy, Clone, Serialize, Deserialize)]
+        Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct SolderedDownSodimm {
-                                type_: u8,
-                                payload_size: u8,
+                                type_: u8 : pub get SerdeHex8 : pub set SerdeHex8,
+                                payload_size: u8 : pub get SerdeHex8 : pub set SerdeHex8,
                                 sockets: u8 : pub get SocketIds : pub set SocketIds,
                                 channels: u8 : pub get ChannelIds : pub set ChannelIds,
-                                dimms: u8 : pub get DimmSlots, // Note: always "all"
-                                value: u8, // Note: always 1
+                                dimms: u8 : pub get DimmSlots : pub set DimmSlots, // Note: always "all"
+                                value: u8 : pub get SerdeHex8 : pub set SerdeHex8, // Note: always 1
                             }
                         }
                         impl_EntryCompatible!(SolderedDownSodimm, 15, 4);

@@ -5,12 +5,12 @@
 // struct in the first place. This might cause problems. Also, serialization can
 // fail if the nice simple user-visible type cannot represent what we are doing.
 
+use crate::df::*;
 use crate::memory::*;
+use crate::ondisk::memory::platform_specific_override::*;
 use crate::ondisk::*;
 use crate::psp::*;
-use crate::df::*;
 use crate::struct_accessors::DummyErrorChecks;
-use crate::ondisk::memory::platform_specific_override::*;
 
 // Note: This is written such that it will fail if the underlying struct has
 // fields added/removed/renamed--if those have a public setter.
@@ -230,13 +230,7 @@ make_serde!(
 make_serde!(
     SlinkRegion,
     SerdeSlinkRegion,
-    [
-        size,
-        alignment,
-        socket,
-        phys_nbio_map,
-        interleaving,
-    ]
+    [size, alignment, socket, phys_nbio_map, interleaving,]
 );
 make_serde!(
     AblConsoleOutControl,
@@ -258,10 +252,7 @@ make_serde!(
 make_serde!(
     AblBreakpointControl,
     SerdeAblBreakpointControl,
-    [
-        enable_breakpoint,
-        break_on_all_dies,
-    ]
+    [enable_breakpoint, break_on_all_dies,]
 );
 make_serde!(
     ExtVoltageControl,
@@ -299,38 +290,18 @@ make_serde!(
 make_serde!(
     MaxFreqElement,
     SerdeMaxFreqElement,
-    [
-        dimm_slots_per_channel,
-        conditions,
-        speeds,
-    ]
+    [dimm_slots_per_channel, conditions, speeds,]
 );
 make_serde!(
     LrMaxFreqElement,
     SerdeLrMaxFreqElement,
-    [
-        dimm_slots_per_channel,
-        conditions,
-        speeds,
-    ]
+    [dimm_slots_per_channel, conditions, speeds,]
 );
-make_serde!(
-    Gpio,
-    SerdeGpio,
-    [
-        pin,
-        iomux_control,
-        bank_control,
-    ]
-);
+make_serde!(Gpio, SerdeGpio, [pin, iomux_control, bank_control,]);
 make_serde!(
     ErrorOutControlBeepCode,
     CustomSerdeErrorOutControlBeepCode,
-    [
-        error_type,
-        peak_map,
-        peak_attr,
-    ]
+    [error_type, peak_map, peak_attr,]
 );
 make_serde!(
     ErrorOutControl116,
@@ -384,88 +355,167 @@ make_serde!(
 make_serde!(
     DimmsPerChannelSelector,
     SerdeDimmsPerChannelSelector,
-    [
-        one_dimm,
-        two_dimms,
-        three_dimms,
-        four_dimms,
-    ]
+    [one_dimm, two_dimms, three_dimms, four_dimms,]
 );
 
 make_serde!(
     ErrorOutControlBeepCodePeakAttr,
     SerdeErrorOutControlBeepCodePeakAttr,
-    [
-        peak_count,
-        pulse_width,
-        repeat_count,
-    ]
+    [peak_count, pulse_width, repeat_count,]
 );
 
 make_serde!(
     OdtPatPatterns,
     SerdeOdtPatPatterns,
-    [
-        reading_pattern,
-        writing_pattern,
-    ]
+    [reading_pattern, writing_pattern,]
 );
 
 make_serde!(
     LrdimmDdr4OdtPatDimmRankBitmaps,
     SerdeLrdimmDdr4OdtPatDimmRankBitmaps,
-    [
-        dimm0,
-        dimm1,
-        dimm2,
-    ]
+    [dimm0, dimm1, dimm2,]
 );
 make_serde!(
     Ddr4OdtPatDimmRankBitmaps,
     SerdeDdr4OdtPatDimmRankBitmaps,
-    [
-        dimm0,
-        dimm1,
-        dimm2,
-    ]
+    [dimm0, dimm1, dimm2,]
 );
 
 make_serde!(
     DimmSlotsSelection,
     SerdeDimmSlotsSelection,
-    [
-        dimm_slot_0,
-        dimm_slot_1,
-        dimm_slot_2,
-        dimm_slot_3,
-    ]
+    [dimm_slot_0, dimm_slot_1, dimm_slot_2, dimm_slot_3,]
 );
 make_serde!(
     ChannelIdsSelection,
     SerdeChannelIdsSelection,
-    [
-        a,
-        b,
-        c,
-        d,
-        e,
-        f,
-        g,
-        h,
-    ]
+    [a, b, c, d, e, f, g, h,]
 );
 
 make_serde!(
     SocketIds,
     SerdeSocketIds,
     [
-        socket_0,
-        socket_1,
-        socket_2,
-        socket_3,
-        socket_4,
-        socket_5,
-        socket_6,
+        socket_0, socket_1, socket_2, socket_3, socket_4, socket_5, socket_6,
         socket_7,
     ]
+);
+
+make_serde!(
+    Ddr4OdtPatElement,
+    SerdeDdr4OdtPatElement,
+    [
+        dimm_rank_bitmaps,
+        cs0_odt_patterns,
+        cs1_odt_patterns,
+        cs2_odt_patterns,
+        cs3_odt_patterns,
+    ]
+);
+make_serde!(
+    LrdimmDdr4OdtPatElement,
+    SerdeLrdimmDdr4OdtPatElement,
+    [
+        dimm_rank_bitmaps,
+        cs0_odt_patterns,
+        cs1_odt_patterns,
+        cs2_odt_patterns,
+        cs3_odt_patterns,
+    ]
+);
+make_serde!(
+    CkeTristateMap,
+    SerdeCkeTristateMap,
+    [type_, payload_size, sockets, channels, dimms, connections,]
+);
+make_serde!(
+    OdtTristateMap,
+    SerdeOdtTristateMap,
+    [type_, payload_size, sockets, channels, dimms, connections,]
+);
+make_serde!(
+    CsTristateMap,
+    SerdeCsTristateMap,
+    [type_, payload_size, sockets, channels, dimms, connections,]
+);
+make_serde!(
+    MaxDimmsPerChannel,
+    SerdeMaxDimmsPerChannel,
+    [type_, payload_size, sockets, channels, dimms, value,]
+);
+make_serde!(
+    MemclkMap,
+    SerdeMemclkMap,
+    [type_, payload_size, sockets, channels, dimms, connections,]
+);
+make_serde!(
+    MaxChannelsPerSocket,
+    SerdeMaxChannelsPerSocket,
+    [type_, payload_size, sockets, channels, dimms, value,]
+);
+make_serde!(
+    MemBusSpeed,
+    SerdeMemBusSpeed,
+    [
+        type_,
+        payload_size,
+        sockets,
+        channels,
+        dimms,
+        timing_mode,
+        bus_speed,
+    ]
+);
+make_serde!(
+    MaxCsPerChannel,
+    SerdeMaxCsPerChannel,
+    [type_, payload_size, sockets, channels, dimms, value,]
+);
+make_serde!(
+    MemTechnology,
+    SerdeMemTechnology,
+    [
+        type_,
+        payload_size,
+        sockets,
+        channels,
+        dimms,
+        technology_type,
+    ]
+);
+make_serde!(
+    WriteLevellingSeedDelay,
+    SerdeWriteLevellingSeedDelay,
+    [
+        type_,
+        payload_size,
+        sockets,
+        channels,
+        dimms,
+        seed,
+        ecc_seed,
+    ]
+);
+make_serde!(
+    RxEnSeed,
+    SerdeRxEnSeed,
+    [
+        type_,
+        payload_size,
+        sockets,
+        channels,
+        dimms,
+        seed,
+        ecc_seed,
+    ]
+);
+make_serde!(
+    LrDimmNoCs6Cs7Routing,
+    SerdeLrDimmNoCs6Cs7Routing,
+    [type_, payload_size, sockets, channels, dimms, value,]
+);
+make_serde!(
+    SolderedDownSodimm,
+    SerdeSolderedDownSodimm,
+    [type_, payload_size, sockets, channels, dimms, value,]
 );
