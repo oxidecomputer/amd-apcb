@@ -163,9 +163,8 @@ type LU16 = U16<LittleEndian>;
 type LU32 = U32<LittleEndian>;
 type LU64 = U64<LittleEndian>;
 
-#[derive(
-    Default, Copy, Clone, FromPrimitive, ToPrimitive, schemars::JsonSchema,
-)]
+#[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct SerdeHex8(u8);
 
 #[cfg(feature = "std")]
@@ -191,9 +190,8 @@ impl<'de> serde::de::Deserialize<'de> for SerdeHex8 {
     }
 }
 
-#[derive(
-    Default, Copy, Clone, FromPrimitive, ToPrimitive, schemars::JsonSchema,
-)]
+#[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct SerdeHex16(u16);
 
 #[cfg(feature = "std")]
@@ -219,9 +217,8 @@ impl<'de> serde::de::Deserialize<'de> for SerdeHex16 {
     }
 }
 
-#[derive(
-    Default, Copy, Clone, FromPrimitive, ToPrimitive, schemars::JsonSchema,
-)]
+#[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct SerdeHex32(u32);
 
 #[cfg(feature = "std")]
@@ -247,9 +244,8 @@ impl<'de> serde::de::Deserialize<'de> for SerdeHex32 {
     }
 }
 
-#[derive(
-    Default, Copy, Clone, FromPrimitive, ToPrimitive, schemars::JsonSchema,
-)]
+#[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct SerdeHex64(u64);
 
 #[cfg(feature = "std")]
@@ -347,7 +343,7 @@ make_array_accessors!(SerdeHex32, LU32);
 make_array_accessors!(SerdeHex64, LU64);
 
 make_accessors! {
-    #[derive(FromBytes, AsBytes, Unaligned, Debug)]
+    #[derive(FromBytes, AsBytes, Unaligned, Debug, Clone)]
     #[repr(C, packed)]
     pub struct V2_HEADER {
         pub signature: [u8; 4] : pub get [SerdeHex8; 4] : pub set [SerdeHex8; 4],
@@ -373,6 +369,12 @@ impl Default for V2_HEADER {
             reserved1: [0, 0, 0],
             reserved2: [0u32.into(); 3],
         }
+    }
+}
+
+impl V2_HEADER {
+    pub fn build(&self) -> Self {
+        self.clone()
     }
 }
 
@@ -439,6 +441,12 @@ impl Default for V3_HEADER_EXT {
             reserved_10: [0u32.into(); 3],
             signature_ending: *b"BCBA",
         }
+    }
+}
+
+impl V3_HEADER_EXT {
+    pub fn build(&self) -> Self {
+        self.clone()
     }
 }
 
@@ -1183,6 +1191,12 @@ make_accessors! {
     }
 }
 
+impl GROUP_HEADER {
+    pub fn build(&self) -> Self {
+        self.clone()
+    }
+}
+
 #[derive(
     FromPrimitive,
     ToPrimitive,
@@ -1291,6 +1305,11 @@ impl Default for PriorityLevels {
     }
 }
 
+impl PriorityLevels {
+    pub fn build(&self) -> Self {
+        self.clone()
+    }
+}
 macro_rules! impl_bitfield_primitive_conversion {
     ($bitfield:ty, $valid_bits:expr, $bitfield_primitive_compatible_type:ty) => {
         impl $bitfield {
@@ -1469,6 +1488,12 @@ impl Default for ENTRY_HEADER {
             key_pos: 0,
             board_instance_mask: 0xFFFFu16.into(),
         }
+    }
+}
+
+impl ENTRY_HEADER {
+    pub fn build(&self) -> Self {
+        self.clone()
     }
 }
 
@@ -1726,6 +1751,9 @@ pub mod df {
                 socket,
                 ..Self::default()
             }
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
         }
     }
 
@@ -2008,6 +2036,9 @@ pub mod memory {
         pub fn new() -> Self {
             Self::default()
         }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
     }
 
     make_accessors! {
@@ -2033,6 +2064,9 @@ pub mod memory {
             result.set_enable_breakpoint(enable_breakpoint);
             result.set_break_on_all_dies(break_on_all_dies);
             result
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
         }
     }
 
@@ -2209,6 +2243,9 @@ pub mod memory {
         pub fn new_disabled() -> Self {
             Self::default()
         }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
     }
 
     make_bitfield_serde!(
@@ -2271,6 +2308,9 @@ pub mod memory {
     impl LrdimmDdr4DimmRanks {
         pub fn builder() -> Self {
             Self::new()
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
         }
     }
 
@@ -2503,6 +2543,9 @@ pub mod memory {
         pub fn builder() -> Self {
             Self::new()
         }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
         pub fn default() -> Self {
             let mut r = Self::new();
             r.set_v_1_2(true);
@@ -2588,6 +2631,9 @@ pub mod memory {
                 Err(Error::EntryTypeMismatch)
             }
         }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
     }
 
     impl EntryCompatible for RdimmDdr4CadBusElement {
@@ -2621,6 +2667,9 @@ pub mod memory {
     impl UdimmDdr4Voltages {
         pub fn builder() -> Self {
             Self::new()
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
         }
         pub fn default() -> Self {
             Self::new()
@@ -2679,6 +2728,9 @@ pub mod memory {
         pub fn builder() -> Self {
             Self::default()
         }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
     }
 
     impl EntryCompatible for UdimmDdr4CadBusElement {
@@ -2710,6 +2762,9 @@ pub mod memory {
     impl LrdimmDdr4Voltages {
         pub fn builder() -> Self {
             Self::new()
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
         }
         pub fn default() -> Self {
             let mut lr = Self::new();
@@ -2795,6 +2850,9 @@ pub mod memory {
             } else {
                 Err(Error::EntryTypeMismatch)
             }
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
         }
     }
 
@@ -3111,6 +3169,9 @@ pub mod memory {
                 ..Self::default()
             })
         }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
     }
 
     impl EntryCompatible for Ddr4DataBusElement {
@@ -3212,6 +3273,9 @@ pub mod memory {
                     .into(),
                 ..Self::default()
             })
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
         }
     }
 
@@ -3338,6 +3402,9 @@ pub mod memory {
                 ..Self::default()
             }
         }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
     }
 
     impl Default for MaxFreqElement {
@@ -3425,6 +3492,9 @@ pub mod memory {
                 ..Self::default()
             }
         }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
     }
 
     impl EntryCompatible for LrMaxFreqElement {
@@ -3461,6 +3531,9 @@ pub mod memory {
                 bank_control: 0,
             }
         }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
     }
 
     make_bitfield_serde! {
@@ -3487,6 +3560,12 @@ pub mod memory {
             ErrorOutControlBeepCodePeakAttr {
                 bytes: [0, 0, 0, 0],
             }
+        }
+    }
+
+    impl ErrorOutControlBeepCodePeakAttr {
+        pub fn build(&self) -> Self {
+            self.clone()
         }
     }
     #[derive(
@@ -3577,6 +3656,9 @@ pub mod memory {
                 peak_attr: peak_attr.to_u32().unwrap().into(),
             }
         }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
     }
 
     impl Getter<Result<[ErrorOutControlBeepCode; 8]>>
@@ -3657,6 +3739,9 @@ Clone)]
         impl $struct_name {
             pub fn builder() -> Self {
                 Self::new()
+            }
+            pub fn build(&self) -> Self {
+                self.clone()
             }
             pub fn error_reporting_gpio(&self) -> Result<Option<Gpio>> {
                 match self.enable_error_reporting_gpio {
@@ -3909,6 +3994,9 @@ Clone)]
                 cs3_odt_patterns: cs3_odt_patterns.to_u32().unwrap().into(),
             }
         }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
     }
 
     impl EntryCompatible for Ddr4OdtPatElement {
@@ -3943,6 +4031,11 @@ Clone)]
     impl Default for LrdimmDdr4OdtPatDimmRankBitmaps {
         fn default() -> Self {
             Self::new()
+        }
+    }
+    impl LrdimmDdr4OdtPatDimmRankBitmaps {
+        pub fn build(&self) -> Self {
+            self.clone()
         }
     }
 
@@ -3984,6 +4077,9 @@ Clone)]
                 cs2_odt_patterns: cs2_odt_patterns.to_u32().unwrap().into(),
                 cs3_odt_patterns: cs3_odt_patterns.to_u32().unwrap().into(),
             }
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
         }
     }
 
@@ -4402,6 +4498,9 @@ Clone)]
                                     .. Self::default()
                                 })
                             }
+                            pub fn build(&self) -> Self {
+                                self.clone()
+                            }
                         }
 
                         make_accessors! {
@@ -4441,6 +4540,9 @@ Clone)]
                                     .. Self::default()
                                 })
                             }
+                            pub fn build(&self) -> Self {
+                                self.clone()
+                            }
                         }
 
                         make_accessors! {
@@ -4479,6 +4581,9 @@ Clone)]
                                     .. Self::default()
                                 })
                             }
+                            pub fn build(&self) -> Self {
+                                self.clone()
+                            }
                         }
 
                         make_accessors! {
@@ -4515,6 +4620,9 @@ Clone)]
                                     value,
                                     .. Self::default()
                                 })
+                            }
+                            pub fn build(&self) -> Self {
+                                self.clone()
                             }
                         }
 
@@ -4554,6 +4662,9 @@ Clone)]
                                     ..Self::default()
                                 })
                             }
+                            pub fn build(&self) -> Self {
+                                self.clone()
+                            }
                         }
 
                         make_accessors! {
@@ -4591,6 +4702,9 @@ Clone)]
                                     value,
                                     ..Self::default()
                                 })
+                            }
+                            pub fn build(&self) -> Self {
+                                self.clone()
                             }
                         }
 
@@ -4672,6 +4786,9 @@ Clone)]
                                     ..Self::default()
                                 }
                             }
+                            pub fn build(&self) -> Self {
+                                self.clone()
+                            }
                         }
 
                         make_accessors! {
@@ -4710,6 +4827,9 @@ Clone)]
                                     value,
                                     ..Self::default()
                                 })
+                            }
+                            pub fn build(&self) -> Self {
+                                self.clone()
                             }
                         }
 
@@ -4765,6 +4885,9 @@ Clone)]
                                     ..Self::default()
                                 }
                             }
+                            pub fn build(&self) -> Self {
+                                self.clone()
+                            }
                         }
 
                         make_accessors! {
@@ -4797,6 +4920,9 @@ Clone)]
                         }
                         impl WriteLevellingSeedDelay {
                             // TODO: Add fn new.
+                            pub fn build(&self) -> Self {
+                                self.clone()
+                            }
                         }
 
                         make_accessors! {
@@ -4839,6 +4965,9 @@ Clone)]
                                     ..Self::default()
                                 }
                             }
+                            pub fn build(&self) -> Self {
+                                self.clone()
+                            }
                         }
 
                         make_accessors! {
@@ -4875,6 +5004,9 @@ Clone)]
                                     dimms: dimms.to_u8().unwrap(),
                                     ..Self::default()
                                 }
+                            }
+                            pub fn build(&self) -> Self {
+                                self.clone()
                             }
                         }
 
@@ -4913,6 +5045,9 @@ Clone)]
                                     ..Self::default()
                                 }
                             }
+                            pub fn build(&self) -> Self {
+                                self.clone()
+                            }
                         }
 
                         make_accessors! {
@@ -4949,6 +5084,9 @@ Clone)]
                                     dimms: dimms.to_u8().unwrap(),
                                     ..Self::default()
                                 }
+                            }
+                            pub fn build(&self) -> Self {
+                                self.clone()
                             }
                         }
 
@@ -4991,6 +5129,9 @@ Clone)]
                                     ..Self::default()
                                 }
                             }
+                            pub fn build(&self) -> Self {
+                                self.clone()
+                            }
                         }
 
                         make_accessors! {
@@ -5019,6 +5160,9 @@ Clone)]
                                     cpu_family_revision: cpu_family_revision.into(),
                                     ..Self::default()
                                 }
+                            }
+                            pub fn build(&self) -> Self {
+                                self.clone()
                             }
                         }
 
@@ -5056,6 +5200,9 @@ Clone)]
                                     value,
                                     ..Self::default()
                                 }
+                            }
+                            pub fn build(&self) -> Self {
+                                self.clone()
                             }
                         }
 
@@ -5103,6 +5250,9 @@ Clone)]
                                     ..Self::default()
                                 }
                             }
+                            pub fn build(&self) -> Self {
+                                self.clone()
+                            }
                         }
 
                         #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone, Serialize, Deserialize)]
@@ -5147,6 +5297,9 @@ Clone)]
                                     value,
                                     ..Self::default()
                                 }
+                            }
+                            pub fn build(&self) -> Self {
+                                self.clone()
                             }
                         }
 
@@ -5615,6 +5768,9 @@ pub mod psp {
                 Err(Error::EntryTypeMismatch)
             }
         }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
     }
 
     #[derive(Debug, PartialEq, Copy, Clone, Serialize, Deserialize)]
@@ -5688,6 +5844,9 @@ pub mod psp {
                 board_instance_index,
             })
         }
+        pub fn build(&self) -> Self {
+            self.clone()
+        }
         pub fn default() -> Self {
             Self {
                 id_and_rev_and_feature_mask: 0x80,
@@ -5729,6 +5888,9 @@ pub mod psp {
                 access_method: 0xF.into(),
                 feature_mask: feature_mask.into(),
             }
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
         }
     }
 
@@ -5778,6 +5940,9 @@ pub mod psp {
                 access_method: 3.into(),
                 bit_locations,
             }
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
         }
     }
 
@@ -5834,6 +5999,9 @@ pub mod psp {
                 board_id_offset: board_id_offset.into(),
                 board_rev_offset: board_rev_offset.into(),
             }
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
         }
     }
 
@@ -5900,6 +6068,9 @@ pub mod psp {
                 smbus_address: smbus_address.into(),
                 register_index: register_index.into(),
             }
+        }
+        pub fn build(&self) -> Self {
+            self.clone()
         }
     }
 
@@ -7049,6 +7220,9 @@ make_bitfield_serde! {
 impl FchGppClkMapSelection {
     pub fn builder() -> Self {
         Self::new()
+    }
+    pub fn build(&self) -> Self {
+        self.clone()
     }
 }
 
