@@ -46,9 +46,6 @@ macro_rules! make_serde{($StructName:ident, $SerdeStructName:ident, [$($field_na
             fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
                 $SerdeStructName::json_schema(gen)
             }
-            /*fn is_referenceable() -> bool {
-                $SerdeStructName::is_referenceable()
-            } FIXME */
         }
     }
 )}
