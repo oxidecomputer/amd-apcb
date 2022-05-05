@@ -250,16 +250,29 @@ impl<'a, 'de: 'a> Deserialize<'de> for Apcb<'a> {
                             crate::ondisk::PspEntryId::BoardIdGettingMethod,
                         )
                     {}
-                    apcb.insert_entry(
+                    let buf = match e.body_as_buf() {
+                        Some(buf) => buf,
+                        None => return Err(de::Error::invalid_value(
+                                serde::de::Unexpected::Enum,
+                                &"a valid Entry with extractable buffer",
+                            )),
+                    };
+                    match apcb.insert_entry(
                         e.id(),
                         e.instance_id(),
                         e.board_instance_mask(),
                         e.context_type(),
                         PriorityLevels::from(e.priority_mask()),
-                        // body buf
-                        e.body_as_buf().unwrap(),
-                    )
-                    .unwrap();
+                        buf,
+                    ) {
+                        Ok(_) => {},
+                        Err(err) => {
+                            print!("Deserializing entry {:?} failed with {:?}", e, err);
+                            return Err(de::Error::invalid_value(
+                                serde::de::Unexpected::StructVariant,
+                                &"a valid Entry Item",));
+                        }
+                    };
                 }
                 Ok(apcb)
             }
@@ -439,7 +452,7 @@ impl<'a> ApcbIter<'a> {
         let header = Cow::Borrowed(header);
 
         Ok(GroupItem {
-            header: header,
+            header,
             buf: body,
             used_size: body_len,
         })

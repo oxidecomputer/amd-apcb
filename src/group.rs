@@ -417,7 +417,7 @@ impl<'a> GroupMutIter<'a> {
 
         // Make sure that entry_allocation is large enough for the header and
         // data
-        (entry_allocation as usize)
+        let padding_size = (entry_allocation as usize)
             .checked_sub(size_of::<ENTRY_HEADER>() + payload_size)
             .ok_or(Error::FileSystem(
                 FileSystemError::PayloadTooBig,
@@ -485,9 +485,7 @@ impl<'a> GroupMutIter<'a> {
 
         let padding = take_body_from_collection_mut(
             &mut buf,
-            entry_allocation as usize
-                - payload_size
-                - size_of::<ENTRY_HEADER>(),
+            padding_size,
             1,
         )
         .ok_or(Error::FileSystem(
