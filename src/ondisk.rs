@@ -3602,7 +3602,7 @@ Clone)]
                 output_delay: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // if no handshake; in units of 10 ns.
                 output_port: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
                 stop_on_first_fatal_error: BU8: pub get bool : pub set bool,
-                _reserved: [u8; 3] : pub get [SerdeHex8; 3] : pub set [SerdeHex8; 3],
+                _reserved: [u8; 3],
                 input_port_size: LU32 : pub get PortSize : pub set PortSize,
                 output_port_size: LU32 : pub get PortSize : pub set PortSize,
                 input_port_type: LU32 : pub get PortType : pub set PortType, // PortType; default: 6
@@ -3617,7 +3617,7 @@ Clone)]
                 enable_heart_beat: BU8 : pub get bool : pub set bool,
                 enable_power_good_gpio: BU8 : pub get bool : pub set bool,
                 pub power_good_gpio: Gpio,
-                _reserved_end: [u8; 3] : pub get [SerdeHex8; 3] : pub set [SerdeHex8; 3], // pad
+                _reserved_end: [u8; 3], // pad
             }
         }
         paste::paste!{
@@ -3635,7 +3635,6 @@ Clone)]
                 pub output_delay: SerdeHex32,
                 pub output_port: SerdeHex32,
                 pub stop_on_first_fatal_error: bool,
-                pub _reserved: [SerdeHex8; 3], // This is not always zero!
                 pub input_port_size: PortSize,
                 pub output_port_size: PortSize,
                 pub input_port_type: PortType,
@@ -3646,7 +3645,6 @@ Clone)]
                 pub enable_heart_beat: bool,
                 pub enable_power_good_gpio: bool,
                 pub raw_power_good_gpio: Option<Gpio>,
-                pub _reserved_end: [SerdeHex8; 3], // This is not always zero!
             }
         }
 
