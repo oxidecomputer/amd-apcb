@@ -483,15 +483,11 @@ impl<'a> GroupMutIter<'a> {
             ))?;
         payload_initializer(body);
 
-        let padding = take_body_from_collection_mut(
-            &mut buf,
-            padding_size,
-            1,
-        )
-        .ok_or(Error::FileSystem(
-            FileSystemError::InconsistentHeader,
-            "padding",
-        ))?;
+        let padding = take_body_from_collection_mut(&mut buf, padding_size, 1)
+            .ok_or(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "padding",
+            ))?;
         // We pad this with 0s instead of 0xFFs because that's what AMD does,
         // even though the erase polarity of most flash systems nowadays are
         // 0xFF.

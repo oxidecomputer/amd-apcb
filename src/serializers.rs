@@ -313,16 +313,18 @@ make_serde!(
         output_delay,
         output_port,
         stop_on_first_fatal_error,
+        _reserved,
         input_port_size,
         output_port_size,
         input_port_type,
         output_port_type,
         clear_acknowledgement,
-        error_reporting_gpio,
+        raw_error_reporting_gpio,
         beep_code_table,
         enable_heart_beat,
         enable_power_good_gpio,
-        power_good_gpio,
+        raw_power_good_gpio,
+        _reserved_end,
     ]
 );
 make_serde!(
@@ -337,16 +339,18 @@ make_serde!(
         output_delay,
         output_port,
         stop_on_first_fatal_error,
+        _reserved,
         input_port_size,
         output_port_size,
         input_port_type,
         output_port_type,
         clear_acknowledgement,
-        error_reporting_gpio,
+        raw_error_reporting_gpio,
         beep_code_table,
         enable_heart_beat,
         enable_power_good_gpio,
-        power_good_gpio,
+        raw_power_good_gpio,
+        _reserved_end,
     ]
 );
 

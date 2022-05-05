@@ -252,10 +252,12 @@ impl<'a, 'de: 'a> Deserialize<'de> for Apcb<'a> {
                     {}
                     let buf = match e.body_as_buf() {
                         Some(buf) => buf,
-                        None => return Err(de::Error::invalid_value(
+                        None => {
+                            return Err(de::Error::invalid_value(
                                 serde::de::Unexpected::Enum,
                                 &"a valid Entry with extractable buffer",
-                            )),
+                            ))
+                        }
                     };
                     match apcb.insert_entry(
                         e.id(),
@@ -265,12 +267,16 @@ impl<'a, 'de: 'a> Deserialize<'de> for Apcb<'a> {
                         PriorityLevels::from(e.priority_mask()),
                         buf,
                     ) {
-                        Ok(_) => {},
+                        Ok(_) => {}
                         Err(err) => {
-                            print!("Deserializing entry {:?} failed with {:?}", e, err);
+                            print!(
+                                "Deserializing entry {:?} failed with {:?}",
+                                e, err
+                            );
                             return Err(de::Error::invalid_value(
                                 serde::de::Unexpected::StructVariant,
-                                &"a valid Entry Item",));
+                                &"a valid Entry Item",
+                            ));
                         }
                     };
                 }

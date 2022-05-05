@@ -3602,7 +3602,7 @@ Clone)]
                 output_delay: LU32 : pub get SerdeHex32 : pub set SerdeHex32, // if no handshake; in units of 10 ns.
                 output_port: LU32 : pub get SerdeHex32 : pub set SerdeHex32,
                 stop_on_first_fatal_error: BU8: pub get bool : pub set bool,
-                _reserved: [u8; 3],
+                _reserved: [u8; 3] : pub get [SerdeHex8; 3] : pub set [SerdeHex8; 3],
                 input_port_size: LU32 : pub get PortSize : pub set PortSize,
                 output_port_size: LU32 : pub get PortSize : pub set PortSize,
                 input_port_type: LU32 : pub get PortType : pub set PortType, // PortType; default: 6
@@ -3617,7 +3617,7 @@ Clone)]
                 enable_heart_beat: BU8 : pub get bool : pub set bool,
                 enable_power_good_gpio: BU8 : pub get bool : pub set bool,
                 pub power_good_gpio: Gpio,
-                _reserved_end: [u8; 3], // pad
+                _reserved_end: [u8; 3] : pub get [SerdeHex8; 3] : pub set [SerdeHex8; 3], // pad
             }
         }
         paste::paste!{
@@ -3635,16 +3635,18 @@ Clone)]
                 pub output_delay: SerdeHex32,
                 pub output_port: SerdeHex32,
                 pub stop_on_first_fatal_error: bool,
+                pub _reserved: [SerdeHex8; 3], // This is not always zero!
                 pub input_port_size: PortSize,
                 pub output_port_size: PortSize,
                 pub input_port_type: PortType,
                 pub output_port_type: PortType,
                 pub clear_acknowledgement: bool,
-                pub error_reporting_gpio: Option<Gpio>,
+                pub raw_error_reporting_gpio: Option<Gpio>,
                 pub beep_code_table: [ErrorOutControlBeepCode; 8],
                 pub enable_heart_beat: bool,
                 pub enable_power_good_gpio: bool,
-                pub power_good_gpio: Option<Gpio>,
+                pub raw_power_good_gpio: Option<Gpio>,
+                pub _reserved_end: [SerdeHex8; 3], // This is not always zero!
             }
         }
 
@@ -3659,6 +3661,10 @@ Clone)]
                     _ => Err(Error::EntryTypeMismatch),
                 }
             }
+            // Only used for Serde
+            pub(crate) fn raw_error_reporting_gpio(&self) -> Result<Option<Gpio>> {
+                Ok(Some(self.error_reporting_gpio))
+            }
             pub fn set_error_reporting_gpio(&mut self, value: Option<Gpio>) {
                 match value {
                     Some(value) => {
@@ -3671,10 +3677,19 @@ Clone)]
                     },
                 }
             }
-            pub fn with_error_reporting_gpio(self, value: Option<Gpio>) -> Self {
-                let mut result = self;
-                result.set_error_reporting_gpio(value);
-                result
+            pub(crate) fn set_raw_error_reporting_gpio(&mut self, value: Option<Gpio>) {
+                match value {
+                    Some(value) => {
+                        self.error_reporting_gpio = value;
+                    },
+                    None => {
+                        self.error_reporting_gpio = Gpio::new(0, 0, 0);
+                    },
+                }
+            }
+            pub(crate) fn with_raw_error_reporting_gpio(&mut self, value: Option<Gpio>) -> &mut Self {
+                self.set_raw_error_reporting_gpio(value);
+                self
             }
             pub fn beep_code_table(&self) -> Result<[ErrorOutControlBeepCode; 8]> {
                 self.beep_code_table.get1()
@@ -3682,10 +3697,9 @@ Clone)]
             pub fn set_beep_code_table(&mut self, value: [ErrorOutControlBeepCode; 8]) {
                 self.beep_code_table.set1(value);
             }
-            pub fn with_beep_code_table(self, value: [ErrorOutControlBeepCode; 8]) -> Self {
-                let mut result = self;
-                result.set_beep_code_table(value);
-                result
+            pub fn with_beep_code_table(&mut self, value:[ErrorOutControlBeepCode; 8]) -> &mut Self {
+                self.set_beep_code_table(value);
+                self
             }
             pub fn power_good_gpio(&self) -> Result<Option<Gpio>> {
                 match self.enable_power_good_gpio {
@@ -3693,6 +3707,9 @@ Clone)]
                     BU8(0) => Ok(None),
                     _ => Err(Error::EntryTypeMismatch),
                 }
+            }
+            pub(crate) fn raw_power_good_gpio(&self) -> Result<Option<Gpio>> {
+                Ok(Some(self.power_good_gpio))
             }
             pub fn set_power_good_gpio(&mut self, value: Option<Gpio>) {
                 match value {
@@ -3706,10 +3723,19 @@ Clone)]
                     },
                 }
             }
-            pub fn with_power_good_gpio(self, value: Option<Gpio>) -> Self {
-                let mut result = self;
-                result.set_power_good_gpio(value);
-                result
+            pub(crate) fn set_raw_power_good_gpio(&mut self, value: Option<Gpio>) {
+                match value {
+                    Some(value) => {
+                        self.power_good_gpio = value;
+                    },
+                    None => {
+                        self.power_good_gpio = Gpio::new(0, 0, 0);
+                    },
+                }
+            }
+            pub(crate) fn with_raw_power_good_gpio(&mut self, value: Option<Gpio>) -> &mut Self {
+                self.set_raw_power_good_gpio(value);
+                self
             }
         }
 
