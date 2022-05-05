@@ -418,11 +418,18 @@ impl<'a> GroupMutIter<'a> {
         // Make sure that entry_allocation is large enough for the header and
         // data
         let padding_size = (entry_allocation as usize)
-            .checked_sub(size_of::<ENTRY_HEADER>() + payload_size)
+            .checked_sub(size_of::<ENTRY_HEADER>())
             .ok_or(Error::FileSystem(
                 FileSystemError::PayloadTooBig,
                 "ENTRY_HEADER:entry_size",
             ))?;
+        let padding_size =
+            padding_size
+                .checked_sub(payload_size)
+                .ok_or(Error::FileSystem(
+                    FileSystemError::PayloadTooBig,
+                    "ENTRY_HEADER:entry_size",
+                ))?;
 
         // Make sure that move_insertion_point_before does not notice the new
         // uninitialized entry

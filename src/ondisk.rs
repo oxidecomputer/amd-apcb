@@ -72,7 +72,7 @@ pub trait MutSequenceElementFromBytes<'a>: Sized {
 pub trait HeaderWithTail {
     type TailArrayItemType<'de>: AsBytes
         + FromBytes
-        + serde::de::Deserialize<'de>;
+        + serde::de::Deserialize<'de>; //TODO: gate behind a serde feature
 }
 
 /// Given *BUF (a collection of multiple items), retrieves the first of the
@@ -4023,25 +4023,25 @@ Clone)]
     */
 
     make_bitfield_serde! {
-    #[bitfield(bits = 64)]
-    #[repr(u64)]
-    #[derive(Clone, Copy)]
-    pub struct DdrPostPackageRepairBody {
-        pub bank: B5,
-        pub rank_multiplier: B3,
-        xdevice_width: B5, /* device width of DIMMs to repair; or 0x1F for
-                            * heeding target_device instead */
-        pub chip_select: B2,
-        pub column: B10,
-        pub hard_repair: bool,
-        pub valid: bool,
-        pub target_device: B5,
-        pub row: B18,
-        pub socket: B3,
-        pub channel: B3,
-        #[skip]
-        __: B8,
-    }
+        #[bitfield(bits = 64)]
+        #[repr(u64)]
+        #[derive(Clone, Copy)]
+        pub struct DdrPostPackageRepairBody {
+            pub bank: B5,
+            pub rank_multiplier: B3,
+            xdevice_width: B5, /* device width of DIMMs to repair; or 0x1F for
+                                * heeding target_device instead */
+            pub chip_select: B2,
+            pub column: B10,
+            pub hard_repair: bool,
+            pub valid: bool,
+            pub target_device: B5,
+            pub row: B18,
+            pub socket: B3,
+            pub channel: B3,
+            #[skip]
+            __: B8,
+        }
     }
 
     impl DdrPostPackageRepairBody {
