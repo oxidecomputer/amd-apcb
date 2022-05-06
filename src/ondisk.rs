@@ -3622,11 +3622,11 @@ Clone)]
                 pub input_port_type: PortType,
                 pub output_port_type: PortType,
                 pub clear_acknowledgement: bool,
-                pub raw_error_reporting_gpio: Option<Gpio>,
+                pub raw_error_reporting_gpio: Gpio,
                 pub beep_code_table: [ErrorOutControlBeepCode; 8],
                 pub enable_heart_beat: bool,
                 pub enable_power_good_gpio: bool,
-                pub raw_power_good_gpio: Option<Gpio>,
+                pub raw_power_good_gpio: Gpio,
             }
         }
 
@@ -3642,8 +3642,8 @@ Clone)]
                 }
             }
             // Only used for Serde
-            pub(crate) fn raw_error_reporting_gpio(&self) -> Result<Option<Gpio>> {
-                Ok(Some(self.error_reporting_gpio))
+            pub(crate) fn raw_error_reporting_gpio(&self) -> Result<Gpio> {
+                Ok(self.error_reporting_gpio)
             }
             pub fn set_error_reporting_gpio(&mut self, value: Option<Gpio>) {
                 match value {
@@ -3657,17 +3657,10 @@ Clone)]
                     },
                 }
             }
-            pub(crate) fn set_raw_error_reporting_gpio(&mut self, value: Option<Gpio>) {
-                match value {
-                    Some(value) => {
-                        self.error_reporting_gpio = value;
-                    },
-                    None => {
-                        self.error_reporting_gpio = Gpio::new(0, 0, 0);
-                    },
-                }
+            pub(crate) fn set_raw_error_reporting_gpio(&mut self, value: Gpio) {
+                self.error_reporting_gpio = value;
             }
-            pub(crate) fn with_raw_error_reporting_gpio(&mut self, value: Option<Gpio>) -> &mut Self {
+            pub(crate) fn with_raw_error_reporting_gpio(&mut self, value: Gpio) -> &mut Self {
                 self.set_raw_error_reporting_gpio(value);
                 self
             }
@@ -3688,8 +3681,8 @@ Clone)]
                     _ => Err(Error::EntryTypeMismatch),
                 }
             }
-            pub(crate) fn raw_power_good_gpio(&self) -> Result<Option<Gpio>> {
-                Ok(Some(self.power_good_gpio))
+            pub(crate) fn raw_power_good_gpio(&self) -> Result<Gpio> {
+                Ok(self.power_good_gpio)
             }
             pub fn set_power_good_gpio(&mut self, value: Option<Gpio>) {
                 match value {
@@ -3703,17 +3696,10 @@ Clone)]
                     },
                 }
             }
-            pub(crate) fn set_raw_power_good_gpio(&mut self, value: Option<Gpio>) {
-                match value {
-                    Some(value) => {
-                        self.power_good_gpio = value;
-                    },
-                    None => {
-                        self.power_good_gpio = Gpio::new(0, 0, 0);
-                    },
-                }
+            pub(crate) fn set_raw_power_good_gpio(&mut self, value: Gpio) {
+                self.power_good_gpio = value;
             }
-            pub(crate) fn with_raw_power_good_gpio(&mut self, value: Option<Gpio>) -> &mut Self {
+            pub(crate) fn with_raw_power_good_gpio(&mut self, value: Gpio) -> &mut Self {
                 self.set_raw_power_good_gpio(value);
                 self
             }
