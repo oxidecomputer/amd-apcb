@@ -32,13 +32,13 @@ use zerocopy::LayoutVerified;
 // The following imports are only used for std enviroments and serde.
 #[cfg(feature = "std")]
 extern crate std;
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 use crate::entry::EntryItem;
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 use serde::ser::{Serialize, SerializeStruct, Serializer};
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 use std::borrow::Cow;
 
 pub struct ApcbIoOptions {
@@ -60,7 +60,7 @@ pub struct Apcb<'a> {
 #[cfg(feature = "std")]
 use std::fmt;
 
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 impl<'a> Serialize for Apcb<'a> {
     fn serialize<S>(
         &self,
@@ -89,7 +89,7 @@ impl<'a> Serialize for Apcb<'a> {
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 impl<'a, 'de: 'a> Deserialize<'de> for Apcb<'a> {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
     where
@@ -454,7 +454,7 @@ impl<'a> ApcbIter<'a> {
         };
         let body_len = body.len();
 
-        #[cfg(feature = "std")]
+        #[cfg(feature = "serde")]
         let header = Cow::Borrowed(header);
 
         Ok(GroupItem {
@@ -537,9 +537,9 @@ impl<'a> Apcb<'a> {
         header
     }
     pub fn header_mut(&mut self) -> LayoutVerified<&mut [u8], V2_HEADER> {
-        #[cfg(not(feature = "std"))]
+        #[cfg(not(feature = "serde"))]
         let bs: &mut [u8] = self.backing_store;
-        #[cfg(feature = "std")]
+        #[cfg(feature = "serde")]
         let bs: &mut [u8] = self.backing_store.to_mut();
         let (header, _) =
             LayoutVerified::<&mut [u8], V2_HEADER>::new_unaligned_from_prefix(
@@ -582,9 +582,9 @@ impl<'a> Apcb<'a> {
     pub fn v3_header_ext_mut(
         &mut self,
     ) -> Option<LayoutVerified<&mut [u8], V3_HEADER_EXT>> {
-        #[cfg(not(feature = "std"))]
+        #[cfg(not(feature = "serde"))]
         let bs: &mut [u8] = self.backing_store;
-        #[cfg(feature = "std")]
+        #[cfg(feature = "serde")]
         let bs: &mut [u8] = self.backing_store.to_mut();
         let (header, rest) =
             LayoutVerified::<&mut [u8], V2_HEADER>::new_unaligned_from_prefix(
@@ -622,9 +622,9 @@ impl<'a> Apcb<'a> {
         if self.v3_header_ext().is_some() {
             offset = size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>();
         }
-        #[cfg(feature = "std")]
+        #[cfg(feature = "serde")]
         return &mut self.backing_store.to_mut()[offset..];
-        #[cfg(not(feature = "std"))]
+        #[cfg(not(feature = "serde"))]
         &mut self.backing_store[offset..]
     }
     pub fn groups(&self) -> ApcbIter<'_> {
@@ -1259,9 +1259,9 @@ impl<'a> Apcb<'a> {
     ) -> Result<Self> {
         let backing_store_len = bs.len();
 
-        #[cfg(not(feature = "std"))]
+        #[cfg(not(feature = "serde"))]
         let backing_store: &mut [u8] = bs;
-        #[cfg(feature = "std")]
+        #[cfg(feature = "serde")]
         let backing_store: &mut [u8] = bs.to_mut();
 
         let (header, mut rest) =
@@ -1425,9 +1425,9 @@ impl<'a> Apcb<'a> {
         initial_unique_apcb_instance: u32,
         options: &ApcbIoOptions,
     ) -> Result<Self> {
-        #[cfg(not(feature = "std"))]
+        #[cfg(not(feature = "serde"))]
         let backing_store: &mut [u8] = bs;
-        #[cfg(feature = "std")]
+        #[cfg(feature = "serde")]
         let backing_store: &mut [u8] = bs.to_mut();
 
         for i in 0..backing_store.len() {

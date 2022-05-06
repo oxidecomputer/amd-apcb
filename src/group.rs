@@ -17,16 +17,16 @@ use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use pre::pre;
 
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GroupItem<'a> {
-    #[cfg_attr(feature = "std", serde(borrow))]
+    #[cfg_attr(feature = "serde", serde(borrow))]
     pub(crate) header: Ptr<'a, GROUP_HEADER>,
-    #[cfg_attr(feature = "std", serde(skip))]
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) buf: &'a [u8],
-    #[cfg_attr(feature = "std", serde(skip))]
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) used_size: usize,
 }
 
@@ -112,7 +112,7 @@ impl<'a> GroupIter<'a> {
         let unit_size = header.unit_size;
         let entry_id = header.entry_id.get();
 
-        #[cfg(feature = "std")]
+        #[cfg(feature = "serde")]
         let header = std::borrow::Cow::Borrowed(header);
 
         Ok(EntryItem {

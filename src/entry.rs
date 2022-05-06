@@ -15,13 +15,11 @@ use num_traits::FromPrimitive;
 use pre::pre;
 use zerocopy::{AsBytes, FromBytes};
 
-#[cfg(feature = "std")]
-use crate::ondisk::ElementAsBytes;
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 use serde::ser::{Serialize, SerializeStruct, Serializer};
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 use std::borrow::Cow;
 
 /* Note: high-level interface is:
@@ -97,7 +95,7 @@ impl<'a> EntryItemBody<Ptr<'a, [u8]>> {
         context_type: ContextType,
         b: &'a [u8],
     ) -> Result<EntryItemBody<Ptr<'a, [u8]>>> {
-        #[cfg(feature = "std")]
+        #[cfg(feature = "serde")]
         let b = Cow::Borrowed(b);
         Ok(match context_type {
             ContextType::Struct => {
@@ -445,7 +443,7 @@ pub struct EntryItem<'a> {
     pub body: EntryItemBody<Ptr<'a, [u8]>>,
 }
 
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 impl<'a> Serialize for EntryItem<'a> {
     fn serialize<S>(
         &self,
@@ -549,7 +547,7 @@ self.body_as_struct_sequence::<memory::platform_tuning::ElementRef<'_>>() {
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 /// if BODY is empty, read a value (which is a Vec of TokensEntryItem) from MAP
 /// and stash it into a new BODY. If BODY is not empty, that's an error. This is
 /// used purely as a helper function during deserialize.
@@ -592,7 +590,7 @@ where
     Ok(())
 }
 
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 /// if BODY is empty, read a value (which is a Vec) from MAP and stash it into a
 /// new BODY. If BODY is not empty, that's an error. This is used purely as a
 /// helper function during deserialize.
@@ -616,7 +614,7 @@ where
     Ok(())
 }
 
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 /// if BODY is empty, read a value (which is a struct) from MAP and stash it
 /// into a new BODY. If BODY is not empty, that's an error. This is used purely
 /// as a helper function during deserialize.
@@ -646,7 +644,7 @@ where
     Ok(())
 }
 
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 /// if BODY is empty, read a value (which is a Vec) from MAP and stash it into a
 /// new BODY. If BODY is not empty, that's an error. This is used purely as a
 /// helper function during deserialize. This handles the sequences, and thus the
@@ -656,7 +654,7 @@ fn struct_sequence_to_body<'a, T, M>(
     map: &mut M,
 ) -> core::result::Result<(), M::Error>
 where
-    T: ElementAsBytes + Deserialize<'a>,
+    T: crate::ondisk::ElementAsBytes + Deserialize<'a>,
     M: MapAccess<'a>,
 {
     if body.is_some() {
@@ -671,7 +669,7 @@ where
     Ok(())
 }
 
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
     where

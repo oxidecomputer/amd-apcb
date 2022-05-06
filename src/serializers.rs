@@ -38,7 +38,7 @@ macro_rules! make_serde{($StructName:ident, $SerdeStructName:ident, [$($field_na
                 }.serialize(serializer)
             }
         }
-   //     #[cfg(std)]
+        #[cfg(feature = "schemars")]
         impl schemars::JsonSchema for $StructName {
             fn schema_name() -> String {
                 $SerdeStructName::schema_name()
@@ -313,7 +313,6 @@ make_serde!(
         output_delay,
         output_port,
         stop_on_first_fatal_error,
-        _reserved,
         input_port_size,
         output_port_size,
         input_port_type,
@@ -324,7 +323,6 @@ make_serde!(
         enable_heart_beat,
         enable_power_good_gpio,
         raw_power_good_gpio,
-        _reserved_end,
     ]
 );
 make_serde!(
@@ -339,7 +337,6 @@ make_serde!(
         output_delay,
         output_port,
         stop_on_first_fatal_error,
-        _reserved,
         input_port_size,
         output_port_size,
         input_port_type,
@@ -350,7 +347,6 @@ make_serde!(
         enable_heart_beat,
         enable_power_good_gpio,
         raw_power_good_gpio,
-        _reserved_end,
     ]
 );
 
@@ -608,3 +604,39 @@ make_serde!(
     ]
 );
 make_serde!(Terminator, SerdeTerminator, [type_,]);
+make_serde!(
+    DdrPostPackageRepairElement,
+    CustomSerdeDdrPostPackageRepairElement,
+    [raw_body,]
+);
+make_serde!(
+    DdrPostPackageRepairBody,
+    CustomSerdeDdrPostPackageRepairBody,
+    [
+        bank,
+        rank_multiplier,
+        raw_device_width,
+        chip_select,
+        column,
+        hard_repair,
+        valid,
+        target_device,
+        row,
+        socket,
+        channel,
+    ]
+);
+make_serde!(
+    DimmInfoSmbusElement,
+    CustomSerdeDimmInfoSmbusElement,
+    [
+        dimm_slot_present,
+        socket_id,
+        channel_id,
+        dimm_id,
+        raw_dimm_smbus_address,
+        raw_i2c_mux_address,
+        raw_mux_control_address,
+        raw_mux_channel,
+    ]
+);

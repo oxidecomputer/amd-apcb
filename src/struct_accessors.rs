@@ -57,7 +57,15 @@ impl<T: FromPrimitive> Getter<Result<T>> for u32 {
     }
 }
 #[derive(
-    Debug, PartialEq, FromBytes, AsBytes, Clone, Copy, Serialize, Deserialize,
+    Default,
+    Debug,
+    PartialEq,
+    FromBytes,
+    AsBytes,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
 )]
 #[repr(C, packed)]
 pub(crate) struct BU8(pub(crate) u8);
@@ -147,6 +155,8 @@ pub(crate) trait DummyErrorChecks: Sized {
     }
 }
 
+impl DummyErrorChecks for u32 {}
+
 impl DummyErrorChecks for u16 {}
 
 impl DummyErrorChecks for u8 {}
@@ -221,7 +231,7 @@ macro_rules! make_accessors {(
         #[doc(hidden)]
         #[allow(non_camel_case_types)]
         #[derive(serde::Serialize, serde::Deserialize)]
-        #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+        #[cfg_attr(feature = "serde", derive(schemars::JsonSchema))]
         // Doing remoting automatically would make it impossible for the user to use another one.
         // Since the config format presumably needs to be
         // backward-compatible, that wouldn't be such a great idea.
