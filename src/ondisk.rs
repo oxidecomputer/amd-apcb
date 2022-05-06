@@ -1266,6 +1266,7 @@ macro_rules! make_bitfield_serde {(
         }
     }
 
+    #[cfg(feature = "serde")]
     paste::paste! {
         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
         #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
@@ -1824,6 +1825,7 @@ pub mod memory {
         pub raw_mux_control_address: SerdeHex8,
         pub raw_mux_channel: SerdeHex8,
     }
+    #[cfg(feature = "serde")]
     impl DimmInfoSmbusElement {
         pub(crate) fn raw_dimm_smbus_address(&self) -> Result<u8> {
             Ok(self.dimm_smbus_address)
@@ -3641,10 +3643,6 @@ Clone)]
                     _ => Err(Error::EntryTypeMismatch),
                 }
             }
-            // Only used for Serde
-            pub(crate) fn raw_error_reporting_gpio(&self) -> Result<Gpio> {
-                Ok(self.error_reporting_gpio)
-            }
             pub fn set_error_reporting_gpio(&mut self, value: Option<Gpio>) {
                 match value {
                     Some(value) => {
@@ -3656,13 +3654,6 @@ Clone)]
                         self.error_reporting_gpio = Gpio::new(0, 0, 0);
                     },
                 }
-            }
-            pub(crate) fn set_raw_error_reporting_gpio(&mut self, value: Gpio) {
-                self.error_reporting_gpio = value;
-            }
-            pub(crate) fn with_raw_error_reporting_gpio(&mut self, value: Gpio) -> &mut Self {
-                self.set_raw_error_reporting_gpio(value);
-                self
             }
             pub fn beep_code_table(&self) -> Result<[ErrorOutControlBeepCode; 8]> {
                 self.beep_code_table.get1()
@@ -3681,9 +3672,6 @@ Clone)]
                     _ => Err(Error::EntryTypeMismatch),
                 }
             }
-            pub(crate) fn raw_power_good_gpio(&self) -> Result<Gpio> {
-                Ok(self.power_good_gpio)
-            }
             pub fn set_power_good_gpio(&mut self, value: Option<Gpio>) {
                 match value {
                     Some(value) => {
@@ -3696,6 +3684,24 @@ Clone)]
                     },
                 }
             }
+        }
+
+        #[cfg(feature = "serde")]
+        impl $struct_name {
+            pub(crate) fn raw_error_reporting_gpio(&self) -> Result<Gpio> {
+                Ok(self.error_reporting_gpio)
+            }
+            pub(crate) fn set_raw_error_reporting_gpio(&mut self, value: Gpio) {
+                self.error_reporting_gpio = value;
+            }
+            pub(crate) fn with_raw_error_reporting_gpio(&mut self, value: Gpio) -> &mut Self {
+                self.set_raw_error_reporting_gpio(value);
+                self
+            }
+
+            pub(crate) fn raw_power_good_gpio(&self) -> Result<Gpio> {
+                Ok(self.power_good_gpio)
+            }
             pub(crate) fn set_raw_power_good_gpio(&mut self, value: Gpio) {
                 self.power_good_gpio = value;
             }
@@ -3704,7 +3710,6 @@ Clone)]
                 self
             }
         }
-
         impl EntryCompatible for $struct_name {
             fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
                 match entry_id {
@@ -4042,6 +4047,7 @@ Clone)]
             self
         }
     }
+    #[cfg(feature = "serde")]
     impl DdrPostPackageRepairBody {
         pub(crate) fn raw_device_width(&self) -> Result<u8> {
             Ok(self.xdevice_width())
@@ -4072,10 +4078,24 @@ Clone)]
         }
     }
 
+    #[cfg(feature = "serde")]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub struct CustomSerdeDdrPostPackageRepairElement {
         pub raw_body: DdrPostPackageRepairBody,
+    }
+    #[cfg(feature = "serde")]
+    impl DdrPostPackageRepairElement {
+        pub(crate) fn raw_body(&self) -> Result<DdrPostPackageRepairBody> {
+            Ok(DdrPostPackageRepairBody::from_bytes(self.body))
+        }
+        pub(crate) fn with_raw_body(
+            &mut self,
+            value: DdrPostPackageRepairBody,
+        ) -> &mut Self {
+            self.body = value.into_bytes();
+            self
+        }
     }
     impl DdrPostPackageRepairElement {
         #[inline]
@@ -4086,9 +4106,6 @@ Clone)]
             } else {
                 None
             }
-        }
-        pub(crate) fn raw_body(&self) -> Result<DdrPostPackageRepairBody> {
-            Ok(DdrPostPackageRepairBody::from_bytes(self.body))
         }
         #[inline]
         pub fn invalid() -> DdrPostPackageRepairElement {
@@ -4109,13 +4126,6 @@ Clone)]
                     self.body = Self::invalid().body;
                 }
             }
-        }
-        pub(crate) fn with_raw_body(
-            &mut self,
-            value: DdrPostPackageRepairBody,
-        ) -> &mut Self {
-            self.body = value.into_bytes();
-            self
         }
     }
 

@@ -13,6 +13,7 @@ mod entry;
 mod group;
 mod naples;
 mod ondisk;
+#[cfg(feature = "serde")]
 mod serializers;
 mod struct_accessors;
 mod struct_variants_enum;

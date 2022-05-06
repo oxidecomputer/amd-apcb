@@ -1254,7 +1254,7 @@ impl<'a> Apcb<'a> {
 
     /// Note: for OPTIONS, try ApcbIoOptions::default()
     pub fn load(
-        mut bs: PtrMut<'a, [u8]>,
+        #[allow(unused_mut)] mut bs: PtrMut<'a, [u8]>,
         options: &ApcbIoOptions,
     ) -> Result<Self> {
         let backing_store_len = bs.len();
@@ -1421,7 +1421,7 @@ impl<'a> Apcb<'a> {
     }
 
     pub fn create(
-        mut bs: PtrMut<'a, [u8]>,
+        #[allow(unused_mut)] mut bs: PtrMut<'a, [u8]>,
         initial_unique_apcb_instance: u32,
         options: &ApcbIoOptions,
     ) -> Result<Self> {

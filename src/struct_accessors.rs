@@ -187,11 +187,13 @@ macro_rules! make_accessors {(
     }
 
     impl $StructName {
+        #[allow(dead_code)]
         pub fn build(&self) -> Self {
             self.clone()
         }
         $($(
             #[inline]
+            #[allow(dead_code)]
             $getter_vis
             fn $field_name (self: &'_ Self)
                 -> Result<$field_user_ty>
@@ -208,7 +210,7 @@ macro_rules! make_accessors {(
                   }
 
                   #[inline]
-                  #[must_use]
+                  #[allow(dead_code)]
                   $setter_vis
                   fn [<with_ $field_name>]<'a>(self: &mut Self, value: $field_setter_user_ty) -> &mut Self {
                       let result = self;
@@ -220,6 +222,7 @@ macro_rules! make_accessors {(
         )?)*
     }
     // for serde
+    #[cfg(feature = "serde")]
     paste::paste!{
         #[doc(hidden)]
         #[allow(non_camel_case_types)]

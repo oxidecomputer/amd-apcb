@@ -18,6 +18,7 @@ use std::borrow::Cow;
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[allow(dead_code)] // unit_size is not read when building without serde
 pub struct TokensEntryBodyItem<BufferType> {
     unit_size: u8,
     entry_id: TokenEntryId,
@@ -280,6 +281,7 @@ impl<'a> Iterator for TokensEntryIterMut<'a> {
 #[cfg(feature = "serde")]
 use serde_hex::{SerHex, StrictPfx};
 
+#[cfg(feature = "serde")]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 enum SerdeTokensEntryItem {
