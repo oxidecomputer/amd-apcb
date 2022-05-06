@@ -8,14 +8,16 @@ use core::mem::size_of;
 use num_traits::FromPrimitive;
 use pre::pre;
 
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 use serde::de::{self, Deserialize, Deserializer};
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 use serde::ser::{Serialize, Serializer};
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 use std::borrow::Cow;
 
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct TokensEntryBodyItem<BufferType> {
     unit_size: u8,
     entry_id: TokenEntryId,
@@ -275,12 +277,11 @@ impl<'a> Iterator for TokensEntryIterMut<'a> {
     }
 }
 
+#[cfg(feature = "serde")]
 use serde_hex::{SerHex, StrictPfx};
 
-#[cfg_attr(
-    feature = "std",
-    derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)
-)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 enum SerdeTokensEntryItem {
     Bool(BoolToken),
     Byte(ByteToken),
@@ -288,14 +289,20 @@ enum SerdeTokensEntryItem {
     Dword(DwordToken),
     Unknown {
         entry_id: TokenEntryId,
-        #[serde(
-            serialize_with = "SerHex::<StrictPfx>::serialize",
-            deserialize_with = "SerHex::<StrictPfx>::deserialize"
+        #[cfg_attr(
+            feature = "serde",
+            serde(
+                serialize_with = "SerHex::<StrictPfx>::serialize",
+                deserialize_with = "SerHex::<StrictPfx>::deserialize"
+            )
         )]
         tag: u32,
-        #[serde(
-            serialize_with = "SerHex::<StrictPfx>::serialize",
-            deserialize_with = "SerHex::<StrictPfx>::deserialize"
+        #[cfg_attr(
+            feature = "serde",
+            serde(
+                serialize_with = "SerHex::<StrictPfx>::serialize",
+                deserialize_with = "SerHex::<StrictPfx>::deserialize"
+            )
         )]
         value: u32,
     },
@@ -306,7 +313,7 @@ pub struct TokensEntryItem<'a> {
     pub(crate) entry: Ptr<'a, TOKEN_ENTRY>,
 }
 
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 impl<'a> Serialize for TokensEntryItem<'a> {
     fn serialize<S>(
         &self,
@@ -349,7 +356,7 @@ impl<'a> Serialize for TokensEntryItem<'a> {
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 impl<'a, 'de: 'a> Deserialize<'de> for TokensEntryItem<'a> {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
     where

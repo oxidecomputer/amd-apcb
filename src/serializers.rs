@@ -18,6 +18,7 @@ use crate::struct_accessors::DummyErrorChecks;
 macro_rules! make_serde{($StructName:ident, $SerdeStructName:ident, [$($field_name:ident),* $(,)?]
 ) => (
     paste::paste!{
+        #[cfg(feature = "serde")]
         impl<'de> serde::de::Deserialize<'de> for $StructName {
             fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
             where D: serde::de::Deserializer<'de>, {
@@ -28,6 +29,7 @@ macro_rules! make_serde{($StructName:ident, $SerdeStructName:ident, [$($field_na
                 )*.build())
                 }
         }
+        #[cfg(feature = "serde")]
         impl serde::Serialize for $StructName {
             fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
             where S: serde::Serializer, {

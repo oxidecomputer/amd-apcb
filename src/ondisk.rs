@@ -617,7 +617,9 @@ impl FromPrimitive for CcxEntryId {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfEntryId {
     DefaultParameters, // Naples
     Parameters,        // Naples
@@ -1204,17 +1206,9 @@ make_accessors! {
     }
 }
 
-#[derive(
-    FromPrimitive,
-    ToPrimitive,
-    Debug,
-    PartialEq,
-    Copy,
-    Clone,
-    Serialize,
-    Deserialize,
-)]
+#[derive(FromPrimitive, ToPrimitive, Debug, PartialEq, Copy, Clone)]
 #[non_exhaustive]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum ContextFormat {
     Raw = 0,
@@ -1222,17 +1216,9 @@ pub enum ContextFormat {
     SortDescending = 2, // don't use
 }
 
-#[derive(
-    FromPrimitive,
-    ToPrimitive,
-    Debug,
-    PartialEq,
-    Copy,
-    Clone,
-    Serialize,
-    Deserialize,
-)]
+#[derive(FromPrimitive, ToPrimitive, Debug, PartialEq, Copy, Clone)]
 #[non_exhaustive]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum ContextType {
     Struct = 0,
@@ -2097,7 +2083,7 @@ pub mod memory {
     pub struct ConsoleOutControl {
         pub abl_console_out_control: AblConsoleOutControl,
         pub abl_breakpoint_control: AblBreakpointControl,
-        #[serde(skip)]
+        #[cfg_attr(feature = "serde", serde(skip))]
         _reserved: LU16,
     }
 

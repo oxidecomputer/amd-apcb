@@ -4,8 +4,10 @@ use crate::types::Error;
 use crate::types::Result;
 use byteorder::LittleEndian;
 use num_traits::{FromPrimitive, ToPrimitive};
-use serde::{Deserialize, Serialize};
 use zerocopy::{AsBytes, FromBytes, U16, U32, U64};
+
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 pub(crate) trait Getter<T> {
     fn get1(self) -> T;
@@ -56,18 +58,9 @@ impl<T: FromPrimitive> Getter<Result<T>> for u32 {
         T::from_u32(self).ok_or(Error::EntryTypeMismatch)
     }
 }
-#[derive(
-    Default,
-    Debug,
-    PartialEq,
-    FromBytes,
-    AsBytes,
-    Clone,
-    Copy,
-    Serialize,
-    Deserialize,
-)]
+#[derive(Default, Debug, PartialEq, FromBytes, AsBytes, Clone, Copy)]
 #[repr(C, packed)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct BU8(pub(crate) u8);
 impl Getter<Result<bool>> for BU8 {
     fn get1(self) -> Result<bool> {
@@ -230,8 +223,8 @@ macro_rules! make_accessors {(
     paste::paste!{
         #[doc(hidden)]
         #[allow(non_camel_case_types)]
-        #[derive(serde::Serialize, serde::Deserialize)]
-        #[cfg_attr(feature = "serde", derive(schemars::JsonSchema))]
+        #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+        #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
         // Doing remoting automatically would make it impossible for the user to use another one.
         // Since the config format presumably needs to be
         // backward-compatible, that wouldn't be such a great idea.

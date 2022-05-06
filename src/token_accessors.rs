@@ -205,7 +205,8 @@ macro_rules! make_token_accessors {(
     }
 ) => (
     $(#[$enum_meta])*
-    #[derive(Debug, Serialize, Deserialize)] // TODO: EnumString
+    #[derive(Debug)] // TODO: EnumString
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     $enum_vis enum $enum_name {
         $(
          $(#[$field_meta])*
