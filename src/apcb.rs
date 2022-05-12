@@ -280,6 +280,7 @@ impl<'a, 'de: 'a> Deserialize<'de> for Apcb<'a> {
                         }
                     };
                 }
+                apcb.save().unwrap();
                 Ok(apcb)
             }
         }
