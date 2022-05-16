@@ -23,6 +23,7 @@ use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use paste::paste;
 use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32, U64};
+use four_cc::FourCC;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -374,7 +375,7 @@ make_accessors! {
     #[derive(FromBytes, AsBytes, Unaligned, Debug, Clone)]
     #[repr(C, packed)]
     pub struct V2_HEADER {
-        pub signature || [SerdeHex8; 4] : [u8; 4],
+        pub signature || FourCC : [u8; 4],
         pub header_size || SerdeHex16 : LU16, // == sizeof(V2_HEADER); but 128 for V3
         pub version || u16 : LU16,     // == 0x30
         pub apcb_size || SerdeHex32 : LU32,
@@ -414,7 +415,7 @@ make_accessors! {
     )]
     #[repr(C, packed)]
     pub struct V3_HEADER_EXT {
-        pub signature || [SerdeHex8; 4] : [u8; 4],
+        pub signature || FourCC : [u8; 4],
         _reserved_1 || SerdeHex16 : LU16,          // 0
         _reserved_2 || SerdeHex16 : LU16, // 0x10 // GROUP_HEADER::header_size
         pub struct_version || u16 : LU16, // GROUP_HEADER::version
@@ -437,7 +438,7 @@ make_accessors! {
         _reserved_9 || [SerdeHex32; 3] : [LU32; 3], // 0 0 0
         pub integrity_sign || [SerdeHex8; 32] : [u8; 32],
         _reserved_10 || [SerdeHex32; 3] : [LU32; 3], // 0 0 0
-        pub signature_ending || [SerdeHex8; 4] : [u8; 4],       // "BCBA"
+        pub signature_ending || FourCC : [u8; 4],       // "BCBA"
     }
 }
 
@@ -1198,7 +1199,7 @@ make_accessors! {
     )]
     #[repr(C, packed)]
     pub(crate) struct GROUP_HEADER {
-        pub(crate) signature || [SerdeHex8; 4] : [u8; 4],
+        pub(crate) signature || FourCC : [u8; 4],
         pub(crate) group_id || SerdeHex16 : LU16,
         pub(crate) header_size || SerdeHex16 : LU16, // == sizeof(GROUP_HEADER)
         pub(crate) version || SerdeHex16 : LU16,     // == 0 << 4 | 1
@@ -7383,5 +7384,11 @@ mod tests {
         const_assert!(size_of::<GROUP_HEADER>() % ENTRY_ALIGNMENT == 0);
         const_assert!(size_of::<ENTRY_HEADER>() == 16);
         const_assert!(size_of::<ENTRY_HEADER>() % ENTRY_ALIGNMENT == 0);
+    }
+
+    #[test]
+    fn test_four_cc() {
+        const_assert!(size_of::<FourCC>() == 4);
+        assert!(FourCC(*b"APCB").0 == [0x41, 0x50, 0x43, 0x42]);
     }
 }

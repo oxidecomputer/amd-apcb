@@ -3,6 +3,7 @@
 use crate::types::Error;
 use crate::types::Result;
 use byteorder::LittleEndian;
+use four_cc::FourCC;
 use num_traits::{FromPrimitive, ToPrimitive};
 use zerocopy::{AsBytes, FromBytes, U16, U32, U64};
 
@@ -69,6 +70,18 @@ impl Getter<Result<bool>> for BU8 {
             1 => Ok(true),
             _ => Err(Error::EntryTypeMismatch),
         }
+    }
+}
+
+impl Getter<Result<FourCC>> for [u8; 4] {
+    fn get1(self) -> Result<FourCC> {
+        Ok(FourCC(self))
+    }
+}
+
+impl Setter<FourCC> for [u8; 4] {
+    fn set1(&mut self, value: FourCC) {
+        *self = value.0
     }
 }
 
