@@ -3495,6 +3495,7 @@ pub mod memory {
     #[cfg(feature = "serde")]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[cfg_attr(feature = "serde", serde(rename = "ErrorOutControlBeepCode"))]
     pub(crate) struct CustomSerdeErrorOutControlBeepCode {
         pub custom_error_type: ErrorOutControlBeepCodeErrorType,
         pub peak_map: SerdeHex16,
@@ -3999,6 +4000,7 @@ Clone)]
     #[cfg(feature = "serde")]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[cfg_attr(feature = "serde", serde(rename = "DdrPostPackageRepairElement"))]
     pub struct CustomSerdeDdrPostPackageRepairElement {
         pub raw_body: DdrPostPackageRepairBody,
     }

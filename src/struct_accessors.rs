@@ -277,7 +277,7 @@ macro_rules! make_accessors {(
         // Doing remoting automatically would make it impossible for the user to use another one.
         // Since the config format presumably needs to be
         // backward-compatible, that wouldn't be such a great idea.
-        //#[serde(remote = "" $StructName)]
+        #[cfg_attr(feature = "serde", serde(rename = "" $StructName))]
         pub(crate) struct [<Serde $StructName>] {
             $(
                 $(pub $field_name: $field_ty,)?
