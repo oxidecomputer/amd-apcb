@@ -3784,9 +3784,9 @@ Clone)]
         #[repr(u32)]
         #[derive(Clone, Copy)]
         pub struct OdtPatPatterns {
-            pub reading_pattern || SerdeHex8 : B4 | pub get OdtPatPattern : pub set OdtPatPattern, // @bit 0
+            pub reading_pattern || SerdeHex8 : OdtPatPattern | pub get OdtPatPattern : pub set OdtPatPattern, // @bit 0
             pub _reserved_1 || SerdeHex8 : B4,             // @bit 4
-            pub writing_pattern || SerdeHex8 : B4 | pub get OdtPatPattern : pub set OdtPatPattern, // @bit 8
+            pub writing_pattern || SerdeHex8 : OdtPatPattern | pub get OdtPatPattern : pub set OdtPatPattern, // @bit 8
             pub _reserved_2 || SerdeHex32 : B20,
         }
     }

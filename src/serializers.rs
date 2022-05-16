@@ -11,7 +11,6 @@ use crate::memory::*;
 use crate::ondisk::memory::platform_specific_override::*;
 use crate::ondisk::*;
 use crate::psp::*;
-use crate::struct_accessors::DummyErrorChecks;
 
 // Note: This is written such that it will fail if the underlying struct has
 // fields added/removed/renamed--if those have a public setter.
