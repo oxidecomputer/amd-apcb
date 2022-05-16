@@ -1308,7 +1308,7 @@ macro_rules! make_bitfield_serde {(
         pub(crate) struct [<Serde $StructName>] {
             $(
                 $(pub $field_name : <$field_ty as Specifier>::InOut,)?
-                $(pub $field_name : <$field_orig_ty as Specifier>::InOut,)?
+                $(pub $field_name : $serde_ty,)?
             )*
         }
     }
@@ -1488,10 +1488,10 @@ make_accessors! {
         pub(crate) entry_id || SerdeHex16 : LU16, // meaning depends on context_type
         pub(crate) entry_size || SerdeHex16 : LU16, // including header
         pub(crate) instance_id || SerdeHex16 : LU16,
-        pub(crate) context_type: u8 | pub get ContextType : pub set ContextType,  // see ContextType enum
-        pub(crate) context_format: u8 | pub get ContextFormat: pub set ContextFormat, // see ContextFormat enum
+        pub(crate) context_type || ContextType : u8 | pub get ContextType : pub set ContextType,  // see ContextType enum
+        pub(crate) context_format || ContextFormat : u8 | pub get ContextFormat: pub set ContextFormat, // see ContextFormat enum
         pub(crate) unit_size || SerdeHex8 : u8, // in Byte.  Applicable when ContextType == 2.  value should be 8
-        pub(crate) priority_mask: u8 | pub get PriorityLevels : pub set PriorityLevels,
+        pub(crate) priority_mask || PriorityLevels : u8 | pub get PriorityLevels : pub set PriorityLevels,
         pub(crate) key_size || SerdeHex8 : u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
         pub(crate) key_pos || SerdeHex8 : u8, // Sorting key position of the unit specified of UnitSize
         pub(crate) board_instance_mask || SerdeHex16 : LU16, // Board-specific Apcb instance mask
@@ -3491,6 +3491,28 @@ pub mod memory {
             peak_attr || ErrorOutControlBeepCodePeakAttr : LU32 | pub get ErrorOutControlBeepCodePeakAttr : pub set ErrorOutControlBeepCodePeakAttr,
         }
     }
+    #[cfg(feature = "serde")]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    pub(crate) struct CustomSerdeErrorOutControlBeepCode {
+        pub custom_error_type: ErrorOutControlBeepCodeErrorType,
+        pub peak_map: SerdeHex16,
+        pub peak_attr: ErrorOutControlBeepCodePeakAttr,
+    }
+    #[cfg(feature = "serde")]
+    impl ErrorOutControlBeepCode {
+        pub(crate) fn serde_custom_error_type(
+            &self,
+        ) -> Result<ErrorOutControlBeepCodeErrorType> {
+            self.error_type()
+        }
+        pub(crate) fn serde_with_custom_error_type(
+            &mut self,
+            value: ErrorOutControlBeepCodeErrorType,
+        ) -> &mut Self {
+            self.with_error_type(value)
+        }
+    }
     impl Default for ErrorOutControlBeepCode {
         fn default() -> Self {
             ErrorOutControlBeepCode::new(
@@ -3517,12 +3539,11 @@ pub mod memory {
             );
         }
         pub fn with_error_type(
-            self,
+            &mut self,
             value: ErrorOutControlBeepCodeErrorType,
-        ) -> Self {
-            let mut result = self;
-            result.set_error_type(value);
-            result
+        ) -> &mut Self {
+            self.set_error_type(value);
+            self
         }
         pub fn new(
             error_type: ErrorOutControlBeepCodeErrorType,

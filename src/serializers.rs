@@ -35,7 +35,8 @@ macro_rules! make_serde{($StructName:ident, $SerdeStructName:ident, [$($field_na
             where S: serde::Serializer, {
                 $SerdeStructName {
                     $(
-                        $field_name: self.[<serde_ $field_name>]().map_err(|_| serde::ser::Error::custom("value unknown"))?.into(),
+                        $field_name: self.[<serde_ $field_name>]().map_err(|_|
+panic!("$field_name"))?.into(),
                     )*
                 }.serialize(serializer)
             }
@@ -381,8 +382,8 @@ make_serde!(
 make_serde!(Gpio, SerdeGpio, [pin, iomux_control, bank_control,]);
 make_serde!(
     ErrorOutControlBeepCode,
-    SerdeErrorOutControlBeepCode,
-    [error_type, peak_map, peak_attr,]
+    CustomSerdeErrorOutControlBeepCode,
+    [custom_error_type, peak_map, peak_attr,]
 );
 make_serde!(
     ErrorOutControl116,
