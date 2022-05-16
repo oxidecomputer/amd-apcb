@@ -164,7 +164,11 @@ impl DummyErrorChecks for bool {}
 /// provided by a Getter and Getter trait impl (for example the ones in the same
 /// file this macro is in) Note: If you want to add a docstring, put it before
 /// the struct inside the macro parameter at the usage site, not before the
-/// macro call. Field syntax:   NAME: TYPE[: pub get TYPE [:pub set TYPE]]
+/// macro call.
+/// This call also defines serde_* and serde_with* getters and setters with an
+/// optionally specified serde type that is used during serialization and
+/// deserialization
+/// Field syntax:   NAME [|| SERDE_TYPE : TYPE] [: TYPE] [| pub get TYPE [:pub set TYPE]]
 macro_rules! make_accessors {(
     $(#[$struct_meta:meta])*
     $struct_vis:vis
