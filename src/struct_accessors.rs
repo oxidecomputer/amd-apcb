@@ -172,7 +172,7 @@ macro_rules! make_accessors {(
         $(
             $(#[$field_meta:meta])*
             $field_vis:vis
-            $field_name:ident : $field_ty:ty $(: $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
+            $field_name:ident $(|| $serde_ty:ty : $field_orig_ty:ty)? $(: $field_ty:ty)? $(| $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
         ),* $(,)?
     }
 ) => (
@@ -182,7 +182,8 @@ macro_rules! make_accessors {(
         $(
             $(#[$field_meta])*
             $field_vis
-            $field_name: $field_ty,
+            $($field_name: $field_ty,)?
+            $($field_name: $field_orig_ty,)?
         )*
     }
 
@@ -191,35 +192,63 @@ macro_rules! make_accessors {(
         pub fn build(&self) -> Self {
             self.clone()
         }
-        $($(
-            #[inline]
-            #[allow(dead_code)]
-            $getter_vis
-            fn $field_name (self: &'_ Self)
-                -> Result<$field_user_ty>
-            {
-                self.$field_name.get1()
-            }
+        $(
             $(
-              paste! {
-                  #[inline]
-                  #[allow(dead_code)]
-                  $setter_vis
-                  fn [<set_ $field_name>] (self: &'_ mut Self, value: $field_setter_user_ty) {
-                      self.$field_name.set1(value)
-                  }
+                #[inline]
+                #[allow(dead_code)]
+                $getter_vis
+                fn $field_name (self: &'_ Self)
+                    -> Result<$field_user_ty>
+                {
+                    self.$field_name.get1()
+                }
+                $(
+                  paste! {
+                      #[inline]
+                      #[allow(dead_code)]
+                      $setter_vis
+                      fn [<set_ $field_name>] (self: &'_ mut Self, value: $field_setter_user_ty) {
+                          self.$field_name.set1(value)
+                      }
 
-                  #[inline]
-                  #[allow(dead_code)]
-                  $setter_vis
-                  fn [<with_ $field_name>]<'a>(self: &mut Self, value: $field_setter_user_ty) -> &mut Self {
-                      let result = self;
-                      result.$field_name.set1(value);
-                      result
                   }
-              }
+                )?
             )?
-        )?)*
+            $(
+                paste! {
+                #[inline]
+                #[allow(dead_code)]
+                pub(crate) fn [<serde_ $field_name>] (self: &'_ Self)
+                    -> Result<$serde_ty>
+                {
+                    self.$field_name.get1()
+                }
+                #[inline]
+                #[allow(dead_code)]
+                pub(crate) fn [<serde_with_ $field_name>]<'a>(self: &mut Self, value: $serde_ty) -> &mut Self {
+                    let result = self;
+                    result.$field_name.set1(value);
+                    result
+                }}
+            )?
+            $(
+                paste! {
+                #[inline]
+                #[allow(dead_code)]
+                pub(crate) fn [<serde_ $field_name>] (self: &'_ Self)
+                    -> Result<$field_ty>
+                {
+                    self.$field_name.get1()
+                }
+                #[inline]
+                #[allow(dead_code)]
+                pub(crate) fn [<serde_with_ $field_name>]<'a>(self: &mut Self, value: $field_ty) -> &mut Self {
+                    let result = self;
+                    result.$field_name = value.into();
+                    result
+                }}
+            )?
+        )*
     }
     // for serde
     #[cfg(feature = "serde")]
@@ -234,9 +263,8 @@ macro_rules! make_accessors {(
         //#[serde(remote = "" $StructName)]
         pub(crate) struct [<Serde $StructName>] {
             $(
-                $(
-                    pub $field_name: $field_user_ty,
-                )?
+                $(pub $field_name: $field_ty,)?
+                $(pub $field_name: $serde_ty,)?
             )*
         }
     }

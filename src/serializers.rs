@@ -25,7 +25,7 @@ macro_rules! make_serde{($StructName:ident, $SerdeStructName:ident, [$($field_na
                 let config = $SerdeStructName::deserialize(deserializer)?;
                 Ok($StructName::default()
                 $(
-                .[<with_ $field_name>](config.$field_name.into())
+                .[<serde_with_ $field_name>](config.$field_name.into())
                 )*.build())
                 }
         }
@@ -35,7 +35,7 @@ macro_rules! make_serde{($StructName:ident, $SerdeStructName:ident, [$($field_na
             where S: serde::Serializer, {
                 $SerdeStructName {
                     $(
-                        $field_name: self.$field_name().map_err(|_| serde::ser::Error::custom("value unknown"))?.into(),
+                        $field_name: self.[<serde_ $field_name>]().map_err(|_| serde::ser::Error::custom("value unknown"))?.into(),
                     )*
                 }.serialize(serializer)
             }
@@ -73,7 +73,15 @@ make_serde!(
 make_serde!(
     PriorityLevels,
     SerdePriorityLevels,
-    [hard_force, high, medium, event_logging, low, normal,]
+    [
+        hard_force,
+        high,
+        medium,
+        event_logging,
+        low,
+        normal,
+        _reserved_1,
+    ]
 );
 
 make_serde!(
@@ -103,17 +111,51 @@ make_serde!(
 make_serde!(
     LrdimmDdr4DimmRanks,
     SerdeLrdimmDdr4DimmRanks,
-    [unpopulated, lr]
+    [unpopulated, lr, _reserved_1,]
 );
 make_serde!(
     DdrRates,
     SerdeDdrRates,
     [
-        ddr400, ddr533, ddr667, ddr800, ddr1066, ddr1333, ddr1600, ddr1866,
-        ddr2133, ddr2400, ddr2667, ddr2933, ddr3200,
+        _reserved_1,
+        _reserved_2,
+        _reserved_3,
+        ddr400,
+        ddr533,
+        ddr667,
+        ddr800,
+        _reserved_4,
+        ddr1066,
+        _reserved_5,
+        ddr1333,
+        _reserved_6,
+        ddr1600,
+        _reserved_7,
+        ddr1866,
+        _reserved_8,
+        ddr2133,
+        _reserved_9,
+        ddr2400,
+        _reserved_10,
+        ddr2667,
+        _reserved_11,
+        ddr2933,
+        _reserved_12,
+        ddr3200,
+        _reserved_13,
+        _reserved_14,
+        _reserved_15,
+        _reserved_16,
+        _reserved_17,
+        _reserved_18,
+        _reserved_19,
     ]
 );
-make_serde!(RdimmDdr4Voltages, SerdeRdimmDdr4Voltages, [v_1_2,]);
+make_serde!(
+    RdimmDdr4Voltages,
+    SerdeRdimmDdr4Voltages,
+    [v_1_2, _reserved_1,]
+);
 make_serde!(
     RdimmDdr4CadBusElement,
     SerdeRdimmDdr4CadBusElement,
@@ -124,7 +166,9 @@ make_serde!(
         dimm0_ranks,
         dimm1_ranks,
         gear_down_mode,
+        _reserved_,
         slow_mode,
+        _reserved_2,
         address_command_control,
         cke_drive_strength,
         cs_odt_drive_strength,
@@ -135,7 +179,7 @@ make_serde!(
 make_serde!(
     UdimmDdr4Voltages,
     SerdeUdimmDdr4Voltages,
-    [v_1_5, v_1_35, v_1_25]
+    [v_1_5, v_1_35, v_1_25, _reserved_1,]
 );
 make_serde!(
     UdimmDdr4CadBusElement,
@@ -147,7 +191,9 @@ make_serde!(
         dimm0_ranks,
         dimm1_ranks,
         gear_down_mode,
+        _reserved_,
         slow_mode,
+        _reserved_2,
         address_command_control,
         cke_drive_strength,
         cs_odt_drive_strength,
@@ -155,7 +201,11 @@ make_serde!(
         clk_drive_strength,
     ]
 );
-make_serde!(LrdimmDdr4Voltages, SerdeLrdimmDdr4Voltages, [v_1_2]);
+make_serde!(
+    LrdimmDdr4Voltages,
+    SerdeLrdimmDdr4Voltages,
+    [v_1_2, _reserved_1,]
+);
 make_serde!(
     LrdimmDdr4CadBusElement,
     SerdeLrdimmDdr4CadBusElement,
@@ -166,7 +216,9 @@ make_serde!(
         dimm0_ranks,
         dimm1_ranks,
         gear_down_mode,
+        _reserved_,
         slow_mode,
+        _reserved_2,
         address_command_control,
         cke_drive_strength,
         cs_odt_drive_strength,
@@ -185,6 +237,8 @@ make_serde!(
         apcb_size,
         unique_apcb_instance,
         checksum_byte,
+        _reserved_1,
+        _reserved_2,
     ]
 );
 make_serde!(
@@ -192,19 +246,36 @@ make_serde!(
     SerdeV3_HEADER_EXT,
     [
         signature,
+        _reserved_1,
+        _reserved_2,
         struct_version,
         data_version,
         ext_header_size,
+        _reserved_3,
+        _reserved_4,
+        _reserved_5,
+        _reserved_6,
+        _reserved_7,
         data_offset,
         header_checksum,
+        _reserved_8,
+        _reserved_9,
         integrity_sign,
+        _reserved_10,
         signature_ending,
     ]
 );
 make_serde!(
     GROUP_HEADER,
     SerdeGROUP_HEADER,
-    [signature, group_id, header_size, version, group_size,]
+    [
+        signature,
+        group_id,
+        header_size,
+        version,
+        _reserved_,
+        group_size,
+    ]
 );
 make_serde!(
     BoardIdGettingMethodEeprom,
@@ -230,7 +301,14 @@ make_serde!(
 make_serde!(
     SlinkRegion,
     SerdeSlinkRegion,
-    [size, alignment, socket, phys_nbio_map, interleaving,]
+    [
+        size,
+        alignment,
+        socket,
+        phys_nbio_map,
+        interleaving,
+        _reserved_,
+    ]
 );
 make_serde!(
     AblConsoleOutControl,
@@ -246,6 +324,7 @@ make_serde!(
         enable_mem_pmu_sram_write_logging,
         enable_mem_test_verbose_logging,
         enable_mem_basic_output_logging,
+        _reserved_,
         abl_console_port,
     ]
 );
@@ -259,6 +338,7 @@ make_serde!(
     SerdeExtVoltageControl,
     [
         enabled,
+        _reserved_,
         input_port,
         output_port,
         input_port_size,
@@ -266,6 +346,7 @@ make_serde!(
         input_port_type,
         output_port_type,
         clear_acknowledgement,
+        _reserved_2,
     ]
 );
 make_serde!(
@@ -290,22 +371,22 @@ make_serde!(
 make_serde!(
     MaxFreqElement,
     SerdeMaxFreqElement,
-    [dimm_slots_per_channel, conditions, speeds,]
+    [dimm_slots_per_channel, _reserved_, conditions, speeds,]
 );
 make_serde!(
     LrMaxFreqElement,
     SerdeLrMaxFreqElement,
-    [dimm_slots_per_channel, conditions, speeds,]
+    [dimm_slots_per_channel, _reserved_, conditions, speeds,]
 );
 make_serde!(Gpio, SerdeGpio, [pin, iomux_control, bank_control,]);
 make_serde!(
     ErrorOutControlBeepCode,
-    CustomSerdeErrorOutControlBeepCode,
+    SerdeErrorOutControlBeepCode,
     [error_type, peak_map, peak_attr,]
 );
 make_serde!(
     ErrorOutControl116,
-    CustomSerdeErrorOutControl116,
+    SerdeErrorOutControl116,
     [
         enable_error_reporting,
         enable_error_reporting_gpio,
@@ -315,21 +396,25 @@ make_serde!(
         output_delay,
         output_port,
         stop_on_first_fatal_error,
+        _reserved_,
         input_port_size,
         output_port_size,
         input_port_type,
         output_port_type,
         clear_acknowledgement,
-        raw_error_reporting_gpio,
+        _reserved_before_gpio,
+        error_reporting_gpio,
+        _reserved_after_gpio,
         beep_code_table,
         enable_heart_beat,
         enable_power_good_gpio,
-        raw_power_good_gpio,
+        power_good_gpio,
+        _reserved_end,
     ]
 );
 make_serde!(
     ErrorOutControl112,
-    CustomSerdeErrorOutControl112,
+    SerdeErrorOutControl112,
     [
         enable_error_reporting,
         enable_error_reporting_gpio,
@@ -339,52 +424,62 @@ make_serde!(
         output_delay,
         output_port,
         stop_on_first_fatal_error,
+        _reserved_,
         input_port_size,
         output_port_size,
         input_port_type,
         output_port_type,
         clear_acknowledgement,
-        raw_error_reporting_gpio,
+        _reserved_before_gpio,
+        error_reporting_gpio,
+        _reserved_after_gpio,
         beep_code_table,
         enable_heart_beat,
         enable_power_good_gpio,
-        raw_power_good_gpio,
+        power_good_gpio,
+        _reserved_end,
     ]
 );
 
 make_serde!(
     DimmsPerChannelSelector,
     SerdeDimmsPerChannelSelector,
-    [one_dimm, two_dimms, three_dimms, four_dimms,]
+    [one_dimm, two_dimms, three_dimms, four_dimms, _reserved_1,]
 );
 
 make_serde!(
     ErrorOutControlBeepCodePeakAttr,
     SerdeErrorOutControlBeepCodePeakAttr,
-    [peak_count, pulse_width, repeat_count,]
+    [peak_count, pulse_width, repeat_count, _reserved_1,]
 );
 
 make_serde!(
     OdtPatPatterns,
     SerdeOdtPatPatterns,
-    [reading_pattern, writing_pattern,]
+    [reading_pattern, _reserved_1, writing_pattern, _reserved_2,]
 );
 
 make_serde!(
     LrdimmDdr4OdtPatDimmRankBitmaps,
     SerdeLrdimmDdr4OdtPatDimmRankBitmaps,
-    [dimm0, dimm1, dimm2,]
+    [dimm0, dimm1, dimm2, _reserved_1,]
 );
 make_serde!(
     Ddr4OdtPatDimmRankBitmaps,
     SerdeDdr4OdtPatDimmRankBitmaps,
-    [dimm0, dimm1, dimm2,]
+    [dimm0, dimm1, dimm2, _reserved_1,]
 );
 
 make_serde!(
     DimmSlotsSelection,
     SerdeDimmSlotsSelection,
-    [dimm_slot_0, dimm_slot_1, dimm_slot_2, dimm_slot_3,]
+    [
+        dimm_slot_0,
+        dimm_slot_1,
+        dimm_slot_2,
+        dimm_slot_3,
+        _reserved_1,
+    ]
 );
 make_serde!(
     ChannelIdsSelection,
@@ -598,11 +693,13 @@ make_serde!(
         s0_gpp4_off,
         s0_gpp2_off,
         s0_gpp3_off,
+        _reserved_1,
         s1_gpp0_off,
         s1_gpp1_off,
         s1_gpp4_off,
         s1_gpp2_off,
         s1_gpp3_off,
+        _reserved_2,
     ]
 );
 make_serde!(Terminator, SerdeTerminator, [type_,]);
@@ -613,11 +710,11 @@ make_serde!(
 );
 make_serde!(
     DdrPostPackageRepairBody,
-    CustomSerdeDdrPostPackageRepairBody,
+    SerdeDdrPostPackageRepairBody,
     [
         bank,
         rank_multiplier,
-        raw_device_width,
+        xdevice_width,
         chip_select,
         column,
         hard_repair,
@@ -626,19 +723,47 @@ make_serde!(
         row,
         socket,
         channel,
+        _reserved_1,
     ]
 );
 make_serde!(
     DimmInfoSmbusElement,
-    CustomSerdeDimmInfoSmbusElement,
+    SerdeDimmInfoSmbusElement,
     [
         dimm_slot_present,
         socket_id,
         channel_id,
         dimm_id,
-        raw_dimm_smbus_address,
-        raw_i2c_mux_address,
-        raw_mux_control_address,
-        raw_mux_channel,
+        dimm_smbus_address,
+        i2c_mux_address,
+        mux_control_address,
+        mux_channel,
+    ]
+);
+make_serde!(
+    ConsoleOutControl,
+    SerdeConsoleOutControl,
+    [abl_console_out_control, abl_breakpoint_control, _reserved_,]
+);
+make_serde!(
+    BoardInstances,
+    SerdeBoardInstances,
+    [
+        instance_0,
+        instance_1,
+        instance_2,
+        instance_3,
+        instance_4,
+        instance_5,
+        instance_6,
+        instance_7,
+        instance_8,
+        instance_9,
+        instance_10,
+        instance_11,
+        instance_12,
+        instance_13,
+        instance_14,
+        instance_15,
     ]
 );

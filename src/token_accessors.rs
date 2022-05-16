@@ -200,7 +200,7 @@ macro_rules! make_token_accessors {(
         $(
             $(#[$field_meta:meta])*
             $field_vis:vis
-            $field_name:ident(default $field_default_value:expr, id $field_key:expr) : $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?
+            $field_name:ident(default $field_default_value:expr, id $field_key:expr) | $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?
         ),* $(,)?
     }
 ) => (
