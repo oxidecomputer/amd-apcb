@@ -1833,14 +1833,14 @@ pub mod memory {
         #[repr(C, packed)]
         pub struct DimmInfoSmbusElement {
             dimm_slot_present || bool : BU8 | pub get bool : pub set bool, // if false, it's soldered-down and not a slot
-            socket_id: u8 | pub get u8 : pub set u8,
-            channel_id: u8 | pub get u8 : pub set u8,
-            dimm_id: u8 | pub get u8 : pub set u8,
+            socket_id || SerdeHex8 : u8 | pub get u8 : pub set u8,
+            channel_id || SerdeHex8 : u8 | pub get u8 : pub set u8,
+            dimm_id || SerdeHex8 : u8 | pub get u8 : pub set u8,
             // For soldered-down DIMMs, SPD data is hardcoded in APCB (in entry MemoryEntryId::SpdInfo), and DIMM_SMBUS_ADDRESS here is the index in the structure for SpdInfo.
-            dimm_smbus_address: u8,
-            i2c_mux_address: u8,
-            mux_control_address: u8,
-            mux_channel: u8,
+            dimm_smbus_address || SerdeHex8 : u8,
+            i2c_mux_address || SerdeHex8 : u8,
+            mux_control_address || SerdeHex8 : u8,
+            mux_channel || SerdeHex8 : u8,
         }
     }
     impl DimmInfoSmbusElement {
@@ -5612,7 +5612,7 @@ pub mod psp {
         pub struct IdRevApcbMapping {
             id_and_rev_and_feature_mask || SerdeHex8 : u8, // bit 7: normal or feature-controlled?  other bits: mask
             id_and_feature_value || SerdeHex8 : u8,
-            rev_and_feature_value: u8 | pub get RevAndFeatureValue : pub set RevAndFeatureValue,
+            rev_and_feature_value || RevAndFeatureValue : u8 | pub get RevAndFeatureValue : pub set RevAndFeatureValue,
             board_instance_index || SerdeHex8 : u8,
         }
     }
