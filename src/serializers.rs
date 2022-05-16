@@ -35,8 +35,7 @@ macro_rules! make_serde{($StructName:ident, $SerdeStructName:ident, [$($field_na
             where S: serde::Serializer, {
                 $SerdeStructName {
                     $(
-                        $field_name: self.[<serde_ $field_name>]().map_err(|_|
-panic!("$field_name"))?.into(),
+                        $field_name: self.[<serde_ $field_name>]().map_err(|_| serde::ser::Error::custom("value unknown"))?.into(),
                     )*
                 }.serialize(serializer)
             }
