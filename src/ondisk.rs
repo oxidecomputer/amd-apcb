@@ -1305,7 +1305,7 @@ macro_rules! make_bitfield_serde {(
     paste::paste! {
         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
         #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-        //#[serde(remote = "" $StructName)]
+        #[cfg_attr(feature = "serde", serde(rename = "" $StructName))]
         pub(crate) struct [<Serde $StructName>] {
             $(
                 $(pub $field_name : <$field_ty as Specifier>::InOut,)?
