@@ -16,6 +16,7 @@ use core::cmp::Ordering;
 use core::convert::TryInto;
 use core::mem::{size_of, take};
 use core::num::NonZeroU8;
+use four_cc::FourCC;
 use modular_bitfield::prelude::*;
 use num_derive::FromPrimitive;
 use num_derive::ToPrimitive;
@@ -23,7 +24,6 @@ use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use paste::paste;
 use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32, U64};
-use four_cc::FourCC;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -372,7 +372,7 @@ make_array_accessors!(SerdeHex32, LU32);
 make_array_accessors!(SerdeHex64, LU64);
 
 make_accessors! {
-    #[derive(FromBytes, AsBytes, Unaligned, Debug, Clone)]
+    #[derive(Copy, FromBytes, AsBytes, Unaligned, Debug, Clone)]
     #[repr(C, packed)]
     pub struct V2_HEADER {
         pub signature || FourCC : [u8; 4],
@@ -4000,7 +4000,10 @@ Clone)]
     #[cfg(feature = "serde")]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-    #[cfg_attr(feature = "serde", serde(rename = "DdrPostPackageRepairElement"))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(rename = "DdrPostPackageRepairElement")
+    )]
     pub struct CustomSerdeDdrPostPackageRepairElement {
         pub raw_body: DdrPostPackageRepairBody,
     }

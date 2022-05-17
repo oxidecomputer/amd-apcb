@@ -22,6 +22,8 @@ pub enum Error {
     TokenRange,
     ParameterNotFound,
     ParameterRange,
+    // Errors used only for Serde
+    EntryNotExtractable,
 }
 
 pub type Result<Q> = core::result::Result<Q, Error>;

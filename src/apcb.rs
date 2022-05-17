@@ -35,7 +35,7 @@ extern crate std;
 #[cfg(feature = "serde")]
 use crate::entry::EntryItem;
 #[cfg(feature = "serde")]
-use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
+use serde::de::{Deserialize, Deserializer};
 #[cfg(feature = "serde")]
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 #[cfg(feature = "serde")]
@@ -52,13 +52,76 @@ impl Default for ApcbIoOptions {
         }
     }
 }
+
 pub struct Apcb<'a> {
     used_size: usize,
     pub backing_store: PtrMut<'a, [u8]>,
 }
 
-#[cfg(feature = "std")]
-use std::fmt;
+#[cfg(feature = "serde")]
+#[cfg_attr(
+    feature = "serde",
+    derive(Default, serde::Serialize, serde::Deserialize)
+)]
+pub struct SerdeApcb<'a> {
+    pub header: V2_HEADER,
+    pub v3_header: Option<V3_HEADER_EXT>,
+    #[cfg_attr(feature = "serde", serde(borrow))]
+    pub groups: Vec<GroupItem<'a>>,
+    #[cfg_attr(feature = "serde", serde(borrow))]
+    pub entries: Vec<EntryItem<'a>>,
+}
+
+#[cfg(feature = "serde")]
+use core::convert::TryFrom;
+
+#[cfg(feature = "serde")]
+impl<'a> TryFrom<SerdeApcb<'_>> for Apcb<'a> {
+    type Error = Error;
+    fn try_from(serde_apcb: SerdeApcb<'_>) -> Result<Self> {
+        let buf =
+            Cow::from(vec![0xFFu8; serde_apcb.header.apcb_size.get() as usize]);
+        let mut apcb = Apcb::create(buf, 42, &ApcbIoOptions::default())?;
+        *apcb.header_mut() = serde_apcb.header;
+        apcb.header_mut().apcb_size =
+            (serde_apcb.header.header_size.get() as u32).into();
+        match serde_apcb.v3_header {
+            Some(v3) => {
+                apcb.v3_header_ext_mut().map(|mut v| *v = v3);
+            }
+            None => {}
+        }
+        for g in serde_apcb.groups {
+            apcb.insert_group(
+                GroupId::from_u16(g.header.group_id.get()).unwrap(),
+                g.header.signature,
+            )
+            .unwrap();
+        }
+        for e in serde_apcb.entries {
+            let buf = match e.body_as_buf() {
+                Some(buf) => buf,
+                None => return Err(Error::EntryNotExtractable),
+            };
+            match apcb.insert_entry(
+                e.id(),
+                e.instance_id(),
+                e.board_instance_mask(),
+                e.context_type(),
+                PriorityLevels::from(e.priority_mask()),
+                buf,
+            ) {
+                Ok(_) => {}
+                Err(err) => {
+                    print!("Deserializing entry {:?} failed with {:?}", e, err);
+                    return Err(err);
+                }
+            };
+        }
+        apcb.update_checksum().unwrap();
+        Ok(apcb)
+    }
+}
 
 #[cfg(feature = "serde")]
 impl<'a> Serialize for Apcb<'a> {
@@ -69,9 +132,9 @@ impl<'a> Serialize for Apcb<'a> {
     where
         S: Serializer,
     {
-        // We need the number of groups, but there's no way to get it from the
-        // Iterator directly. We have two other fields for now, header and
-        // used_size. This is fragile and I don't like it.
+        // In a better world we would implement From<Apcb> for SerdeApcb
+        // however we can't do that as we'd be returning borrowed data from
+        // Apcb.
         let mut state = serializer.serialize_struct("Apcb", 5)?;
         let groups = self.groups().collect::<Vec<_>>();
         let mut entries: Vec<EntryItem<'_>> = Vec::new();
@@ -84,7 +147,6 @@ impl<'a> Serialize for Apcb<'a> {
         state.serialize_field("v3_header_ext", &v3_header)?;
         state.serialize_field("groups", &groups)?;
         state.serialize_field("entries", &entries)?;
-        state.serialize_field("used_size", &self.used_size)?;
         state.end()
     }
 }
@@ -95,196 +157,9 @@ impl<'a, 'de: 'a> Deserialize<'de> for Apcb<'a> {
     where
         D: Deserializer<'de>,
     {
-        enum Field {
-            Header,
-            V3Header,
-            Groups,
-            Entries,
-            UsedSize,
-        }
-        const FIELDS: &'static [&'static str] =
-            &["header", "v3_header_ext", "groups", "entries", "used_size"];
-
-        impl<'de> Deserialize<'de> for Field {
-            fn deserialize<D>(
-                deserializer: D,
-            ) -> core::result::Result<Field, D::Error>
-            where
-                D: Deserializer<'de>,
-            {
-                struct FieldVisitor;
-
-                impl<'de> Visitor<'de> for FieldVisitor {
-                    type Value = Field;
-
-                    fn expecting(
-                        &self,
-                        formatter: &mut fmt::Formatter<'_>,
-                    ) -> fmt::Result {
-                        formatter.write_str(
-                            "`header`, `v3_header`, `groups`,
-`entries`, or `used_size`",
-                        )
-                    }
-
-                    fn visit_str<E>(
-                        self,
-                        value: &str,
-                    ) -> core::result::Result<Field, E>
-                    where
-                        E: de::Error,
-                    {
-                        match value {
-                            "header" => Ok(Field::Header),
-                            "v3_header_ext" => Ok(Field::V3Header),
-                            "groups" => Ok(Field::Groups),
-                            "entries" => Ok(Field::Entries),
-                            "used_size" => Ok(Field::UsedSize),
-                            _ => Err(de::Error::unknown_field(value, FIELDS)),
-                        }
-                    }
-                }
-
-                deserializer.deserialize_identifier(FieldVisitor)
-            }
-        }
-
-        struct ApcbVisitor;
-
-        impl<'de> Visitor<'de> for ApcbVisitor {
-            type Value = Apcb<'de>;
-
-            fn expecting(
-                &self,
-                formatter: &mut fmt::Formatter<'_>,
-            ) -> fmt::Result {
-                formatter.write_str("struct Apcb")
-            }
-
-            fn visit_map<V>(
-                self,
-                mut map: V,
-            ) -> core::result::Result<Apcb<'static>, V::Error>
-            where
-                V: MapAccess<'de>,
-            {
-                let mut header: Option<V2_HEADER> = None;
-                let mut v3_header_ext: Option<V3_HEADER_EXT> = None;
-                let mut groups: Option<Vec<GroupItem<'_>>> = None;
-                let mut entries: Option<Vec<EntryItem<'_>>> = None;
-                let mut used_size: Option<usize> = None;
-                while let Some(key) = map.next_key()? {
-                    match key {
-                        Field::Header => {
-                            if header.is_some() {
-                                return Err(de::Error::duplicate_field(
-                                    "header",
-                                ));
-                            }
-                            header = Some(map.next_value()?);
-                        }
-                        Field::V3Header => {
-                            if v3_header_ext.is_some() {
-                                return Err(de::Error::duplicate_field(
-                                    "v3_header_ext",
-                                ));
-                            }
-                            v3_header_ext = Some(map.next_value()?);
-                        }
-                        Field::Groups => {
-                            if groups.is_some() {
-                                return Err(de::Error::duplicate_field(
-                                    "groups",
-                                ));
-                            }
-                            groups = Some(map.next_value()?);
-                        }
-                        Field::Entries => {
-                            if entries.is_some() {
-                                return Err(de::Error::duplicate_field(
-                                    "entries",
-                                ));
-                            }
-                            entries = Some(map.next_value()?);
-                        }
-                        Field::UsedSize => {
-                            if used_size.is_some() {
-                                return Err(de::Error::duplicate_field(
-                                    "used_size",
-                                ));
-                            }
-                            used_size = Some(map.next_value()?);
-                        }
-                    }
-                }
-                let header =
-                    header.ok_or_else(|| de::Error::missing_field("header"))?;
-                let groups =
-                    groups.ok_or_else(|| de::Error::missing_field("groups"))?;
-                let entries = entries
-                    .ok_or_else(|| de::Error::missing_field("entries"))?;
-                let _used_size = used_size
-                    .ok_or_else(|| de::Error::missing_field("used_size"))?;
-                let buf = Cow::from(vec![0xFFu8; 8 * 1024]);
-                let mut apcb =
-                    Apcb::create(buf, 42, &ApcbIoOptions::default()).unwrap();
-                let header_size = (header.header_size.get() as u32).into();
-                *apcb.header_mut() = header;
-                apcb.header_mut().apcb_size = header_size;
-                match v3_header_ext {
-                    Some(v3) => {
-                        apcb.v3_header_ext_mut().map(|mut v| *v = v3);
-                    }
-                    None => {}
-                }
-                for g in groups {
-                    apcb.insert_group(
-                        GroupId::from_u16(g.header.group_id.get()).unwrap(),
-                        g.header.signature,
-                    )
-                    .unwrap();
-                }
-                for e in entries {
-                    if e.id()
-                        == crate::ondisk::EntryId::Psp(
-                            crate::ondisk::PspEntryId::BoardIdGettingMethod,
-                        )
-                    {}
-                    let buf = match e.body_as_buf() {
-                        Some(buf) => buf,
-                        None => {
-                            return Err(de::Error::invalid_value(
-                                serde::de::Unexpected::Enum,
-                                &"a valid Entry with extractable buffer",
-                            ))
-                        }
-                    };
-                    match apcb.insert_entry(
-                        e.id(),
-                        e.instance_id(),
-                        e.board_instance_mask(),
-                        e.context_type(),
-                        PriorityLevels::from(e.priority_mask()),
-                        buf,
-                    ) {
-                        Ok(_) => {}
-                        Err(err) => {
-                            print!(
-                                "Deserializing entry {:?} failed with {:?}",
-                                e, err
-                            );
-                            return Err(de::Error::invalid_value(
-                                serde::de::Unexpected::StructVariant,
-                                &"a valid Entry Item",
-                            ));
-                        }
-                    };
-                }
-                apcb.update_checksum().unwrap();
-                Ok(apcb)
-            }
-        }
-        deserializer.deserialize_struct("Apcb", FIELDS, ApcbVisitor)
+        let sa: SerdeApcb<'_> = SerdeApcb::deserialize(deserializer)?;
+        Apcb::try_from(sa)
+            .map_err(|e| serde::de::Error::custom(format!("{:?}", e)))
     }
 }
 

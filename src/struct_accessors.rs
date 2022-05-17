@@ -181,7 +181,8 @@ impl DummyErrorChecks for bool {}
 /// This call also defines serde_* and serde_with* getters and setters with an
 /// optionally specified serde type that is used during serialization and
 /// deserialization
-/// Field syntax:   NAME [|| SERDE_TYPE : TYPE] [: TYPE] [| pub get TYPE [:pub set TYPE]]
+/// Field syntax:   NAME [|| SERDE_TYPE : TYPE] [: TYPE] [| pub get TYPE [:pub
+/// set TYPE]]
 macro_rules! make_accessors {(
     $(#[$struct_meta:meta])*
     $struct_vis:vis
