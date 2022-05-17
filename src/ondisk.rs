@@ -2000,7 +2000,7 @@ pub mod memory {
             enable_mem_test_verbose_logging || bool : BU8 | pub get bool : pub set bool,
             enable_mem_basic_output_logging || bool : BU8 | pub get bool : pub set bool,
             _reserved_ || SerdeHex16 : LU16,
-            abl_console_port || SerdeHex32 : LU32,
+            abl_console_port || SerdeHex32 : LU32 | pub get u32 : pub set u32,
         }
     }
     impl Default for AblConsoleOutControl {
@@ -2499,7 +2499,7 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct RdimmDdr4CadBusElement {
-            dimm_slots_per_channel || SerdeHex32 : LU32,
+            dimm_slots_per_channel || SerdeHex32 : LU32 | pub get u32 : pub set u32,
             ddr_rates || DdrRates : LU32 | pub get DdrRates : pub set DdrRates,
             vdd_io || RdimmDdr4Voltages : LU32 | pub get RdimmDdr4Voltages : pub set RdimmDdr4Voltages,
             dimm0_ranks || Ddr4DimmRanks : LU32 | pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
@@ -2509,7 +2509,7 @@ pub mod memory {
             _reserved_ || SerdeHex16 : LU16,
             slow_mode || bool : BLU16 | pub get bool : pub set bool, // (probably) 2T is slow, 1T is fast
             _reserved_2 || SerdeHex16 : LU16,
-            address_command_control || SerdeHex32 : LU32, // 24 bit; often all used bytes are equal
+            address_command_control || SerdeHex32 : LU32 | pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
 
             cke_drive_strength || CadBusCkeDriveStrength : u8 | pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
             cs_odt_drive_strength || CadBusCsOdtDriveStrength : u8 | pub get CadBusCsOdtDriveStrength : pub set CadBusCsOdtDriveStrength,
@@ -2615,7 +2615,7 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct UdimmDdr4CadBusElement {
-            dimm_slots_per_channel || SerdeHex32 : LU32,
+            dimm_slots_per_channel || SerdeHex32 : LU32 | pub get u32 : pub set u32,
             ddr_rates || DdrRates : LU32 | pub get DdrRates : pub set DdrRates,
             vdd_io || UdimmDdr4Voltages : LU32 | pub get UdimmDdr4Voltages : pub set UdimmDdr4Voltages,
             dimm0_ranks || Ddr4DimmRanks : LU32 | pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
@@ -2705,7 +2705,7 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4CadBusElement {
-            dimm_slots_per_channel || SerdeHex32 : LU32,
+            dimm_slots_per_channel || SerdeHex32 : LU32 | pub get u32 : pub set u32,
             ddr_rates || DdrRates : LU32 | pub get DdrRates : pub set DdrRates,
             vdd_io || LrdimmDdr4Voltages : LU32 | pub get LrdimmDdr4Voltages : pub set LrdimmDdr4Voltages,
             dimm0_ranks || LrdimmDdr4DimmRanks : LU32 | pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
@@ -2988,7 +2988,7 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct Ddr4DataBusElement {
-            dimm_slots_per_channel || SerdeHex32 : LU32,
+            dimm_slots_per_channel || SerdeHex32 : LU32 | pub get u32 : pub set u32,
             ddr_rates || DdrRates : LU32 | pub get DdrRates : pub set DdrRates,
             vdd_io || RdimmDdr4Voltages : LU32 | pub get RdimmDdr4Voltages : pub set RdimmDdr4Voltages,
             dimm0_ranks || Ddr4DimmRanks : LU32 | pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
@@ -3000,7 +3000,7 @@ pub mod memory {
             dq_drive_strength || SerdeHex32 : LU32, // for data
             dqs_drive_strength || SerdeHex32 : LU32, // for data strobe (bit clock)
             odt_drive_strength || SerdeHex32 : LU32, // for on-die termination
-            pmu_phy_vref || SerdeHex32 : LU32,
+            pmu_phy_vref || SerdeHex32 : LU32 | pub get u32 : pub set u32,
             // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
             // See <https://github.com/LongJohnCoder/ddr-doc/blob/gh-pages/jedec/JESD79-4.pdf> Table 15
             pub(crate) vref_dq || VrefDq : LU32 | pub get VrefDq : pub set VrefDq, // MR6 vref calibration value; 23|30|32
