@@ -378,8 +378,8 @@ make_accessors! {
         pub signature || FourCC : [u8; 4],
         pub header_size || SerdeHex16 : LU16, // == sizeof(V2_HEADER); but 128 for V3
         pub version || u16 : LU16,     // == 0x30
-        pub apcb_size || SerdeHex32 : LU32,
-        pub unique_apcb_instance || SerdeHex32 : LU32,
+        pub apcb_size || SerdeHex32 : LU32 | pub get u32 : pub set u32,
+        pub unique_apcb_instance || SerdeHex32 : LU32 | pub get u32 : pub set u32,
         pub checksum_byte || SerdeHex8 : u8,
         _reserved_1 || [SerdeHex8; 3] : [u8; 3],                // 0
         _reserved_2 || [SerdeHex32; 3] : [LU32; 3], // 0
@@ -420,7 +420,7 @@ make_accessors! {
         _reserved_2 || SerdeHex16 : LU16, // 0x10 // GROUP_HEADER::header_size
         pub struct_version || u16 : LU16, // GROUP_HEADER::version
         pub data_version || u16 : LU16, // GROUP_HEADER::_reserved_
-        pub ext_header_size || SerdeHex32 : LU32, // 96 // GROUP_HEADER::group_size
+        pub ext_header_size || SerdeHex32 : LU32 | pub get u32 : pub set u32, // 96 // GROUP_HEADER::group_size
         _reserved_3 || SerdeHex16 : LU16, // 0 // ENTRY_HEADER::group_id
         _reserved_4 || SerdeHex16 : LU16, // 0xFFFF // ENTRY_HEADER::entry_id
         // _reserved_5 includes 0x10 for the entry header; that
@@ -1488,14 +1488,14 @@ make_accessors! {
         pub(crate) group_id || SerdeHex16 : LU16, // should be equal to the group's group_id
         pub(crate) entry_id || SerdeHex16 : LU16, // meaning depends on context_type
         pub(crate) entry_size || SerdeHex16 : LU16, // including header
-        pub(crate) instance_id || SerdeHex16 : LU16,
+        pub(crate) instance_id || SerdeHex16 : LU16 | pub get u16 : pub set u16,
         pub(crate) context_type || ContextType : u8 | pub get ContextType : pub set ContextType,  // see ContextType enum
         pub(crate) context_format || ContextFormat : u8 | pub get ContextFormat: pub set ContextFormat, // see ContextFormat enum
-        pub(crate) unit_size || SerdeHex8 : u8, // in Byte.  Applicable when ContextType == 2.  value should be 8
+        pub(crate) unit_size || SerdeHex8 : u8 | pub get u8 : pub set u8, // in Byte.  Applicable when ContextType == 2.  value should be 8
         pub(crate) priority_mask || PriorityLevels : u8 | pub get PriorityLevels : pub set PriorityLevels,
-        pub(crate) key_size || SerdeHex8 : u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
-        pub(crate) key_pos || SerdeHex8 : u8, // Sorting key position of the unit specified of UnitSize
-        pub(crate) board_instance_mask || SerdeHex16 : LU16, // Board-specific Apcb instance mask
+        pub(crate) key_size || SerdeHex8 : u8 | pub get u8 : pub set u8, // Sorting key size; <= unit_size. Applicable when ContextFormat = 1. (or != 0)
+        pub(crate) key_pos || SerdeHex8 : u8 | pub get u8 : pub set u8, // Sorting key position of the unit specified of UnitSize
+        pub(crate) board_instance_mask || SerdeHex16 : LU16 | pub get u16 : pub set u16, // Board-specific Apcb instance mask
     }
 }
 
@@ -1736,9 +1736,9 @@ pub mod df {
         #[repr(C, packed)]
         pub struct SlinkRegion {
             size || SerdeHex64 : LU64,
-            alignment || SerdeHex8 : u8,
+            alignment || SerdeHex8 : u8 | pub get u8 : pub set u8,
             socket: u8, // 0|1
-            phys_nbio_map || SerdeHex8 : u8, // bitmap
+            phys_nbio_map || SerdeHex8 : u8 | pub get u8 : pub set u8, // bitmap
             interleaving || SlinkRegionInterleavingSize : u8 | pub get SlinkRegionInterleavingSize : pub set SlinkRegionInterleavingSize,
             _reserved_ || [SerdeHex8; 4] : [u8; 4],
         }
@@ -2621,11 +2621,11 @@ pub mod memory {
             dimm0_ranks || Ddr4DimmRanks : LU32 | pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
             dimm1_ranks || Ddr4DimmRanks : LU32 | pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
 
-            gear_down_mode || SerdeHex16 : LU16,
+            gear_down_mode || SerdeHex16 : LU16 | pub get u16 : pub set u16,
             _reserved_ || SerdeHex16 : LU16,
-            slow_mode || SerdeHex16 : LU16,
+            slow_mode || SerdeHex16 : LU16 | pub get u16 : pub set u16,
             _reserved_2 || SerdeHex16 : LU16,
-            address_command_control || SerdeHex32 : LU32, // 24 bit; often all used bytes are equal
+            address_command_control || SerdeHex32 : LU32 | pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
 
             cke_drive_strength || CadBusAddressCommandDriveStrength : u8 | pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
             cs_odt_drive_strength || CadBusCsOdtDriveStrength : u8 | pub get CadBusCsOdtDriveStrength : pub set CadBusCsOdtDriveStrength,
@@ -2711,11 +2711,11 @@ pub mod memory {
             dimm0_ranks || LrdimmDdr4DimmRanks : LU32 | pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
             dimm1_ranks || LrdimmDdr4DimmRanks : LU32 | pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
 
-            gear_down_mode || SerdeHex16 : LU16,
+            gear_down_mode || SerdeHex16 : LU16 | pub get u16 : pub set u16,
             _reserved_ || SerdeHex16 : LU16,
-            slow_mode || SerdeHex16 : LU16,
+            slow_mode || SerdeHex16 : LU16 | pub get u16 : pub set u16,
             _reserved_2 || SerdeHex16 : LU16,
-            address_command_control || SerdeHex32 : LU32, // 24 bit; often all used bytes are equal
+            address_command_control || SerdeHex32 : LU32 | pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
 
             cke_drive_strength || CadBusCkeDriveStrength : u8 | pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
             cs_odt_drive_strength || CadBusCsOdtDriveStrength : u8 | pub get CadBusCsOdtDriveStrength : pub set CadBusCsOdtDriveStrength,
@@ -2997,9 +2997,9 @@ pub mod memory {
             rtt_nom || RttNom : LU32 | pub get RttNom : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
             rtt_wr || RttWr : LU32 | pub get RttWr : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
             rtt_park || RttPark : LU32 | pub get RttPark : pub set RttPark, // contains ODT termination resistor to be used when ODT is low
-            dq_drive_strength || SerdeHex32 : LU32, // for data
-            dqs_drive_strength || SerdeHex32 : LU32, // for data strobe (bit clock)
-            odt_drive_strength || SerdeHex32 : LU32, // for on-die termination
+            dq_drive_strength || SerdeHex32 : LU32 | pub get u32 : pub set u32, // for data
+            dqs_drive_strength || SerdeHex32 : LU32 | pub get u32 : pub set u32, // for data strobe (bit clock)
+            odt_drive_strength || SerdeHex32 : LU32 | pub get u32 : pub set u32, // for on-die termination
             pmu_phy_vref || SerdeHex32 : LU32 | pub get u32 : pub set u32,
             // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
             // See <https://github.com/LongJohnCoder/ddr-doc/blob/gh-pages/jedec/JESD79-4.pdf> Table 15
@@ -3094,7 +3094,7 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4DataBusElement {
-            dimm_slots_per_channel || SerdeHex32 : LU32,
+            dimm_slots_per_channel || SerdeHex32 : LU32 | pub get u32 : pub set u32,
             ddr_rates || DdrRates : LU32 | pub get DdrRates : pub set DdrRates,
             vdd_io || LrdimmDdr4Voltages : LU32 | pub get LrdimmDdr4Voltages : pub set LrdimmDdr4Voltages,
             dimm0_ranks || LrdimmDdr4DimmRanks : LU32 | pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
@@ -3103,12 +3103,12 @@ pub mod memory {
             rtt_nom || RttNom : LU32 | pub get RttNom : pub set RttNom, // contains nominal on-die termination mode (not used on writes)
             rtt_wr || RttWr : LU32 | pub get RttWr : pub set RttWr, // contains dynamic on-die termination mode (used on writes)
             rtt_park || RttPark : LU32 | pub get RttPark : pub set RttPark, // contains ODT termination resistor to be used when ODT is low
-            dq_drive_strength || SerdeHex32 : LU32, // for data
-            dqs_drive_strength || SerdeHex32 : LU32, // for data strobe (bit clock)
-            odt_drive_strength || SerdeHex32 : LU32, // for on-die termination
-            pmu_phy_vref || SerdeHex32 : LU32,
+            dq_drive_strength || SerdeHex32 : LU32 | pub get u32 : pub set u32, // for data
+            dqs_drive_strength || SerdeHex32 : LU32 | pub get u32 : pub set u32, // for data strobe (bit clock)
+            odt_drive_strength || SerdeHex32 : LU32 | pub get u32 : pub set u32, // for on-die termination
+            pmu_phy_vref || SerdeHex32 : LU32 | pub get u32 : pub set u32,
             // See <https://www.systemverilog.io/ddr4-initialization-and-calibration>
-            vref_dq || SerdeHex32 : LU32, // MR6 vref calibration value; 23|30|32
+            vref_dq || SerdeHex32 : LU32 | pub get u32 : pub set u32, // MR6 vref calibration value; 23|30|32
         }
     }
 
@@ -3342,7 +3342,7 @@ pub mod memory {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct LrMaxFreqElement {
-            dimm_slots_per_channel || SerdeHex8 : u8,
+            dimm_slots_per_channel || SerdeHex8 : u8 | pub get u8 : pub set u8,
             _reserved_ || SerdeHex8 : u8,
             pub conditions || [SerdeHex16; 4] : [LU16; 4], // maybe: number of dimm on a channel, 0, number of lr dimm, 0 // FIXME: Make accessible
             pub speeds || [SerdeHex16; 3] : [LU16; 3], // maybe: speed limit with voltage 1.5 V, 1.35 V, 1.25 V; FIXME: Make accessible
@@ -3403,9 +3403,9 @@ pub mod memory {
         #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Clone, Copy)]
         #[repr(C, packed)]
         pub struct Gpio {
-            pin || SerdeHex8 : u8, // in FCH
-            iomux_control || SerdeHex8 : u8, // how to configure that pin
-            bank_control || SerdeHex8 : u8, // how to configure bank control
+            pin || SerdeHex8 : u8 | pub get u8 : pub set u8, // in FCH
+            iomux_control || SerdeHex8 : u8 | pub get u8 : pub set u8, // how to configure that pin
+            bank_control || SerdeHex8 : u8 | pub get u8 : pub set u8, // how to configure bank control
         }
     }
 
@@ -3488,7 +3488,7 @@ pub mod memory {
         #[repr(C, packed)]
         pub struct ErrorOutControlBeepCode {
             error_type || ErrorOutControlBeepCodeErrorType : LU16,
-            peak_map || SerdeHex16 : LU16,
+            peak_map || SerdeHex16 : LU16 | pub get u16 : pub set u16,
             peak_attr || ErrorOutControlBeepCodePeakAttr : LU32 | pub get ErrorOutControlBeepCodePeakAttr : pub set ErrorOutControlBeepCodePeakAttr,
         }
     }
@@ -3585,9 +3585,9 @@ Clone)]
                 enable_error_reporting_beep_codes || bool : BU8 | pub get bool : pub set bool,
                 /// Note: Receiver of the error log: Send 0xDEAD5555 to the INPUT_PORT to acknowledge.
                 enable_using_handshake || bool : BU8 | pub get bool : pub set bool, // otherwise see output_delay
-                input_port || SerdeHex32 : LU32, // for handshake
-                output_delay || SerdeHex32 : LU32, // if no handshake; in units of 10 ns.
-                output_port || SerdeHex32 : LU32,
+                input_port || SerdeHex32 : LU32 | pub get u32 : pub set u32, // for handshake
+                output_delay || SerdeHex32 : LU32 | pub get u32 : pub set u32, // if no handshake; in units of 10 ns.
+                output_port || SerdeHex32 : LU32 | pub get u32 : pub set u32,
                 stop_on_first_fatal_error || bool : BU8| pub get bool : pub set bool,
                 _reserved_ || [SerdeHex8; 3] : [u8; 3],
                 input_port_size || PortSize : LU32 | pub get PortSize : pub set PortSize,
@@ -4313,7 +4313,7 @@ Clone)]
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Clone)]
                             #[repr(C, packed)]
                             pub struct CkeTristateMap {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -4352,7 +4352,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct OdtTristateMap {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -4390,7 +4390,7 @@ Clone)]
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct CsTristateMap {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -4428,12 +4428,12 @@ Clone)]
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MaxDimmsPerChannel {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: must always be "any"
-                                value || SerdeHex8 : u8,
+                                value || SerdeHex8 : u8 | pub get u8 : pub set u8,
                             }
                         }
                         impl_EntryCompatible!(MaxDimmsPerChannel, 4, 4);
@@ -4466,7 +4466,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MemclkMap {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -4504,12 +4504,12 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MaxChannelsPerSocket {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,  // Note: must always be "any"
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: must always be "any" here
-                                value || SerdeHex8 : u8,
+                                value || SerdeHex8 : u8 | pub get u8 : pub set u8,
                             }
                         }
                         impl_EntryCompatible!(MaxChannelsPerSocket, 8, 4);
@@ -4583,7 +4583,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MemBusSpeed {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -4625,12 +4625,12 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MaxCsPerChannel {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: must always be "Any"
-                                value || SerdeHex8 : u8,
+                                value || SerdeHex8 : u8 | pub get u8 : pub set u8,
                             }
                         }
                         impl_EntryCompatible!(MaxCsPerChannel, 10, 4);
@@ -4680,7 +4680,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MemTechnology {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds, // Note: must always be "any" here
@@ -4718,13 +4718,13 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct WriteLevellingSeedDelay {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots,
                                 seed || [SerdeHex8; 8] : [u8; 8],
-                                ecc_seed || SerdeHex8 : u8,
+                                ecc_seed || SerdeHex8 : u8 | pub get u8 : pub set u8,
                             }
                         }
                         impl_EntryCompatible!(WriteLevellingSeedDelay, 12, 12);
@@ -4751,13 +4751,13 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct RxEnSeed {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots,
                                 seed || [SerdeHex16; 8] : [LU16; 8],
-                                ecc_seed || SerdeHex16 : LU16,
+                                ecc_seed || SerdeHex16 : LU16 | pub get u16 : pub set u16,
                             }
                         }
                         impl_EntryCompatible!(RxEnSeed, 13, 21);
@@ -4792,12 +4792,12 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct LrDimmNoCs6Cs7Routing {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots,
-                                value || SerdeHex8 : u8, // Note: always 1
+                                value || SerdeHex8 : u8 | pub get u8 : pub set u8, // Note: always 1
                             }
                         }
                         impl_EntryCompatible!(LrDimmNoCs6Cs7Routing, 14, 4);
@@ -4829,12 +4829,12 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct SolderedDownSodimm {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: always "all"
-                                value || SerdeHex8 : u8, // Note: always 1
+                                value || SerdeHex8 : u8 | pub get u8 : pub set u8, // Note: always 1
                             }
                         }
                         impl_EntryCompatible!(SolderedDownSodimm, 15, 4);
@@ -4866,12 +4866,12 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct LvDimmForce1V5 {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds, // Note: always "all"
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds, // Note: always "all"
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: always "all"
-                                value || SerdeHex8 : u8, // Note: always 1
+                                value || SerdeHex8 : u8 | pub get u8 : pub set u8, // Note: always 1
                             }
                         }
                         impl_EntryCompatible!(LvDimmForce1V5, 16, 4);
@@ -4903,13 +4903,13 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MinimumRwDataEyeWidth {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: always "all"
-                                min_read_data_eye_width || SerdeHex8 : u8,
-                                min_write_data_eye_width || SerdeHex8 : u8,
+                                min_read_data_eye_width || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                min_write_data_eye_width || SerdeHex8 : u8 | pub get u8 : pub set u8,
                             }
                         }
                         impl_EntryCompatible!(MinimumRwDataEyeWidth, 17, 5);
@@ -4944,9 +4944,9 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct CpuFamilyFilter {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
-                                cpu_family_revision || SerdeHex32 : LU32,
+                                cpu_family_revision || SerdeHex32 : LU32 | pub get u32 : pub set u32,
                             }
                         }
                         impl_EntryCompatible!(CpuFamilyFilter, 18, 4);
@@ -4973,12 +4973,12 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct SolderedDownDimmsPerChannel {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: always "all"
-                                value || SerdeHex8 : u8,
+                                value || SerdeHex8 : u8 | pub get u8 : pub set u8,
                             }
                         }
                         impl_EntryCompatible!(SolderedDownDimmsPerChannel, 19, 4);
@@ -5019,7 +5019,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MemPowerPolicy {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds, // Note: always "all"
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds, // Note: always "all"
@@ -5065,7 +5065,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MotherboardLayers {
-                                type_ || SerdeHex8 : u8,
+                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds, // Note: always "all"
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds, // Note: always "all"
@@ -5257,7 +5257,7 @@ Clone)]
         Clone, Copy)]
                             #[repr(C, packed)]
                             pub struct Terminator {
-                                type_ || SerdeHex16 : LU16,
+                                type_ || SerdeHex16 : LU16 | pub get u16 : pub set u16,
                             }
                         }
                         impl_EntryCompatible!(Terminator, 0xfeef, 2);
@@ -5536,9 +5536,9 @@ pub mod psp {
         #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct IdApcbMapping {
-            id_and_feature_mask || SerdeHex8 : u8, // bit 7: normal or feature-controlled?  other bits: mask
-            id_and_feature_value || SerdeHex8 : u8,
-            board_instance_index || SerdeHex8 : u8,
+            id_and_feature_mask || SerdeHex8 : u8 | pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
+            id_and_feature_value || SerdeHex8 : u8 | pub get u8 : pub set u8,
+            board_instance_index || SerdeHex8 : u8 | pub get u8 : pub set u8,
         }
     }
     impl IdApcbMapping {
@@ -5611,10 +5611,10 @@ pub mod psp {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct IdRevApcbMapping {
-            id_and_rev_and_feature_mask || SerdeHex8 : u8, // bit 7: normal or feature-controlled?  other bits: mask
-            id_and_feature_value || SerdeHex8 : u8,
+            id_and_rev_and_feature_mask || SerdeHex8 : u8 | pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
+            id_and_feature_value || SerdeHex8 : u8 | pub get u8 : pub set u8,
             rev_and_feature_value || RevAndFeatureValue : u8 | pub get RevAndFeatureValue : pub set RevAndFeatureValue,
-            board_instance_index || SerdeHex8 : u8,
+            board_instance_index || SerdeHex8 : u8 | pub get u8 : pub set u8,
         }
     }
 
@@ -5655,8 +5655,8 @@ pub mod psp {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodCustom {
-            access_method || SerdeHex16 : LU16, // 0xF for BoardIdGettingMethodCustom
-            feature_mask || SerdeHex16 : LU16,
+            access_method || SerdeHex16 : LU16 | pub get u16 : pub set u16, // 0xF for BoardIdGettingMethodCustom
+            feature_mask || SerdeHex16 : LU16 | pub get u16 : pub set u16,
         }
     }
 
@@ -5699,7 +5699,7 @@ pub mod psp {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodGpio {
-            access_method || SerdeHex16 : LU16, // 3 for BoardIdGettingMethodGpio
+            access_method || SerdeHex16 : LU16 | pub get u16 : pub set u16, // 3 for BoardIdGettingMethodGpio
             pub bit_locations: [Gpio; 4] | pub get [Gpio; 4] : pub set [Gpio; 4], // for the board id
         }
     }
@@ -5747,11 +5747,11 @@ pub mod psp {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodEeprom {
-            access_method || SerdeHex16 : LU16, // 2 for BoardIdGettingMethodEeprom
-            i2c_controller_index || SerdeHex16 : LU16,
-            device_address || SerdeHex16 : LU16,
-            board_id_offset || SerdeHex16 : LU16, // Byte offset
-            board_rev_offset || SerdeHex16 : LU16, // Byte offset
+            access_method || SerdeHex16 : LU16 | pub get u16 : pub set u16, // 2 for BoardIdGettingMethodEeprom
+            i2c_controller_index || SerdeHex16 : LU16 | pub get u16 : pub set u16,
+            device_address || SerdeHex16 : LU16 | pub get u16 : pub set u16,
+            board_id_offset || SerdeHex16 : LU16 | pub get u16 : pub set u16, // Byte offset
+            board_rev_offset || SerdeHex16 : LU16 | pub get u16 : pub set u16, // Byte offset
         }
     }
 
@@ -5804,13 +5804,13 @@ pub mod psp {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodSmbus {
-            access_method || SerdeHex16 : LU16, // 1 for BoardIdGettingMethodSmbus
-            i2c_controller_index || SerdeHex16 : LU16,
-            i2c_mux_address || SerdeHex8 : u8,
-            mux_control_address || SerdeHex8 : u8,
-            mux_channel || SerdeHex8 : u8,
-            smbus_address || SerdeHex16 : LU16,
-            register_index || SerdeHex16 : LU16,
+            access_method || SerdeHex16 : LU16 | pub get u16 : pub set u16, // 1 for BoardIdGettingMethodSmbus
+            i2c_controller_index || SerdeHex16 : LU16 | pub get u16 : pub set u16,
+            i2c_mux_address || SerdeHex8 : u8 | pub get u8 : pub set u8,
+            mux_control_address || SerdeHex8 : u8 | pub get u8 : pub set u8,
+            mux_channel || SerdeHex8 : u8 | pub get u8 : pub set u8,
+            smbus_address || SerdeHex16 : LU16 | pub get u16 : pub set u16,
+            register_index || SerdeHex16 : LU16 | pub get u16 : pub set u16,
         }
     }
 
