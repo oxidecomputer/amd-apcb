@@ -167,133 +167,50 @@ type LU16 = U16<LittleEndian>;
 type LU32 = U32<LittleEndian>;
 type LU64 = U64<LittleEndian>;
 
-#[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct SerdeHex8(
-    #[cfg_attr(
-        feature = "serde",
-        serde(
-            serialize_with = "SerHex::<StrictPfx>::serialize",
-            deserialize_with = "SerHex::<StrictPfx>::deserialize"
-        )
-    )]
-    u8,
-);
-
-#[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct SerdeHex16(
-    #[cfg_attr(
-        feature = "serde",
-        serde(
-            serialize_with = "SerHex::<StrictPfx>::serialize",
-            deserialize_with = "SerHex::<StrictPfx>::deserialize"
-        )
-    )]
-    u16,
-);
-
-#[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct SerdeHex32(
-    #[cfg_attr(
-        feature = "serde",
-        serde(
-            serialize_with = "SerHex::<StrictPfx>::serialize",
-            deserialize_with = "SerHex::<StrictPfx>::deserialize"
-        )
-    )]
-    u32,
-);
-
-#[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct SerdeHex64(
-    #[cfg_attr(
-        feature = "serde",
-        serde(
-            serialize_with = "SerHex::<StrictPfx>::serialize",
-            deserialize_with = "SerHex::<StrictPfx>::deserialize"
-        )
-    )]
-    u64,
-);
-
-impl From<u8> for SerdeHex8 {
-    fn from(lu: u8) -> Self {
-        Self(lu)
-    }
+macro_rules! make_serde_hex {
+    ($serde_ty:ident, $base_ty:ty $(, $lu_ty:ty)?) => {
+        #[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive)]
+        #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+        pub struct $serde_ty(
+            #[cfg_attr(
+                feature = "serde",
+                serde(
+                    serialize_with = "SerHex::<StrictPfx>::serialize",
+                    deserialize_with = "SerHex::<StrictPfx>::deserialize"
+                )
+            )]
+            $base_ty,
+        );
+        impl From<$base_ty> for $serde_ty {
+            fn from(base: $base_ty) -> Self {
+                Self(base)
+            }
+        }
+        impl From<$serde_ty> for $base_ty {
+            fn from(st: $serde_ty) -> Self {
+                st.0
+            }
+        }
+        $(
+            impl From<$lu_ty> for $serde_ty {
+                fn from(lu: $lu_ty) -> Self {
+                    Self(lu.get())
+                }
+            }
+            impl From<$serde_ty> for $lu_ty {
+                fn from(st: $serde_ty) -> Self {
+                    Self::new(st.0)
+                }
+            }
+        )?
+    };
 }
 
-impl From<SerdeHex8> for u8 {
-    fn from(sh: SerdeHex8) -> Self {
-        sh.0
-    }
-}
-
-impl From<LU16> for SerdeHex16 {
-    fn from(lu: LU16) -> Self {
-        Self(lu.get())
-    }
-}
-
-impl From<SerdeHex16> for LU16 {
-    fn from(sh: SerdeHex16) -> Self {
-        Self::new(sh.0)
-    }
-}
-
-impl From<u16> for SerdeHex16 {
-    fn from(lu: u16) -> Self {
-        Self(lu)
-    }
-}
-
-impl From<SerdeHex16> for u16 {
-    fn from(sh: SerdeHex16) -> Self {
-        sh.0
-    }
-}
-
-impl From<LU32> for SerdeHex32 {
-    fn from(lu: LU32) -> Self {
-        Self(lu.get())
-    }
-}
-
-impl From<SerdeHex32> for LU32 {
-    fn from(sh: SerdeHex32) -> Self {
-        Self::new(sh.0)
-    }
-}
-
-impl From<u32> for SerdeHex32 {
-    fn from(lu: u32) -> Self {
-        Self(lu)
-    }
-}
-
-impl From<SerdeHex32> for u32 {
-    fn from(sh: SerdeHex32) -> Self {
-        sh.0
-    }
-}
-
-impl From<LU64> for SerdeHex64 {
-    fn from(lu: LU64) -> Self {
-        Self(lu.get())
-    }
-}
-
-impl From<SerdeHex64> for LU64 {
-    fn from(sh: SerdeHex64) -> Self {
-        Self::new(sh.0)
-    }
-}
+make_serde_hex!(SerdeHex8, u8);
+make_serde_hex!(SerdeHex16, u16, LU16);
+make_serde_hex!(SerdeHex32, u32, LU32);
+make_serde_hex!(SerdeHex64, u64, LU64);
 
 macro_rules! make_array_accessors {
     ($res_ty:ty, $array_ty:ty) => {
