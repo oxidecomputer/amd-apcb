@@ -3537,7 +3537,7 @@ Clone)]
                 input_port || SerdeHex32 : LU32 | pub get u32 : pub set u32, // for handshake
                 output_delay || SerdeHex32 : LU32 | pub get u32 : pub set u32, // if no handshake; in units of 10 ns.
                 output_port || SerdeHex32 : LU32 | pub get u32 : pub set u32,
-                stop_on_first_fatal_error || bool : BU8| pub get bool : pub set bool,
+                stop_on_first_fatal_error || bool : BU8 | pub get bool : pub set bool,
                 _reserved_ || [SerdeHex8; 3] : [u8; 3],
                 input_port_size || PortSize : LU32 | pub get PortSize : pub set PortSize,
                 output_port_size || PortSize : LU32 | pub get PortSize : pub set PortSize,
@@ -4279,7 +4279,7 @@ Clone)]
                         impl Default for CkeTristateMap {
                             fn default() -> Self {
                                 Self {
-                                    type_: 1,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -4318,7 +4318,7 @@ Clone)]
                         impl Default for OdtTristateMap {
                             fn default() -> Self {
                                 Self {
-                                    type_: 2,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -4356,7 +4356,7 @@ Clone)]
                         impl Default for CsTristateMap {
                             fn default() -> Self {
                                 Self {
-                                    type_: 3,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -4393,7 +4393,7 @@ Clone)]
                         impl Default for MaxDimmsPerChannel {
                             fn default() -> Self {
                                 Self {
-                                    type_: 4,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -4431,7 +4431,7 @@ Clone)]
                         impl Default for MemclkMap {
                             fn default() -> Self {
                                 Self {
-                                    type_: 7,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -4469,7 +4469,7 @@ Clone)]
                         impl Default for MaxChannelsPerSocket {
                             fn default() -> Self {
                                 Self {
-                                    type_: 8,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -4549,7 +4549,7 @@ Clone)]
                         impl Default for MemBusSpeed {
                             fn default() -> Self {
                                 Self {
-                                    type_: 9,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -4590,7 +4590,7 @@ Clone)]
                         impl Default for MaxCsPerChannel {
                             fn default() -> Self {
                                 Self {
-                                    type_: 10,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -4645,7 +4645,7 @@ Clone)]
                         impl Default for MemTechnology {
                             fn default() -> Self {
                                 Self {
-                                    type_: 11,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -4684,7 +4684,7 @@ Clone)]
                         impl Default for WriteLevellingSeedDelay {
                             fn default() -> Self {
                                 Self {
-                                    type_: 12,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -4717,7 +4717,7 @@ Clone)]
                         impl Default for RxEnSeed {
                             fn default() -> Self {
                                 Self {
-                                    type_: 13,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -4757,7 +4757,7 @@ Clone)]
                         impl Default for LrDimmNoCs6Cs7Routing {
                             fn default() -> Self {
                                 Self {
-                                    type_: 14,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -4794,7 +4794,7 @@ Clone)]
                         impl Default for SolderedDownSodimm {
                             fn default() -> Self {
                                 Self {
-                                    type_: 15,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -4831,7 +4831,7 @@ Clone)]
                         impl Default for LvDimmForce1V5 {
                             fn default() -> Self {
                                 Self {
-                                    type_: 16,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -4869,7 +4869,7 @@ Clone)]
                         impl Default for MinimumRwDataEyeWidth {
                             fn default() -> Self {
                                 Self {
-                                    type_: 17,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -4906,7 +4906,7 @@ Clone)]
                         impl Default for CpuFamilyFilter {
                             fn default() -> Self {
                                 Self {
-                                    type_: 18,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     cpu_family_revision: 0.into(), // probably invalid
                                 }
@@ -4938,7 +4938,7 @@ Clone)]
                         impl Default for SolderedDownDimmsPerChannel {
                             fn default() -> Self {
                                 Self {
-                                    type_: 19,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -4984,7 +4984,7 @@ Clone)]
                         impl Default for MemPowerPolicy {
                             fn default() -> Self {
                                 Self {
-                                    type_: 20,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
@@ -5030,7 +5030,7 @@ Clone)]
                         impl Default for MotherboardLayers {
                             fn default() -> Self {
                                 Self {
-                                    type_: 21,
+                                    type_: Self::TAG as u8,
                                     payload_size: (size_of::<Self>() - 2) as u8,
                                     sockets: SocketIds::ALL.to_u8().unwrap(),
                                     channels: ChannelIds::Any.to_u8().unwrap(),
