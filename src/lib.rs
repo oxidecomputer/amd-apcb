@@ -1,6 +1,8 @@
+#![recursion_limit = "256"]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(elided_lifetimes_in_paths)]
 #![allow(clippy::collapsible_if)]
+#![feature(generic_associated_types)]
 
 #[cfg(test)]
 #[macro_use]
@@ -11,6 +13,8 @@ mod entry;
 mod group;
 mod naples;
 mod ondisk;
+#[cfg(feature = "serde")]
+mod serializers;
 mod struct_accessors;
 mod struct_variants_enum;
 mod tests;

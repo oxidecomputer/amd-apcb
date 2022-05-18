@@ -1,18 +1,24 @@
-use core::convert::TryFrom;
 use crate::ondisk::{
-    take_header_from_collection, take_header_from_collection_mut, TokenEntryId,
-    TOKEN_ENTRY,
-    BoolToken,
-    ByteToken,
-    WordToken,
-    DwordToken,
+    take_header_from_collection, take_header_from_collection_mut, BoolToken,
+    ByteToken, DwordToken, TokenEntryId, WordToken, TOKEN_ENTRY,
 };
-use crate::types::{Error, FileSystemError, Result};
+use crate::types::{Error, FileSystemError, Ptr, Result};
+use core::convert::TryFrom;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
 use pre::pre;
 
-#[derive(Debug)]
+#[cfg(feature = "serde")]
+use serde::de::{self, Deserialize, Deserializer};
+#[cfg(feature = "serde")]
+use serde::ser::{Serialize, Serializer};
+#[cfg(feature = "serde")]
+use std::borrow::Cow;
+
+#[derive(Debug, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[allow(dead_code)] // unit_size is not read when building without serde
 pub struct TokensEntryBodyItem<BufferType> {
     unit_size: u8,
     entry_id: TokenEntryId,
@@ -272,43 +278,210 @@ impl<'a> Iterator for TokensEntryIterMut<'a> {
     }
 }
 
+#[cfg(feature = "serde")]
+use serde_hex::{SerHex, StrictPfx};
+
+#[cfg(feature = "serde")]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+enum SerdeTokensEntryItem {
+    Bool(BoolToken),
+    Byte(ByteToken),
+    Word(WordToken),
+    Dword(DwordToken),
+    Unknown {
+        entry_id: TokenEntryId,
+        #[cfg_attr(
+            feature = "serde",
+            serde(
+                serialize_with = "SerHex::<StrictPfx>::serialize",
+                deserialize_with = "SerHex::<StrictPfx>::deserialize"
+            )
+        )]
+        tag: u32,
+        #[cfg_attr(
+            feature = "serde",
+            serde(
+                serialize_with = "SerHex::<StrictPfx>::serialize",
+                deserialize_with = "SerHex::<StrictPfx>::deserialize"
+            )
+        )]
+        value: u32,
+    },
+}
+
 pub struct TokensEntryItem<'a> {
-    entry_id: TokenEntryId,
-    entry: &'a TOKEN_ENTRY,
+    pub(crate) entry_id: TokenEntryId,
+    pub(crate) entry: Ptr<'a, TOKEN_ENTRY>,
+}
+
+#[cfg(feature = "serde")]
+impl<'a> Serialize for TokensEntryItem<'a> {
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> core::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let entry = &*self.entry;
+        let key = entry.key.get();
+        let mut st = SerdeTokensEntryItem::Unknown {
+            entry_id: self.entry_id,
+            tag: key,
+            value: self.value(),
+        };
+        match self.entry_id {
+            TokenEntryId::Bool => {
+                if let Ok(token) = BoolToken::try_from(entry) {
+                    st = SerdeTokensEntryItem::Bool(token);
+                }
+            }
+            TokenEntryId::Byte => {
+                if let Ok(token) = ByteToken::try_from(entry) {
+                    st = SerdeTokensEntryItem::Byte(token);
+                }
+            }
+            TokenEntryId::Word => {
+                if let Ok(token) = WordToken::try_from(entry) {
+                    st = SerdeTokensEntryItem::Word(token);
+                }
+            }
+            TokenEntryId::Dword => {
+                if let Ok(token) = DwordToken::try_from(entry) {
+                    st = SerdeTokensEntryItem::Dword(token);
+                }
+            }
+            TokenEntryId::Unknown(_) => {}
+        }
+        st.serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'a, 'de: 'a> Deserialize<'de> for TokensEntryItem<'a> {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let st = SerdeTokensEntryItem::deserialize(deserializer)?;
+        let entry_id: TokenEntryId;
+        match st {
+            SerdeTokensEntryItem::Bool(t) => {
+                entry_id = TokenEntryId::Bool;
+                if let Ok(te) = TOKEN_ENTRY::try_from(t) {
+                    return Ok(Self {
+                        entry_id,
+                        entry: Cow::Owned(te),
+                    });
+                } else {
+                    return Err(de::Error::invalid_value(
+                        serde::de::Unexpected::Enum,
+                        &"a valid Token Entry",
+                    ));
+                }
+            }
+            SerdeTokensEntryItem::Byte(t) => {
+                entry_id = TokenEntryId::Byte;
+                if let Ok(te) = TOKEN_ENTRY::try_from(t) {
+                    return Ok(Self {
+                        entry_id,
+                        entry: Cow::Owned(te),
+                    });
+                } else {
+                    return Err(de::Error::invalid_value(
+                        serde::de::Unexpected::Enum,
+                        &"a valid Token Entry",
+                    ));
+                }
+            }
+            SerdeTokensEntryItem::Word(t) => {
+                entry_id = TokenEntryId::Word;
+                if let Ok(te) = TOKEN_ENTRY::try_from(t) {
+                    return Ok(Self {
+                        entry_id,
+                        entry: Cow::Owned(te),
+                    });
+                } else {
+                    return Err(de::Error::invalid_value(
+                        serde::de::Unexpected::Enum,
+                        &"a valid Token Entry",
+                    ));
+                }
+            }
+            SerdeTokensEntryItem::Dword(t) => {
+                entry_id = TokenEntryId::Dword;
+                if let Ok(te) = TOKEN_ENTRY::try_from(t) {
+                    return Ok(Self {
+                        entry_id,
+                        entry: Cow::Owned(te),
+                    });
+                } else {
+                    return Err(de::Error::invalid_value(
+                        serde::de::Unexpected::Enum,
+                        &"a valid Token Entry",
+                    ));
+                }
+            }
+            SerdeTokensEntryItem::Unknown {
+                entry_id: e_id,
+                tag,
+                value,
+            } => {
+                entry_id = e_id;
+                let te = TOKEN_ENTRY {
+                    key: tag.into(),
+                    value: value.into(),
+                };
+                return Ok(Self {
+                    entry_id,
+                    entry: Cow::Owned(te),
+                });
+            }
+        }
+    }
 }
 
 impl<'a> core::fmt::Debug for TokensEntryItem<'a> {
     fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let entry = self.entry;
+        let entry = &*self.entry;
         let key = entry.key.get();
         let mut ds = fmt.debug_struct("TokensEntryItem_TOKEN_ENTRY");
         ds.field("entry_id", &self.entry_id);
         let value = entry.value.get();
         match self.entry_id {
-            TokenEntryId::Bool => if let Ok(token) = BoolToken::try_from(entry) {
-                ds.field("token", &token)
-            } else {
-                ds.field("key", &key)
-            },
-            TokenEntryId::Byte => if let Ok(token) = ByteToken::try_from(entry) {
-                ds.field("token", &token)
-            } else {
-                ds.field("key", &key)
-            },
-            TokenEntryId::Word => if let Ok(token) = WordToken::try_from(entry) {
-                ds.field("token", &token)
-            } else {
-                ds.field("key", &key)
-            },
-            TokenEntryId::Dword => if let Ok(token) = DwordToken::try_from(entry) {
-                ds.field("token", &token)
-            } else {
-                ds.field("key", &key)
-            },
-            TokenEntryId::Unknown(_) => {
-                ds.field("key", &key)
-            },
-        }.field("value", &value).finish()
+            TokenEntryId::Bool => {
+                if let Ok(token) = BoolToken::try_from(entry) {
+                    ds.field("token", &token)
+                } else {
+                    ds.field("key", &key)
+                }
+            }
+            TokenEntryId::Byte => {
+                if let Ok(token) = ByteToken::try_from(entry) {
+                    ds.field("token", &token)
+                } else {
+                    ds.field("key", &key)
+                }
+            }
+            TokenEntryId::Word => {
+                if let Ok(token) = WordToken::try_from(entry) {
+                    ds.field("token", &token)
+                } else {
+                    ds.field("key", &key)
+                }
+            }
+            TokenEntryId::Dword => {
+                if let Ok(token) = DwordToken::try_from(entry) {
+                    ds.field("token", &token)
+                } else {
+                    ds.field("key", &key)
+                }
+            }
+            TokenEntryId::Unknown(_) => ds.field("key", &key),
+        }
+        .field("value", &value)
+        .finish()
     }
 }
 
@@ -352,6 +525,8 @@ impl<'a> TokensEntryIter<'a> {
                 ));
             }
         };
+        #[cfg(feature = "std")]
+        let header = std::borrow::Cow::Borrowed(header);
         Ok(TokensEntryItem {
             entry_id,
             entry: header,
@@ -472,11 +647,11 @@ impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
     }
 }
 
-impl<'a> TokensEntryBodyItem<&'a [u8]> {
+impl<'a> TokensEntryBodyItem<Ptr<'a, [u8]>> {
     pub fn iter(&self) -> TokensEntryIter<'_> {
         TokensEntryIter {
             entry_id: self.entry_id,
-            buf: self.buf,
+            buf: &self.buf,
             remaining_used_size: self.used_size,
         }
     }

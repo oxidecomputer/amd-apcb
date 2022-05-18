@@ -1,4 +1,4 @@
-use crate::types::{Error, FileSystemError, Result};
+use crate::types::{Error, FileSystemError, Ptr, Result};
 
 use crate::entry::{EntryItem, EntryItemBody, EntryMutItem};
 use crate::ondisk::GroupId;
@@ -17,9 +17,16 @@ use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use pre::pre;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GroupItem<'a> {
-    pub(crate) header: &'a GROUP_HEADER,
+    #[cfg_attr(feature = "serde", serde(borrow))]
+    pub(crate) header: Ptr<'a, GROUP_HEADER>,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) buf: &'a [u8],
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) used_size: usize,
 }
 
@@ -104,9 +111,13 @@ impl<'a> GroupIter<'a> {
 
         let unit_size = header.unit_size;
         let entry_id = header.entry_id.get();
+
+        #[cfg(feature = "serde")]
+        let header = std::borrow::Cow::Borrowed(header);
+
         Ok(EntryItem {
             header,
-            body: EntryItemBody::<&'_ [u8]>::from_slice(
+            body: EntryItemBody::<Ptr<'_, [u8]>>::from_slice(
                 unit_size,
                 entry_id,
                 context_type,
@@ -212,7 +223,7 @@ impl GroupItem<'_> {
 
     pub fn entries(&self) -> GroupIter<'_> {
         GroupIter {
-            header: self.header,
+            header: &*self.header,
             buf: self.buf,
             remaining_used_size: self.used_size,
         }
@@ -404,6 +415,22 @@ impl<'a> GroupMutIter<'a> {
         let group_id = entry_id.group_id();
         let entry_id = entry_id.type_id();
 
+        // Make sure that entry_allocation is large enough for the header and
+        // data
+        let padding_size = (entry_allocation as usize)
+            .checked_sub(size_of::<ENTRY_HEADER>())
+            .ok_or(Error::FileSystem(
+                FileSystemError::PayloadTooBig,
+                "ENTRY_HEADER:entry_size",
+            ))?;
+        let padding_size =
+            padding_size
+                .checked_sub(payload_size)
+                .ok_or(Error::FileSystem(
+                    FileSystemError::PayloadTooBig,
+                    "ENTRY_HEADER:entry_size",
+                ))?;
+
         // Make sure that move_insertion_point_before does not notice the new
         // uninitialized entry
         self.remaining_used_size = self
@@ -456,16 +483,22 @@ impl<'a> GroupMutIter<'a> {
         header
             .board_instance_mask
             .set(u16::from(board_instance_mask));
-        let body = take_body_from_collection_mut(
-            &mut buf,
-            payload_size,
-            ENTRY_ALIGNMENT,
-        )
-        .ok_or(Error::FileSystem(
-            FileSystemError::InconsistentHeader,
-            "ENTRY_HEADER",
-        ))?;
+        let body = take_body_from_collection_mut(&mut buf, payload_size, 1)
+            .ok_or(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "ENTRY_HEADER",
+            ))?;
         payload_initializer(body);
+
+        let padding = take_body_from_collection_mut(&mut buf, padding_size, 1)
+            .ok_or(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "padding",
+            ))?;
+        // We pad this with 0s instead of 0xFFs because that's what AMD does,
+        // even though the erase polarity of most flash systems nowadays are
+        // 0xFF.
+        padding.iter_mut().for_each(|b| *b = 0u8);
         self.remaining_used_size = self
             .remaining_used_size
             .checked_add(entry_allocation as usize)

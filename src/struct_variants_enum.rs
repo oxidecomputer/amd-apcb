@@ -48,10 +48,11 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
             $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@match2mut {type_}{skip_step}{xbuf}$($deserializer)*)
         }
     };
-    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}
+    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}{$($state_obj:tt)*}{$($as_bytes:tt)*}
     ) => {
         #[non_exhaustive]
         #[derive(Debug)]
+        #[cfg_attr(feature = "std", derive(Serialize))]
         pub enum ElementRef<'a> {
              Unknown(&'a [u8]),
              $($state)*
@@ -61,6 +62,15 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
         pub enum MutElementRef<'a> {
              Unknown(&'a mut [u8]),
              $($state_mut)*
+        }
+
+        #[cfg(feature = "std")]
+        #[non_exhaustive]
+        #[derive(Serialize, Deserialize)]
+        #[repr(C)]
+        pub enum Element {
+             Unknown(Vec<u8>),
+             $($state_obj)*
         }
 
         impl<'a> SequenceElementFromBytes<'a> for ElementRef<'a> {
@@ -77,8 +87,18 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
                 Ok(result)
             }
         }
+
+        #[cfg(feature = "std")]
+        impl ElementAsBytes for Element {
+            fn element_as_bytes(&self) -> &[u8] {
+                match self {
+                    Element::Unknown(vec) => vec.as_slice(),
+                    $($as_bytes)*
+                }
+            }
+        }
     };
-    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}
+    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}{$($state_obj:tt)*}{$($as_bytes:tt)*}
         $(#[$struct_meta:meta])*
         impl EntryCompatible for $struct_name:ident {
             $($impl_body:tt)*
@@ -99,11 +119,11 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
         impl EntryCompatible for $struct_name {
             $($impl_body)*
         }
-        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$struct_name; $($deserializer)*}{$struct_name(&'a $struct_name), $($state)*}{$struct_name(&'a mut $struct_name), $($state_mut)*}
+        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$struct_name; $($deserializer)*}{$struct_name(&'a $struct_name), $($state)*}{$struct_name(&'a mut $struct_name), $($state_mut)*}{$struct_name($struct_name), $($state_obj)*}{Element::$struct_name($struct_name) => $struct_name.as_bytes(), $($as_bytes)*}
         $($tail)*);
     };
     // Who could possibly want non-eager evaluation here?  Sigh.
-    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}
+    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}{$($state_obj:tt)*}{$($as_bytes:tt)*}
         impl_EntryCompatible!($struct_name:ident, $($args:tt)*);
         $($tail:tt)*
     ) => {
@@ -118,10 +138,10 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
             }
         }
         impl_EntryCompatible!($struct_name, $($args)*);
-        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$struct_name; $($deserializer)*}{$struct_name(&'a $struct_name), $($state)*}{$struct_name(&'a mut $struct_name), $($state_mut)*}
+        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$struct_name; $($deserializer)*}{$struct_name(&'a $struct_name), $($state)*}{$struct_name(&'a mut $struct_name), $($state_mut)*}{$struct_name($struct_name), $($state_obj)*}{Element::$struct_name($struct_name) => $struct_name.as_bytes(), $($as_bytes)*}
         $($tail)*);
     };
-    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}
+    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}{$($state_obj:tt)*}{$($as_bytes:tt)*}
         $(#[$struct_meta:meta])*
         $struct_vis:vis
         struct $struct_name:ident {
@@ -133,19 +153,38 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
         $struct_vis
         struct $struct_name { $($struct_body)* }
 
-        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$($deserializer)*}{$($state)*}{$($state_mut)*}
+        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$($deserializer)*}{$($state)*}{$($state_mut)*}{$($state_obj)*}{$($as_bytes)*}
         $($tail)*);
     };
-    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}
+    // Who could possibly want non-eager evaluation here?  Sigh.
+    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}{$($state_obj:tt)*}{$($as_bytes:tt)*}
+        make_bitfield_serde! {
+            $(#[$struct_meta:meta])*
+            $struct_vis:vis
+            struct $struct_name:ident {
+                $($struct_body:tt)*
+            }
+        }
+        $($tail:tt)*
+    ) => {
+        make_bitfield_serde! {
+            $(#[$struct_meta])*
+            $struct_vis
+            struct $struct_name { $($struct_body)* }
+        }
+        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$($deserializer)*}{$($state)*}{$($state_mut)*}{$($state_obj)*}{$($as_bytes)*}
+        $($tail)*);
+    };
+    (@machine {$($deserializer:tt)*}{$($state:tt)*}{$($state_mut:tt)*}{$($state_obj:tt)*}{$($as_bytes:tt)*}
         $head:item
         $($tail:tt)*
     ) => {
         $head
-        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$($deserializer)*}{$($state)*}{$($state_mut)*}
+        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {$($deserializer)*}{$($state)*}{$($state_mut)*}{$($state_obj)*}{$($as_bytes)*}
         $($tail)*);
     };
     ($($tts:tt)*) => {
-        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {}{}{} $($tts)*);
+        $crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum!(@machine {}{}{}{}{} $($tts)*);
     };
 }
 

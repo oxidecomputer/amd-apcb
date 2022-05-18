@@ -3,7 +3,9 @@
 use modular_bitfield::prelude::*;
 //use crate::struct_accessors::make_accessors;
 
-#[derive(Debug, PartialEq, num_derive::FromPrimitive, Clone, Copy, BitfieldSpecifier)]
+#[derive(
+    Debug, PartialEq, num_derive::FromPrimitive, Clone, Copy, BitfieldSpecifier,
+)]
 #[non_exhaustive]
 #[bits = 8]
 pub enum ParameterTimePoint {
@@ -11,12 +13,13 @@ pub enum ParameterTimePoint {
     Any = 1,
 }
 
-#[derive(Debug, PartialEq, num_derive::FromPrimitive, Clone, Copy, BitfieldSpecifier)]
+#[derive(
+    Debug, PartialEq, num_derive::FromPrimitive, Clone, Copy, BitfieldSpecifier,
+)]
 #[non_exhaustive]
 #[bits = 13]
 pub enum ParameterTokenConfig {
     // Cbs
-
     Cbs00 = 0x00,
     Cbs01 = 0x01,
     Cbs02 = 0x02,
@@ -275,11 +278,9 @@ pub enum ParameterTokenConfig {
     Cbsff = 0xff,
 
     // Ccx
-
     CcxMinSevAsid = 0x0101,
 
     // Df
-
     DfGmiEncrypt = 0x0301,
     DfXgmiEncrypt = 0x0302,
     DfSaveRestoreMemEncrypt = 0x0303,
