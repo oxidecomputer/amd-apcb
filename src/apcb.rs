@@ -82,8 +82,8 @@ impl<'a> TryFrom<SerdeApcb<'_>> for Apcb<'a> {
         let buf =
             Cow::from(vec![0xFFu8; serde_apcb.header.apcb_size.get() as usize]);
         let mut apcb = Apcb::create(buf, 42, &ApcbIoOptions::default())?;
-        *apcb.header_mut() = serde_apcb.header;
-        apcb.header_mut().apcb_size =
+        *apcb.header_mut()? = serde_apcb.header;
+        apcb.header_mut()?.apcb_size =
             (serde_apcb.header.header_size.get() as u32).into();
         match serde_apcb.v3_header {
             Some(v3) => {
@@ -91,12 +91,13 @@ impl<'a> TryFrom<SerdeApcb<'_>> for Apcb<'a> {
             }
             None => {}
         }
+        // These groups already exist: We've just successfully parsed them,
+        // there's no reason the groupid should be invalid.
         for g in serde_apcb.groups {
             apcb.insert_group(
                 GroupId::from_u16(g.header.group_id.get()).unwrap(),
                 g.header.signature,
-            )
-            .unwrap();
+            )?;
         }
         for e in serde_apcb.entries {
             let buf = match e.body_as_buf() {
@@ -118,7 +119,7 @@ impl<'a> TryFrom<SerdeApcb<'_>> for Apcb<'a> {
                 }
             };
         }
-        apcb.update_checksum().unwrap();
+        apcb.update_checksum()?;
         Ok(apcb)
     }
 }
@@ -141,7 +142,12 @@ impl<'a> Serialize for Apcb<'a> {
         for g in &groups {
             entries.extend((g.entries()).collect::<Vec<_>>());
         }
-        state.serialize_field("header", &*self.header())?;
+        state.serialize_field(
+            "header",
+            &*self
+                .header()
+                .map_err(|_| serde::ser::Error::custom("invalid V2_HEADER"))?,
+        )?;
         let v3_header: Option<V3_HEADER_EXT> =
             self.v3_header_ext().as_ref().map(|h| **h);
         state.serialize_field("v3_header_ext", &v3_header)?;
@@ -400,7 +406,7 @@ impl<'a> Apcb<'a> {
     const ROME_VERSION: u16 = 0x30;
     pub const MAX_SIZE: usize = 0x2400;
 
-    pub fn header(&self) -> LayoutVerified<&[u8], V2_HEADER> {
+    pub fn header(&self) -> Result<LayoutVerified<&[u8], V2_HEADER>> {
         let (header, _) =
             LayoutVerified::<&[u8], V2_HEADER>::new_unaligned_from_prefix(
                 &*self.backing_store,
@@ -408,11 +414,12 @@ impl<'a> Apcb<'a> {
             .ok_or(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
                 "V2_HEADER",
-            ))
-            .unwrap();
-        header
+            ))?;
+        Ok(header)
     }
-    pub fn header_mut(&mut self) -> LayoutVerified<&mut [u8], V2_HEADER> {
+    pub fn header_mut(
+        &mut self,
+    ) -> Result<LayoutVerified<&mut [u8], V2_HEADER>> {
         #[cfg(not(feature = "serde"))]
         let bs: &mut [u8] = self.backing_store;
         #[cfg(feature = "serde")]
@@ -424,9 +431,8 @@ impl<'a> Apcb<'a> {
             .ok_or(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
                 "V2_HEADER",
-            ))
-            .unwrap();
-        header
+            ))?;
+        Ok(header)
     }
     pub fn v3_header_ext(
         &self,
@@ -559,12 +565,12 @@ impl<'a> Apcb<'a> {
         size_diff: i64,
     ) -> Result<GroupMutItem<'_>> {
         let old_used_size = self.used_size;
-        let apcb_size = self.header().apcb_size.get();
+        let apcb_size = self.header()?.apcb_size.get();
         if size_diff > 0 {
             let size_diff: u32 = (size_diff as u64)
                 .try_into()
                 .map_err(|_| Error::ArithmeticOverflow)?;
-            self.header_mut().apcb_size.set(
+            self.header_mut()?.apcb_size.set(
                 apcb_size.checked_add(size_diff).ok_or(Error::FileSystem(
                     FileSystemError::PayloadTooBig,
                     "HEADER_V2::apcb_size",
@@ -574,7 +580,7 @@ impl<'a> Apcb<'a> {
             let size_diff: u32 = ((-size_diff) as u64)
                 .try_into()
                 .map_err(|_| Error::ArithmeticOverflow)?;
-            self.header_mut().apcb_size.set(
+            self.header_mut()?.apcb_size.set(
                 apcb_size.checked_sub(size_diff).ok_or(Error::FileSystem(
                     FileSystemError::InconsistentHeader,
                     "HEADER_V2::apcb_size",
@@ -992,10 +998,10 @@ impl<'a> Apcb<'a> {
     }
 
     pub fn delete_group(&mut self, group_id: GroupId) -> Result<()> {
-        let apcb_size = self.header().apcb_size.get();
+        let apcb_size = self.header()?.apcb_size.get();
         let mut groups = self.groups_mut();
         let (offset, group_size) = groups.move_point_to(group_id)?;
-        self.header_mut().apcb_size.set(
+        self.header_mut()?.apcb_size.set(
             apcb_size.checked_sub(group_size as u32).ok_or(
                 Error::FileSystem(
                     FileSystemError::InconsistentHeader,
@@ -1049,7 +1055,7 @@ impl<'a> Apcb<'a> {
         }
 
         let size = size_of::<GROUP_HEADER>();
-        let old_apcb_size = self.header().apcb_size.get();
+        let old_apcb_size = self.header()?.apcb_size.get();
         let new_apcb_size = old_apcb_size
             .checked_add(size as u32)
             .ok_or(Error::OutOfSpace)?;
@@ -1059,7 +1065,7 @@ impl<'a> Apcb<'a> {
         if self.beginning_of_groups().len() < new_used_size {
             return Err(Error::OutOfSpace);
         }
-        self.header_mut().apcb_size.set(new_apcb_size);
+        self.header_mut()?.apcb_size.set(new_apcb_size);
         self.used_size = new_used_size;
 
         let mut beginning_of_group =
@@ -1274,13 +1280,13 @@ impl<'a> Apcb<'a> {
     }
 
     pub fn update_checksum(&mut self) -> Result<()> {
-        self.header_mut().checksum_byte = 0; // make calculate_checksum's job easier
+        self.header_mut()?.checksum_byte = 0; // make calculate_checksum's job easier
         let checksum_byte = Self::calculate_checksum(
-            &self.header(),
+            &self.header()?,
             &self.v3_header_ext(),
             self.beginning_of_groups(),
         )?;
-        self.header_mut().checksum_byte = checksum_byte;
+        self.header_mut()?.checksum_byte = checksum_byte;
         Ok(())
     }
 
@@ -1288,8 +1294,8 @@ impl<'a> Apcb<'a> {
     /// (including insertions and deletions). We update both the checksum
     /// and the unique_apcb_instance.
     pub fn save(&mut self) -> Result<()> {
-        let unique_apcb_instance = self.header().unique_apcb_instance.get();
-        self.header_mut()
+        let unique_apcb_instance = self.unique_apcb_instance()?;
+        self.header_mut()?
             .unique_apcb_instance
             .set(unique_apcb_instance.wrapping_add(1));
         self.update_checksum()?;
@@ -1347,15 +1353,14 @@ impl<'a> Apcb<'a> {
         let checksum_byte =
             Self::calculate_checksum(&header, &Some(v3_header_ext), rest)?;
 
-        let (mut header, _) = LayoutVerified::<&'_ mut [u8],
-V2_HEADER>::new_unaligned_from_prefix(backing_store).unwrap();
+        let (mut header, _) = LayoutVerified::<&'_ mut [u8], V2_HEADER>::new_unaligned_from_prefix(backing_store).unwrap();
         header.checksum_byte = checksum_byte;
         Self::load(bs, options)
     }
     /// Note: Each modification in the APCB causes the value of
     /// unique_apcb_instance to change.
-    pub fn unique_apcb_instance(&self) -> u32 {
-        self.header().unique_apcb_instance.get()
+    pub fn unique_apcb_instance(&self) -> Result<u32> {
+        Ok(self.header()?.unique_apcb_instance.get())
     }
     /// Constructs a attribute accessor proxy for the given combination of
     /// (INSTANCE_ID, BOARD_INSTANCE_MASK).  ENTRY_ID is inferred on access.

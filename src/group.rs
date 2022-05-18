@@ -507,7 +507,6 @@ impl<'a> GroupMutIter<'a> {
     }
 }
 
-//#[derive(Serialize, Deserialize, Debug)]
 #[derive(Debug)]
 pub struct GroupMutItem<'a> {
     pub(crate) header: &'a mut GROUP_HEADER,

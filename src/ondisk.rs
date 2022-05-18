@@ -169,111 +169,59 @@ type LU64 = U64<LittleEndian>;
 
 #[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive)]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct SerdeHex8(u8);
-
-#[cfg(feature = "serde")]
-impl serde::ser::Serialize for SerdeHex8 {
-    fn serialize<S>(
-        &self,
-        serializer: S,
-    ) -> core::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        SerHex::<StrictPfx>::serialize(&self.0, serializer)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::de::Deserialize<'de> for SerdeHex8 {
-    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        Ok(Self(SerHex::<StrictPfx>::deserialize(deserializer)?))
-    }
-}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct SerdeHex8(
+    #[cfg_attr(
+        feature = "serde",
+        serde(
+            serialize_with = "SerHex::<StrictPfx>::serialize",
+            deserialize_with = "SerHex::<StrictPfx>::deserialize"
+        )
+    )]
+    u8,
+);
 
 #[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive)]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct SerdeHex16(u16);
-
-#[cfg(feature = "serde")]
-impl serde::ser::Serialize for SerdeHex16 {
-    fn serialize<S>(
-        &self,
-        serializer: S,
-    ) -> core::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        SerHex::<StrictPfx>::serialize(&self.0, serializer)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::de::Deserialize<'de> for SerdeHex16 {
-    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        Ok(Self(SerHex::<StrictPfx>::deserialize(deserializer)?))
-    }
-}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct SerdeHex16(
+    #[cfg_attr(
+        feature = "serde",
+        serde(
+            serialize_with = "SerHex::<StrictPfx>::serialize",
+            deserialize_with = "SerHex::<StrictPfx>::deserialize"
+        )
+    )]
+    u16,
+);
 
 #[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive)]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct SerdeHex32(u32);
-
-#[cfg(feature = "serde")]
-impl serde::ser::Serialize for SerdeHex32 {
-    fn serialize<S>(
-        &self,
-        serializer: S,
-    ) -> core::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        SerHex::<StrictPfx>::serialize(&self.0, serializer)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::de::Deserialize<'de> for SerdeHex32 {
-    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        Ok(Self(SerHex::<StrictPfx>::deserialize(deserializer)?))
-    }
-}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct SerdeHex32(
+    #[cfg_attr(
+        feature = "serde",
+        serde(
+            serialize_with = "SerHex::<StrictPfx>::serialize",
+            deserialize_with = "SerHex::<StrictPfx>::deserialize"
+        )
+    )]
+    u32,
+);
 
 #[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive)]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct SerdeHex64(u64);
-
-#[cfg(feature = "serde")]
-impl serde::ser::Serialize for SerdeHex64 {
-    fn serialize<S>(
-        &self,
-        serializer: S,
-    ) -> core::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        SerHex::<StrictPfx>::serialize(&self.0, serializer)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::de::Deserialize<'de> for SerdeHex64 {
-    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        Ok(Self(SerHex::<StrictPfx>::deserialize(deserializer)?))
-    }
-}
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct SerdeHex64(
+    #[cfg_attr(
+        feature = "serde",
+        serde(
+            serialize_with = "SerHex::<StrictPfx>::serialize",
+            deserialize_with = "SerHex::<StrictPfx>::deserialize"
+        )
+    )]
+    u64,
+);
 
 impl From<u8> for SerdeHex8 {
     fn from(lu: u8) -> Self {
