@@ -83,11 +83,13 @@ impl<'a> TryFrom<SerdeApcb<'_>> for Apcb<'a> {
             Cow::from(vec![0xFFu8; serde_apcb.header.apcb_size.get() as usize]);
         let mut apcb = Apcb::create(buf, 42, &ApcbIoOptions::default())?;
         *apcb.header_mut()? = serde_apcb.header;
+        // We reset apcb_size to header_size as this is naturally extended as we
+        // add groups and entries.
         apcb.header_mut()?.apcb_size =
             (serde_apcb.header.header_size.get() as u32).into();
         match serde_apcb.v3_header {
             Some(v3) => {
-                apcb.v3_header_ext_mut().map(|mut v| *v = v3);
+                apcb.v3_header_ext_mut()?.map(|mut v| *v = v3);
             }
             None => {}
         }
@@ -114,7 +116,8 @@ impl<'a> TryFrom<SerdeApcb<'_>> for Apcb<'a> {
             ) {
                 Ok(_) => {}
                 Err(err) => {
-                    print!("Deserializing entry {:?} failed with {:?}", e, err);
+                    // print!("Deserializing entry {:?} failed with {:?}", e,
+                    // err);
                     return Err(err);
                 }
             };
@@ -136,8 +139,11 @@ impl<'a> Serialize for Apcb<'a> {
         // In a better world we would implement From<Apcb> for SerdeApcb
         // however we can't do that as we'd be returning borrowed data from
         // Apcb.
-        let mut state = serializer.serialize_struct("Apcb", 5)?;
-        let groups = self.groups().collect::<Vec<_>>();
+        let mut state = serializer.serialize_struct("Apcb", 4)?;
+        let groups = self
+            .groups()
+            .map_err(|e| serde::ser::Error::custom(format!("{:?}", e)))?
+            .collect::<Vec<_>>();
         let mut entries: Vec<EntryItem<'_>> = Vec::new();
         for g in &groups {
             entries.extend((g.entries()).collect::<Vec<_>>());
@@ -148,8 +154,11 @@ impl<'a> Serialize for Apcb<'a> {
                 .header()
                 .map_err(|_| serde::ser::Error::custom("invalid V2_HEADER"))?,
         )?;
-        let v3_header: Option<V3_HEADER_EXT> =
-            self.v3_header_ext().as_ref().map(|h| **h);
+        let v3_header: Option<V3_HEADER_EXT> = self
+            .v3_header_ext()
+            .map_err(|e| serde::ser::Error::custom(format!("{:?}", e)))?
+            .as_ref()
+            .map(|h| **h);
         state.serialize_field("v3_header_ext", &v3_header)?;
         state.serialize_field("groups", &groups)?;
         state.serialize_field("entries", &entries)?;
@@ -436,7 +445,7 @@ impl<'a> Apcb<'a> {
     }
     pub fn v3_header_ext(
         &self,
-    ) -> Option<LayoutVerified<&[u8], V3_HEADER_EXT>> {
+    ) -> Result<Option<LayoutVerified<&[u8], V3_HEADER_EXT>>> {
         let (header, rest) =
             LayoutVerified::<&[u8], V2_HEADER>::new_unaligned_from_prefix(
                 &*self.backing_store,
@@ -444,8 +453,7 @@ impl<'a> Apcb<'a> {
             .ok_or(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
                 "V2_HEADER",
-            ))
-            .unwrap();
+            ))?;
         let v3_header_ext = if usize::from(header.header_size)
             == size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>()
         {
@@ -454,16 +462,16 @@ impl<'a> Apcb<'a> {
                 .ok_or(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
                 "V3_HEADER_EXT",
-            )).unwrap();
+            ))?;
             Some(header_ext)
         } else {
             None
         };
-        v3_header_ext
+        Ok(v3_header_ext)
     }
     pub fn v3_header_ext_mut(
         &mut self,
-    ) -> Option<LayoutVerified<&mut [u8], V3_HEADER_EXT>> {
+    ) -> Result<Option<LayoutVerified<&mut [u8], V3_HEADER_EXT>>> {
         #[cfg(not(feature = "serde"))]
         let bs: &mut [u8] = self.backing_store;
         #[cfg(feature = "serde")]
@@ -475,8 +483,7 @@ impl<'a> Apcb<'a> {
             .ok_or(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
                 "V2_HEADER",
-            ))
-            .unwrap();
+            ))?;
         let v3_header_ext = if usize::from(header.header_size)
             == size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>()
         {
@@ -485,62 +492,64 @@ impl<'a> Apcb<'a> {
                 .ok_or(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
                 "V3_HEADER_EXT",
-            )).unwrap();
+            ))?;
             Some(header_ext)
         } else {
             None
         };
-        v3_header_ext
+        Ok(v3_header_ext)
     }
-    pub fn beginning_of_groups(&self) -> &'_ [u8] {
+    pub fn beginning_of_groups(&self) -> Result<&'_ [u8]> {
         let mut offset = size_of::<V2_HEADER>();
-        if self.v3_header_ext().is_some() {
+        if self.v3_header_ext()?.is_some() {
             offset = size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>();
         }
-        &self.backing_store[offset..]
+        Ok(&self.backing_store[offset..])
     }
-    pub fn beginning_of_groups_mut(&mut self) -> &'_ mut [u8] {
+    pub fn beginning_of_groups_mut(&mut self) -> Result<&'_ mut [u8]> {
         let mut offset = size_of::<V2_HEADER>();
-        if self.v3_header_ext().is_some() {
+        if self.v3_header_ext()?.is_some() {
             offset = size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>();
         }
         #[cfg(feature = "serde")]
-        return &mut self.backing_store.to_mut()[offset..];
+        return Ok(&mut self.backing_store.to_mut()[offset..]);
         #[cfg(not(feature = "serde"))]
-        &mut self.backing_store[offset..]
+        Ok(&mut self.backing_store[offset..])
     }
-    pub fn groups(&self) -> ApcbIter<'_> {
-        ApcbIter {
-            buf: &*self.beginning_of_groups(),
+    pub fn groups(&self) -> Result<ApcbIter<'_>> {
+        Ok(ApcbIter {
+            buf: &*self.beginning_of_groups()?,
             remaining_used_size: self.used_size,
-        }
+        })
     }
-    pub fn group(&self, group_id: GroupId) -> Option<GroupItem<'_>> {
-        for group in self.groups() {
+    pub fn group(&self, group_id: GroupId) -> Result<Option<GroupItem<'_>>> {
+        for group in self.groups()? {
             if group.id() == group_id {
-                return Some(group);
+                return Ok(Some(group));
             }
         }
-        None
+        Ok(None)
     }
     pub fn validate(&self) -> Result<()> {
-        self.groups().validate()
+        self.groups()?.validate()
     }
-    pub fn groups_mut(&mut self) -> ApcbIterMut<'_> {
+    pub fn groups_mut(&mut self) -> Result<ApcbIterMut<'_>> {
         let used_size = self.used_size;
-        ApcbIterMut {
-            buf: &mut *self.beginning_of_groups_mut(),
+        Ok(ApcbIterMut {
+            buf: &mut *self.beginning_of_groups_mut()?,
             remaining_used_size: used_size,
-        }
+        })
     }
-    pub fn group_mut(&mut self, group_id: GroupId) -> Option<GroupMutItem<'_>> {
-        //let group_id = group_id.to_u16().unwrap();
-        for group in self.groups_mut() {
+    pub fn group_mut(
+        &mut self,
+        group_id: GroupId,
+    ) -> Result<Option<GroupMutItem<'_>>> {
+        for group in self.groups_mut()? {
             if group.id() == group_id {
-                return Some(group);
+                return Ok(Some(group));
             }
         }
-        None
+        Ok(None)
     }
     /// Note: BOARD_INSTANCE_MASK needs to be exact.
     pub fn delete_entry(
@@ -550,7 +559,8 @@ impl<'a> Apcb<'a> {
         board_instance_mask: BoardInstances,
     ) -> Result<()> {
         let group_id = entry_id.group_id();
-        let mut group = self.group_mut(group_id).ok_or(Error::GroupNotFound)?;
+        let mut group =
+            self.group_mut(group_id)?.ok_or(Error::GroupNotFound)?;
         let size_diff =
             group.delete_entry(entry_id, instance_id, board_instance_mask)?;
         if size_diff > 0 {
@@ -588,8 +598,8 @@ impl<'a> Apcb<'a> {
             );
         }
 
-        let self_beginning_of_groups_len = self.beginning_of_groups().len();
-        let mut groups = self.groups_mut();
+        let self_beginning_of_groups_len = self.beginning_of_groups()?.len();
+        let mut groups = self.groups_mut()?;
         let (offset, old_group_size) = groups.move_point_to(group_id)?;
         if size_diff > 0 {
             // Grow
@@ -618,7 +628,7 @@ impl<'a> Apcb<'a> {
             }
             let group = groups.next().ok_or(Error::GroupNotFound)?;
             group.header.group_size.set(new_group_size);
-            let buf = &mut self.beginning_of_groups_mut()[offset..];
+            let buf = &mut self.beginning_of_groups_mut()?[offset..];
             if old_group_size as usize > old_used_size {
                 return Err(Error::FileSystem(
                     FileSystemError::InconsistentHeader,
@@ -651,14 +661,14 @@ impl<'a> Apcb<'a> {
             ))?;
             let group = groups.next().ok_or(Error::GroupNotFound)?;
             group.header.group_size.set(new_group_size);
-            let buf = &mut self.beginning_of_groups_mut()[offset..];
+            let buf = &mut self.beginning_of_groups_mut()?[offset..];
             buf.copy_within(
                 (old_group_size as usize)..old_used_size,
                 new_group_size as usize,
             );
             self.used_size = new_used_size;
         }
-        self.group_mut(group_id).ok_or(Error::GroupNotFound)
+        self.group_mut(group_id)?.ok_or(Error::GroupNotFound)
     }
     /// Note: board_instance_mask needs to be exact.
     #[pre]
@@ -673,7 +683,8 @@ impl<'a> Apcb<'a> {
         payload_initializer: &mut dyn FnMut(&mut [u8]),
     ) -> Result<()> {
         let group_id = entry_id.group_id();
-        let mut group = self.group_mut(group_id).ok_or(Error::GroupNotFound)?;
+        let mut group =
+            self.group_mut(group_id)?.ok_or(Error::GroupNotFound)?;
         match group.entry_exact_mut(entry_id, instance_id, board_instance_mask)
         {
             None => {}
@@ -935,7 +946,7 @@ impl<'a> Apcb<'a> {
     ) -> Result<()> {
         let group_id = entry_id.group_id();
         // Make sure that the entry exists before resizing the group
-        let group = self.group(group_id).ok_or(Error::GroupNotFound)?;
+        let group = self.group(group_id)?.ok_or(Error::GroupNotFound)?;
         let entry = group
             .entry_exact(entry_id, instance_id, board_instance_mask)
             .ok_or(Error::EntryNotFound)?;
@@ -986,7 +997,8 @@ impl<'a> Apcb<'a> {
     ) -> Result<()> {
         let group_id = entry_id.group_id();
         // Make sure that the entry exists before resizing the group
-        let mut group = self.group_mut(group_id).ok_or(Error::GroupNotFound)?;
+        let mut group =
+            self.group_mut(group_id)?.ok_or(Error::GroupNotFound)?;
         let token_diff = group.delete_token(
             entry_id,
             instance_id,
@@ -999,7 +1011,7 @@ impl<'a> Apcb<'a> {
 
     pub fn delete_group(&mut self, group_id: GroupId) -> Result<()> {
         let apcb_size = self.header()?.apcb_size.get();
-        let mut groups = self.groups_mut();
+        let mut groups = self.groups_mut()?;
         let (offset, group_size) = groups.move_point_to(group_id)?;
         self.header_mut()?.apcb_size.set(
             apcb_size.checked_sub(group_size as u32).ok_or(
@@ -1009,7 +1021,7 @@ impl<'a> Apcb<'a> {
                 ),
             )?,
         );
-        let buf = &mut self.beginning_of_groups_mut()[offset..];
+        let buf = &mut self.beginning_of_groups_mut()?[offset..];
         buf.copy_within(group_size..(apcb_size as usize), 0);
         self.used_size =
             self.used_size
@@ -1043,7 +1055,7 @@ impl<'a> Apcb<'a> {
             return Err(Error::GroupTypeMismatch);
         }
 
-        let mut groups = self.groups_mut();
+        let mut groups = self.groups_mut()?;
         match groups.move_point_to(group_id) {
             Err(Error::GroupNotFound) => {}
             Err(x) => {
@@ -1062,14 +1074,14 @@ impl<'a> Apcb<'a> {
         let old_used_size = self.used_size;
         let new_used_size =
             old_used_size.checked_add(size).ok_or(Error::OutOfSpace)?;
-        if self.beginning_of_groups().len() < new_used_size {
+        if self.beginning_of_groups()?.len() < new_used_size {
             return Err(Error::OutOfSpace);
         }
         self.header_mut()?.apcb_size.set(new_apcb_size);
         self.used_size = new_used_size;
 
         let mut beginning_of_group =
-            &mut self.beginning_of_groups_mut()[old_used_size..new_used_size];
+            &mut self.beginning_of_groups_mut()?[old_used_size..new_used_size];
 
         let mut header = take_header_from_collection_mut::<GROUP_HEADER>(
             &mut beginning_of_group,
@@ -1270,7 +1282,7 @@ impl<'a> Apcb<'a> {
             used_size,
         };
 
-        match result.groups().validate() {
+        match result.groups()?.validate() {
             Ok(_) => {}
             Err(e) => {
                 return Err(e);
@@ -1283,8 +1295,8 @@ impl<'a> Apcb<'a> {
         self.header_mut()?.checksum_byte = 0; // make calculate_checksum's job easier
         let checksum_byte = Self::calculate_checksum(
             &self.header()?,
-            &self.v3_header_ext(),
-            self.beginning_of_groups(),
+            &self.v3_header_ext()?,
+            self.beginning_of_groups()?,
         )?;
         self.header_mut()?.checksum_byte = checksum_byte;
         Ok(())

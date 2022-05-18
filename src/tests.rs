@@ -27,7 +27,7 @@ mod tests {
         let apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
-        let groups = apcb.groups();
+        let groups = apcb.groups().unwrap();
         for _item in groups {
             assert!(false);
         }
@@ -40,7 +40,7 @@ mod tests {
         let apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
-        let groups = apcb.groups();
+        let groups = apcb.groups().unwrap();
         for _ in groups {
             assert!(false);
         }
@@ -53,7 +53,7 @@ mod tests {
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
                 .unwrap();
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
-        let groups = apcb.groups();
+        let groups = apcb.groups().unwrap();
         let mut count = 0;
         for _item in groups {
             count += 1;
@@ -70,7 +70,7 @@ mod tests {
                 .unwrap();
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
-        let mut groups = apcb.groups();
+        let mut groups = apcb.groups().unwrap();
         let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() == *b"PSPG");
@@ -93,7 +93,7 @@ mod tests {
         apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
-        let mut groups = apcb.groups();
+        let mut groups = apcb.groups().unwrap();
         let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() == *b"MEMG");
@@ -113,7 +113,7 @@ mod tests {
         apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
-        let mut groups = apcb.groups();
+        let mut groups = apcb.groups().unwrap();
         let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() == *b"PSPG");
@@ -139,7 +139,7 @@ mod tests {
         apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
-        let mut groups = apcb.groups();
+        let mut groups = apcb.groups().unwrap();
         let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() == *b"PSPG");
@@ -161,7 +161,7 @@ mod tests {
         apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
-        let groups = apcb.groups();
+        let groups = apcb.groups().unwrap();
         for _group in groups {
             assert!(false);
         }
@@ -206,7 +206,7 @@ mod tests {
         apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
-        let mut groups = apcb.groups();
+        let mut groups = apcb.groups().unwrap();
         let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() == *b"PSPG");
@@ -258,7 +258,7 @@ mod tests {
         apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
-        let mut groups = apcb.groups();
+        let mut groups = apcb.groups().unwrap();
 
         let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
@@ -317,7 +317,7 @@ mod tests {
         apcb.save().unwrap();
         let mut apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
-        let mut groups = apcb.groups_mut();
+        let mut groups = apcb.groups_mut().unwrap();
 
         let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
@@ -430,7 +430,7 @@ mod tests {
         apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
-        let mut groups = apcb.groups();
+        let mut groups = apcb.groups().unwrap();
 
         let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
@@ -535,7 +535,7 @@ mod tests {
         apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
-        let mut groups = apcb.groups();
+        let mut groups = apcb.groups().unwrap();
 
         let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
@@ -714,7 +714,7 @@ mod tests {
         apcb.save().unwrap();
         let mut apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
-        let mut groups = apcb.groups_mut();
+        let mut groups = apcb.groups_mut().unwrap();
 
         let mut group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Df);
@@ -910,7 +910,7 @@ mod tests {
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
 
-        let mut groups = apcb.groups();
+        let mut groups = apcb.groups().unwrap();
 
         let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
@@ -1061,7 +1061,7 @@ mod tests {
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
 
-        let mut groups = apcb.groups();
+        let mut groups = apcb.groups().unwrap();
 
         let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
@@ -1199,7 +1199,7 @@ mod tests {
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
 
-        let mut groups = apcb.groups();
+        let mut groups = apcb.groups().unwrap();
 
         let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
@@ -1297,7 +1297,7 @@ mod tests {
         apcb.save().unwrap();
         let mut apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
-        let mut groups = apcb.groups_mut();
+        let mut groups = apcb.groups_mut().unwrap();
 
         let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
@@ -1418,7 +1418,7 @@ mod tests {
         apcb.save().unwrap();
         let mut apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
-        let mut groups = apcb.groups_mut();
+        let mut groups = apcb.groups_mut().unwrap();
 
         let mut group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
@@ -1503,7 +1503,7 @@ mod tests {
         apcb.save().unwrap();
         let mut apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
-        let mut groups = apcb.groups_mut();
+        let mut groups = apcb.groups_mut().unwrap();
 
         let mut group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);

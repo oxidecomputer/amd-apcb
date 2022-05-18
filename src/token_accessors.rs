@@ -51,7 +51,7 @@ impl<'a, 'b> TokensMut<'a, 'b> {
     ) -> Result<u32> {
         let group = self
             .apcb
-            .group(GroupId::Token)
+            .group(GroupId::Token)?
             .ok_or_else(|| Error::GroupNotFound)?;
         let entry = group
             .entry_exact(
@@ -115,7 +115,7 @@ impl<'a, 'b> TokensMut<'a, 'b> {
                 )?;
             }
             Err(Error::TokenUniqueKeyViolation) => {
-                let mut group = self.apcb.group_mut(GroupId::Token).unwrap();
+                let mut group = self.apcb.group_mut(GroupId::Token)?.unwrap();
                 let mut entry = group
                     .entry_exact_mut(
                         entry_id,
@@ -163,7 +163,7 @@ impl<'a, 'b> Tokens<'a, 'b> {
     ) -> Result<u32> {
         let group = self
             .apcb
-            .group(GroupId::Token)
+            .group(GroupId::Token)?
             .ok_or_else(|| Error::GroupNotFound)?;
         let entry = group
             .entry_exact(
