@@ -2360,10 +2360,50 @@ pub mod memory {
         #[repr(u32)]
         #[derive(Clone, Copy)]
         pub struct RdimmDdr4Voltages {
-            pub v_1_2: bool | pub get bool : pub set bool,
+            pub _1_2V: bool | pub get bool : pub set bool,
             pub _reserved_1 || SerdeHex32 : B31,
             // all = 7
         }
+    }
+    macro_rules! define_compat_bitfield_field {
+        ($compat_field:ident, $current_field:ident) => {
+            paste! {
+                #[deprecated(note = "The name of this fn has since been fixed to '" $current_field "_or_err'")]
+                pub fn [<$compat_field _or_err>](&self)
+                    -> core::result::Result<bool,
+                       modular_bitfield::error::InvalidBitPattern<<bool as modular_bitfield::Specifier>::Bytes>>
+                {
+                    self.[<$current_field _or_err>]()
+                }
+                #[deprecated(note = "The name of this fn has since been fixed to '" $current_field "'")]
+                pub fn [<$compat_field>](&self) -> bool {
+                    self.[<$current_field>]()
+                }
+                #[deprecated(note = "The name of this fn has since been fixed to 'with_" $current_field "'")]
+                pub fn [<with_ $compat_field>](self, new_val: bool) -> Self {
+                   self.[<with_ $current_field>](new_val)
+                }
+                #[deprecated(note = "The name of this fn has since been fixed to 'with_" $current_field "_checked'")]
+                pub fn [<with_ $compat_field _checked>](self, new_val: bool)
+                    -> core::result::Result<Self, modular_bitfield::error::OutOfBounds>
+                {
+                    self.[<with_ $current_field _checked>](new_val)
+                }
+                #[deprecated(note = "The name of this fn has since been fixed to 'set_" $current_field "_checked'")]
+                pub fn [<set_ $compat_field _checked>](&mut self, new_val: bool)
+                    -> core::result::Result<(), modular_bitfield::error::OutOfBounds>
+                {
+                    self.[<set_ $current_field _checked>](new_val)
+                }
+                #[deprecated(note = "The name of this fn has since been fixed to 'set_" $current_field "'")]
+                pub fn [<set_ $compat_field>](&mut self, new_val: bool) {
+                    self.[<set_ $current_field>](new_val)
+                }
+            }
+        }
+    }
+    impl RdimmDdr4Voltages {
+        define_compat_bitfield_field!(v_1_2, _1_2V);
     }
     impl_bitfield_primitive_conversion!(RdimmDdr4Voltages, 0b1, u32);
     impl RdimmDdr4Voltages {
@@ -2372,7 +2412,7 @@ pub mod memory {
         }
         pub fn default() -> Self {
             let mut r = Self::new();
-            r.set_v_1_2(true);
+            r.set__1_2V(true);
             r
         }
     }
@@ -2476,12 +2516,17 @@ pub mod memory {
         #[repr(u32)]
         #[derive(Clone, Copy)]
         pub struct UdimmDdr4Voltages {
-            pub v_1_5: bool | pub get bool : pub set bool,
-            pub v_1_35: bool | pub get bool : pub set bool,
-            pub v_1_25: bool | pub get bool : pub set bool,
+            pub _1_5V: bool | pub get bool : pub set bool,
+            pub _1_35V: bool | pub get bool : pub set bool,
+            pub _1_25V: bool | pub get bool : pub set bool,
             // all = 7
             pub _reserved_1 || SerdeHex32 : B29,
         }
+    }
+    impl UdimmDdr4Voltages {
+        define_compat_bitfield_field!(v_1_5, _1_5V);
+        define_compat_bitfield_field!(v_1_35, _1_35V);
+        define_compat_bitfield_field!(v_1_25, _1_25V);
     }
     impl_bitfield_primitive_conversion!(UdimmDdr4Voltages, 0b111, u32);
     impl UdimmDdr4Voltages {
@@ -2566,10 +2611,13 @@ pub mod memory {
         #[repr(u32)]
         #[derive(Clone, Copy)]
         pub struct LrdimmDdr4Voltages {
-            pub v_1_2: bool | pub get bool : pub set bool,
+            pub _1_2V: bool | pub get bool : pub set bool,
             // all = 7
             pub _reserved_1 || SerdeHex32 : B31,
         }
+    }
+    impl LrdimmDdr4Voltages {
+        define_compat_bitfield_field!(v_1_2, _1_2V);
     }
     impl_bitfield_primitive_conversion!(LrdimmDdr4Voltages, 0b1, u32);
     impl LrdimmDdr4Voltages {
@@ -2578,7 +2626,7 @@ pub mod memory {
         }
         pub fn default() -> Self {
             let mut lr = Self::new();
-            lr.set_v_1_2(true);
+            lr.set__1_2V(true);
             lr
         }
     }
@@ -5942,19 +5990,40 @@ pub enum MemDataPoison {
 pub enum MemMaxActivityCount {
     Untested = 0,
     #[cfg_attr(feature = "serde", serde(rename="700000"))]
-    _700K = 1,
+    _700000 = 1,
     #[cfg_attr(feature = "serde", serde(rename="600000"))]
-    _600K = 2,
+    _600000 = 2,
     #[cfg_attr(feature = "serde", serde(rename="500000"))]
-    _500K = 3,
+    _500000 = 3,
     #[cfg_attr(feature = "serde", serde(rename="400000"))]
-    _400K = 4,
+    _400000 = 4,
     #[cfg_attr(feature = "serde", serde(rename="300000"))]
-    _300K = 5,
+    _300000 = 5,
     #[cfg_attr(feature = "serde", serde(rename="200000"))]
-    _200K = 6,
+    _200000 = 6,
     Unlimited = 8,
     Auto = 0xff,
+}
+
+impl MemMaxActivityCount {
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_700000'")]
+    pub const _700K: Self = Self::_700000;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_600000'")]
+    pub const _600K: Self = Self::_600000;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_500000'")]
+    pub const _500K: Self = Self::_500000;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_400000'")]
+    pub const _400K: Self = Self::_400000;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_300000'")]
+    pub const _300K: Self = Self::_300000;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_200000'")]
+    pub const _200K: Self = Self::_200000;
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
@@ -6045,16 +6114,34 @@ pub enum MemNvdimmPowerSource {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemRdimmTimingCmdParLatency {
     #[cfg_attr(feature = "serde", serde(rename="1 nCK"))]
-    _1_nCK = 0, // not valid in gear-down mode
+    _1nCK = 0, // not valid in gear-down mode
     #[cfg_attr(feature = "serde", serde(rename="2 nCK"))]
-    _2_nCK = 1,
+    _2nCK = 1,
     #[cfg_attr(feature = "serde", serde(rename="3 nCK"))]
-    _3_nCK = 2, // not valid in gear-down mode
+    _3nCK = 2, // not valid in gear-down mode
     #[cfg_attr(feature = "serde", serde(rename="4 nCK"))]
-    _4_nCK = 3,
+    _4nCK = 3,
     #[cfg_attr(feature = "serde", serde(rename="0 nCK"))]
-    _0_nCK = 4, // only valid if parity checking and CAL modes are disabled
+    _0nCK = 4, // only valid if parity checking and CAL modes are disabled
     Auto = 0xff,
+}
+
+impl MemRdimmTimingCmdParLatency {
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_1nCK'")]
+    pub const _1_nCK: Self = Self::_1nCK;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_2nCK'")]
+    pub const _2_nCK: Self = Self::_2nCK;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_3nCK'")]
+    pub const _3_nCK: Self = Self::_3nCK;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_4nCK'")]
+    pub const _4_nCK: Self = Self::_4nCK;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_0nCK'")]
+    pub const _0_nCK: Self = Self::_0nCK;
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -6214,12 +6301,24 @@ pub enum DfRemapAt1TiB {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfXgmiLinkConfig {
     #[cfg_attr(feature = "serde", serde(rename="2 links connected"))]
-    _2_links_connected = 0,
+    _2links_connected = 0,
     #[cfg_attr(feature = "serde", serde(rename="3 links connected"))]
-    _3_links_connected = 1,
+    _3links_connected = 1,
     #[cfg_attr(feature = "serde", serde(rename="4 links connected"))]
-    _4_links_connected = 2,
+    _4links_connected = 2,
     Auto = 3,
+}
+
+impl DfXgmiLinkConfig {
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_2links_connected'")]
+    pub const _2_links_connected: Self = Self::_2links_connected;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_3links_connected'")]
+    pub const _3_links_connected: Self = Self::_3links_connected;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_4links_connected'")]
+    pub const _4_links_connected: Self = Self::_4links_connected;
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
@@ -6238,20 +6337,44 @@ pub enum DfPstateModeSelect {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum GnbSmuDfPstateFclkLimit {
     #[cfg_attr(feature = "serde", serde(rename="1600 MHz"))]
-    _1600_Mhz = 0,
+    _1600MHz = 0,
     #[cfg_attr(feature = "serde", serde(rename="1467 MHz"))]
-    _1467_Mhz = 1,
+    _1467MHz = 1,
     #[cfg_attr(feature = "serde", serde(rename="1333 MHz"))]
-    _1333_MHz = 2,
+    _1333MHz = 2,
     #[cfg_attr(feature = "serde", serde(rename="1200 MHz"))]
-    _1200_MHz = 3,
+    _1200MHz = 3,
     #[cfg_attr(feature = "serde", serde(rename="1067 MHz"))]
-    _1067_MHz = 4,
+    _1067MHz = 4,
     #[cfg_attr(feature = "serde", serde(rename="933 MHz"))]
-    _933_MHz = 5,
+    _933MHz = 5,
     #[cfg_attr(feature = "serde", serde(rename="800 MHz"))]
-    _800_MHz = 6,
+    _800MHz = 6,
     Auto = 0xff,
+}
+
+impl GnbSmuDfPstateFclkLimit {
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_1600MHz'")]
+    const _1600_Mhz: Self = Self::_1600MHz;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_1467MHz'")]
+    const _1467_Mhz: Self = Self::_1467MHz;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_1333MHz'")]
+    const _1333_Mhz: Self = Self::_1333MHz;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_1200MHz'")]
+    const _1200_Mhz: Self = Self::_1200MHz;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_1067MHz'")]
+    const _1067_Mhz: Self = Self::_1067MHz;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_933MHz'")]
+    const _933_Mhz: Self = Self::_933MHz;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_800MHz'")]
+    const _800_Mhz: Self = Self::_800MHz;
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
@@ -6383,11 +6506,23 @@ pub enum MemMbistPatternSelect {
 pub enum MemMbistAggressorsChannels {
     Disabled = 0,
     #[cfg_attr(feature = "serde", serde(rename="1 aggressor/(2 ch)"))]
-    _1_AggressorsPer2Channels = 1,
+    _1AggressorsPer2Channels = 1,
     #[cfg_attr(feature = "serde", serde(rename="3 aggressor/(4 ch)"))]
-    _3_AggressorsPer4Channels = 3,
+    _3AggressorsPer4Channels = 3,
     #[cfg_attr(feature = "serde", serde(rename="7 aggressor/(8 ch)"))]
-    _7_AggressorsPer8Channels = 7,
+    _7AggressorsPer8Channels = 7,
+}
+
+impl MemMbistAggressorsChannels {
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_700000'")]
+    pub const _1_AggressorsPer2Channels: Self = Self::_1AggressorsPer2Channels;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_700000'")]
+    pub const _3_AggressorsPer4Channels: Self = Self::_3AggressorsPer4Channels;
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to '_700000'")]
+    pub const _7_AggressorsPer8Channels: Self = Self::_7AggressorsPer8Channels;
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
@@ -6405,12 +6540,24 @@ pub enum MemMbistTestMode {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemMbistDataEyeType {
     #[cfg_attr(feature = "serde", serde(rename="1D Voltage"))]
-    _1dVolate = 0,
+    _1dVoltage = 0,
     #[cfg_attr(feature = "serde", serde(rename="1D Timing"))]
     _1dTiming = 1,
     #[cfg_attr(feature = "serde", serde(rename="2D Full Data Eye"))]
     _2dFullDataEye = 2,
     WorstCaseMarginOnly = 3,
+}
+
+impl MemMbistDataEyeType {
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "This variant had a typo and has since been fixed to '_1dVoltage'")]
+    pub const _1dVolate: Self = Self::_1dVoltage;
+}
+
+#[test]
+#[allow(deprecated)]
+fn test_volate() {
+    assert!(MemMbistDataEyeType::_1dVolate == MemMbistDataEyeType::_1dVoltage);
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
