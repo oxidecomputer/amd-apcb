@@ -1589,9 +1589,13 @@ pub mod df {
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum SlinkRegionInterleavingSize {
+        #[cfg_attr(feature = "serde", serde(rename="256 B"))]
         _256B = 0,
+        #[cfg_attr(feature = "serde", serde(rename="512 B"))]
         _512B = 1,
+        #[cfg_attr(feature = "serde", serde(rename="1024 B"))]
         _1024B = 2,
+        #[cfg_attr(feature = "serde", serde(rename="2048 B"))]
         _2048B = 3,
         Auto = 7,
     }
@@ -2012,8 +2016,11 @@ pub mod memory {
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum PortSize {
+        #[cfg_attr(feature = "serde", serde(rename="8 Bit"))]
         _8Bit = 1,
+        #[cfg_attr(feature = "serde", serde(rename="16 Bit"))]
         _16Bit = 2,
+        #[cfg_attr(feature = "serde", serde(rename="32 Bit"))]
         _32Bit = 4,
     }
     impl Default for PortSize {
@@ -2177,11 +2184,23 @@ pub mod memory {
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum CadBusClkDriveStrength {
         Auto = 0xFF,
+        #[cfg_attr(feature = "serde", serde(rename="120 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias="120 Ohm"))]
         _120Ohm = 0,
+        #[cfg_attr(feature = "serde", serde(rename="60 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias="60 Ohm"))]
         _60Ohm = 1,
+        #[cfg_attr(feature = "serde", serde(rename="40 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias="40 Ohm"))]
         _40Ohm = 3,
+        #[cfg_attr(feature = "serde", serde(rename="30 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias="30 Ohm"))]
         _30Ohm = 7,
+        #[cfg_attr(feature = "serde", serde(rename="24 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias="24 Ohm"))]
         _24Ohm = 15,
+        #[cfg_attr(feature = "serde", serde(rename="20 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias="20 Ohm"))]
         _20Ohm = 31,
     }
 
@@ -2660,12 +2679,26 @@ pub mod memory {
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum RttNom {
         Off = 0,
+        #[cfg_attr(feature = "serde", serde(rename="60 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias="60 Ohm"))]
         _60Ohm = 1,
+        #[cfg_attr(feature = "serde", serde(rename="120 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias="120 Ohm"))]
         _120Ohm = 2,
+        #[cfg_attr(feature = "serde", serde(rename="40 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias="40 Ohm"))]
         _40Ohm = 3,
+        #[cfg_attr(feature = "serde", serde(rename="240 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias="240 Ohm"))]
         _240Ohm = 4,
+        #[cfg_attr(feature = "serde", serde(rename="48 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias="48 Ohm"))]
         _48Ohm = 5,
+        #[cfg_attr(feature = "serde", serde(rename="80 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias="80 Ohm"))]
         _80Ohm = 6,
+        #[cfg_attr(feature = "serde", serde(rename="34 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias="34 Ohm"))]
         _34Ohm = 7,
     }
     // See <https://github.com/LongJohnCoder/ddr-doc/blob/gh-pages/jedec/JESD79-4.pdf> Table 11
@@ -2675,9 +2708,15 @@ pub mod memory {
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum RttWr {
         Off = 0,
+        #[cfg_attr(feature = "serde", serde(rename="120 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias="120 Ohm"))]
         _120Ohm = 1,
+        #[cfg_attr(feature = "serde", serde(rename="240 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias="240 Ohm"))]
         _240Ohm = 2,
         Floating = 3,
+        #[cfg_attr(feature = "serde", serde(rename="80 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias="80 Ohm"))]
         _80Ohm = 4,
     }
 
@@ -2685,56 +2724,107 @@ pub mod memory {
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum VrefDqRange1 {
+        #[cfg_attr(feature = "serde", serde(rename="60.00%"))]
         _60_00P = 0b00_0000,
+        #[cfg_attr(feature = "serde", serde(rename="60.65%"))]
         _60_65P = 0b00_0001,
+        #[cfg_attr(feature = "serde", serde(rename="61.30%"))]
         _61_30P = 0b00_0010,
+        #[cfg_attr(feature = "serde", serde(rename="61.95%"))]
         _61_95P = 0b00_0011,
+        #[cfg_attr(feature = "serde", serde(rename="62.60%"))]
         _62_60P = 0b00_0100,
+        #[cfg_attr(feature = "serde", serde(rename="63.25%"))]
         _63_25P = 0b00_0101,
+        #[cfg_attr(feature = "serde", serde(rename="63.90%"))]
         _63_90P = 0b00_0110,
+        #[cfg_attr(feature = "serde", serde(rename="64.55%"))]
         _64_55P = 0b00_0111,
+        #[cfg_attr(feature = "serde", serde(rename="65.20%"))]
         _65_20P = 0b00_1000,
+        #[cfg_attr(feature = "serde", serde(rename="65.85%"))]
         _65_85P = 0b00_1001,
+        #[cfg_attr(feature = "serde", serde(rename="66.50%"))]
         _66_50P = 0b00_1010,
+        #[cfg_attr(feature = "serde", serde(rename="67.15%"))]
         _67_15P = 0b00_1011,
+        #[cfg_attr(feature = "serde", serde(rename="67.80%"))]
         _67_80P = 0b00_1100,
+        #[cfg_attr(feature = "serde", serde(rename="68.45%"))]
         _68_45P = 0b00_1101,
+        #[cfg_attr(feature = "serde", serde(rename="69.10%"))]
         _69_10P = 0b00_1110,
+        #[cfg_attr(feature = "serde", serde(rename="69.75%"))]
         _69_75P = 0b00_1111,
+        #[cfg_attr(feature = "serde", serde(rename="70.40%"))]
         _70_40P = 0b01_0000,
+        #[cfg_attr(feature = "serde", serde(rename="71.05%"))]
         _71_05P = 0b01_0001,
+        #[cfg_attr(feature = "serde", serde(rename="71.70%"))]
         _71_70P = 0b01_0010,
+        #[cfg_attr(feature = "serde", serde(rename="72.35%"))]
         _72_35P = 0b01_0011,
+        #[cfg_attr(feature = "serde", serde(rename="73.00%"))]
         _73_00P = 0b01_0100,
+        #[cfg_attr(feature = "serde", serde(rename="73.65%"))]
         _73_65P = 0b01_0101,
+        #[cfg_attr(feature = "serde", serde(rename="74.30%"))]
         _74_30P = 0b01_0110,
+        #[cfg_attr(feature = "serde", serde(rename="74.95%"))]
         _74_95P = 0b01_0111,
+        #[cfg_attr(feature = "serde", serde(rename="75.60%"))]
         _75_60P = 0b01_1000,
+        #[cfg_attr(feature = "serde", serde(rename="76.25%"))]
         _76_25P = 0b01_1001,
+        #[cfg_attr(feature = "serde", serde(rename="76.90%"))]
         _76_90P = 0b01_1010,
+        #[cfg_attr(feature = "serde", serde(rename="77.55%"))]
         _77_55P = 0b01_1011,
+        #[cfg_attr(feature = "serde", serde(rename="78.20%"))]
         _78_20P = 0b01_1100,
+        #[cfg_attr(feature = "serde", serde(rename="78.85%"))]
         _78_85P = 0b01_1101,
+        #[cfg_attr(feature = "serde", serde(rename="79.50%"))]
         _79_50P = 0b01_1110,
+        #[cfg_attr(feature = "serde", serde(rename="80.15%"))]
         _80_15P = 0b01_1111,
+        #[cfg_attr(feature = "serde", serde(rename="80.80%"))]
         _80_80P = 0b10_0000,
+        #[cfg_attr(feature = "serde", serde(rename="81.45%"))]
         _81_45P = 0b10_0001,
+        #[cfg_attr(feature = "serde", serde(rename="82.10%"))]
         _82_10P = 0b10_0010,
+        #[cfg_attr(feature = "serde", serde(rename="82.75%"))]
         _82_75P = 0b10_0011,
+        #[cfg_attr(feature = "serde", serde(rename="83.40%"))]
         _83_40P = 0b10_0100,
+        #[cfg_attr(feature = "serde", serde(rename="84.05%"))]
         _84_05P = 0b10_0101,
+        #[cfg_attr(feature = "serde", serde(rename="84.70%"))]
         _84_70P = 0b10_0110,
+        #[cfg_attr(feature = "serde", serde(rename="85.35%"))]
         _85_35P = 0b10_0111,
+        #[cfg_attr(feature = "serde", serde(rename="86.00%"))]
         _86_00P = 0b10_1000,
+        #[cfg_attr(feature = "serde", serde(rename="86.65%"))]
         _86_65P = 0b10_1001,
+        #[cfg_attr(feature = "serde", serde(rename="87.30%"))]
         _87_30P = 0b10_1010,
+        #[cfg_attr(feature = "serde", serde(rename="87.95%"))]
         _87_95P = 0b10_1011,
+        #[cfg_attr(feature = "serde", serde(rename="88.60%"))]
         _88_60P = 0b10_1100,
+        #[cfg_attr(feature = "serde", serde(rename="89.25%"))]
         _89_25P = 0b10_1101,
+        #[cfg_attr(feature = "serde", serde(rename="89.90%"))]
         _89_90P = 0b10_1110,
+        #[cfg_attr(feature = "serde", serde(rename="90.55%"))]
         _90_55P = 0b10_1111,
+        #[cfg_attr(feature = "serde", serde(rename="91.20%"))]
         _91_20P = 0b11_0000,
+        #[cfg_attr(feature = "serde", serde(rename="91.85%"))]
         _91_85P = 0b11_0001,
+        #[cfg_attr(feature = "serde", serde(rename="92.50%"))]
         _92_50P = 0b11_0010,
     }
 
@@ -2742,56 +2832,107 @@ pub mod memory {
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum VrefDqRange2 {
+        #[cfg_attr(feature = "serde", serde(rename="45.00%"))]
         _45_00P = 0b00_0000,
+        #[cfg_attr(feature = "serde", serde(rename="45.65%"))]
         _45_65P = 0b00_0001,
+        #[cfg_attr(feature = "serde", serde(rename="46.30%"))]
         _46_30P = 0b00_0010,
+        #[cfg_attr(feature = "serde", serde(rename="46.95%"))]
         _46_95P = 0b00_0011,
+        #[cfg_attr(feature = "serde", serde(rename="47.60%"))]
         _47_60P = 0b00_0100,
+        #[cfg_attr(feature = "serde", serde(rename="48.25%"))]
         _48_25P = 0b00_0101,
+        #[cfg_attr(feature = "serde", serde(rename="48.90%"))]
         _48_90P = 0b00_0110,
+        #[cfg_attr(feature = "serde", serde(rename="49.55%"))]
         _49_55P = 0b00_0111,
+        #[cfg_attr(feature = "serde", serde(rename="50.20%"))]
         _50_20P = 0b00_1000,
+        #[cfg_attr(feature = "serde", serde(rename="50.85%"))]
         _50_85P = 0b00_1001,
+        #[cfg_attr(feature = "serde", serde(rename="51.50%"))]
         _51_50P = 0b00_1010,
+        #[cfg_attr(feature = "serde", serde(rename="52.15%"))]
         _52_15P = 0b00_1011,
+        #[cfg_attr(feature = "serde", serde(rename="52.80%"))]
         _52_80P = 0b00_1100,
+        #[cfg_attr(feature = "serde", serde(rename="53.45%"))]
         _53_45P = 0b00_1101,
+        #[cfg_attr(feature = "serde", serde(rename="54.10%"))]
         _54_10P = 0b00_1110,
+        #[cfg_attr(feature = "serde", serde(rename="54.75%"))]
         _54_75P = 0b00_1111,
+        #[cfg_attr(feature = "serde", serde(rename="55.40%"))]
         _55_40P = 0b01_0000,
+        #[cfg_attr(feature = "serde", serde(rename="56.05%"))]
         _56_05P = 0b01_0001,
+        #[cfg_attr(feature = "serde", serde(rename="56.70%"))]
         _56_70P = 0b01_0010,
+        #[cfg_attr(feature = "serde", serde(rename="57.35%"))]
         _57_35P = 0b01_0011,
+        #[cfg_attr(feature = "serde", serde(rename="58.00%"))]
         _58_00P = 0b01_0100,
+        #[cfg_attr(feature = "serde", serde(rename="58.65%"))]
         _58_65P = 0b01_0101,
+        #[cfg_attr(feature = "serde", serde(rename="59.30%"))]
         _59_30P = 0b01_0110,
+        #[cfg_attr(feature = "serde", serde(rename="59.95%"))]
         _59_95P = 0b01_0111,
+        #[cfg_attr(feature = "serde", serde(rename="60.60%"))]
         _60_60P = 0b01_1000,
+        #[cfg_attr(feature = "serde", serde(rename="61.25%"))]
         _61_25P = 0b01_1001,
+        #[cfg_attr(feature = "serde", serde(rename="61.90%"))]
         _61_90P = 0b01_1010,
+        #[cfg_attr(feature = "serde", serde(rename="62.55%"))]
         _62_55P = 0b01_1011,
+        #[cfg_attr(feature = "serde", serde(rename="63.20%"))]
         _63_20P = 0b01_1100,
+        #[cfg_attr(feature = "serde", serde(rename="63.85%"))]
         _63_85P = 0b01_1101,
+        #[cfg_attr(feature = "serde", serde(rename="64.50%"))]
         _64_50P = 0b01_1110,
+        #[cfg_attr(feature = "serde", serde(rename="65.15%"))]
         _65_15P = 0b01_1111,
+        #[cfg_attr(feature = "serde", serde(rename="65.80%"))]
         _65_80P = 0b10_0000,
+        #[cfg_attr(feature = "serde", serde(rename="66.45%"))]
         _66_45P = 0b10_0001,
+        #[cfg_attr(feature = "serde", serde(rename="67.10%"))]
         _67_10P = 0b10_0010,
+        #[cfg_attr(feature = "serde", serde(rename="67.75%"))]
         _67_75P = 0b10_0011,
+        #[cfg_attr(feature = "serde", serde(rename="68.40%"))]
         _68_40P = 0b10_0100,
+        #[cfg_attr(feature = "serde", serde(rename="69.05%"))]
         _69_05P = 0b10_0101,
+        #[cfg_attr(feature = "serde", serde(rename="69.70%"))]
         _69_70P = 0b10_0110,
+        #[cfg_attr(feature = "serde", serde(rename="70.35%"))]
         _70_35P = 0b10_0111,
+        #[cfg_attr(feature = "serde", serde(rename="71.00%"))]
         _71_00P = 0b10_1000,
+        #[cfg_attr(feature = "serde", serde(rename="71.65%"))]
         _71_65P = 0b10_1001,
+        #[cfg_attr(feature = "serde", serde(rename="72.30%"))]
         _72_30P = 0b10_1010,
+        #[cfg_attr(feature = "serde", serde(rename="72.95%"))]
         _72_95P = 0b10_1011,
+        #[cfg_attr(feature = "serde", serde(rename="73.60%"))]
         _73_60P = 0b10_1100,
+        #[cfg_attr(feature = "serde", serde(rename="74.25%"))]
         _74_25P = 0b10_1101,
+        #[cfg_attr(feature = "serde", serde(rename="74.90%"))]
         _74_90P = 0b10_1110,
+        #[cfg_attr(feature = "serde", serde(rename="75.55%"))]
         _75_55P = 0b10_1111,
+        #[cfg_attr(feature = "serde", serde(rename="76.20%"))]
         _76_20P = 0b11_0000,
+        #[cfg_attr(feature = "serde", serde(rename="76.85%"))]
         _76_85P = 0b11_0001,
+        #[cfg_attr(feature = "serde", serde(rename="77.50%"))]
         _77_50P = 0b11_0010,
     }
 
@@ -4926,7 +5067,9 @@ Clone)]
                         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
                         #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
                         pub enum MotherboardLayerCount {
+                            #[cfg_attr(feature = "serde", serde(rename="4"))]
                             _4 = 0,
+                            #[cfg_attr(feature = "serde", serde(rename="6"))]
                             _6 = 1,
                         }
 
@@ -5756,14 +5899,23 @@ pub mod psp {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum BaudRate {
+    #[cfg_attr(feature = "serde", serde(rename="2400 Baud"))]
     _2400Baud = 0,
+    #[cfg_attr(feature = "serde", serde(rename="3600 Baud"))]
     _3600Baud = 1,
+    #[cfg_attr(feature = "serde", serde(rename="4800 Baud"))]
     _4800Baud = 2,
+    #[cfg_attr(feature = "serde", serde(rename="7200 Baud"))]
     _7200Baud = 3,
+    #[cfg_attr(feature = "serde", serde(rename="9600 Baud"))]
     _9600Baud = 4,
+    #[cfg_attr(feature = "serde", serde(rename="19200 Baud"))]
     _19200Baud = 5,
+    #[cfg_attr(feature = "serde", serde(rename="38400 Baud"))]
     _38400Baud = 6,
+    #[cfg_attr(feature = "serde", serde(rename="57600 Baud"))]
     _57600Baud = 7,
+    #[cfg_attr(feature = "serde", serde(rename="115200 Baud"))]
     _115200Baud = 8,
 }
 
@@ -5789,11 +5941,17 @@ pub enum MemDataPoison {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemMaxActivityCount {
     Untested = 0,
+    #[cfg_attr(feature = "serde", serde(rename="700000"))]
     _700K = 1,
+    #[cfg_attr(feature = "serde", serde(rename="600000"))]
     _600K = 2,
+    #[cfg_attr(feature = "serde", serde(rename="500000"))]
     _500K = 3,
+    #[cfg_attr(feature = "serde", serde(rename="400000"))]
     _400K = 4,
+    #[cfg_attr(feature = "serde", serde(rename="300000"))]
     _300K = 5,
+    #[cfg_attr(feature = "serde", serde(rename="200000"))]
     _200K = 6,
     Unlimited = 8,
     Auto = 0xff,
@@ -5829,7 +5987,9 @@ pub enum CbsMemAddrCmdParityRetryDdr4 {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum CcxSevAsidCount {
+    #[cfg_attr(feature = "serde", serde(rename="253"))]
     _253 = 0,
+    #[cfg_attr(feature = "serde", serde(rename="509"))]
     _509 = 1,
     Auto = 3,
 }
@@ -5884,10 +6044,15 @@ pub enum MemNvdimmPowerSource {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemRdimmTimingCmdParLatency {
+    #[cfg_attr(feature = "serde", serde(rename="1 nCK"))]
     _1_nCK = 0, // not valid in gear-down mode
+    #[cfg_attr(feature = "serde", serde(rename="2 nCK"))]
     _2_nCK = 1,
+    #[cfg_attr(feature = "serde", serde(rename="3 nCK"))]
     _3_nCK = 2, // not valid in gear-down mode
+    #[cfg_attr(feature = "serde", serde(rename="4 nCK"))]
     _4_nCK = 3,
+    #[cfg_attr(feature = "serde", serde(rename="0 nCK"))]
     _0_nCK = 4, // only valid if parity checking and CAL modes are disabled
     Auto = 0xff,
 }
@@ -6010,10 +6175,15 @@ pub enum DfMemInterleaving {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfMemInterleavingSize {
+    #[cfg_attr(feature = "serde", serde(rename="256 B"))]
     _256_Byte = 0,
+    #[cfg_attr(feature = "serde", serde(rename="512 B"))]
     _512_Byte = 1,
+    #[cfg_attr(feature = "serde", serde(rename="1024 B"))]
     _1024_Byte = 2,
+    #[cfg_attr(feature = "serde", serde(rename="2048 B"))]
     _2048_Byte = 3,
+    #[cfg_attr(feature = "serde", serde(rename="4096 B"))]
     _4096_Byte = 4,
     Auto = 7,
 }
@@ -6043,8 +6213,11 @@ pub enum DfRemapAt1TiB {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfXgmiLinkConfig {
+    #[cfg_attr(feature = "serde", serde(rename="2 links connected"))]
     _2_links_connected = 0,
+    #[cfg_attr(feature = "serde", serde(rename="3 links connected"))]
     _3_links_connected = 1,
+    #[cfg_attr(feature = "serde", serde(rename="4 links connected"))]
     _4_links_connected = 2,
     Auto = 3,
 }
@@ -6064,12 +6237,19 @@ pub enum DfPstateModeSelect {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum GnbSmuDfPstateFclkLimit {
+    #[cfg_attr(feature = "serde", serde(rename="1600 MHz"))]
     _1600_Mhz = 0,
+    #[cfg_attr(feature = "serde", serde(rename="1467 MHz"))]
     _1467_Mhz = 1,
+    #[cfg_attr(feature = "serde", serde(rename="1333 MHz"))]
     _1333_MHz = 2,
+    #[cfg_attr(feature = "serde", serde(rename="1200 MHz"))]
     _1200_MHz = 3,
+    #[cfg_attr(feature = "serde", serde(rename="1067 MHz"))]
     _1067_MHz = 4,
+    #[cfg_attr(feature = "serde", serde(rename="933 MHz"))]
     _933_MHz = 5,
+    #[cfg_attr(feature = "serde", serde(rename="800 MHz"))]
     _800_MHz = 6,
     Auto = 0xff,
 }
@@ -6096,11 +6276,17 @@ pub enum BmcLinkSpeed {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum SecondPcieLinkMaxPayload {
+    #[cfg_attr(feature = "serde", serde(rename="128 B"))]
     _128_Byte = 0,
+    #[cfg_attr(feature = "serde", serde(rename="256 B"))]
     _256_Byte = 1,
+    #[cfg_attr(feature = "serde", serde(rename="512 B"))]
     _512_Byte = 2,
+    #[cfg_attr(feature = "serde", serde(rename="1024 B"))]
     _1024_Byte = 3,
+    #[cfg_attr(feature = "serde", serde(rename="2048 B"))]
     _2048_Byte = 4,
+    #[cfg_attr(feature = "serde", serde(rename="4096 B"))]
     _4096_Byte = 5,
     HardwareDefault = 0xff,
 }
@@ -6153,9 +6339,13 @@ pub enum MemControllerPmuTrainDfeDdr4 {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemControllerPmuTrainingMode {
+    #[cfg_attr(feature = "serde", serde(rename="1D"))]
     _1D = 0,
+    #[cfg_attr(feature = "serde", serde(rename="1D,2D,Read-Only"))]
     _1D_2D_Read_Only = 1,
+    #[cfg_attr(feature = "serde", serde(rename="1D,2D,Write-Only"))]
     _1D_2D_Write_Only = 2,
+    #[cfg_attr(feature = "serde", serde(rename="1D,2D"))]
     _1D_2D = 3,
     Auto = 0xff,
 }
@@ -6192,8 +6382,11 @@ pub enum MemMbistPatternSelect {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemMbistAggressorsChannels {
     Disabled = 0,
+    #[cfg_attr(feature = "serde", serde(rename="1 aggressor/(2 ch)"))]
     _1_AggressorsPer2Channels = 1,
+    #[cfg_attr(feature = "serde", serde(rename="3 aggressor/(4 ch)"))]
     _3_AggressorsPer4Channels = 3,
+    #[cfg_attr(feature = "serde", serde(rename="7 aggressor/(8 ch)"))]
     _7_AggressorsPer8Channels = 7,
 }
 
@@ -6211,8 +6404,11 @@ pub enum MemMbistTestMode {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemMbistDataEyeType {
+    #[cfg_attr(feature = "serde", serde(rename="1D Voltage"))]
     _1dVolate = 0,
+    #[cfg_attr(feature = "serde", serde(rename="1D Timing"))]
     _1dTiming = 1,
+    #[cfg_attr(feature = "serde", serde(rename="2D Full Data Eye"))]
     _2dFullDataEye = 2,
     WorstCaseMarginOnly = 3,
 }
@@ -6233,32 +6429,59 @@ pub enum DfXgmiTxEqMode {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfXgmiLinkMaxSpeed {
+    #[cfg_attr(feature = "serde", serde(rename="6.4 Gbit/s"))]
     _6_40Gbps = 0,
+    #[cfg_attr(feature = "serde", serde(rename="7.467 Gbit/s"))]
     _7_467Gbps = 1,
+    #[cfg_attr(feature = "serde", serde(rename="8.533 Gbit/s"))]
     _8_533Gbps = 2,
+    #[cfg_attr(feature = "serde", serde(rename="9.6 Gbit/s"))]
     _9_6Gbps = 3,
+    #[cfg_attr(feature = "serde", serde(rename="10.667 Gbit/s"))]
     _10_667Gbps = 4,
+    #[cfg_attr(feature = "serde", serde(rename="11 Gbit/s"))]
     _11Gbps = 5,
+    #[cfg_attr(feature = "serde", serde(rename="12 Gbit/s"))]
     _12Gbps = 6,
+    #[cfg_attr(feature = "serde", serde(rename="13 Gbit/s"))]
     _13Gbps = 7,
+    #[cfg_attr(feature = "serde", serde(rename="14 Gbit/s"))]
     _14Gbps = 8,
+    #[cfg_attr(feature = "serde", serde(rename="15 Gbit/s"))]
     _15Gbps = 9,
+    #[cfg_attr(feature = "serde", serde(rename="16 Gbit/s"))]
     _16Gbps = 10,
+    #[cfg_attr(feature = "serde", serde(rename="17 Gbit/s"))]
     _17Gbps = 11,
+    #[cfg_attr(feature = "serde", serde(rename="18 Gbit/s"))]
     _18Gbps = 12,
+    #[cfg_attr(feature = "serde", serde(rename="19 Gbit/s"))]
     _19Gbps = 13,
+    #[cfg_attr(feature = "serde", serde(rename="20 Gbit/s"))]
     _20Gbps = 14,
+    #[cfg_attr(feature = "serde", serde(rename="21 Gbit/s"))]
     _21Gbps = 15,
+    #[cfg_attr(feature = "serde", serde(rename="22 Gbit/s"))]
     _22Gbps = 16,
+    #[cfg_attr(feature = "serde", serde(rename="23 Gbit/s"))]
     _23Gbps = 17,
+    #[cfg_attr(feature = "serde", serde(rename="24 Gbit/s"))]
     _24Gbps = 18,
+    #[cfg_attr(feature = "serde", serde(rename="25 Gbit/s"))]
     _25Gbps = 19,
+    #[cfg_attr(feature = "serde", serde(rename="26 Gbit/s"))]
     _26Gbps = 20,
+    #[cfg_attr(feature = "serde", serde(rename="27 Gbit/s"))]
     _27Gbps = 21,
+    #[cfg_attr(feature = "serde", serde(rename="28 Gbit/s"))]
     _28Gbps = 22,
+    #[cfg_attr(feature = "serde", serde(rename="29 Gbit/s"))]
     _29Gbps = 23,
+    #[cfg_attr(feature = "serde", serde(rename="30 Gbit/s"))]
     _30Gbps = 24,
+    #[cfg_attr(feature = "serde", serde(rename="31 Gbit/s"))]
     _31Gbps = 25,
+    #[cfg_attr(feature = "serde", serde(rename="32 Gbit/s"))]
     _32Gbps = 26,
     Auto = 0xff,
 }
