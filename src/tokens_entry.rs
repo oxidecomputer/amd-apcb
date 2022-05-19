@@ -651,7 +651,7 @@ impl<'a> TokensEntryBodyItem<Ptr<'a, [u8]>> {
     pub fn iter(&self) -> TokensEntryIter<'_> {
         TokensEntryIter {
             entry_id: self.entry_id,
-            buf: &self.buf,
+            buf: self.buf,
             remaining_used_size: self.used_size,
         }
     }
