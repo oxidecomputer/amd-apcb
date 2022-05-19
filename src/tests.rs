@@ -71,10 +71,10 @@ mod tests {
         apcb.insert_group(GroupId::Psp, *b"PSPG")?;
         apcb.insert_group(GroupId::Memory, *b"MEMG")?;
         let mut groups = apcb.groups().unwrap();
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() == *b"PSPG");
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() == *b"MEMG");
         assert!(matches!(groups.next(), None));
@@ -94,7 +94,7 @@ mod tests {
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups().unwrap();
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() == *b"MEMG");
         assert!(matches!(groups.next(), None));
@@ -114,7 +114,7 @@ mod tests {
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups().unwrap();
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() == *b"PSPG");
         assert!(matches!(groups.next(), None));
@@ -140,10 +140,10 @@ mod tests {
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups().unwrap();
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() == *b"PSPG");
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() == *b"MEMG");
         assert!(matches!(groups.next(), None));
@@ -207,18 +207,18 @@ mod tests {
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups().unwrap();
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() == *b"PSPG");
 
         let mut entries = group.entries();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Psp(PspEntryId::Unknown(97)));
 
         assert!(matches!(entries.next(), None));
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() == *b"MEMG");
         for _entry in group.entries() {
@@ -260,25 +260,25 @@ mod tests {
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups().unwrap();
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() == *b"PSPG");
 
         let mut entries = group.entries();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Psp(PspEntryId::BoardIdGettingMethod));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Psp(PspEntryId::Unknown(97)));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
         assert!(matches!(entries.next(), None));
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() == *b"MEMG");
         for _entry in group.entries() {
@@ -319,26 +319,26 @@ mod tests {
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups_mut().unwrap();
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() == *b"PSPG");
 
         let mut entries = group.entries();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Psp(PspEntryId::BoardIdGettingMethod));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
         assert!(matches!(entries.next(), None));
 
-        let mut group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let mut group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() == *b"MEMG");
 
         let mut entries = group.entries_mut();
 
-        let mut entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let mut entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(
             entry.id() == EntryId::Memory(MemoryEntryId::ConsoleOutControl)
         );
@@ -432,31 +432,31 @@ mod tests {
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups().unwrap();
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() == *b"PSPG");
 
         let mut entries = group.entries();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Psp(PspEntryId::BoardIdGettingMethod));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
         let (header, elements) = entry
             .body_as_struct::<BoardIdGettingMethodEeprom>()
-            .ok_or_else(|| Error::EntryTypeMismatch)?;
+            .ok_or(Error::EntryTypeMismatch)?;
         assert!(*header == BoardIdGettingMethodEeprom::new(1, 2, 3, 4));
 
         let mut elements = elements.iter();
 
         assert!(
-            *elements.next().ok_or_else(|| Error::EntryTypeMismatch)?
+            *elements.next().ok_or(Error::EntryTypeMismatch)?
                 == IdRevApcbMapping::new(5, 4, RevAndFeatureValue::Value(9), 3)
                     .unwrap()
         );
         assert!(
-            *elements.next().ok_or_else(|| Error::EntryTypeMismatch)?
+            *elements.next().ok_or(Error::EntryTypeMismatch)?
                 == IdRevApcbMapping::new(
                     8,
                     7,
@@ -469,16 +469,16 @@ mod tests {
 
         assert!(matches!(entries.next(), None));
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() == *b"MEMG");
 
         let mut entries = group.entries();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         let (control, _) = entry
             .body_as_struct::<ExtVoltageControl>()
-            .ok_or_else(|| Error::EntryTypeMismatch)?;
+            .ok_or(Error::EntryTypeMismatch)?;
         assert!(*control == ExtVoltageControl::default());
         assert!(matches!(entries.next(), None));
 
@@ -537,26 +537,26 @@ mod tests {
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups().unwrap();
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() == *b"PSPG");
 
         let mut entries = group.entries();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Psp(PspEntryId::BoardIdGettingMethod));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
         assert!(matches!(entries.next(), None));
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() == *b"MEMG");
 
         let mut entries = group.entries();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Memory(MemoryEntryId::DimmInfoSmbus));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
@@ -575,11 +575,11 @@ mod tests {
 
         let elements = entry
             .body_as_struct_array::<DimmInfoSmbusElement>()
-            .ok_or_else(|| Error::EntryTypeMismatch)?;
+            .ok_or(Error::EntryTypeMismatch)?;
         let mut elements = elements.iter();
 
         assert_eq!(
-            *elements.next().ok_or_else(|| Error::EntryTypeMismatch)?,
+            *elements.next().ok_or(Error::EntryTypeMismatch)?,
             DimmInfoSmbusElement::new_slot(
                 2,
                 3,
@@ -592,7 +592,7 @@ mod tests {
             .unwrap()
         );
         assert_eq!(
-            *elements.next().ok_or_else(|| Error::EntryTypeMismatch)?,
+            *elements.next().ok_or(Error::EntryTypeMismatch)?,
             DimmInfoSmbusElement::new_slot(
                 10,
                 11,
@@ -716,38 +716,38 @@ mod tests {
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups_mut().unwrap();
 
-        let mut group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let mut group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Df);
         assert!(group.signature() == *b"DFG ");
 
         let mut entries = group.entries_mut();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Df(DfEntryId::SlinkConfig));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Df(DfEntryId::XgmiPhyOverride));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
         assert!(matches!(entries.next(), None));
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() == *b"MEMG");
         for _entry in group.entries() {
             assert!(false);
         }
 
-        let mut group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let mut group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Token);
         assert!(group.signature() == *b"TOKN");
 
         let mut entries = group.entries_mut();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Token(TokenEntryId::Byte));
 
         match entry.body {
@@ -755,7 +755,7 @@ mod tests {
                 let mut tokens = tokens.iter();
 
                 let token =
-                    tokens.next().ok_or_else(|| Error::TokenNotFound)?;
+                    tokens.next().ok_or(Error::TokenNotFound)?;
                 assert!(token.id() == 0xae46_cea4);
                 assert!(token.value() == 2);
 
@@ -772,7 +772,7 @@ mod tests {
             .unwrap();
         assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::_4800Baud);
 
-        let mut tokens = apcb
+        let _tokens = apcb
             .tokens_mut(
                 0,
                 BoardInstances::from_instance(0).unwrap(),
@@ -912,42 +912,42 @@ mod tests {
 
         let mut groups = apcb.groups().unwrap();
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() == *b"PSPG");
 
         let mut entries = group.entries();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Psp(PspEntryId::BoardIdGettingMethod));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Psp(PspEntryId::Unknown(97)));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
         assert!(matches!(entries.next(), None));
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() == *b"MEMG");
         for _entry in group.entries() {
             assert!(false);
         }
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Token);
         assert!(group.signature() == *b"TOKN");
         let mut entries = group.entries();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         match entry.body {
             EntryItemBody::<_>::Tokens(tokens) => {
                 let mut tokens = tokens.iter();
                 let token =
-                    tokens.next().ok_or_else(|| Error::TokenNotFound)?;
+                    tokens.next().ok_or(Error::TokenNotFound)?;
                 assert!(token.id() == 0x014FBF20);
                 assert!(token.value() == 1);
                 assert!(matches!(tokens.next(), None));
@@ -1063,48 +1063,48 @@ mod tests {
 
         let mut groups = apcb.groups().unwrap();
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() == *b"PSPG");
 
         let mut entries = group.entries();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Psp(PspEntryId::BoardIdGettingMethod));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Psp(PspEntryId::Unknown(97)));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
         assert!(matches!(entries.next(), None));
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() == *b"MEMG");
         for _entry in group.entries() {
             assert!(false);
         }
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Token);
         assert!(group.signature() == *b"TOKN");
         let mut entries = group.entries();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         match entry.body {
             EntryItemBody::<_>::Tokens(tokens) => {
                 let mut tokens = tokens.iter();
 
                 let token =
-                    tokens.next().ok_or_else(|| Error::TokenNotFound)?;
+                    tokens.next().ok_or(Error::TokenNotFound)?;
                 assert!(token.id() == 0x42);
                 assert!(token.value() == 2);
 
                 let token =
-                    tokens.next().ok_or_else(|| Error::TokenNotFound)?;
+                    tokens.next().ok_or(Error::TokenNotFound)?;
                 assert!(token.id() == 0x014FBF20);
                 assert!(token.value() == 1);
 
@@ -1201,43 +1201,43 @@ mod tests {
 
         let mut groups = apcb.groups().unwrap();
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() == *b"PSPG");
 
         let mut entries = group.entries();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Psp(PspEntryId::BoardIdGettingMethod));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Psp(PspEntryId::Unknown(97)));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
         assert!(matches!(entries.next(), None));
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() == *b"MEMG");
         for _entry in group.entries() {
             assert!(false);
         }
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Token);
         assert!(group.signature() == *b"TOKN");
         let mut entries = group.entries();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         match entry.body {
             EntryItemBody::<_>::Tokens(tokens) => {
                 let mut tokens = tokens.iter();
 
                 let token =
-                    tokens.next().ok_or_else(|| Error::TokenNotFound)?;
+                    tokens.next().ok_or(Error::TokenNotFound)?;
                 assert!(token.id() == 0x014FBF20);
                 assert!(token.value() == 1);
 
@@ -1299,26 +1299,26 @@ mod tests {
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups_mut().unwrap();
 
-        let group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Psp);
         assert!(group.signature() == *b"PSPG");
 
         let mut entries = group.entries();
 
-        let entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(entry.id() == EntryId::Psp(PspEntryId::BoardIdGettingMethod));
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
         assert!(matches!(entries.next(), None));
 
-        let mut group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let mut group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() == *b"MEMG");
 
         let mut entries = group.entries_mut();
 
-        let mut entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let mut entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(
             entry.id()
                 == EntryId::Memory(MemoryEntryId::PlatformSpecificOverride)
@@ -1420,13 +1420,13 @@ mod tests {
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups_mut().unwrap();
 
-        let mut group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let mut group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() == *b"MEMG");
 
         let mut entries = group.entries_mut();
 
-        let mut entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let mut entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(
             entry.id() == EntryId::Memory(MemoryEntryId::PsRdimmDdr4CadBus)
         );
@@ -1437,7 +1437,7 @@ mod tests {
             .body_as_struct_array_mut::<RdimmDdr4CadBusElement>()
             .unwrap();
         let mut items = items.iter_mut();
-        let item = items.next().ok_or_else(|| Error::EntryNotFound)?;
+        let item = items.next().ok_or(Error::EntryNotFound)?;
 
         assert!(item.dimm_slots_per_channel().unwrap() == 2);
         assert!(
@@ -1505,13 +1505,13 @@ mod tests {
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
         let mut groups = apcb.groups_mut().unwrap();
 
-        let mut group = groups.next().ok_or_else(|| Error::GroupNotFound)?;
+        let mut group = groups.next().ok_or(Error::GroupNotFound)?;
         assert!(group.id() == GroupId::Memory);
         assert!(group.signature() == *b"MEMG");
 
         let mut entries = group.entries_mut();
 
-        let mut entry = entries.next().ok_or_else(|| Error::EntryNotFound)?;
+        let mut entry = entries.next().ok_or(Error::EntryNotFound)?;
         assert!(
             entry.id() == EntryId::Memory(MemoryEntryId::PsRdimmDdr4DataBus)
         );
@@ -1522,7 +1522,7 @@ mod tests {
             .body_as_struct_array_mut::<Ddr4DataBusElement>()
             .unwrap();
         let mut items = items.iter_mut();
-        let item = items.next().ok_or_else(|| Error::EntryNotFound)?;
+        let item = items.next().ok_or(Error::EntryNotFound)?;
 
         assert!(item.dimm_slots_per_channel().unwrap() == 2);
         assert!(

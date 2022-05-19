@@ -52,24 +52,24 @@ impl<'a, 'b> TokensMut<'a, 'b> {
         let group = self
             .apcb
             .group(GroupId::Token)?
-            .ok_or_else(|| Error::GroupNotFound)?;
+            .ok_or(Error::GroupNotFound)?;
         let entry = group
             .entry_exact(
                 EntryId::Token(token_entry_id),
                 self.instance_id,
                 self.board_instance_mask,
             )
-            .ok_or_else(|| Error::EntryNotFound)?;
+            .ok_or(Error::EntryNotFound)?;
         match &entry.body {
             EntryItemBody::<_>::Tokens(ref a) => {
                 let token =
-                    a.token(field_key).ok_or_else(|| Error::TokenNotFound)?;
+                    a.token(field_key).ok_or(Error::TokenNotFound)?;
                 assert!(token.id() == field_key);
                 let token_value = token.value();
                 Ok(token_value)
             }
             _ => {
-                return Err(Error::EntryTypeMismatch);
+                Err(Error::EntryTypeMismatch)
             }
         }
     }
@@ -164,24 +164,24 @@ impl<'a, 'b> Tokens<'a, 'b> {
         let group = self
             .apcb
             .group(GroupId::Token)?
-            .ok_or_else(|| Error::GroupNotFound)?;
+            .ok_or(Error::GroupNotFound)?;
         let entry = group
             .entry_exact(
                 EntryId::Token(token_entry_id),
                 self.instance_id,
                 self.board_instance_mask,
             )
-            .ok_or_else(|| Error::EntryNotFound)?;
+            .ok_or(Error::EntryNotFound)?;
         match &entry.body {
             EntryItemBody::<_>::Tokens(ref a) => {
                 let token =
-                    a.token(field_key).ok_or_else(|| Error::TokenNotFound)?;
+                    a.token(field_key).ok_or(Error::TokenNotFound)?;
                 assert!(token.id() == field_key);
                 let token_value = token.value();
                 Ok(token_value)
             }
             _ => {
-                return Err(Error::EntryTypeMismatch);
+                Err(Error::EntryTypeMismatch)
             }
         }
     }

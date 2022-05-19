@@ -670,7 +670,7 @@ impl<'a> GroupMutItem<'a> {
             entry_id,
             instance_id,
             board_instance_mask,
-            (token_size as i64).into(),
+            token_size as i64,
         )?;
         #[assure(
             "Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`",

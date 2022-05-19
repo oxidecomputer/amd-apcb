@@ -1538,7 +1538,7 @@ impl Iterator for ParametersIter<'_> {
                     )),
                     8 => Some((
                         attributes,
-                        raw_value.read_u64::<LittleEndian>().ok()?.into(),
+                        raw_value.read_u64::<LittleEndian>().ok()?,
                     )),
                     _ => None, // TODO: Raise error
                 }
@@ -5348,7 +5348,7 @@ Clone)]
             );
             let tag: Option<ElementRef<'_>> = Some((&lvdimm).into());
             match tag {
-                Some(ElementRef::LvDimmForce1V5(ref _item)) => {}
+                Some(ElementRef::LvDimmForce1V5(_item)) => {}
                 _ => {
                     assert!(false);
                 }
@@ -7244,40 +7244,40 @@ impl<'a, 'b> Tokens<'a, 'b> {
     #[allow(non_snake_case)]
     pub fn mem_limit_memory_to_below_1_TiB(&self) -> Result<bool> {
         bool::from_u32(self.get(TokenEntryId::Bool, 0x5e71e6d8)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
     #[allow(non_snake_case)]
     pub fn mem_uma_above_4_GiB(&self) -> Result<bool> {
         bool::from_u32(self.get(TokenEntryId::Bool, 0x77e41d2a)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
     pub fn df_remap_at_1tib(&self) -> Result<DfRemapAt1TiB> {
         DfRemapAt1TiB::from_u32(self.get(TokenEntryId::Byte, 0x35ee_96f3)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
     pub fn df_4link_max_xgmi_speed(&self) -> Result<DfXgmi4LinkMaxSpeed> {
         DfXgmi4LinkMaxSpeed::from_u32(self.get(TokenEntryId::Byte, 0x3f307cb3)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
     pub fn df_3link_max_xgmi_speed(&self) -> Result<DfXgmi3LinkMaxSpeed> {
         DfXgmi3LinkMaxSpeed::from_u32(self.get(TokenEntryId::Byte, 0x53ba449b)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
     pub fn mem_rdimm_timing_rcd_f0rc0f_additional_latency(&self) -> Result<MemRdimmTimingCmdParLatency> {
         MemRdimmTimingCmdParLatency::from_u32(self.get(TokenEntryId::Byte, 0xd155798a)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
     pub fn dimm_3ds_sensor_critical(&self) -> Result<u16> {
         u16::from_u32(self.get(TokenEntryId::Word, 0x16b77f73)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
     pub fn dimm_3ds_sensor_upper(&self) -> Result<u16> {
         u16::from_u32(self.get(TokenEntryId::Word, 0x2db877e4)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
     pub fn mother_board_type_0(&self) -> Result<bool> {
         bool::from_u32(self.get(TokenEntryId::Bool, 0x536464b)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
 }
 
@@ -7287,86 +7287,86 @@ impl<'a, 'b> TokensMut<'a, 'b> {
     #[allow(non_snake_case)]
     pub fn mem_limit_memory_to_below_1_TiB(&self) -> Result<bool> {
         bool::from_u32(self.get(TokenEntryId::Bool, 0x5e71e6d8)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
     #[allow(non_snake_case)]
     pub fn mem_uma_above_4_GiB(&self) -> Result<bool> {
         bool::from_u32(self.get(TokenEntryId::Bool, 0x77e41d2a)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
     pub fn df_remap_at_1tib(&self) -> Result<DfRemapAt1TiB> {
         DfRemapAt1TiB::from_u32(self.get(TokenEntryId::Byte, 0x35ee_96f3)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
     pub fn df_4link_max_xgmi_speed(&self) -> Result<DfXgmi4LinkMaxSpeed> {
         DfXgmi4LinkMaxSpeed::from_u32(self.get(TokenEntryId::Byte, 0x3f307cb3)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
     pub fn df_3link_max_xgmi_speed(&self) -> Result<DfXgmi3LinkMaxSpeed> {
         DfXgmi3LinkMaxSpeed::from_u32(self.get(TokenEntryId::Byte, 0x53ba449b)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
     pub fn mem_rdimm_timing_rcd_f0rc0f_additional_latency(&self)
         -> Result<MemRdimmTimingCmdParLatency> {
         MemRdimmTimingCmdParLatency::from_u32(self.get(TokenEntryId::Byte, 0xd155798a)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
     pub fn dimm_3ds_sensor_critical(&self) -> Result<u16> {
         u16::from_u32(self.get(TokenEntryId::Word, 0x16b77f73)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
     pub fn dimm_3ds_sensor_upper(&self) -> Result<u16> {
         u16::from_u32(self.get(TokenEntryId::Word, 0x2db877e4)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
     pub fn mother_board_type_0(&self) -> Result<bool> {
         bool::from_u32(self.get(TokenEntryId::Bool, 0x536464b)?)
-            .ok_or_else(|| Error::EntryTypeMismatch)
+            .ok_or(Error::EntryTypeMismatch)
     }
 
     #[allow(non_snake_case)]
-    pub fn set_mem_limit_memory_to_below_1_TiB(self: &'_ mut Self,
+    pub fn set_mem_limit_memory_to_below_1_TiB(&'_ mut self,
         value: bool) -> Result<()> {
         let token_value = value.to_u32().unwrap();
         self.set(TokenEntryId::Bool, 0x5e71e6d8, token_value)
     }
     #[allow(non_snake_case)]
-    pub fn set_mem_uma_above_4_GiB(self: &'_ mut Self,
+    pub fn set_mem_uma_above_4_GiB(&'_ mut self,
         value: bool) -> Result<()> {
         let token_value = value.to_u32().unwrap();
         self.set(TokenEntryId::Bool, 0x77e41d2a, token_value)
     }
-    pub fn set_df_remap_at_1tib(self: &'_ mut Self,
+    pub fn set_df_remap_at_1tib(&'_ mut self,
         value: DfRemapAt1TiB) -> Result<()> {
         let token_value = value.to_u32().unwrap();
         self.set(TokenEntryId::Byte, 0x35ee_96f3, token_value)
     }
-    pub fn set_df_4link_max_xgmi_speed(self: &'_ mut Self,
+    pub fn set_df_4link_max_xgmi_speed(&'_ mut self,
         value: DfXgmi4LinkMaxSpeed) -> Result<()> {
         let token_value = value.to_u32().unwrap();
         self.set(TokenEntryId::Bool, 0x3f307cb3, token_value)
     }
-    pub fn set_df_3link_max_xgmi_speed(self: &'_ mut Self,
+    pub fn set_df_3link_max_xgmi_speed(&'_ mut self,
         value: DfXgmi3LinkMaxSpeed) -> Result<()> {
         let token_value = value.to_u32().unwrap();
         self.set(TokenEntryId::Bool, 0x53ba449b, token_value)
     }
-    pub fn set_mem_rdimm_timing_rcd_f0rc0f_additional_latency(self: &'_ mut Self,
+    pub fn set_mem_rdimm_timing_rcd_f0rc0f_additional_latency(&'_ mut self,
         value: MemRdimmTimingCmdParLatency) -> Result<()> {
         let token_value = value.to_u32().unwrap();
         self.set(TokenEntryId::Byte, 0xd155798a, token_value)
     }
-    pub fn set_dimm_3ds_sensor_critical(self: &'_ mut Self,
+    pub fn set_dimm_3ds_sensor_critical(&'_ mut self,
         value: u16) -> Result<()> {
         let token_value = value.to_u32().unwrap();
         self.set(TokenEntryId::Word, 0x16b77f73, token_value)
     }
-    pub fn set_dimm_3ds_sensor_upper(self: &'_ mut Self,
+    pub fn set_dimm_3ds_sensor_upper(&'_ mut self,
         value: u16) -> Result<()> {
         let token_value = value.to_u32().unwrap();
         self.set(TokenEntryId::Word, 0x2db877e4, token_value)
     }
-    pub fn set_mother_board_type_0(self: &'_ mut Self,
+    pub fn set_mother_board_type_0(&'_ mut self,
         value: bool) -> Result<()> {
         let token_value = value.to_u32().unwrap();
         self.set(TokenEntryId::Bool, 0x536464b, token_value)
