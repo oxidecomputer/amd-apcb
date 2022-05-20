@@ -2369,7 +2369,7 @@ pub mod memory {
     pub struct CustomSerdeRdimmDdr4Voltages {
         #[cfg_attr(feature = "serde", serde(rename = "1.2 V"))]
         pub _1_2V: bool,
-        pub _reserved_1: bool,
+        pub _reserved_1: u32,
     }
     macro_rules! define_compat_bitfield_field {
         ($compat_field:ident, $current_field:ident) => {
@@ -2537,7 +2537,7 @@ pub mod memory {
         pub _1_35V: bool,
         #[cfg_attr(feature = "serde", serde(rename = "1.25 V"))]
         pub _1_25V: bool,
-        pub _reserved_1: bool,
+        pub _reserved_1: u32,
     }
     impl UdimmDdr4Voltages {
         define_compat_bitfield_field!(v_1_5, _1_5V);
@@ -2636,7 +2636,7 @@ pub mod memory {
     pub struct CustomSerdeLrdimmDdr4Voltages {
         #[cfg_attr(feature = "serde", serde(rename = "1.2 V"))]
         pub _1_2V: bool,
-        pub _reserved_1: bool,
+        pub _reserved_1: u32,
     }
 
     impl LrdimmDdr4Voltages {
