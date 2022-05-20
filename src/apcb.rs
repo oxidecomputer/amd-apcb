@@ -64,6 +64,7 @@ pub struct Apcb<'a> {
     derive(Default, serde::Serialize, serde::Deserialize)
 )]
 pub struct SerdeApcb<'a> {
+    pub version: String,
     pub header: V2_HEADER,
     pub v3_header: Option<V3_HEADER_EXT>,
     #[cfg_attr(feature = "serde", serde(borrow))]
@@ -139,7 +140,8 @@ impl<'a> Serialize for Apcb<'a> {
         // In a better world we would implement From<Apcb> for SerdeApcb
         // however we can't do that as we'd be returning borrowed data from
         // Apcb.
-        let mut state = serializer.serialize_struct("Apcb", 4)?;
+        let mut state = serializer.serialize_struct("Apcb", 5)?;
+        state.serialize_field("version", env!("CARGO_PKG_VERSION"))?;
         let groups = self
             .groups()
             .map_err(|e| serde::ser::Error::custom(format!("{:?}", e)))?
