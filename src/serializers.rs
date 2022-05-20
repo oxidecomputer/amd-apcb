@@ -152,8 +152,8 @@ make_serde!(
 );
 make_serde!(
     RdimmDdr4Voltages,
-    SerdeRdimmDdr4Voltages,
-    [v_1_2, _reserved_1,]
+    CustomSerdeRdimmDdr4Voltages,
+    [_1_2V, _reserved_1,]
 );
 make_serde!(
     RdimmDdr4CadBusElement,
@@ -177,8 +177,8 @@ make_serde!(
 );
 make_serde!(
     UdimmDdr4Voltages,
-    SerdeUdimmDdr4Voltages,
-    [v_1_5, v_1_35, v_1_25, _reserved_1,]
+    CustomSerdeUdimmDdr4Voltages,
+    [_1_5V, _1_35V, _1_25V, _reserved_1,]
 );
 make_serde!(
     UdimmDdr4CadBusElement,
@@ -202,8 +202,8 @@ make_serde!(
 );
 make_serde!(
     LrdimmDdr4Voltages,
-    SerdeLrdimmDdr4Voltages,
-    [v_1_2, _reserved_1,]
+    CustomSerdeLrdimmDdr4Voltages,
+    [_1_2V, _reserved_1,]
 );
 make_serde!(
     LrdimmDdr4CadBusElement,

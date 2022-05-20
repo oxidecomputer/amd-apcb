@@ -2365,6 +2365,12 @@ pub mod memory {
             // all = 7
         }
     }
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    pub struct CustomSerdeRdimmDdr4Voltages {
+        #[cfg_attr(feature = "serde", serde(rename = "1.2 V"))]
+        pub _1_2V: bool,
+        pub _reserved_1: bool,
+    }
     macro_rules! define_compat_bitfield_field {
         ($compat_field:ident, $current_field:ident) => {
             paste! {
@@ -2523,6 +2529,16 @@ pub mod memory {
             pub _reserved_1 || SerdeHex32 : B29,
         }
     }
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    pub struct CustomSerdeUdimmDdr4Voltages {
+        #[cfg_attr(feature = "serde", serde(rename = "1.5 V"))]
+        pub _1_5V: bool,
+        #[cfg_attr(feature = "serde", serde(rename = "1.35 V"))]
+        pub _1_35V: bool,
+        #[cfg_attr(feature = "serde", serde(rename = "1.25 V"))]
+        pub _1_25V: bool,
+        pub _reserved_1: bool,
+    }
     impl UdimmDdr4Voltages {
         define_compat_bitfield_field!(v_1_5, _1_5V);
         define_compat_bitfield_field!(v_1_35, _1_35V);
@@ -2616,6 +2632,13 @@ pub mod memory {
             pub _reserved_1 || SerdeHex32 : B31,
         }
     }
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    pub struct CustomSerdeLrdimmDdr4Voltages {
+        #[cfg_attr(feature = "serde", serde(rename = "1.2 V"))]
+        pub _1_2V: bool,
+        pub _reserved_1: bool,
+    }
+
     impl LrdimmDdr4Voltages {
         define_compat_bitfield_field!(v_1_2, _1_2V);
     }
