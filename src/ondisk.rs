@@ -2366,6 +2366,8 @@ pub mod memory {
         }
     }
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[cfg_attr(feature = "serde", serde(rename = "RdimmDdr4Voltages"))]
     pub struct CustomSerdeRdimmDdr4Voltages {
         #[cfg_attr(feature = "serde", serde(rename = "1.2 V"))]
         pub _1_2V: bool,
@@ -2530,6 +2532,8 @@ pub mod memory {
         }
     }
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[cfg_attr(feature = "serde", serde(rename = "UdimmDdr4Voltages"))]
     pub struct CustomSerdeUdimmDdr4Voltages {
         #[cfg_attr(feature = "serde", serde(rename = "1.5 V"))]
         pub _1_5V: bool,
@@ -2633,6 +2637,8 @@ pub mod memory {
         }
     }
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[cfg_attr(feature = "serde", serde(rename = "LrdimmDdr4Voltages"))]
     pub struct CustomSerdeLrdimmDdr4Voltages {
         #[cfg_attr(feature = "serde", serde(rename = "1.2 V"))]
         pub _1_2V: bool,
