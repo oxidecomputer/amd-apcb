@@ -3715,6 +3715,10 @@ Clone)]
                     },
                 }
             }
+            pub fn with_error_reporting_gpio(&mut self, value: Option<Gpio>) -> &mut Self{
+                self.set_error_reporting_gpio(value);
+                self
+            }
             pub fn beep_code_table(&self) -> Result<[ErrorOutControlBeepCode; 8]> {
                 self.beep_code_table.get1()
             }
@@ -3743,6 +3747,10 @@ Clone)]
                         self.power_good_gpio = Gpio::new(0, 0, 0);
                     },
                 }
+            }
+            pub fn with_power_good_gpio(&mut self, value: Option<Gpio>) -> &mut Self {
+                self.set_power_good_gpio(value);
+                self
             }
         }
 
