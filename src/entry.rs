@@ -36,28 +36,6 @@ use std::borrow::Cow;
 pub enum EntryItemBody<BufferType> {
     Struct(BufferType),
     Tokens(TokensEntryBodyItem<BufferType>),
-    Parameters(BufferType), /* not seen in the wild anymore */
-                            /* Not seen in the wild anymore.
-                                /// If the value is a Parameter, returns its time point
-                                pub fn parameter_time_point(&self) -> u8 {
-                                    assert!(self.context_type() == ContextType::Parameter);
-                                    self.body[0]
-                                }
-
-                                /// If the value is a Parameter, returns its token
-                                pub fn parameter_token(&self) -> u16 {
-                                    assert!(self.context_type() == ContextType::Parameter);
-                                    let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
-                                    value & 0x1FFF
-                                }
-
-                                // If the value is a Parameter, returns its size
-                                pub fn parameter_size(&self) -> u16 {
-                                    assert!(self.context_type() == ContextType::Parameter);
-                                    let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
-                                    (value >> 13) + 1
-                                }
-                            */
 }
 
 impl<'a> EntryItemBody<&'a mut [u8]> {
@@ -67,7 +45,7 @@ impl<'a> EntryItemBody<&'a mut [u8]> {
         context_type: ContextType,
         b: &'a mut [u8],
     ) -> Result<EntryItemBody<&'a mut [u8]>> {
-        Ok(match context_type {
+        match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
                     return Err(Error::FileSystem(
@@ -75,16 +53,18 @@ impl<'a> EntryItemBody<&'a mut [u8]> {
                         "ENTRY_HEADER::unit_size",
                     ));
                 }
-                Self::Struct(b)
+                Ok(Self::Struct(b))
             }
             ContextType::Tokens => {
                 let used_size = b.len();
-                Self::Tokens(TokensEntryBodyItem::<&'_ mut [u8]>::new(
+                Ok(Self::Tokens(TokensEntryBodyItem::<&'_ mut [u8]>::new(
                     unit_size, entry_id, b, used_size,
-                )?)
+                )?))
             }
-            ContextType::Parameters => Self::Parameters(b),
-        })
+            ContextType::Parameters => {
+                Err(Error::EntryTypeMismatch)
+            }
+        }
     }
 }
 
@@ -97,7 +77,7 @@ impl<'a> EntryItemBody<Ptr<'a, [u8]>> {
     ) -> Result<EntryItemBody<Ptr<'a, [u8]>>> {
         #[cfg(feature = "serde")]
         let b = Cow::Borrowed(b);
-        Ok(match context_type {
+        match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
                     return Err(Error::FileSystem(
@@ -105,16 +85,16 @@ impl<'a> EntryItemBody<Ptr<'a, [u8]>> {
                         "ENTRY_HEADER::unit_size",
                     ));
                 }
-                Self::Struct(b)
+                Ok(Self::Struct(b))
             }
             ContextType::Tokens => {
                 let used_size = b.len();
-                Self::Tokens(TokensEntryBodyItem::<Ptr<'_, [u8]>>::new(
+                Ok(Self::Tokens(TokensEntryBodyItem::<Ptr<'_, [u8]>>::new(
                     unit_size, entry_id, b, used_size,
-                )?)
+                )?))
             }
-            ContextType::Parameters => Self::Parameters(b),
-        })
+            ContextType::Parameters => Err(Error::EntryTypeMismatch)
+        }
     }
     pub(crate) fn validate(&self) -> Result<()> {
         match self {
@@ -122,7 +102,6 @@ impl<'a> EntryItemBody<Ptr<'a, [u8]>> {
                 tokens.iter().validate()?;
             }
             EntryItemBody::Struct(_) => {}
-            EntryItemBody::Parameters(_) => {}
         }
         Ok(())
     }
@@ -538,9 +517,6 @@ self.body_as_struct_sequence::<memory::platform_tuning::ElementRef<'_>>() {
                 } else {
                     state.serialize_field("struct_body", &buf)?;
                 }
-            }
-            EntryItemBody::<_>::Parameters(buf) => {
-                state.serialize_field("parameters", &buf)?;
             }
         }
         state.end()
