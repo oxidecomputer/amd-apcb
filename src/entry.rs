@@ -480,6 +480,8 @@ impl<'a> Serialize for EntryItem<'a> {
                     state.serialize_field("LrMaxFreqElement", &v)?;
                 } else if let Some((s, _)) = self.body_as_struct::<memory::ConsoleOutControl>() {
                     state.serialize_field("ConsoleOutControl", &s)?;
+                } else if let Some((s, _)) = self.body_as_struct::<memory::NaplesConsoleOutControl>() {
+                    state.serialize_field("NaplesConsoleOutControl", &s)?;
                 } else if let Some((s, _)) = self.body_as_struct::<memory::ExtVoltageControl>() {
                     state.serialize_field("ExtVoltageControl", &s)?;
                 } else if let Some((s, _)) = self.body_as_struct::<memory::ErrorOutControl116>() {
@@ -514,6 +516,11 @@ self.body_as_struct_sequence::<memory::platform_tuning::ElementRef<'_>>() {
                     let i = s.iter().unwrap();
                     let v = i.collect::<Vec<_>>();
                     state.serialize_field("platform_tuning", &v)?;
+                } else if let Some((_, s)) = self.body_as_struct::<Parameters>() {
+                    let parameters = ParametersIter::new(s.into_slice())
+                        .map_err(|_| serde::ser::Error::custom("could not serialize Parameters"))?;
+                    let v = parameters.collect::<Vec<_>>();
+                    state.serialize_field("parameters", &v)?;
                 } else {
                     state.serialize_field("struct_body", &buf)?;
                 }
@@ -679,7 +686,7 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
             // struct sequence
             PlatformSpecificOverrides,
             PlatformTuning,
-            //Parameters,
+            Parameters,
         }
         const FIELDS: &'static [&'static str] = &[
             "header",
@@ -708,7 +715,7 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
             // struct sequence
             "platform_specific_overrides",
             "platform_tuning",
-            //"parameters"
+            "parameters"
         ];
 
         impl<'de> Deserialize<'de> for Field {
@@ -792,7 +799,7 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
                                 Ok(Field::PlatformSpecificOverrides)
                             }
                             "platform_tuning" => Ok(Field::PlatformTuning),
-                            //"parameters" => Ok(Field::Parameters),
+                            "parameters" => Ok(Field::Parameters),
                             _ => Err(de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -959,6 +966,11 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
                                 memory::platform_tuning::Element,
                                 V,
                             >(&mut body, &mut map)?;
+                        }
+                        Field::Parameters => {
+                            /* TODO: Parameters itself is empty.
+                               Its tail, however, can be serialized using ParametersIter::serialize.
+                             */
                         }
                     }
                 }

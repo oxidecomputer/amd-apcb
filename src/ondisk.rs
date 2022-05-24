@@ -1441,19 +1441,21 @@ pub trait EntryCompatible {
 
 // Starting here come the actual Entry formats (struct )
 
-/// For Naples.
-#[bitfield(bits = 32)]
-#[repr(u32)]
-#[derive(Copy, Clone, Debug)]
-pub struct ParameterAttributes {
-    #[bits = 8]
-    pub time_point: ParameterTimePoint,
-    #[bits = 13]
-    pub token: ParameterTokenConfig,
-    #[bits = 3]
-    pub size_minus_one: B3,
-    #[skip]
-    __: B8,
+make_bitfield_serde! {
+    /// For Naples.
+    #[bitfield(bits = 32)]
+    #[repr(u32)]
+    #[derive(Copy, Clone, Debug)]
+    pub struct ParameterAttributes {
+        #[bits = 8]
+        pub time_point: ParameterTimePoint | pub get ParameterTimePoint : pub set ParameterTimePoint,
+        #[bits = 13]
+        pub token: ParameterTokenConfig | pub get ParameterTokenConfig : pub set ParameterTokenConfig,
+        #[bits = 3]
+        pub size_minus_one || u8 : B3,
+        #[bits = 8]
+        pub _reserved_0 || u8 : B8,
+    }
 }
 
 impl_bitfield_primitive_conversion!(
@@ -1461,6 +1463,12 @@ impl_bitfield_primitive_conversion!(
     0b1111_1111_1111_1111_1111_1111,
     u32
 );
+
+impl Default for ParameterAttributes { // FIXME: remove
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl ParameterAttributes {
     pub fn size(&self) -> usize {
@@ -1578,6 +1586,13 @@ impl EntryCompatible for Parameters {
         )
     }
 }
+
+/*#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[cfg_attr(feature = "serde", serde(rename = "Parameters"))]
+pub struct SerdeParameters {
+    pub items: Vec<ParameterAttributes, u64)>;
+}*/
 
 pub mod df {
     use super::*;
@@ -1971,11 +1986,24 @@ pub mod memory {
     }
 
     impl EntryCompatible for ConsoleOutControl {
-        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
-            matches!(
-                entry_id,
-                EntryId::Memory(MemoryEntryId::ConsoleOutControl)
-            )
+        fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+            /* On Naples, size_of::<NaplesConsoleOutControl>() == 20.
+               On newer models, size_of::<ConsoleOutControl>() == 20.
+               But the structs are not at all the same!
+               Therefore, we use heuristics here:
+                 On Naples, at offset 4, there's a LU32 port number.
+                 On newer models, at offset 4, there's four bools.
+                 It's very unlikely for the LSB of the port number to be
+                 0 or 1.
+            */
+            if prefix.len() >= 20 && prefix[4] <= 1 {
+                matches!(
+                    entry_id,
+                    EntryId::Memory(MemoryEntryId::ConsoleOutControl)
+                )
+            } else {
+                false
+            }
         }
     }
 
@@ -1986,6 +2014,121 @@ pub mod memory {
     impl ConsoleOutControl {
         pub fn new(
             abl_console_out_control: AblConsoleOutControl,
+            abl_breakpoint_control: AblBreakpointControl,
+        ) -> Self {
+            Self {
+                abl_console_out_control,
+                abl_breakpoint_control,
+                _reserved_: 0.into(),
+            }
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct NaplesAblConsoleOutControl {
+            enable_console_logging || bool : BU8 | pub get bool : pub set bool,
+            _reserved_0 || [SerdeHex8; 3] : [u8; 3],
+            abl_console_port || SerdeHex32 : U32<LittleEndian> | pub get u32 : pub set u32,
+            enable_mem_flow_logging || bool : BU8 | pub get bool : pub set bool,
+            enable_mem_setreg_logging || bool : BU8 | pub get bool : pub set bool,
+            enable_mem_getreg_logging || bool : BU8 | pub get bool : pub set bool,
+            enable_mem_status_logging || bool : BU8 | pub get bool : pub set bool,
+            enable_mem_pmu_logging || bool : BU8 | pub get bool : pub set bool,
+            enable_mem_pmu_sram_read_logging || bool : BU8 | pub get bool : pub set bool,
+            enable_mem_pmu_sram_write_logging || bool : BU8 | pub get bool : pub set bool,
+            enable_mem_test_verbose_logging || bool : BU8 | pub get bool : pub set bool,
+        }
+    }
+    impl Default for NaplesAblConsoleOutControl {
+        fn default() -> Self {
+            Self {
+                enable_console_logging: BU8(1),
+                _reserved_0: [0u8; 3],
+                enable_mem_flow_logging: BU8(1),
+                enable_mem_setreg_logging: BU8(1),
+                enable_mem_getreg_logging: BU8(0),
+                enable_mem_status_logging: BU8(0),
+                enable_mem_pmu_logging: BU8(0),
+                enable_mem_pmu_sram_read_logging: BU8(0),
+                enable_mem_pmu_sram_write_logging: BU8(0),
+                enable_mem_test_verbose_logging: BU8(0),
+                abl_console_port: 0x80u32.into(),
+            }
+        }
+    }
+
+    impl Getter<Result<NaplesAblConsoleOutControl>> for NaplesAblConsoleOutControl {
+        fn get1(self) -> Result<Self> {
+            Ok(self)
+        }
+    }
+
+    impl Setter<NaplesAblConsoleOutControl> for NaplesAblConsoleOutControl {
+        fn set1(&mut self, value: Self) {
+            *self = value;
+        }
+    }
+
+    impl NaplesAblConsoleOutControl {
+        pub fn builder() -> Self {
+            Self::default()
+        }
+        pub fn new() -> Self {
+            Self::default()
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct NaplesConsoleOutControl {
+            pub abl_console_out_control: NaplesAblConsoleOutControl,
+            pub abl_breakpoint_control: AblBreakpointControl,
+            _reserved_ || SerdeHex16 : U16<LittleEndian>,
+        }
+    }
+
+    impl Default for NaplesConsoleOutControl {
+        fn default() -> Self {
+            Self {
+                abl_console_out_control: NaplesAblConsoleOutControl::default(),
+                abl_breakpoint_control: AblBreakpointControl::default(),
+                _reserved_: 0.into(),
+            }
+        }
+    }
+
+    impl EntryCompatible for NaplesConsoleOutControl {
+        fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+            /* On Naples, size_of::<NaplesConsoleOutControl>() == 20.
+               On newer models, size_of::<ConsoleOutControl>() == 20.
+               But the structs are not at all the same!
+               Therefore, we use heuristics here:
+                 On Naples, at offset 4, there's a LU32 port number.
+                 On newer models, at offset 4, there's four bools.
+                 It's very unlikely for the LSB of the port number to be
+                 0 or 1.
+            */
+            if prefix.len() >= 20 && prefix[4] > 1 {
+                matches!(
+                    entry_id,
+                    EntryId::Memory(MemoryEntryId::ConsoleOutControl)
+                )
+            } else {
+                false
+            }
+        }
+    }
+
+    impl HeaderWithTail for NaplesConsoleOutControl {
+        type TailArrayItemType<'de> = ();
+    }
+
+    impl NaplesConsoleOutControl {
+        pub fn new(
+            abl_console_out_control: NaplesAblConsoleOutControl,
             abl_breakpoint_control: AblBreakpointControl,
         ) -> Self {
             Self {
@@ -5479,6 +5622,8 @@ Clone)]
             const_assert!(size_of::<DimmInfoSmbusElement>() == 8);
             const_assert!(size_of::<AblConsoleOutControl>() == 16);
             const_assert!(size_of::<ConsoleOutControl>() == 20);
+            const_assert!(size_of::<NaplesAblConsoleOutControl>() == 16);
+            const_assert!(size_of::<NaplesConsoleOutControl>() == 20);
             const_assert!(size_of::<ExtVoltageControl>() == 32);
             const_assert!(size_of::<RdimmDdr4CadBusElement>() == 36);
             const_assert!(size_of::<UdimmDdr4CadBusElement>() == 36);

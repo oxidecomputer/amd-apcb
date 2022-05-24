@@ -1,11 +1,12 @@
 // This file mostly contains the Naples backward-compatibility interface.
 
 use modular_bitfield::prelude::*;
-//use crate::struct_accessors::make_accessors;
 
 #[derive(
     Debug, PartialEq, num_derive::FromPrimitive, Clone, Copy, BitfieldSpecifier,
 )]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[non_exhaustive]
 #[bits = 8]
 pub enum ParameterTimePoint {
@@ -16,6 +17,8 @@ pub enum ParameterTimePoint {
 #[derive(
     Debug, PartialEq, num_derive::FromPrimitive, Clone, Copy, BitfieldSpecifier,
 )]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[non_exhaustive]
 #[bits = 13]
 pub enum ParameterTokenConfig {

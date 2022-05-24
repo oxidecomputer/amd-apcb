@@ -328,6 +328,23 @@ make_serde!(
     ]
 );
 make_serde!(
+    NaplesAblConsoleOutControl,
+    SerdeNaplesAblConsoleOutControl,
+    [
+        enable_console_logging,
+        enable_mem_flow_logging,
+        enable_mem_setreg_logging,
+        enable_mem_getreg_logging,
+        enable_mem_status_logging,
+        enable_mem_pmu_logging,
+        enable_mem_pmu_sram_read_logging,
+        enable_mem_pmu_sram_write_logging,
+        enable_mem_test_verbose_logging,
+        _reserved_0,
+        abl_console_port,
+    ]
+);
+make_serde!(
     AblBreakpointControl,
     SerdeAblBreakpointControl,
     [enable_breakpoint, break_on_all_dies,]
@@ -745,6 +762,11 @@ make_serde!(
     [abl_console_out_control, abl_breakpoint_control, _reserved_,]
 );
 make_serde!(
+    NaplesConsoleOutControl,
+    SerdeNaplesConsoleOutControl,
+    [abl_console_out_control, abl_breakpoint_control, _reserved_,]
+);
+make_serde!(
     BoardInstances,
     SerdeBoardInstances,
     [
@@ -764,5 +786,15 @@ make_serde!(
         instance_13,
         instance_14,
         instance_15,
+    ]
+);
+make_serde!(
+    ParameterAttributes,
+    SerdeParameterAttributes,
+    [
+        time_point,
+        token,
+        size_minus_one,
+        _reserved_0,
     ]
 );
