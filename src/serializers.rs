@@ -789,12 +789,13 @@ make_serde!(
     ]
 );
 make_serde!(
-    ParameterAttributes,
-    SerdeParameterAttributes,
+    Parameter,
+    SerdeParameter,
     [
         time_point,
         token,
-        size_minus_one,
+        value_size,
+        value,
         _reserved_0,
     ]
 );

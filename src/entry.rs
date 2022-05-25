@@ -6,7 +6,7 @@ use crate::ondisk::{
     HeaderWithTail, MutSequenceElementFromBytes, PriorityLevels,
     SequenceElementFromBytes,
 };
-use crate::ondisk::{Parameters, ParametersIter};
+use crate::ondisk::{Parameters, ParametersIter, Parameter};
 use crate::tokens_entry::TokensEntryBodyItem;
 use crate::types::{Error, FileSystemError, Ptr, Result};
 use core::marker::PhantomData;
@@ -628,6 +628,26 @@ where
 }
 
 #[cfg(feature = "serde")]
+/// if BODY is empty, read a value (which is a struct) from MAP and stash it
+/// into a new BODY. If BODY is not empty, that's an error. This is used purely
+/// as a helper function during deserialize.
+fn parameters_struct_to_body<'a, M>(
+    body: &mut Option<Cow<'_, [u8]>>,
+    map: &mut M,
+) -> core::result::Result<(), M::Error>
+where
+    M: MapAccess<'a>,
+{
+    if body.is_some() {
+        return Err(de::Error::duplicate_field("body"));
+    }
+    let val: Vec<Parameter> = map.next_value()?;
+    let buf = Parameters::new_tail_from_vec(val).unwrap();
+    *body = Some(Cow::from(buf));
+    Ok(())
+}
+
+#[cfg(feature = "serde")]
 /// if BODY is empty, read a value (which is a Vec) from MAP and stash it into a
 /// new BODY. If BODY is not empty, that's an error. This is used purely as a
 /// helper function during deserialize. This handles the sequences, and thus the
@@ -968,9 +988,10 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
                             >(&mut body, &mut map)?;
                         }
                         Field::Parameters => {
-                            /* TODO: Parameters itself is empty.
-                               Its tail, however, can be serialized using ParametersIter::serialize.
-                             */
+                            /* Parameters itself is empty. The tail is not. */
+                            parameters_struct_to_body::<V>(
+                                &mut body, &mut map,
+                            )?;
                         }
                     }
                 }
@@ -1090,9 +1111,13 @@ impl Parameters {
         tail: StructArrayEntryItem<'_, u8>,
         key: ParameterTokenConfig,
     ) -> Result<u64> {
-        for (parameter_key, parameter_value) in Self::iter(tail)? {
-            if parameter_key.token() == key {
-                return Ok(parameter_value);
+        for parameter in Self::iter(tail)? {
+            match parameter.token() {
+                Ok(t) => if t == key {
+                    return Ok(parameter.value().unwrap());
+                },
+                Err(_) => {
+                }
             }
         }
         Err(Error::ParameterNotFound)

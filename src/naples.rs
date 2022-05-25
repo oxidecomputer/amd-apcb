@@ -1,6 +1,8 @@
 // This file mostly contains the Naples backward-compatibility interface.
 
 use modular_bitfield::prelude::*;
+use crate::struct_accessors::{Getter, Setter};
+use crate::types::Result;
 
 #[derive(
     Debug, PartialEq, num_derive::FromPrimitive, Clone, Copy, BitfieldSpecifier,
@@ -12,6 +14,18 @@ use modular_bitfield::prelude::*;
 pub enum ParameterTimePoint {
     Never = 0,
     Any = 1,
+}
+
+impl Getter<Result<ParameterTimePoint>> for ParameterTimePoint {
+    fn get1(self) -> Result<Self> {
+        Ok(self)
+    }
+}
+
+impl Setter<ParameterTimePoint> for ParameterTimePoint {
+    fn set1(&mut self, value: Self) {
+        *self = value
+    }
 }
 
 #[derive(
@@ -388,4 +402,16 @@ pub enum ParameterTokenConfig {
     Fch1c07 = 0x1C07, // FIXME
 
     Limit = 0x1FFF,
+}
+
+impl Getter<Result<ParameterTokenConfig>> for ParameterTokenConfig {
+    fn get1(self) -> Result<Self> {
+        Ok(self)
+    }
+}
+
+impl Setter<ParameterTokenConfig> for ParameterTokenConfig {
+    fn set1(&mut self, value: Self) {
+        *self = value
+    }
 }

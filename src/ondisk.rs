@@ -10,7 +10,7 @@ use crate::token_accessors::{make_token_accessors, Tokens, TokensMut};
 use crate::types::Error;
 use crate::types::PriorityLevel;
 use crate::types::Result;
-use byteorder::{LittleEndian, ReadBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use core::clone::Clone;
 use core::cmp::Ordering;
 use core::convert::TryInto;
@@ -1471,8 +1471,8 @@ impl Default for ParameterAttributes { // FIXME: remove
 }
 
 impl ParameterAttributes {
-    pub fn size(&self) -> usize {
-        (self.size_minus_one() as usize) + 1
+    pub fn size(&self) -> u16 {
+        (self.size_minus_one() as u16) + 1
     }
     pub fn terminator() -> Self {
         Self::new()
@@ -1522,32 +1522,35 @@ impl<'a> ParametersIter<'a> {
 }
 
 impl Iterator for ParametersIter<'_> {
-    type Item = (ParameterAttributes, u64);
+    type Item = Parameter;
     fn next(&mut self) -> Option<<Self as Iterator>::Item> {
         let attributes = Self::next_attributes(&mut self.keys).ok()?;
         if attributes.token() == ParameterTokenConfig::Limit {
             return None;
         }
-        let size = attributes.size();
+        let size = usize::from(attributes.size());
         match size {
             1 | 2 | 4 | 8 => {
                 let raw_value =
                     take_body_from_collection(&mut self.values, size, 1)?;
                 let mut raw_value = raw_value;
                 match raw_value.len() {
-                    1 => Some((attributes, raw_value.read_u8().ok()?.into())),
-                    2 => Some((
-                        attributes,
+                    1 => Some(Parameter::new(
+                        &attributes,
+                        raw_value.read_u8().ok()?.into()
+                    ).unwrap()),
+                    2 => Some(Parameter::new(
+                        &attributes,
                         raw_value.read_u16::<LittleEndian>().ok()?.into(),
-                    )),
-                    4 => Some((
-                        attributes,
+                    ).unwrap()),
+                    4 => Some(Parameter::new(
+                        &attributes,
                         raw_value.read_u32::<LittleEndian>().ok()?.into(),
-                    )),
-                    8 => Some((
-                        attributes,
+                    ).unwrap()),
+                    8 => Some(Parameter::new(
+                        &attributes,
                         raw_value.read_u64::<LittleEndian>().ok()?,
-                    )),
+                    ).unwrap()),
                     _ => None, // TODO: Raise error
                 }
             }
@@ -1587,12 +1590,73 @@ impl EntryCompatible for Parameters {
     }
 }
 
-/*#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[cfg_attr(feature = "serde", serde(rename = "Parameters"))]
-pub struct SerdeParameters {
-    pub items: Vec<ParameterAttributes, u64)>;
-}*/
+make_accessors! {
+    /// This is actually just a helper struct and is not on disk (at least not exactly).
+    /// It's needed because the value area is not adjacent to the attribute.
+    //#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    //#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    //#[cfg_attr(feature = "serde", serde(rename = "Parameter"))]
+    #[derive(Debug, Copy, Clone)]
+    pub struct Parameter {
+        time_point: ParameterTimePoint | pub get ParameterTimePoint : pub set ParameterTimePoint,
+        token: ParameterTokenConfig | pub get ParameterTokenConfig : pub set ParameterTokenConfig,
+        value_size || u16 : LU16 | pub get u16 : pub set u16,
+        value || u64 : LU64 | pub get u64 : pub set u64,
+        _reserved_0: u8 | pub get u8 : pub set u8,
+    }
+}
+
+impl Parameter {
+    // Note: VALUE is in an extra area
+    pub fn attributes(&self) -> Result<ParameterAttributes> {
+        Ok(ParameterAttributes::new()
+            .with_time_point(self.time_point)
+            .with_token(self.token)
+            .with_size_minus_one(self.value_size().unwrap().checked_sub(1).unwrap().try_into().unwrap())
+            .with__reserved_0(self._reserved_0))
+    }
+    pub fn new(attributes: &ParameterAttributes, value: u64) -> Result<Self> {
+        Ok(Self {
+            time_point: attributes.time_point(),
+            token: attributes.token(),
+            value_size: attributes.size().into(),
+            _reserved_0: attributes._reserved_0(),
+            value: value.into(),
+        })
+    }
+}
+
+impl Default for Parameter { // FIXME: remove
+    fn default() -> Self {
+        Self::new(&ParameterAttributes::default(), 0).unwrap()
+    }
+}
+
+impl Parameters {
+    /// Create a new Parameters Tail with the items from SOURCE.
+    /// Note that the last entry in SOURCE must be Parameter::new(&ParameterAttributes::terminator(), 0xff).
+    #[cfg(feature = "serde")]
+    pub(crate) fn new_tail_from_vec(source: Vec<Parameter>) -> Result<Vec<u8>> {
+        //let iter = source.into_iter();
+        //let total_size: usize = source.map(|x| size_of::<ParameterAttributes>() + x.value_size).sum();
+        let mut result = Vec::<u8>::new(); // with_capacity(total_size);
+        for parameter in &source {
+            let raw_attributes = u32::from(parameter.attributes().unwrap());
+            result.write_u32::<LittleEndian>(raw_attributes).unwrap();
+        }
+        for parameter in &source {
+            let value = parameter.value().unwrap();
+            match parameter.value_size().unwrap() {
+                1 => result.write_u8(value as u8).unwrap(),
+                2 => result.write_u16::<LittleEndian>(value as u16).unwrap(),
+                4 => result.write_u32::<LittleEndian>(value as u32).unwrap(),
+                8 => result.write_u64::<LittleEndian>(value as u64).unwrap(),
+                _ => panic!("oops"),
+            }
+        }
+        Ok(result)
+    }
+}
 
 pub mod df {
     use super::*;

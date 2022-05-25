@@ -16,7 +16,7 @@ use crate::ondisk::{
 };
 pub use crate::ondisk::{
     BoardInstances, ContextFormat, ContextType, EntryCompatible, EntryId,
-    PriorityLevels,
+    PriorityLevels, Parameter,
 };
 use crate::token_accessors::{Tokens, TokensMut};
 use core::convert::TryInto;
@@ -882,21 +882,23 @@ impl<'a> Apcb<'a> {
     }
 
     /// This inserts a Naples-style Parameters entry.
+    /// Note: Keep in sync with new_tail_from_vec.
     pub fn insert_parameters_entry(
         &mut self,
         entry_id: EntryId,
-        items: &[(ParameterAttributes, u64)],
+        items: &[Parameter],
     ) -> Result<()> {
         let mut payload_size = size_of::<u32>() + size_of::<u8>(); // terminator attribute and its value
-        for (key, value) in items {
+        for parameter in items {
             payload_size = payload_size
                 .checked_add(size_of::<ParameterAttributes>())
                 .ok_or(Error::ArithmeticOverflow)?;
-            let value_size = key.size();
+            let value_size = usize::from(parameter.value_size().unwrap());
+            let value = parameter.value().unwrap();
             payload_size = payload_size
                 .checked_add(value_size)
                 .ok_or(Error::ArithmeticOverflow)?;
-            if value_size > 8 || *value >= (8u64 << value_size) {
+            if value_size > 8 || value >= (8u64 << value_size) {
                 return Err(Error::ParameterRange);
             }
         }
@@ -909,8 +911,8 @@ impl<'a> Apcb<'a> {
             PriorityLevels::new(),
             &mut |body: &mut [u8]| {
                 let mut body = body;
-                for (key, _) in items {
-                    let raw_key = key.to_u32().unwrap();
+                for parameter in items {
+                    let raw_key = parameter.attributes().unwrap().to_u32().unwrap();
                     let (a, rest) = body.split_at_mut(size_of::<u32>());
                     a.copy_from_slice(raw_key.as_bytes());
                     body = rest;
@@ -921,9 +923,10 @@ impl<'a> Apcb<'a> {
                 a.copy_from_slice(raw_key.as_bytes());
                 body = rest;
 
-                for (key, value) in items {
-                    let size = key.size();
+                for parameter in items {
+                    let size = usize::from(parameter.value_size().unwrap());
                     let (a, rest) = body.split_at_mut(size);
+                    let value = parameter.value().unwrap();
                     let raw_value = value.as_bytes();
                     a.copy_from_slice(&raw_value[0..size]);
                     body = rest;
