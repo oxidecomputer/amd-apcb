@@ -10,7 +10,7 @@ use crate::token_accessors::{make_token_accessors, Tokens, TokensMut};
 use crate::types::Error;
 use crate::types::PriorityLevel;
 use crate::types::Result;
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt};
 use core::clone::Clone;
 use core::cmp::Ordering;
 use core::convert::TryInto;
@@ -1538,19 +1538,19 @@ impl Iterator for ParametersIter<'_> {
                     1 => Some(Parameter::new(
                         &attributes,
                         raw_value.read_u8().ok()?.into()
-                    ).unwrap()),
+                    ).ok()?),
                     2 => Some(Parameter::new(
                         &attributes,
                         raw_value.read_u16::<LittleEndian>().ok()?.into(),
-                    ).unwrap()),
+                    ).ok()?),
                     4 => Some(Parameter::new(
                         &attributes,
                         raw_value.read_u32::<LittleEndian>().ok()?.into(),
-                    ).unwrap()),
+                    ).ok()?),
                     8 => Some(Parameter::new(
                         &attributes,
                         raw_value.read_u64::<LittleEndian>().ok()?,
-                    ).unwrap()),
+                    ).ok()?),
                     _ => None, // TODO: Raise error
                 }
             }
@@ -1612,7 +1612,11 @@ impl Parameter {
         Ok(ParameterAttributes::new()
             .with_time_point(self.time_point)
             .with_token(self.token)
-            .with_size_minus_one(self.value_size().unwrap().checked_sub(1).unwrap().try_into().unwrap())
+            .with_size_minus_one(self.value_size()?
+                .checked_sub(1)
+                .ok_or(Error::EntryTypeMismatch)?
+                .try_into()
+                .map_err(|_| Error::EntryTypeMismatch)?)
             .with__reserved_0(self._reserved_0))
     }
     pub fn new(attributes: &ParameterAttributes, value: u64) -> Result<Self> {
@@ -1641,17 +1645,17 @@ impl Parameters {
         //let total_size: usize = source.map(|x| size_of::<ParameterAttributes>() + x.value_size).sum();
         let mut result = Vec::<u8>::new(); // with_capacity(total_size);
         for parameter in &source {
-            let raw_attributes = u32::from(parameter.attributes().unwrap());
-            result.write_u32::<LittleEndian>(raw_attributes).unwrap();
+            let raw_attributes = u32::from(parameter.attributes()?);
+            result.write_u32::<LittleEndian>(raw_attributes)?;
         }
         for parameter in &source {
-            let value = parameter.value().unwrap();
-            match parameter.value_size().unwrap() {
-                1 => result.write_u8(value as u8).unwrap(),
-                2 => result.write_u16::<LittleEndian>(value as u16).unwrap(),
-                4 => result.write_u32::<LittleEndian>(value as u32).unwrap(),
-                8 => result.write_u64::<LittleEndian>(value as u64).unwrap(),
-                _ => panic!("oops"),
+            let value = parameter.value()?;
+            match parameter.value_size()? {
+                1 => result.write_u8(value as u8)?,
+                2 => result.write_u16::<LittleEndian>(value as u16)?,
+                4 => result.write_u32::<LittleEndian>(value as u32)?,
+                8 => result.write_u64::<LittleEndian>(value as u64)?,
+                _ => Err(Error::EntryTypeMismatch),
             }
         }
         Ok(result)

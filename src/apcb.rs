@@ -893,8 +893,8 @@ impl<'a> Apcb<'a> {
             payload_size = payload_size
                 .checked_add(size_of::<ParameterAttributes>())
                 .ok_or(Error::ArithmeticOverflow)?;
-            let value_size = usize::from(parameter.value_size().unwrap());
-            let value = parameter.value().unwrap();
+            let value_size = usize::from(parameter.value_size()?);
+            let value = parameter.value()?;
             payload_size = payload_size
                 .checked_add(value_size)
                 .ok_or(Error::ArithmeticOverflow)?;

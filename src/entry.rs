@@ -6,7 +6,7 @@ use crate::ondisk::{
     HeaderWithTail, MutSequenceElementFromBytes, PriorityLevels,
     SequenceElementFromBytes,
 };
-use crate::ondisk::{Parameters, ParametersIter, Parameter};
+use crate::ondisk::{Parameters, ParametersIter};
 use crate::tokens_entry::TokensEntryBodyItem;
 use crate::types::{Error, FileSystemError, Ptr, Result};
 use core::marker::PhantomData;
@@ -1114,7 +1114,7 @@ impl Parameters {
         for parameter in Self::iter(tail)? {
             match parameter.token() {
                 Ok(t) => if t == key {
-                    return Ok(parameter.value().unwrap());
+                    return Ok(parameter.value()?);
                 },
                 Err(_) => {
                 }
