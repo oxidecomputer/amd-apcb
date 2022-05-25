@@ -20,6 +20,8 @@ use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
 #[cfg(feature = "serde")]
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 #[cfg(feature = "serde")]
+use crate::ondisk::Parameter;
+#[cfg(feature = "serde")]
 use std::borrow::Cow;
 
 /* Note: high-level interface is:

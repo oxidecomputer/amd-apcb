@@ -799,3 +799,13 @@ make_serde!(
         _reserved_0,
     ]
 );
+make_serde!(
+    ParameterAttributes,
+    SerdeParameterAttributes,
+    [
+        time_point,
+        token,
+        size_minus_one,
+        _reserved_0,
+    ]
+);
