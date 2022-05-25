@@ -62,15 +62,12 @@ impl<'a, 'b> TokensMut<'a, 'b> {
             .ok_or(Error::EntryNotFound)?;
         match &entry.body {
             EntryItemBody::<_>::Tokens(ref a) => {
-                let token =
-                    a.token(field_key).ok_or(Error::TokenNotFound)?;
+                let token = a.token(field_key).ok_or(Error::TokenNotFound)?;
                 assert!(token.id() == field_key);
                 let token_value = token.value();
                 Ok(token_value)
             }
-            _ => {
-                Err(Error::EntryTypeMismatch)
-            }
+            _ => Err(Error::EntryTypeMismatch),
         }
     }
 
@@ -174,15 +171,12 @@ impl<'a, 'b> Tokens<'a, 'b> {
             .ok_or(Error::EntryNotFound)?;
         match &entry.body {
             EntryItemBody::<_>::Tokens(ref a) => {
-                let token =
-                    a.token(field_key).ok_or(Error::TokenNotFound)?;
+                let token = a.token(field_key).ok_or(Error::TokenNotFound)?;
                 assert!(token.id() == field_key);
                 let token_value = token.value();
                 Ok(token_value)
             }
-            _ => {
-                Err(Error::EntryTypeMismatch)
-            }
+            _ => Err(Error::EntryTypeMismatch),
         }
     }
 }

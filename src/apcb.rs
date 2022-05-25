@@ -16,7 +16,7 @@ use crate::ondisk::{
 };
 pub use crate::ondisk::{
     BoardInstances, ContextFormat, ContextType, EntryCompatible, EntryId,
-    PriorityLevels, Parameter,
+    Parameter, PriorityLevels,
 };
 use crate::token_accessors::{Tokens, TokensMut};
 use core::convert::TryInto;
@@ -914,7 +914,8 @@ impl<'a> Apcb<'a> {
             &mut |body: &mut [u8]| {
                 let mut body = body;
                 for parameter in items {
-                    let raw_key = parameter.attributes().unwrap().to_u32().unwrap();
+                    let raw_key =
+                        parameter.attributes().unwrap().to_u32().unwrap();
                     let (a, rest) = body.split_at_mut(size_of::<u32>());
                     a.copy_from_slice(raw_key.as_bytes());
                     body = rest;

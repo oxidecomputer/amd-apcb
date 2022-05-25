@@ -1,8 +1,8 @@
 // This file mostly contains the Naples backward-compatibility interface.
 
-use modular_bitfield::prelude::*;
 use crate::struct_accessors::{Getter, Setter};
 use crate::types::Result;
+use modular_bitfield::prelude::*;
 
 #[derive(
     Debug, PartialEq, num_derive::FromPrimitive, Clone, Copy, BitfieldSpecifier,

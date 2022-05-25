@@ -26,11 +26,11 @@ use paste::paste;
 use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32, U64};
 
 #[cfg(feature = "serde")]
+use byteorder::WriteBytesExt;
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "serde")]
 use serde_hex::{SerHex, StrictPfx};
-#[cfg(feature = "serde")]
-use byteorder::WriteBytesExt;
 #[cfg(feature = "std")]
 use std::fmt;
 
@@ -1490,7 +1490,8 @@ impl_bitfield_primitive_conversion!(
     u32
 );
 
-impl Default for ParameterAttributes { // FIXME: remove
+impl Default for ParameterAttributes {
+    // FIXME: remove
     fn default() -> Self {
         Self::new()
     }
@@ -1561,22 +1562,34 @@ impl Iterator for ParametersIter<'_> {
                     take_body_from_collection(&mut self.values, size, 1)?;
                 let mut raw_value = raw_value;
                 match raw_value.len() {
-                    1 => Some(Parameter::new(
-                        &attributes,
-                        raw_value.read_u8().ok()?.into()
-                    ).ok()?),
-                    2 => Some(Parameter::new(
-                        &attributes,
-                        raw_value.read_u16::<LittleEndian>().ok()?.into(),
-                    ).ok()?),
-                    4 => Some(Parameter::new(
-                        &attributes,
-                        raw_value.read_u32::<LittleEndian>().ok()?.into(),
-                    ).ok()?),
-                    8 => Some(Parameter::new(
-                        &attributes,
-                        raw_value.read_u64::<LittleEndian>().ok()?,
-                    ).ok()?),
+                    1 => Some(
+                        Parameter::new(
+                            &attributes,
+                            raw_value.read_u8().ok()?.into(),
+                        )
+                        .ok()?,
+                    ),
+                    2 => Some(
+                        Parameter::new(
+                            &attributes,
+                            raw_value.read_u16::<LittleEndian>().ok()?.into(),
+                        )
+                        .ok()?,
+                    ),
+                    4 => Some(
+                        Parameter::new(
+                            &attributes,
+                            raw_value.read_u32::<LittleEndian>().ok()?.into(),
+                        )
+                        .ok()?,
+                    ),
+                    8 => Some(
+                        Parameter::new(
+                            &attributes,
+                            raw_value.read_u64::<LittleEndian>().ok()?,
+                        )
+                        .ok()?,
+                    ),
                     _ => None, // TODO: Raise error
                 }
             }
@@ -1638,11 +1651,13 @@ impl Parameter {
         Ok(ParameterAttributes::new()
             .with_time_point(self.time_point)
             .with_token(self.token)
-            .with_size_minus_one(self.value_size()?
-                .checked_sub(1)
-                .ok_or(Error::EntryTypeMismatch)?
-                .try_into()
-                .map_err(|_| Error::EntryTypeMismatch)?)
+            .with_size_minus_one(
+                self.value_size()?
+                    .checked_sub(1)
+                    .ok_or(Error::EntryTypeMismatch)?
+                    .try_into()
+                    .map_err(|_| Error::EntryTypeMismatch)?,
+            )
             .with__reserved_0(self._reserved_0))
     }
     pub fn new(attributes: &ParameterAttributes, value: u64) -> Result<Self> {
@@ -1656,7 +1671,8 @@ impl Parameter {
     }
 }
 
-impl Default for Parameter { // FIXME: remove
+impl Default for Parameter {
+    // FIXME: remove
     fn default() -> Self {
         Self::new(&ParameterAttributes::default(), 0).unwrap()
     }
@@ -1664,23 +1680,35 @@ impl Default for Parameter { // FIXME: remove
 
 impl Parameters {
     /// Create a new Parameters Tail with the items from SOURCE.
-    /// Note that the last entry in SOURCE must be Parameter::new(&ParameterAttributes::terminator(), 0xff).
+    /// Note that the last entry in SOURCE must be
+    /// Parameter::new(&ParameterAttributes::terminator(), 0xff).
     #[cfg(feature = "serde")]
     pub(crate) fn new_tail_from_vec(source: Vec<Parameter>) -> Result<Vec<u8>> {
         //let iter = source.into_iter();
-        //let total_size: usize = source.map(|x| size_of::<ParameterAttributes>() + x.value_size).sum();
+        //let total_size: usize = source.map(|x|
+        // size_of::<ParameterAttributes>() + x.value_size).sum();
         let mut result = Vec::<u8>::new(); // with_capacity(total_size);
         for parameter in &source {
             let raw_attributes = u32::from(parameter.attributes()?);
-            result.write_u32::<LittleEndian>(raw_attributes).map_err(|_| Error::ParameterRange)?;
+            result
+                .write_u32::<LittleEndian>(raw_attributes)
+                .map_err(|_| Error::ParameterRange)?;
         }
         for parameter in &source {
             let value = parameter.value()?;
             match parameter.value_size()? {
-                1 => result.write_u8(value as u8).map_err(|_| Error::ParameterRange)?,
-                2 => result.write_u16::<LittleEndian>(value as u16).map_err(|_| Error::ParameterRange)?,
-                4 => result.write_u32::<LittleEndian>(value as u32).map_err(|_| Error::ParameterRange)?,
-                8 => result.write_u64::<LittleEndian>(value as u64).map_err(|_| Error::ParameterRange)?,
+                1 => result
+                    .write_u8(value as u8)
+                    .map_err(|_| Error::ParameterRange)?,
+                2 => result
+                    .write_u16::<LittleEndian>(value as u16)
+                    .map_err(|_| Error::ParameterRange)?,
+                4 => result
+                    .write_u32::<LittleEndian>(value as u32)
+                    .map_err(|_| Error::ParameterRange)?,
+                8 => result
+                    .write_u64::<LittleEndian>(value as u64)
+                    .map_err(|_| Error::ParameterRange)?,
                 _ => Err(Error::EntryTypeMismatch)?,
             }
         }
