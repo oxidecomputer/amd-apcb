@@ -754,8 +754,7 @@ mod tests {
             EntryItemBody::Tokens(ref tokens) => {
                 let mut tokens = tokens.iter();
 
-                let token =
-                    tokens.next().ok_or(Error::TokenNotFound)?;
+                let token = tokens.next().ok_or(Error::TokenNotFound)?;
                 assert!(token.id() == 0xae46_cea4);
                 assert!(token.value() == 2);
 
@@ -946,8 +945,7 @@ mod tests {
         match entry.body {
             EntryItemBody::<_>::Tokens(tokens) => {
                 let mut tokens = tokens.iter();
-                let token =
-                    tokens.next().ok_or(Error::TokenNotFound)?;
+                let token = tokens.next().ok_or(Error::TokenNotFound)?;
                 assert!(token.id() == 0x014FBF20);
                 assert!(token.value() == 1);
                 assert!(matches!(tokens.next(), None));
@@ -1098,13 +1096,11 @@ mod tests {
             EntryItemBody::<_>::Tokens(tokens) => {
                 let mut tokens = tokens.iter();
 
-                let token =
-                    tokens.next().ok_or(Error::TokenNotFound)?;
+                let token = tokens.next().ok_or(Error::TokenNotFound)?;
                 assert!(token.id() == 0x42);
                 assert!(token.value() == 2);
 
-                let token =
-                    tokens.next().ok_or(Error::TokenNotFound)?;
+                let token = tokens.next().ok_or(Error::TokenNotFound)?;
                 assert!(token.id() == 0x014FBF20);
                 assert!(token.value() == 1);
 
@@ -1236,8 +1232,7 @@ mod tests {
             EntryItemBody::<_>::Tokens(tokens) => {
                 let mut tokens = tokens.iter();
 
-                let token =
-                    tokens.next().ok_or(Error::TokenNotFound)?;
+                let token = tokens.next().ok_or(Error::TokenNotFound)?;
                 assert!(token.id() == 0x014FBF20);
                 assert!(token.value() == 1);
 

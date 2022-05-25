@@ -16,11 +16,11 @@ use pre::pre;
 use zerocopy::{AsBytes, FromBytes};
 
 #[cfg(feature = "serde")]
+use crate::ondisk::Parameter;
+#[cfg(feature = "serde")]
 use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
 #[cfg(feature = "serde")]
 use serde::ser::{Serialize, SerializeStruct, Serializer};
-#[cfg(feature = "serde")]
-use crate::ondisk::Parameter;
 #[cfg(feature = "serde")]
 use std::borrow::Cow;
 
@@ -63,9 +63,7 @@ impl<'a> EntryItemBody<&'a mut [u8]> {
                     unit_size, entry_id, b, used_size,
                 )?))
             }
-            ContextType::Parameters => {
-                Err(Error::EntryTypeMismatch)
-            }
+            ContextType::Parameters => Err(Error::EntryTypeMismatch),
         }
     }
 }
@@ -95,7 +93,7 @@ impl<'a> EntryItemBody<Ptr<'a, [u8]>> {
                     unit_size, entry_id, b, used_size,
                 )?))
             }
-            ContextType::Parameters => Err(Error::EntryTypeMismatch)
+            ContextType::Parameters => Err(Error::EntryTypeMismatch),
         }
     }
     pub(crate) fn validate(&self) -> Result<()> {
@@ -737,7 +735,7 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
             // struct sequence
             "platform_specific_overrides",
             "platform_tuning",
-            "parameters"
+            "parameters",
         ];
 
         impl<'de> Deserialize<'de> for Field {
@@ -1115,11 +1113,12 @@ impl Parameters {
     ) -> Result<u64> {
         for parameter in Self::iter(tail)? {
             match parameter.token() {
-                Ok(t) => if t == key {
-                    return Ok(parameter.value()?);
-                },
-                Err(_) => {
+                Ok(t) => {
+                    if t == key {
+                        return Ok(parameter.value()?);
+                    }
                 }
+                Err(_) => {}
             }
         }
         Err(Error::ParameterNotFound)

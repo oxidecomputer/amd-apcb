@@ -791,21 +791,10 @@ make_serde!(
 make_serde!(
     Parameter,
     SerdeParameter,
-    [
-        time_point,
-        token,
-        value_size,
-        value,
-        _reserved_0,
-    ]
+    [time_point, token, value_size, value, _reserved_0,]
 );
 make_serde!(
     ParameterAttributes,
     SerdeParameterAttributes,
-    [
-        time_point,
-        token,
-        size_minus_one,
-        _reserved_0,
-    ]
+    [time_point, token, size_minus_one, _reserved_0,]
 );
