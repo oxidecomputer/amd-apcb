@@ -29,6 +29,8 @@ use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32, U64};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "serde")]
 use serde_hex::{SerHex, StrictPfx};
+#[cfg(feature = "std")]
+use std::fmt;
 
 /// Work around Rust issue# 51443, in case it ever will be phased out.
 /// (zerocopy 0.5.0 has a as_bytes_mut with a Self-where--which is not supposed
@@ -168,18 +170,10 @@ type LU32 = U32<LittleEndian>;
 type LU64 = U64<LittleEndian>;
 
 macro_rules! make_serde_hex {
-    ($serde_ty:ident, $base_ty:ty $(, $lu_ty:ty)?) => {
+    ($serde_ty:ident, $base_ty:ty, $format_string:literal $(, $lu_ty:ty)?) => {
         #[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive)]
         #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         pub struct $serde_ty(
-            #[cfg_attr(
-                feature = "serde",
-                serde(
-                    serialize_with = "SerHex::<StrictPfx>::serialize",
-                    deserialize_with = "SerHex::<StrictPfx>::deserialize"
-                )
-            )]
             $base_ty,
         );
         impl From<$base_ty> for $serde_ty {
@@ -204,13 +198,42 @@ macro_rules! make_serde_hex {
                 }
             }
         )?
+        #[cfg(feature = "std")]
+        impl std::fmt::Display for $serde_ty {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, $format_string, self.0)
+            }
+        }
+        #[cfg(feature = "serde")]
+        impl serde::ser::Serialize for $serde_ty {
+            fn serialize<S>(
+                &self,
+                serializer: S
+            ) -> core::result::Result<S::Ok, S::Error>
+            where
+                S: serde::Serializer,
+            {
+                format!("{}", self).serialize(serializer)
+            }
+        }
+        impl<'de> serde::de::Deserialize<'de> for $serde_ty {
+            fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                let s = String::deserialize(deserializer)?;
+                let val: $base_ty = parse_int::parse::<$base_ty>(&s).map_err(
+                    |e| serde::de::Error::custom(format!("{:?}", e)))?;
+                Ok(Self(val))
+            }
+        }
     };
 }
 
-make_serde_hex!(SerdeHex8, u8);
-make_serde_hex!(SerdeHex16, u16, LU16);
-make_serde_hex!(SerdeHex32, u32, LU32);
-make_serde_hex!(SerdeHex64, u64, LU64);
+make_serde_hex!(SerdeHex8, u8, "{:#04x}");
+make_serde_hex!(SerdeHex16, u16, "{:#06x}", LU16);
+make_serde_hex!(SerdeHex32, u32, "{:#010x}", LU32);
+make_serde_hex!(SerdeHex64, u64, "{:#018x}", LU64);
 
 macro_rules! make_array_accessors {
     ($res_ty:ty, $array_ty:ty) => {
