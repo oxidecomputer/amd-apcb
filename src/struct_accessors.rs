@@ -170,19 +170,22 @@ impl DummyErrorChecks for u8 {}
 impl DummyErrorChecks for bool {}
 
 /// This macro expects a struct as a parameter (attributes are fine) and then,
-/// first, defines the exact same struct. Afterwards, it automatically impl
+/// first, defines the exact same struct. Afterwards, it automatically impls
 /// getters (and setters) for the fields where there was "get" (and "set")
 /// specified.  The getters and setters so generated are hardcoded as calling
 /// self.field.get1 and self.field.set1, respectively.  These are usually
-/// provided by a Getter and Getter trait impl (for example the ones in the same
-/// file this macro is in) Note: If you want to add a docstring, put it before
-/// the struct inside the macro parameter at the usage site, not before the
-/// macro call.
+/// provided by a Getter and Setter trait impl (for example the ones in the same
+/// file this macro is in).
+///
+/// Note: If you want to add a docstring, put it before the struct inside the
+/// macro parameter at the usage site, not before the macro call.
+///
 /// This call also defines serde_* and serde_with* getters and setters with an
 /// optionally specified serde type that is used during serialization and
 /// deserialization
-/// Field syntax:   NAME [|| SERDE_TYPE : TYPE] [: TYPE] [| pub get TYPE [:pub
-/// set TYPE]]
+///
+/// Field syntax:
+/// NAME [|| SERDE_TYPE : TYPE] [: TYPE] [| pub get TYPE [: pub set TYPE]]
 macro_rules! make_accessors {(
     $(#[$struct_meta:meta])*
     $struct_vis:vis
@@ -190,7 +193,11 @@ macro_rules! make_accessors {(
         $(
             $(#[$field_meta:meta])*
             $field_vis:vis
-            $field_name:ident $(|| $serde_ty:ty : $field_orig_ty:ty)? $(: $field_ty:ty)? $(| $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
+            $field_name:ident
+            $(|| $serde_ty:ty : $field_orig_ty:ty)?
+            $(: $field_ty:ty)?
+            $(| $getter_vis:vis get $field_user_ty:ty
+              $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
         ),* $(,)?
     }
 ) => (
