@@ -36,28 +36,6 @@ use std::borrow::Cow;
 pub enum EntryItemBody<BufferType> {
     Struct(BufferType),
     Tokens(TokensEntryBodyItem<BufferType>),
-    Parameters(BufferType), /* not seen in the wild anymore */
-                            /* Not seen in the wild anymore.
-                                /// If the value is a Parameter, returns its time point
-                                pub fn parameter_time_point(&self) -> u8 {
-                                    assert!(self.context_type() == ContextType::Parameter);
-                                    self.body[0]
-                                }
-
-                                /// If the value is a Parameter, returns its token
-                                pub fn parameter_token(&self) -> u16 {
-                                    assert!(self.context_type() == ContextType::Parameter);
-                                    let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
-                                    value & 0x1FFF
-                                }
-
-                                // If the value is a Parameter, returns its size
-                                pub fn parameter_size(&self) -> u16 {
-                                    assert!(self.context_type() == ContextType::Parameter);
-                                    let value = self.body[1] as u16 | ((self.body[2] as u16) << 8);
-                                    (value >> 13) + 1
-                                }
-                            */
 }
 
 impl<'a> EntryItemBody<&'a mut [u8]> {
@@ -67,7 +45,7 @@ impl<'a> EntryItemBody<&'a mut [u8]> {
         context_type: ContextType,
         b: &'a mut [u8],
     ) -> Result<EntryItemBody<&'a mut [u8]>> {
-        Ok(match context_type {
+        match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
                     return Err(Error::FileSystem(
@@ -75,16 +53,18 @@ impl<'a> EntryItemBody<&'a mut [u8]> {
                         "ENTRY_HEADER::unit_size",
                     ));
                 }
-                Self::Struct(b)
+                Ok(Self::Struct(b))
             }
             ContextType::Tokens => {
                 let used_size = b.len();
-                Self::Tokens(TokensEntryBodyItem::<&'_ mut [u8]>::new(
+                Ok(Self::Tokens(TokensEntryBodyItem::<&'_ mut [u8]>::new(
                     unit_size, entry_id, b, used_size,
-                )?)
+                )?))
             }
-            ContextType::Parameters => Self::Parameters(b),
-        })
+            ContextType::Parameters => {
+                Err(Error::EntryTypeMismatch)
+            }
+        }
     }
 }
 
@@ -97,7 +77,7 @@ impl<'a> EntryItemBody<Ptr<'a, [u8]>> {
     ) -> Result<EntryItemBody<Ptr<'a, [u8]>>> {
         #[cfg(feature = "serde")]
         let b = Cow::Borrowed(b);
-        Ok(match context_type {
+        match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
                     return Err(Error::FileSystem(
@@ -105,16 +85,16 @@ impl<'a> EntryItemBody<Ptr<'a, [u8]>> {
                         "ENTRY_HEADER::unit_size",
                     ));
                 }
-                Self::Struct(b)
+                Ok(Self::Struct(b))
             }
             ContextType::Tokens => {
                 let used_size = b.len();
-                Self::Tokens(TokensEntryBodyItem::<Ptr<'_, [u8]>>::new(
+                Ok(Self::Tokens(TokensEntryBodyItem::<Ptr<'_, [u8]>>::new(
                     unit_size, entry_id, b, used_size,
-                )?)
+                )?))
             }
-            ContextType::Parameters => Self::Parameters(b),
-        })
+            ContextType::Parameters => Err(Error::EntryTypeMismatch)
+        }
     }
     pub(crate) fn validate(&self) -> Result<()> {
         match self {
@@ -122,7 +102,6 @@ impl<'a> EntryItemBody<Ptr<'a, [u8]>> {
                 tokens.iter().validate()?;
             }
             EntryItemBody::Struct(_) => {}
-            EntryItemBody::Parameters(_) => {}
         }
         Ok(())
     }
@@ -501,6 +480,8 @@ impl<'a> Serialize for EntryItem<'a> {
                     state.serialize_field("LrMaxFreqElement", &v)?;
                 } else if let Some((s, _)) = self.body_as_struct::<memory::ConsoleOutControl>() {
                     state.serialize_field("ConsoleOutControl", &s)?;
+                } else if let Some((s, _)) = self.body_as_struct::<memory::NaplesConsoleOutControl>() {
+                    state.serialize_field("NaplesConsoleOutControl", &s)?;
                 } else if let Some((s, _)) = self.body_as_struct::<memory::ExtVoltageControl>() {
                     state.serialize_field("ExtVoltageControl", &s)?;
                 } else if let Some((s, _)) = self.body_as_struct::<memory::ErrorOutControl116>() {
@@ -535,12 +516,14 @@ self.body_as_struct_sequence::<memory::platform_tuning::ElementRef<'_>>() {
                     let i = s.iter().unwrap();
                     let v = i.collect::<Vec<_>>();
                     state.serialize_field("platform_tuning", &v)?;
+                } else if let Some((_, s)) = self.body_as_struct::<Parameters>() {
+                    let parameters = ParametersIter::new(s.into_slice())
+                        .map_err(|_| serde::ser::Error::custom("could not serialize Parameters"))?;
+                    let v = parameters.collect::<Vec<_>>();
+                    state.serialize_field("parameters", &v)?;
                 } else {
                     state.serialize_field("struct_body", &buf)?;
                 }
-            }
-            EntryItemBody::<_>::Parameters(buf) => {
-                state.serialize_field("parameters", &buf)?;
             }
         }
         state.end()
@@ -645,6 +628,26 @@ where
 }
 
 #[cfg(feature = "serde")]
+/// if BODY is empty, read a value (which is a struct) from MAP and stash it
+/// into a new BODY. If BODY is not empty, that's an error. This is used purely
+/// as a helper function during deserialize.
+fn parameters_struct_to_body<'a, M>(
+    body: &mut Option<Cow<'_, [u8]>>,
+    map: &mut M,
+) -> core::result::Result<(), M::Error>
+where
+    M: MapAccess<'a>,
+{
+    if body.is_some() {
+        return Err(de::Error::duplicate_field("body"));
+    }
+    let val: Vec<Parameter> = map.next_value()?;
+    let buf = Parameters::new_tail_from_vec(val).unwrap();
+    *body = Some(Cow::from(buf));
+    Ok(())
+}
+
+#[cfg(feature = "serde")]
 /// if BODY is empty, read a value (which is a Vec) from MAP and stash it into a
 /// new BODY. If BODY is not empty, that's an error. This is used purely as a
 /// helper function during deserialize. This handles the sequences, and thus the
@@ -703,7 +706,7 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
             // struct sequence
             PlatformSpecificOverrides,
             PlatformTuning,
-            //Parameters,
+            Parameters,
         }
         const FIELDS: &'static [&'static str] = &[
             "header",
@@ -732,7 +735,7 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
             // struct sequence
             "platform_specific_overrides",
             "platform_tuning",
-            //"parameters"
+            "parameters"
         ];
 
         impl<'de> Deserialize<'de> for Field {
@@ -816,7 +819,7 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
                                 Ok(Field::PlatformSpecificOverrides)
                             }
                             "platform_tuning" => Ok(Field::PlatformTuning),
-                            //"parameters" => Ok(Field::Parameters),
+                            "parameters" => Ok(Field::Parameters),
                             _ => Err(de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -984,6 +987,12 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
                                 V,
                             >(&mut body, &mut map)?;
                         }
+                        Field::Parameters => {
+                            /* Parameters itself is empty. The tail is not. */
+                            parameters_struct_to_body::<V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
                     }
                 }
                 let header =
@@ -1102,9 +1111,13 @@ impl Parameters {
         tail: StructArrayEntryItem<'_, u8>,
         key: ParameterTokenConfig,
     ) -> Result<u64> {
-        for (parameter_key, parameter_value) in Self::iter(tail)? {
-            if parameter_key.token() == key {
-                return Ok(parameter_value);
+        for parameter in Self::iter(tail)? {
+            match parameter.token() {
+                Ok(t) => if t == key {
+                    return Ok(parameter.value()?);
+                },
+                Err(_) => {
+                }
             }
         }
         Err(Error::ParameterNotFound)

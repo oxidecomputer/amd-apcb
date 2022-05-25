@@ -1,11 +1,14 @@
 // This file mostly contains the Naples backward-compatibility interface.
 
 use modular_bitfield::prelude::*;
-//use crate::struct_accessors::make_accessors;
+use crate::struct_accessors::{Getter, Setter};
+use crate::types::Result;
 
 #[derive(
     Debug, PartialEq, num_derive::FromPrimitive, Clone, Copy, BitfieldSpecifier,
 )]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[non_exhaustive]
 #[bits = 8]
 pub enum ParameterTimePoint {
@@ -13,9 +16,23 @@ pub enum ParameterTimePoint {
     Any = 1,
 }
 
+impl Getter<Result<ParameterTimePoint>> for ParameterTimePoint {
+    fn get1(self) -> Result<Self> {
+        Ok(self)
+    }
+}
+
+impl Setter<ParameterTimePoint> for ParameterTimePoint {
+    fn set1(&mut self, value: Self) {
+        *self = value
+    }
+}
+
 #[derive(
     Debug, PartialEq, num_derive::FromPrimitive, Clone, Copy, BitfieldSpecifier,
 )]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[non_exhaustive]
 #[bits = 13]
 pub enum ParameterTokenConfig {
@@ -385,4 +402,16 @@ pub enum ParameterTokenConfig {
     Fch1c07 = 0x1C07, // FIXME
 
     Limit = 0x1FFF,
+}
+
+impl Getter<Result<ParameterTokenConfig>> for ParameterTokenConfig {
+    fn get1(self) -> Result<Self> {
+        Ok(self)
+    }
+}
+
+impl Setter<ParameterTokenConfig> for ParameterTokenConfig {
+    fn set1(&mut self, value: Self) {
+        *self = value
+    }
 }

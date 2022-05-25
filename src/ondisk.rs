@@ -1464,19 +1464,21 @@ pub trait EntryCompatible {
 
 // Starting here come the actual Entry formats (struct )
 
-/// For Naples.
-#[bitfield(bits = 32)]
-#[repr(u32)]
-#[derive(Copy, Clone, Debug)]
-pub struct ParameterAttributes {
-    #[bits = 8]
-    pub time_point: ParameterTimePoint,
-    #[bits = 13]
-    pub token: ParameterTokenConfig,
-    #[bits = 3]
-    pub size_minus_one: B3,
-    #[skip]
-    __: B8,
+make_bitfield_serde! {
+    /// For Naples.
+    #[bitfield(bits = 32)]
+    #[repr(u32)]
+    #[derive(Copy, Clone, Debug)]
+    pub struct ParameterAttributes {
+        #[bits = 8]
+        pub time_point: ParameterTimePoint | pub get ParameterTimePoint : pub set ParameterTimePoint,
+        #[bits = 13]
+        pub token: ParameterTokenConfig | pub get ParameterTokenConfig : pub set ParameterTokenConfig,
+        #[bits = 3]
+        pub size_minus_one || u8 : B3,
+        #[bits = 8]
+        pub _reserved_0 || u8 : B8,
+    }
 }
 
 impl_bitfield_primitive_conversion!(
@@ -1485,9 +1487,15 @@ impl_bitfield_primitive_conversion!(
     u32
 );
 
+impl Default for ParameterAttributes { // FIXME: remove
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ParameterAttributes {
-    pub fn size(&self) -> usize {
-        (self.size_minus_one() as usize) + 1
+    pub fn size(&self) -> u16 {
+        (self.size_minus_one() as u16) + 1
     }
     pub fn terminator() -> Self {
         Self::new()
@@ -1537,32 +1545,35 @@ impl<'a> ParametersIter<'a> {
 }
 
 impl Iterator for ParametersIter<'_> {
-    type Item = (ParameterAttributes, u64);
+    type Item = Parameter;
     fn next(&mut self) -> Option<<Self as Iterator>::Item> {
         let attributes = Self::next_attributes(&mut self.keys).ok()?;
         if attributes.token() == ParameterTokenConfig::Limit {
             return None;
         }
-        let size = attributes.size();
+        let size = usize::from(attributes.size());
         match size {
             1 | 2 | 4 | 8 => {
                 let raw_value =
                     take_body_from_collection(&mut self.values, size, 1)?;
                 let mut raw_value = raw_value;
                 match raw_value.len() {
-                    1 => Some((attributes, raw_value.read_u8().ok()?.into())),
-                    2 => Some((
-                        attributes,
+                    1 => Some(Parameter::new(
+                        &attributes,
+                        raw_value.read_u8().ok()?.into()
+                    ).ok()?),
+                    2 => Some(Parameter::new(
+                        &attributes,
                         raw_value.read_u16::<LittleEndian>().ok()?.into(),
-                    )),
-                    4 => Some((
-                        attributes,
+                    ).ok()?),
+                    4 => Some(Parameter::new(
+                        &attributes,
                         raw_value.read_u32::<LittleEndian>().ok()?.into(),
-                    )),
-                    8 => Some((
-                        attributes,
+                    ).ok()?),
+                    8 => Some(Parameter::new(
+                        &attributes,
                         raw_value.read_u64::<LittleEndian>().ok()?,
-                    )),
+                    ).ok()?),
                     _ => None, // TODO: Raise error
                 }
             }
@@ -1599,6 +1610,78 @@ impl EntryCompatible for Parameters {
                 | EntryId::Cbs(CbsEntryId::DefaultParameters)
                 | EntryId::Cbs(CbsEntryId::Parameters)
         )
+    }
+}
+
+make_accessors! {
+    /// This is actually just a helper struct and is not on disk (at least not exactly).
+    /// It's needed because the value area is not adjacent to the attribute.
+    //#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    //#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    //#[cfg_attr(feature = "serde", serde(rename = "Parameter"))]
+    #[derive(Debug, Copy, Clone)]
+    pub struct Parameter {
+        time_point: ParameterTimePoint | pub get ParameterTimePoint : pub set ParameterTimePoint,
+        token: ParameterTokenConfig | pub get ParameterTokenConfig : pub set ParameterTokenConfig,
+        value_size || u16 : LU16 | pub get u16 : pub set u16,
+        value || u64 : LU64 | pub get u64 : pub set u64,
+        _reserved_0: u8 | pub get u8 : pub set u8,
+    }
+}
+
+impl Parameter {
+    // Note: VALUE is in an extra area
+    pub fn attributes(&self) -> Result<ParameterAttributes> {
+        Ok(ParameterAttributes::new()
+            .with_time_point(self.time_point)
+            .with_token(self.token)
+            .with_size_minus_one(self.value_size()?
+                .checked_sub(1)
+                .ok_or(Error::EntryTypeMismatch)?
+                .try_into()
+                .map_err(|_| Error::EntryTypeMismatch)?)
+            .with__reserved_0(self._reserved_0))
+    }
+    pub fn new(attributes: &ParameterAttributes, value: u64) -> Result<Self> {
+        Ok(Self {
+            time_point: attributes.time_point(),
+            token: attributes.token(),
+            value_size: attributes.size().into(),
+            _reserved_0: attributes._reserved_0(),
+            value: value.into(),
+        })
+    }
+}
+
+impl Default for Parameter { // FIXME: remove
+    fn default() -> Self {
+        Self::new(&ParameterAttributes::default(), 0).unwrap()
+    }
+}
+
+impl Parameters {
+    /// Create a new Parameters Tail with the items from SOURCE.
+    /// Note that the last entry in SOURCE must be Parameter::new(&ParameterAttributes::terminator(), 0xff).
+    #[cfg(feature = "serde")]
+    pub(crate) fn new_tail_from_vec(source: Vec<Parameter>) -> Result<Vec<u8>> {
+        //let iter = source.into_iter();
+        //let total_size: usize = source.map(|x| size_of::<ParameterAttributes>() + x.value_size).sum();
+        let mut result = Vec::<u8>::new(); // with_capacity(total_size);
+        for parameter in &source {
+            let raw_attributes = u32::from(parameter.attributes()?);
+            result.write_u32::<LittleEndian>(raw_attributes)?;
+        }
+        for parameter in &source {
+            let value = parameter.value()?;
+            match parameter.value_size()? {
+                1 => result.write_u8(value as u8)?,
+                2 => result.write_u16::<LittleEndian>(value as u16)?,
+                4 => result.write_u32::<LittleEndian>(value as u32)?,
+                8 => result.write_u64::<LittleEndian>(value as u64)?,
+                _ => Err(Error::EntryTypeMismatch),
+            }
+        }
+        Ok(result)
     }
 }
 
@@ -1994,11 +2077,24 @@ pub mod memory {
     }
 
     impl EntryCompatible for ConsoleOutControl {
-        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
-            matches!(
-                entry_id,
-                EntryId::Memory(MemoryEntryId::ConsoleOutControl)
-            )
+        fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+            /* On Naples, size_of::<NaplesConsoleOutControl>() == 20.
+               On newer models, size_of::<ConsoleOutControl>() == 20.
+               But the structs are not at all the same!
+               Therefore, we use heuristics here:
+                 On Naples, at offset 4, there's a LU32 port number.
+                 On newer models, at offset 4, there's four bools.
+                 It's very unlikely for the LSB of the port number to be
+                 0 or 1.
+            */
+            if prefix.len() >= 20 && prefix[4] <= 1 {
+                matches!(
+                    entry_id,
+                    EntryId::Memory(MemoryEntryId::ConsoleOutControl)
+                )
+            } else {
+                false
+            }
         }
     }
 
@@ -2009,6 +2105,121 @@ pub mod memory {
     impl ConsoleOutControl {
         pub fn new(
             abl_console_out_control: AblConsoleOutControl,
+            abl_breakpoint_control: AblBreakpointControl,
+        ) -> Self {
+            Self {
+                abl_console_out_control,
+                abl_breakpoint_control,
+                _reserved_: 0.into(),
+            }
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct NaplesAblConsoleOutControl {
+            enable_console_logging || bool : BU8 | pub get bool : pub set bool,
+            _reserved_0 || [SerdeHex8; 3] : [u8; 3],
+            abl_console_port || SerdeHex32 : U32<LittleEndian> | pub get u32 : pub set u32,
+            enable_mem_flow_logging || bool : BU8 | pub get bool : pub set bool,
+            enable_mem_setreg_logging || bool : BU8 | pub get bool : pub set bool,
+            enable_mem_getreg_logging || bool : BU8 | pub get bool : pub set bool,
+            enable_mem_status_logging || bool : BU8 | pub get bool : pub set bool,
+            enable_mem_pmu_logging || bool : BU8 | pub get bool : pub set bool,
+            enable_mem_pmu_sram_read_logging || bool : BU8 | pub get bool : pub set bool,
+            enable_mem_pmu_sram_write_logging || bool : BU8 | pub get bool : pub set bool,
+            enable_mem_test_verbose_logging || bool : BU8 | pub get bool : pub set bool,
+        }
+    }
+    impl Default for NaplesAblConsoleOutControl {
+        fn default() -> Self {
+            Self {
+                enable_console_logging: BU8(1),
+                _reserved_0: [0u8; 3],
+                enable_mem_flow_logging: BU8(1),
+                enable_mem_setreg_logging: BU8(1),
+                enable_mem_getreg_logging: BU8(0),
+                enable_mem_status_logging: BU8(0),
+                enable_mem_pmu_logging: BU8(0),
+                enable_mem_pmu_sram_read_logging: BU8(0),
+                enable_mem_pmu_sram_write_logging: BU8(0),
+                enable_mem_test_verbose_logging: BU8(0),
+                abl_console_port: 0x80u32.into(),
+            }
+        }
+    }
+
+    impl Getter<Result<NaplesAblConsoleOutControl>> for NaplesAblConsoleOutControl {
+        fn get1(self) -> Result<Self> {
+            Ok(self)
+        }
+    }
+
+    impl Setter<NaplesAblConsoleOutControl> for NaplesAblConsoleOutControl {
+        fn set1(&mut self, value: Self) {
+            *self = value;
+        }
+    }
+
+    impl NaplesAblConsoleOutControl {
+        pub fn builder() -> Self {
+            Self::default()
+        }
+        pub fn new() -> Self {
+            Self::default()
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct NaplesConsoleOutControl {
+            pub abl_console_out_control: NaplesAblConsoleOutControl,
+            pub abl_breakpoint_control: AblBreakpointControl,
+            _reserved_ || SerdeHex16 : U16<LittleEndian>,
+        }
+    }
+
+    impl Default for NaplesConsoleOutControl {
+        fn default() -> Self {
+            Self {
+                abl_console_out_control: NaplesAblConsoleOutControl::default(),
+                abl_breakpoint_control: AblBreakpointControl::default(),
+                _reserved_: 0.into(),
+            }
+        }
+    }
+
+    impl EntryCompatible for NaplesConsoleOutControl {
+        fn is_entry_compatible(entry_id: EntryId, prefix: &[u8]) -> bool {
+            /* On Naples, size_of::<NaplesConsoleOutControl>() == 20.
+               On newer models, size_of::<ConsoleOutControl>() == 20.
+               But the structs are not at all the same!
+               Therefore, we use heuristics here:
+                 On Naples, at offset 4, there's a LU32 port number.
+                 On newer models, at offset 4, there's four bools.
+                 It's very unlikely for the LSB of the port number to be
+                 0 or 1.
+            */
+            if prefix.len() >= 20 && prefix[4] > 1 {
+                matches!(
+                    entry_id,
+                    EntryId::Memory(MemoryEntryId::ConsoleOutControl)
+                )
+            } else {
+                false
+            }
+        }
+    }
+
+    impl HeaderWithTail for NaplesConsoleOutControl {
+        type TailArrayItemType<'de> = ();
+    }
+
+    impl NaplesConsoleOutControl {
+        pub fn new(
+            abl_console_out_control: NaplesAblConsoleOutControl,
             abl_breakpoint_control: AblBreakpointControl,
         ) -> Self {
             Self {
@@ -5502,6 +5713,8 @@ Clone)]
             const_assert!(size_of::<DimmInfoSmbusElement>() == 8);
             const_assert!(size_of::<AblConsoleOutControl>() == 16);
             const_assert!(size_of::<ConsoleOutControl>() == 20);
+            const_assert!(size_of::<NaplesAblConsoleOutControl>() == 16);
+            const_assert!(size_of::<NaplesConsoleOutControl>() == 20);
             const_assert!(size_of::<ExtVoltageControl>() == 32);
             const_assert!(size_of::<RdimmDdr4CadBusElement>() == 36);
             const_assert!(size_of::<UdimmDdr4CadBusElement>() == 36);
