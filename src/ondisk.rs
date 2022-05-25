@@ -29,6 +29,8 @@ use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32, U64};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "serde")]
 use serde_hex::{SerHex, StrictPfx};
+#[cfg(feature = "serde")]
+use byteorder::WriteBytesExt;
 #[cfg(feature = "std")]
 use std::fmt;
 
@@ -216,6 +218,7 @@ macro_rules! make_serde_hex {
                 format!("{}", self).serialize(serializer)
             }
         }
+        #[cfg(feature = "serde")]
         impl<'de> serde::de::Deserialize<'de> for $serde_ty {
             fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
             where
@@ -1669,16 +1672,16 @@ impl Parameters {
         let mut result = Vec::<u8>::new(); // with_capacity(total_size);
         for parameter in &source {
             let raw_attributes = u32::from(parameter.attributes()?);
-            result.write_u32::<LittleEndian>(raw_attributes)?;
+            result.write_u32::<LittleEndian>(raw_attributes).map_err(|_| Error::ParameterRange)?;
         }
         for parameter in &source {
             let value = parameter.value()?;
             match parameter.value_size()? {
-                1 => result.write_u8(value as u8)?,
-                2 => result.write_u16::<LittleEndian>(value as u16)?,
-                4 => result.write_u32::<LittleEndian>(value as u32)?,
-                8 => result.write_u64::<LittleEndian>(value as u64)?,
-                _ => Err(Error::EntryTypeMismatch),
+                1 => result.write_u8(value as u8).map_err(|_| Error::ParameterRange)?,
+                2 => result.write_u16::<LittleEndian>(value as u16).map_err(|_| Error::ParameterRange)?,
+                4 => result.write_u32::<LittleEndian>(value as u32).map_err(|_| Error::ParameterRange)?,
+                8 => result.write_u64::<LittleEndian>(value as u64).map_err(|_| Error::ParameterRange)?,
+                _ => Err(Error::EntryTypeMismatch)?,
             }
         }
         Ok(result)
