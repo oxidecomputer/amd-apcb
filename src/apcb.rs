@@ -1310,16 +1310,24 @@ impl<'a> Apcb<'a> {
         Ok(())
     }
 
+    /// This function does not increment the unique_apcb_instance, and thus
+    /// should only be used during an initial build of the APCB. In cases where
+    /// one is updating an existing apcb binary, one should always call save()
+    pub fn save_no_inc(mut self) -> Result<PtrMut<'a, [u8]>> {
+        self.update_checksum()?;
+        Ok(self.backing_store)
+    }
+
     /// User is expected to call this once after modifying anything in the apcb
     /// (including insertions and deletions). We update both the checksum
     /// and the unique_apcb_instance.
-    pub fn save(&mut self) -> Result<()> {
+    pub fn save(mut self) -> Result<PtrMut<'a, [u8]>> {
         let unique_apcb_instance = self.unique_apcb_instance()?;
         self.header_mut()?
             .unique_apcb_instance
             .set(unique_apcb_instance.wrapping_add(1));
         self.update_checksum()?;
-        Ok(())
+        Ok(self.backing_store)
     }
 
     pub fn create(
