@@ -1132,6 +1132,9 @@ impl Default for GROUP_HEADER {
     }
 }
 
+/// A variant of the make_accessors macro for modular_bitfields.
+/// Note: fields that serde Deserialization cannot find in the source file
+/// will be defaulted.
 macro_rules! make_bitfield_serde {(
         $(#[$struct_meta:meta])*
         $struct_vis:vis
@@ -1199,8 +1202,8 @@ macro_rules! make_bitfield_serde {(
         #[cfg_attr(feature = "serde", serde(rename = "" $StructName))]
         pub(crate) struct [<Serde $StructName>] {
             $(
-                $(pub $field_name : <$field_ty as Specifier>::InOut,)?
-                $(pub $field_name : $serde_ty,)?
+                $(#[serde(default)] pub $field_name : <$field_ty as Specifier>::InOut,)?
+                $(#[serde(default)] pub $field_name : $serde_ty,)?
             )*
         }
     }
@@ -2636,6 +2639,7 @@ pub mod memory {
     pub struct CustomSerdeRdimmDdr4Voltages {
         #[cfg_attr(feature = "serde", serde(rename = "1.2 V"))]
         pub _1_2V: bool,
+        #[serde(default)]
         pub _reserved_1: u32,
     }
     macro_rules! define_compat_bitfield_field {
@@ -2806,6 +2810,7 @@ pub mod memory {
         pub _1_35V: bool,
         #[cfg_attr(feature = "serde", serde(rename = "1.25 V"))]
         pub _1_25V: bool,
+        #[serde(default)]
         pub _reserved_1: u32,
     }
     impl UdimmDdr4Voltages {
@@ -2907,6 +2912,7 @@ pub mod memory {
     pub struct CustomSerdeLrdimmDdr4Voltages {
         #[cfg_attr(feature = "serde", serde(rename = "1.2 V"))]
         pub _1_2V: bool,
+        #[serde(default)]
         pub _reserved_1: u32,
     }
 

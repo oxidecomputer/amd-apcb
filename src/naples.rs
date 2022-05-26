@@ -28,6 +28,12 @@ impl Setter<ParameterTimePoint> for ParameterTimePoint {
     }
 }
 
+impl Default for ParameterTimePoint {
+    fn default() -> Self {
+        Self::Any
+    }
+}
+
 #[derive(
     Debug, PartialEq, num_derive::FromPrimitive, Clone, Copy, BitfieldSpecifier,
 )]
@@ -402,6 +408,12 @@ pub enum ParameterTokenConfig {
     Fch1c07 = 0x1C07, // FIXME
 
     Limit = 0x1FFF,
+}
+
+impl Default for ParameterTokenConfig {
+    fn default() -> Self {
+        Self::Limit
+    }
 }
 
 impl Getter<Result<ParameterTokenConfig>> for ParameterTokenConfig {
