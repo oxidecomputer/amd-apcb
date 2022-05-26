@@ -432,6 +432,7 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
     ) -> schemars::schema::Schema {
         use crate::memory;
         use crate::psp;
+        use crate::tokens_entry::TokensEntryItem;
         let mut schema = schemars::schema::SchemaObject {
             instance_type: Some(schemars::schema::InstanceType::Object.into()),
             ..Default::default()
@@ -440,6 +441,10 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
         obj.required.insert("header".to_owned());
         obj.properties
             .insert("header".to_owned(), <ENTRY_HEADER>::json_schema(gen));
+        obj.properties.insert(
+            "Tokens".to_owned(),
+            <Vec<TokensEntryItem<'_>>>::json_schema(gen),
+        );
         obj.properties.insert(
             "LrdimmDdr4OdtPatElement".to_owned(),
             <Vec<memory::LrdimmDdr4OdtPatElement>>::json_schema(gen),

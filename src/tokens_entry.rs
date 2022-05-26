@@ -315,6 +315,21 @@ pub struct TokensEntryItem<'a> {
     pub(crate) entry: Ptr<'a, TOKEN_ENTRY>,
 }
 
+#[cfg(feature = "schemars")]
+impl<'a> schemars::JsonSchema for TokensEntryItem<'a> {
+    fn schema_name() -> std::string::String {
+        SerdeTokensEntryItem::schema_name()
+    }
+    fn json_schema(
+        gen: &mut schemars::gen::SchemaGenerator,
+    ) -> schemars::schema::Schema {
+        SerdeTokensEntryItem::json_schema(gen)
+    }
+    fn is_referenceable() -> bool {
+        SerdeTokensEntryItem::is_referenceable()
+    }
+}
+
 #[cfg(feature = "serde")]
 impl<'a> Serialize for TokensEntryItem<'a> {
     fn serialize<S>(
