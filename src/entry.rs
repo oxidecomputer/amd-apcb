@@ -35,6 +35,7 @@ use std::borrow::Cow;
 */
 
 #[derive(Debug, Clone, Copy)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum EntryItemBody<BufferType> {
     Struct(BufferType),
     Tokens(TokensEntryBodyItem<BufferType>),
@@ -417,6 +418,7 @@ extern crate std;
 use std::fmt;
 
 #[derive(Clone)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct EntryItem<'a> {
     pub(crate) header: Ptr<'a, ENTRY_HEADER>,
     pub body: EntryItemBody<Ptr<'a, [u8]>>,

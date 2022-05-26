@@ -53,6 +53,7 @@ impl Default for ApcbIoOptions {
     }
 }
 
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Apcb<'a> {
     used_size: usize,
     pub backing_store: PtrMut<'a, [u8]>,
@@ -63,6 +64,7 @@ pub struct Apcb<'a> {
     feature = "serde",
     derive(Default, serde::Serialize, serde::Deserialize)
 )]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SerdeApcb<'a> {
     pub version: String,
     pub header: V2_HEADER,
