@@ -79,7 +79,9 @@ impl<'a> schemars::JsonSchema for Apcb<'a> {
     fn schema_name() -> std::string::String {
         SerdeApcb::schema_name()
     }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+    fn json_schema(
+        gen: &mut schemars::gen::SchemaGenerator,
+    ) -> schemars::schema::Schema {
         SerdeApcb::json_schema(gen)
     }
     fn is_referenceable() -> bool {
