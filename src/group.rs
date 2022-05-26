@@ -21,6 +21,7 @@ use pre::pre;
 use serde::{Deserialize, Serialize};
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct GroupItem<'a> {
     #[cfg_attr(feature = "serde", serde(borrow))]
     pub(crate) header: Ptr<'a, GROUP_HEADER>,
