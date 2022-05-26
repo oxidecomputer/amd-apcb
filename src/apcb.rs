@@ -53,7 +53,6 @@ impl Default for ApcbIoOptions {
     }
 }
 
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Apcb<'a> {
     used_size: usize,
     pub backing_store: PtrMut<'a, [u8]>,
@@ -73,6 +72,19 @@ pub struct SerdeApcb<'a> {
     pub groups: Vec<GroupItem<'a>>,
     #[cfg_attr(feature = "serde", serde(borrow))]
     pub entries: Vec<EntryItem<'a>>,
+}
+
+#[cfg(feature = "schemars")]
+impl<'a> schemars::JsonSchema for Apcb<'a> {
+    fn schema_name() -> std::string::String {
+        SerdeApcb::schema_name()
+    }
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        SerdeApcb::json_schema(gen)
+    }
+    fn is_referenceable() -> bool {
+        SerdeApcb::is_referenceable()
+    }
 }
 
 #[cfg(feature = "serde")]

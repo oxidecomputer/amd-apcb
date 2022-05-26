@@ -35,7 +35,6 @@ use std::borrow::Cow;
 */
 
 #[derive(Debug, Clone, Copy)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum EntryItemBody<BufferType> {
     Struct(BufferType),
     Tokens(TokensEntryBodyItem<BufferType>),
@@ -418,10 +417,84 @@ extern crate std;
 use std::fmt;
 
 #[derive(Clone)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct EntryItem<'a> {
     pub(crate) header: Ptr<'a, ENTRY_HEADER>,
     pub body: EntryItemBody<Ptr<'a, [u8]>>,
+}
+
+#[cfg(feature = "schemars")]
+impl<'a> schemars::JsonSchema for EntryItem<'a> {
+    fn schema_name() -> std::string::String {
+        String::from("EntryItem")
+    }
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        use crate::memory;
+        use crate::psp;
+        let mut schema = schemars::schema::SchemaObject {
+            instance_type: Some(schemars::schema::InstanceType::Object.into()),
+            ..Default::default()
+        };
+        let obj = schema.object();
+        obj.required.insert("header".to_owned());
+        obj.properties
+            .insert("header".to_owned(), <ENTRY_HEADER>::json_schema(gen));
+        obj.properties
+            .insert("LrdimmDdr4OdtPatElement".to_owned(), <Vec<memory::LrdimmDdr4OdtPatElement>>::json_schema(gen));
+        obj.properties
+            .insert("Ddr4OdtPatElement".to_owned(), <Vec<memory::Ddr4OdtPatElement>>::json_schema(gen));
+        obj.properties
+            .insert("DdrPostPackageRepairElement".to_owned(), <Vec<memory::DdrPostPackageRepairElement>>::json_schema(gen));
+        obj.properties
+            .insert("DimmInfoSmbusElement".to_owned(), <Vec<memory::DimmInfoSmbusElement>>::json_schema(gen));
+        obj.properties
+            .insert("RdimmDdr4CadBusElement".to_owned(), <Vec<memory::RdimmDdr4CadBusElement>>::json_schema(gen));
+        obj.properties
+            .insert("UdimmDdr4CadBusElement".to_owned(), <Vec<memory::UdimmDdr4CadBusElement>>::json_schema(gen));
+        obj.properties
+            .insert("LrdimmDdr4CadBusElement".to_owned(), <Vec<memory::LrdimmDdr4CadBusElement>>::json_schema(gen));
+        obj.properties
+            .insert("Ddr4DataBusElement".to_owned(), <Vec<memory::Ddr4DataBusElement>>::json_schema(gen));
+        obj.properties
+            .insert("LrdimmDdr4DataBusElement".to_owned(), <Vec<memory::LrdimmDdr4DataBusElement>>::json_schema(gen));
+        obj.properties
+            .insert("MaxFreqElement".to_owned(), <Vec<memory::MaxFreqElement>>::json_schema(gen));
+        obj.properties
+            .insert("LrMaxFreqElement".to_owned(), <Vec<memory::LrMaxFreqElement>>::json_schema(gen));
+        obj.properties
+            .insert("ConsoleOutControl".to_owned(), <memory::ConsoleOutControl>::json_schema(gen));
+        obj.properties
+            .insert("NaplesConsoleOutControl".to_owned(), <memory::NaplesConsoleOutControl>::json_schema(gen));
+        obj.properties
+            .insert("ExtVoltageControl".to_owned(), <memory::ExtVoltageControl>::json_schema(gen));
+        obj.properties
+            .insert("ErrorOutControl116".to_owned(), <memory::ErrorOutControl116>::json_schema(gen));
+        obj.properties
+            .insert("ErrorOutControl112".to_owned(), <memory::ErrorOutControl112>::json_schema(gen));
+        obj.properties
+            .insert("SlinkConfig".to_owned(), <crate::df::SlinkConfig>::json_schema(gen));
+
+        obj.properties
+            .insert("BoardIdGettingMethodGpio".to_owned(),
+                <(psp::BoardIdGettingMethodGpio, Vec<psp::IdApcbMapping>)>::json_schema(gen));
+        obj.properties
+            .insert("BoardIdGettingMethodEeprom".to_owned(),
+                <(psp::BoardIdGettingMethodEeprom, Vec<psp::IdRevApcbMapping>)>::json_schema(gen));
+        obj.properties
+            .insert("BoardIdGettingMethodSmbus".to_owned(),
+                <(psp::BoardIdGettingMethodSmbus, Vec<psp::IdRevApcbMapping>)>::json_schema(gen));
+        obj.properties
+            .insert("BoardIdGettingMethodCustom".to_owned(),
+                <(psp::BoardIdGettingMethodCustom, Vec<psp::IdApcbMapping>)>::json_schema(gen));
+
+        obj.properties
+            .insert("platform_specific_overrides".to_owned(), <memory::platform_specific_override::ElementRef<'_>>::json_schema(gen));
+        obj.properties
+            .insert("platform_tuning".to_owned(), <memory::platform_tuning::ElementRef<'_>>::json_schema(gen));
+
+        obj.properties
+            .insert("parameters".to_owned(), <Parameters>::json_schema(gen));
+        schema.into()
+    }
 }
 
 #[cfg(feature = "serde")]
