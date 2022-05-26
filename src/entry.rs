@@ -516,16 +516,24 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
 
         obj.properties
             .insert("BoardIdGettingMethodGpio".to_owned(),
-                <(psp::BoardIdGettingMethodGpio, Vec<psp::IdApcbMapping>)>::json_schema(gen));
+                <(psp::BoardIdGettingMethodGpio,
+                    Vec<<psp::BoardIdGettingMethodGpio as
+                        HeaderWithTail>::TailArrayItemType<'_>>)>::json_schema(gen));
         obj.properties
             .insert("BoardIdGettingMethodEeprom".to_owned(),
-                <(psp::BoardIdGettingMethodEeprom, Vec<psp::IdRevApcbMapping>)>::json_schema(gen));
+                <(psp::BoardIdGettingMethodEeprom,
+                    Vec<<psp::BoardIdGettingMethodEeprom as
+                        HeaderWithTail>::TailArrayItemType<'_>>)>::json_schema(gen));
         obj.properties
             .insert("BoardIdGettingMethodSmbus".to_owned(),
-                <(psp::BoardIdGettingMethodSmbus, Vec<psp::IdRevApcbMapping>)>::json_schema(gen));
+                <(psp::BoardIdGettingMethodSmbus,
+                    Vec<<psp::BoardIdGettingMethodSmbus as
+                        HeaderWithTail>::TailArrayItemType<'_>>)>::json_schema(gen));
         obj.properties
             .insert("BoardIdGettingMethodCustom".to_owned(),
-                <(psp::BoardIdGettingMethodCustom, Vec<psp::IdApcbMapping>)>::json_schema(gen));
+                <(psp::BoardIdGettingMethodCustom,
+                    Vec<<psp::BoardIdGettingMethodCustom as
+                        HeaderWithTail>::TailArrayItemType<'_>>)>::json_schema(gen));
 
         obj.properties.insert(
             "platform_specific_overrides".to_owned(),
