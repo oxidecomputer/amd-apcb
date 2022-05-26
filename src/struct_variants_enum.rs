@@ -52,7 +52,8 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
     ) => {
         #[non_exhaustive]
         #[derive(Debug)]
-        #[cfg_attr(feature = "std", derive(Serialize))]
+        #[cfg_attr(feature = "serde", derive(Serialize))]
+        #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
         pub enum ElementRef<'a> {
              Unknown(&'a [u8]),
              $($state)*
@@ -64,7 +65,7 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
              $($state_mut)*
         }
 
-        #[cfg(feature = "std")]
+        #[cfg(feature = "serde")]
         #[non_exhaustive]
         #[derive(Serialize, Deserialize)]
         #[repr(C)]

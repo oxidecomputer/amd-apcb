@@ -1601,6 +1601,7 @@ impl Iterator for ParametersIter<'_> {
 /// For Naples.
 #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
 #[repr(C, packed)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Parameters {}
 
 impl HeaderWithTail for Parameters {
