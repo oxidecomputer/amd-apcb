@@ -537,13 +537,13 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
 
         obj.properties.insert(
             "platform_specific_overrides".to_owned(),
-            <memory::platform_specific_override::ElementRef<'_>>::json_schema(
+            <Vec<memory::platform_specific_override::ElementRef<'_>>>::json_schema(
                 gen,
             ),
         );
         obj.properties.insert(
             "platform_tuning".to_owned(),
-            <memory::platform_tuning::ElementRef<'_>>::json_schema(gen),
+            <Vec<memory::platform_tuning::ElementRef<'_>>>::json_schema(gen),
         );
 
         obj.properties
