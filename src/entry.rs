@@ -34,7 +34,6 @@ use std::borrow::Cow;
 
 */
 
-
 #[derive(Debug, Clone, Copy)]
 pub enum EntryItemBody<BufferType> {
     Struct(BufferType),
@@ -572,7 +571,6 @@ impl<'a> schemars::JsonSchema for SerdeEntryItem {
         EntryItem::is_referenceable()
     }
 }
-
 
 #[cfg(feature = "serde")]
 impl<'a> Serialize for EntryItem<'a> {
@@ -1157,7 +1155,11 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
                 })
             }
         }
-        deserializer.deserialize_struct("EntryItem", FIELDS, SerdeEntryItemVisitor)
+        deserializer.deserialize_struct(
+            "EntryItem",
+            FIELDS,
+            SerdeEntryItemVisitor,
+        )
     }
 }
 

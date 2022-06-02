@@ -17,7 +17,6 @@ use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use pre::pre;
 
-
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct GroupItem<'a> {
     pub(crate) header: Ptr<'a, GROUP_HEADER>,

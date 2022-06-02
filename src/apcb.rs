@@ -61,10 +61,7 @@ pub struct Apcb<'a> {
 }
 
 #[cfg(feature = "serde")]
-#[cfg_attr(
-    feature = "serde",
-    derive(Default, serde::Deserialize)
-)]
+#[cfg_attr(feature = "serde", derive(Default, serde::Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SerdeApcb {
     pub version: String,
@@ -122,7 +119,10 @@ impl<'a> TryFrom<SerdeApcb> for Apcb<'a> {
         for e in serde_apcb.entries {
             let buf = &e.body[..];
             match apcb.insert_entry(
-                EntryId::decode(e.header.group_id.get(), e.header.entry_id.get()),
+                EntryId::decode(
+                    e.header.group_id.get(),
+                    e.header.entry_id.get(),
+                ),
                 e.header.instance_id.get(),
                 BoardInstances::from(e.header.board_instance_mask.get()),
                 ContextType::from_u8(e.header.context_type).unwrap(),
