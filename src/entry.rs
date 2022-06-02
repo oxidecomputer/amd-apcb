@@ -34,6 +34,7 @@ use std::borrow::Cow;
 
 */
 
+
 #[derive(Debug, Clone, Copy)]
 pub enum EntryItemBody<BufferType> {
     Struct(BufferType),
@@ -422,6 +423,12 @@ pub struct EntryItem<'a> {
     pub body: EntryItemBody<Ptr<'a, [u8]>>,
 }
 
+#[cfg(feature = "serde")]
+pub struct SerdeEntryItem {
+    pub(crate) header: ENTRY_HEADER,
+    pub(crate) body: Vec<u8>,
+}
+
 #[cfg(feature = "schemars")]
 impl<'a> schemars::JsonSchema for EntryItem<'a> {
     fn schema_name() -> std::string::String {
@@ -551,6 +558,21 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
         schema.into()
     }
 }
+#[cfg(feature = "schemars")]
+impl<'a> schemars::JsonSchema for SerdeEntryItem {
+    fn schema_name() -> std::string::String {
+        EntryItem::schema_name()
+    }
+    fn json_schema(
+        gen: &mut schemars::gen::SchemaGenerator,
+    ) -> schemars::schema::Schema {
+        EntryItem::json_schema(gen)
+    }
+    fn is_referenceable() -> bool {
+        EntryItem::is_referenceable()
+    }
+}
+
 
 #[cfg(feature = "serde")]
 impl<'a> Serialize for EntryItem<'a> {
@@ -803,7 +825,7 @@ where
 }
 
 #[cfg(feature = "serde")]
-impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
+impl<'de> Deserialize<'de> for SerdeEntryItem {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -959,10 +981,10 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
             }
         }
 
-        struct EntryItemVisitor;
+        struct SerdeEntryItemVisitor;
 
-        impl<'de> Visitor<'de> for EntryItemVisitor {
-            type Value = EntryItem<'de>;
+        impl<'de> Visitor<'de> for SerdeEntryItemVisitor {
+            type Value = SerdeEntryItem;
 
             fn expecting(
                 &self,
@@ -974,7 +996,7 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
             fn visit_map<V>(
                 self,
                 mut map: V,
-            ) -> core::result::Result<EntryItem<'static>, V::Error>
+            ) -> core::result::Result<SerdeEntryItem, V::Error>
             where
                 V: MapAccess<'de>,
             {
@@ -1129,14 +1151,13 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
                     header.ok_or_else(|| de::Error::missing_field("header"))?;
                 let body =
                     body.ok_or_else(|| de::Error::missing_field("body"))?;
-                let buf = Cow::Owned(header);
-                Ok(EntryItem {
-                    header: buf,
-                    body: EntryItemBody::<Ptr<'static, [u8]>>::Struct(body),
+                Ok(SerdeEntryItem {
+                    header: header,
+                    body: body.into(),
                 })
             }
         }
-        deserializer.deserialize_struct("EntryItem", FIELDS, EntryItemVisitor)
+        deserializer.deserialize_struct("EntryItem", FIELDS, SerdeEntryItemVisitor)
     }
 }
 
