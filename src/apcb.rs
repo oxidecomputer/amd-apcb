@@ -361,9 +361,6 @@ impl<'a> ApcbIter<'a> {
         };
         let body_len = body.len();
 
-        #[cfg(feature = "serde")]
-        let header = Cow::Borrowed(header);
-
         Ok(GroupItem {
             header,
             buf: body,

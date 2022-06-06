@@ -662,7 +662,7 @@ impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
     }
 }
 
-impl<'a> TokensEntryBodyItem<Ptr<'a, [u8]>> {
+impl<'a> TokensEntryBodyItem<&'a [u8]> {
     pub fn iter(&self) -> TokensEntryIter<'_> {
         TokensEntryIter {
             entry_id: self.entry_id,
