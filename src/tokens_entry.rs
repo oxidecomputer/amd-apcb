@@ -278,7 +278,7 @@ impl<'a> Iterator for TokensEntryIterMut<'a> {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde-hex")]
 use serde_hex::{SerHex, StrictPfx};
 
 #[cfg(feature = "serde")]
@@ -292,7 +292,7 @@ enum SerdeTokensEntryItem {
     Unknown {
         entry_id: TokenEntryId,
         #[cfg_attr(
-            feature = "serde",
+            feature = "serde-hex",
             serde(
                 serialize_with = "SerHex::<StrictPfx>::serialize",
                 deserialize_with = "SerHex::<StrictPfx>::deserialize"
@@ -300,7 +300,7 @@ enum SerdeTokensEntryItem {
         )]
         tag: u32,
         #[cfg_attr(
-            feature = "serde",
+            feature = "serde-hex",
             serde(
                 serialize_with = "SerHex::<StrictPfx>::serialize",
                 deserialize_with = "SerHex::<StrictPfx>::deserialize"
