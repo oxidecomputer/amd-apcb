@@ -34,4 +34,5 @@ parse_int = { version = "0.6.0", optional = true }
 default = []
 std = []
 schemars = ["std", "dep:schemars"]
-serde = ["std", "dep:serde", "dep:serde-hex", "dep:parse_int"]
+serde = ["std", "dep:serde", "dep:parse_int"]
+serde-hex = ["std", "dep:serde", "dep:serde-hex"]
