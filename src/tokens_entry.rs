@@ -16,8 +16,6 @@ use serde::ser::{Serialize, Serializer};
 use std::borrow::Cow;
 
 #[derive(Debug, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(dead_code)] // unit_size is not read when building without serde
 pub struct TokensEntryBodyItem<BufferType> {
     unit_size: u8,
