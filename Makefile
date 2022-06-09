@@ -6,7 +6,7 @@ all:
 	$(CARGO) build
 
 tests:
-	$(CARGO) test
+	$(CARGO) test --tests --lib
 	$(CARGO) build --features serde
-	$(CARGO) build --features serde,serde-hex
-	$(CARGO) build --example fromyaml
+	#$(CARGO) build --features schemars,serde,serde-hex
+	$(CARGO) build --features serde,schemars --example fromyaml
