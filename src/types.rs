@@ -44,12 +44,6 @@ extern crate std;
 use std::borrow::Cow;
 
 #[cfg(feature = "std")]
-pub(crate) type Ptr<'a, T> = Cow<'a, T>;
-
-#[cfg(not(feature = "std"))]
-pub(crate) type Ptr<'a, T> = &'a T;
-
-#[cfg(feature = "std")]
 pub(crate) type PtrMut<'a, T> = Cow<'a, T>;
 
 #[cfg(not(feature = "std"))]

@@ -2,18 +2,14 @@ use crate::ondisk::{
     take_header_from_collection, take_header_from_collection_mut, BoolToken,
     ByteToken, DwordToken, TokenEntryId, WordToken, TOKEN_ENTRY,
 };
-use crate::types::{Error, FileSystemError, Ptr, Result};
+use crate::types::{Error, FileSystemError, Result};
 use core::convert::TryFrom;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
 use pre::pre;
 
 #[cfg(feature = "serde")]
-use serde::de::{self, Deserialize, Deserializer};
-#[cfg(feature = "serde")]
 use serde::ser::{Serialize, Serializer};
-#[cfg(feature = "serde")]
-use std::borrow::Cow;
 
 #[derive(Debug, Clone, Copy)]
 #[allow(dead_code)] // unit_size is not read when building without serde
@@ -282,7 +278,7 @@ use serde_hex::{SerHex, StrictPfx};
 #[cfg(feature = "serde")]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-enum SerdeTokensEntryItem {
+pub(crate) enum SerdeTokensEntryItem {
     Bool(BoolToken),
     Byte(ByteToken),
     Word(WordToken),
@@ -308,9 +304,94 @@ enum SerdeTokensEntryItem {
     },
 }
 
+#[cfg(feature = "serde")]
+impl SerdeTokensEntryItem {
+    pub(crate) fn entry_id(&self) -> TokenEntryId {
+        match self {
+            Self::Bool(_) => TokenEntryId::Bool,
+            Self::Byte(_) => TokenEntryId::Byte,
+            Self::Word(_) => TokenEntryId::Word,
+            Self::Dword(_) => TokenEntryId::Dword,
+            Self::Unknown {
+                entry_id,
+                tag: _,
+                value: _,
+            } => *entry_id,
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl From<&TokensEntryItem<'_>> for SerdeTokensEntryItem {
+    fn from(item: &TokensEntryItem<'_>) -> Self {
+        let entry = &*item.entry;
+        let key = entry.key.get();
+        let mut st = Self::Unknown {
+            entry_id: item.entry_id,
+            tag: key,
+            value: item.value(),
+        };
+        match item.entry_id {
+            TokenEntryId::Bool => {
+                if let Ok(token) = BoolToken::try_from(entry) {
+                    st = Self::Bool(token);
+                }
+            }
+            TokenEntryId::Byte => {
+                if let Ok(token) = ByteToken::try_from(entry) {
+                    st = Self::Byte(token);
+                }
+            }
+            TokenEntryId::Word => {
+                if let Ok(token) = WordToken::try_from(entry) {
+                    st = Self::Word(token);
+                }
+            }
+            TokenEntryId::Dword => {
+                if let Ok(token) = DwordToken::try_from(entry) {
+                    st = Self::Dword(token);
+                }
+            }
+            TokenEntryId::Unknown(_) => {}
+        }
+        st
+    }
+}
+
+#[cfg(feature = "serde")]
+impl core::convert::TryFrom<SerdeTokensEntryItem> for TOKEN_ENTRY {
+    type Error = Error;
+    fn try_from(st: SerdeTokensEntryItem) -> core::result::Result<Self, Self::Error> {
+        match st {
+            SerdeTokensEntryItem::Bool(t) => {
+                TOKEN_ENTRY::try_from(t)
+            }
+            SerdeTokensEntryItem::Byte(t) => {
+                TOKEN_ENTRY::try_from(t)
+            }
+            SerdeTokensEntryItem::Word(t) => {
+                TOKEN_ENTRY::try_from(t)
+            }
+            SerdeTokensEntryItem::Dword(t) => {
+                TOKEN_ENTRY::try_from(t)
+            }
+            SerdeTokensEntryItem::Unknown {
+                entry_id: _,
+                tag,
+                value,
+            } => {
+                Ok(Self {
+                    key: tag.into(),
+                    value: value.into(),
+                })
+            }
+        }
+    }
+}
+
 pub struct TokensEntryItem<'a> {
     pub(crate) entry_id: TokenEntryId,
-    pub(crate) entry: Ptr<'a, TOKEN_ENTRY>,
+    pub(crate) entry: &'a TOKEN_ENTRY,
 }
 
 #[cfg(feature = "schemars")]
@@ -337,121 +418,7 @@ impl<'a> Serialize for TokensEntryItem<'a> {
     where
         S: Serializer,
     {
-        let entry = &*self.entry;
-        let key = entry.key.get();
-        let mut st = SerdeTokensEntryItem::Unknown {
-            entry_id: self.entry_id,
-            tag: key,
-            value: self.value(),
-        };
-        match self.entry_id {
-            TokenEntryId::Bool => {
-                if let Ok(token) = BoolToken::try_from(entry) {
-                    st = SerdeTokensEntryItem::Bool(token);
-                }
-            }
-            TokenEntryId::Byte => {
-                if let Ok(token) = ByteToken::try_from(entry) {
-                    st = SerdeTokensEntryItem::Byte(token);
-                }
-            }
-            TokenEntryId::Word => {
-                if let Ok(token) = WordToken::try_from(entry) {
-                    st = SerdeTokensEntryItem::Word(token);
-                }
-            }
-            TokenEntryId::Dword => {
-                if let Ok(token) = DwordToken::try_from(entry) {
-                    st = SerdeTokensEntryItem::Dword(token);
-                }
-            }
-            TokenEntryId::Unknown(_) => {}
-        }
-        st.serialize(serializer)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'a, 'de: 'a> Deserialize<'de> for TokensEntryItem<'a> {
-    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let st = SerdeTokensEntryItem::deserialize(deserializer)?;
-        let entry_id: TokenEntryId;
-        match st {
-            SerdeTokensEntryItem::Bool(t) => {
-                entry_id = TokenEntryId::Bool;
-                if let Ok(te) = TOKEN_ENTRY::try_from(t) {
-                    return Ok(Self {
-                        entry_id,
-                        entry: Cow::Owned(te),
-                    });
-                } else {
-                    return Err(de::Error::invalid_value(
-                        serde::de::Unexpected::Enum,
-                        &"a valid Token Entry",
-                    ));
-                }
-            }
-            SerdeTokensEntryItem::Byte(t) => {
-                entry_id = TokenEntryId::Byte;
-                if let Ok(te) = TOKEN_ENTRY::try_from(t) {
-                    return Ok(Self {
-                        entry_id,
-                        entry: Cow::Owned(te),
-                    });
-                } else {
-                    return Err(de::Error::invalid_value(
-                        serde::de::Unexpected::Enum,
-                        &"a valid Token Entry",
-                    ));
-                }
-            }
-            SerdeTokensEntryItem::Word(t) => {
-                entry_id = TokenEntryId::Word;
-                if let Ok(te) = TOKEN_ENTRY::try_from(t) {
-                    return Ok(Self {
-                        entry_id,
-                        entry: Cow::Owned(te),
-                    });
-                } else {
-                    return Err(de::Error::invalid_value(
-                        serde::de::Unexpected::Enum,
-                        &"a valid Token Entry",
-                    ));
-                }
-            }
-            SerdeTokensEntryItem::Dword(t) => {
-                entry_id = TokenEntryId::Dword;
-                if let Ok(te) = TOKEN_ENTRY::try_from(t) {
-                    return Ok(Self {
-                        entry_id,
-                        entry: Cow::Owned(te),
-                    });
-                } else {
-                    return Err(de::Error::invalid_value(
-                        serde::de::Unexpected::Enum,
-                        &"a valid Token Entry",
-                    ));
-                }
-            }
-            SerdeTokensEntryItem::Unknown {
-                entry_id: e_id,
-                tag,
-                value,
-            } => {
-                entry_id = e_id;
-                let te = TOKEN_ENTRY {
-                    key: tag.into(),
-                    value: value.into(),
-                };
-                return Ok(Self {
-                    entry_id,
-                    entry: Cow::Owned(te),
-                });
-            }
-        }
+        SerdeTokensEntryItem::from(self).serialize(serializer)
     }
 }
 
@@ -538,8 +505,6 @@ impl<'a> TokensEntryIter<'a> {
                 ));
             }
         };
-        #[cfg(feature = "std")]
-        let header = std::borrow::Cow::Borrowed(header);
         Ok(TokensEntryItem {
             entry_id,
             entry: header,

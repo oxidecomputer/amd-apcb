@@ -687,32 +687,40 @@ fn token_vec_to_body<'a, M>(
 where
     M: MapAccess<'a>,
 {
-    use crate::ondisk::TokenEntryId;
-    use crate::tokens_entry::TokensEntryItem;
+    use crate::ondisk::{TokenEntryId, TOKEN_ENTRY};
+    use core::convert::TryFrom;
+    use crate::tokens_entry::SerdeTokensEntryItem;
     if body.is_some() {
         return Err(de::Error::duplicate_field("body"));
     }
-    let val: Vec<TokensEntryItem<'_>> = map.next_value()?;
+    let val: Vec<SerdeTokensEntryItem> = map.next_value()?;
     let mut buf: Vec<u8> = Vec::new();
 
     if val.len() >= 1 {
         // Ensure that all tokens in this entry have the same id.
         let entry_id: TokenEntryId;
-        if let TokenEntryId::Unknown(_eid) = val[0].entry_id {
+        if let TokenEntryId::Unknown(_eid) = val[0].entry_id() {
             return Err(de::Error::invalid_value(
                 de::Unexpected::Enum,
                 &"expected one of [Bool, Byte, Word, Dword]",
             ));
         }
-        entry_id = val[0].entry_id;
+        entry_id = val[0].entry_id();
         for v in val {
-            if entry_id != v.entry_id {
+            if entry_id != v.entry_id() {
                 return Err(de::Error::invalid_value(
                     de::Unexpected::Enum,
                     &entry_id,
                 ));
             }
-            buf.extend_from_slice(v.entry.as_bytes());
+            if let Ok(te) = TOKEN_ENTRY::try_from(v) {
+                buf.extend_from_slice(te.as_bytes());
+            } else {
+                return Err(de::Error::invalid_value(
+                    de::Unexpected::Enum,
+                    &"a valid Token Entry",
+                ));
+            }
         }
     }
     *body = Some(buf);
