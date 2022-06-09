@@ -171,6 +171,7 @@ type LU16 = U16<LittleEndian>;
 type LU32 = U32<LittleEndian>;
 type LU64 = U64<LittleEndian>;
 
+#[allow(unused_macros)]
 macro_rules! make_serde_hex {
     ($serde_ty:ident, $base_ty:ty, $format_string:literal $(, $lu_ty:ty)?) => {
         #[derive(Default, Copy, Clone, FromPrimitive, ToPrimitive)]
