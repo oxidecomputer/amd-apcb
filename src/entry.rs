@@ -688,8 +688,8 @@ where
     M: MapAccess<'a>,
 {
     use crate::ondisk::{TokenEntryId, TOKEN_ENTRY};
-    use core::convert::TryFrom;
     use crate::tokens_entry::SerdeTokensEntryItem;
+    use core::convert::TryFrom;
     if body.is_some() {
         return Err(de::Error::duplicate_field("body"));
     }

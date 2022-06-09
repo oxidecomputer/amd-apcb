@@ -361,30 +361,22 @@ impl From<&TokensEntryItem<'_>> for SerdeTokensEntryItem {
 #[cfg(feature = "serde")]
 impl core::convert::TryFrom<SerdeTokensEntryItem> for TOKEN_ENTRY {
     type Error = Error;
-    fn try_from(st: SerdeTokensEntryItem) -> core::result::Result<Self, Self::Error> {
+    fn try_from(
+        st: SerdeTokensEntryItem,
+    ) -> core::result::Result<Self, Self::Error> {
         match st {
-            SerdeTokensEntryItem::Bool(t) => {
-                TOKEN_ENTRY::try_from(t)
-            }
-            SerdeTokensEntryItem::Byte(t) => {
-                TOKEN_ENTRY::try_from(t)
-            }
-            SerdeTokensEntryItem::Word(t) => {
-                TOKEN_ENTRY::try_from(t)
-            }
-            SerdeTokensEntryItem::Dword(t) => {
-                TOKEN_ENTRY::try_from(t)
-            }
+            SerdeTokensEntryItem::Bool(t) => TOKEN_ENTRY::try_from(t),
+            SerdeTokensEntryItem::Byte(t) => TOKEN_ENTRY::try_from(t),
+            SerdeTokensEntryItem::Word(t) => TOKEN_ENTRY::try_from(t),
+            SerdeTokensEntryItem::Dword(t) => TOKEN_ENTRY::try_from(t),
             SerdeTokensEntryItem::Unknown {
                 entry_id: _,
                 tag,
                 value,
-            } => {
-                Ok(Self {
-                    key: tag.into(),
-                    value: value.into(),
-                })
-            }
+            } => Ok(Self {
+                key: tag.into(),
+                value: value.into(),
+            }),
         }
     }
 }
