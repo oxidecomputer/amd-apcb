@@ -9,4 +9,4 @@ tests:
 	$(CARGO) test
 	$(CARGO) build --features serde
 	$(CARGO) build --features serde,serde-hex
-	# TODO: test-compile let _foo: Apcb = serde_yaml::from_str("")
+	$(CARGO) build --example fromyaml
