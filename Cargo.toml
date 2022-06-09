@@ -36,3 +36,6 @@ std = []
 schemars = ["std", "dep:schemars"]
 serde = ["std", "dep:serde", "dep:parse_int"]
 serde-hex = ["std", "dep:serde", "dep:serde-hex"]
+
+[dev-dependencies]
+serde_yaml = "0.8.24" # for the example
