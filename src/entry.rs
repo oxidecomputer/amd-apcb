@@ -8,7 +8,7 @@ use crate::ondisk::{
 };
 use crate::ondisk::{Parameters, ParametersIter};
 use crate::tokens_entry::TokensEntryBodyItem;
-use crate::types::{Error, FileSystemError, Ptr, Result};
+use crate::types::{Error, FileSystemError, Result};
 use core::marker::PhantomData;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
@@ -21,8 +21,6 @@ use crate::ondisk::Parameter;
 use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
 #[cfg(feature = "serde")]
 use serde::ser::{Serialize, SerializeStruct, Serializer};
-#[cfg(feature = "serde")]
-use std::borrow::Cow;
 
 /* Note: high-level interface is:
 
@@ -68,15 +66,13 @@ impl<'a> EntryItemBody<&'a mut [u8]> {
     }
 }
 
-impl<'a> EntryItemBody<Ptr<'a, [u8]>> {
+impl<'a> EntryItemBody<&'a [u8]> {
     pub(crate) fn from_slice(
         unit_size: u8,
         entry_id: u16,
         context_type: ContextType,
         b: &'a [u8],
-    ) -> Result<EntryItemBody<Ptr<'a, [u8]>>> {
-        #[cfg(feature = "serde")]
-        let b = Cow::Borrowed(b);
+    ) -> Result<EntryItemBody<&'a [u8]>> {
         match context_type {
             ContextType::Struct => {
                 if unit_size != 0 {
@@ -89,7 +85,7 @@ impl<'a> EntryItemBody<Ptr<'a, [u8]>> {
             }
             ContextType::Tokens => {
                 let used_size = b.len();
-                Ok(Self::Tokens(TokensEntryBodyItem::<Ptr<'_, [u8]>>::new(
+                Ok(Self::Tokens(TokensEntryBodyItem::<&'_ [u8]>::new(
                     unit_size, entry_id, b, used_size,
                 )?))
             }
@@ -418,8 +414,14 @@ use std::fmt;
 
 #[derive(Clone)]
 pub struct EntryItem<'a> {
-    pub(crate) header: Ptr<'a, ENTRY_HEADER>,
-    pub body: EntryItemBody<Ptr<'a, [u8]>>,
+    pub(crate) header: &'a ENTRY_HEADER,
+    pub body: EntryItemBody<&'a [u8]>,
+}
+
+#[cfg(feature = "serde")]
+pub struct SerdeEntryItem {
+    pub(crate) header: ENTRY_HEADER,
+    pub(crate) body: Vec<u8>,
 }
 
 #[cfg(feature = "schemars")]
@@ -551,6 +553,20 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
         schema.into()
     }
 }
+#[cfg(feature = "schemars")]
+impl<'a> schemars::JsonSchema for SerdeEntryItem {
+    fn schema_name() -> std::string::String {
+        EntryItem::schema_name()
+    }
+    fn json_schema(
+        gen: &mut schemars::gen::SchemaGenerator,
+    ) -> schemars::schema::Schema {
+        EntryItem::json_schema(gen)
+    }
+    fn is_referenceable() -> bool {
+        EntryItem::is_referenceable()
+    }
+}
 
 #[cfg(feature = "serde")]
 impl<'a> Serialize for EntryItem<'a> {
@@ -665,41 +681,49 @@ self.body_as_struct_sequence::<memory::platform_tuning::ElementRef<'_>>() {
 /// and stash it into a new BODY. If BODY is not empty, that's an error. This is
 /// used purely as a helper function during deserialize.
 fn token_vec_to_body<'a, M>(
-    body: &mut Option<Cow<'_, [u8]>>,
+    body: &mut Option<Vec<u8>>,
     map: &mut M,
 ) -> core::result::Result<(), M::Error>
 where
     M: MapAccess<'a>,
 {
-    use crate::ondisk::TokenEntryId;
-    use crate::tokens_entry::TokensEntryItem;
+    use crate::ondisk::{TokenEntryId, TOKEN_ENTRY};
+    use crate::tokens_entry::SerdeTokensEntryItem;
+    use core::convert::TryFrom;
     if body.is_some() {
         return Err(de::Error::duplicate_field("body"));
     }
-    let val: Vec<TokensEntryItem<'_>> = map.next_value()?;
+    let val: Vec<SerdeTokensEntryItem> = map.next_value()?;
     let mut buf: Vec<u8> = Vec::new();
 
     if val.len() >= 1 {
         // Ensure that all tokens in this entry have the same id.
         let entry_id: TokenEntryId;
-        if let TokenEntryId::Unknown(_eid) = val[0].entry_id {
+        if let TokenEntryId::Unknown(_eid) = val[0].entry_id() {
             return Err(de::Error::invalid_value(
                 de::Unexpected::Enum,
                 &"expected one of [Bool, Byte, Word, Dword]",
             ));
         }
-        entry_id = val[0].entry_id;
+        entry_id = val[0].entry_id();
         for v in val {
-            if entry_id != v.entry_id {
+            if entry_id != v.entry_id() {
                 return Err(de::Error::invalid_value(
                     de::Unexpected::Enum,
                     &entry_id,
                 ));
             }
-            buf.extend_from_slice(v.entry.as_bytes());
+            if let Ok(te) = TOKEN_ENTRY::try_from(v) {
+                buf.extend_from_slice(te.as_bytes());
+            } else {
+                return Err(de::Error::invalid_value(
+                    de::Unexpected::Enum,
+                    &"a valid Token Entry",
+                ));
+            }
         }
     }
-    *body = Some(Cow::from(buf));
+    *body = Some(buf);
     Ok(())
 }
 
@@ -708,7 +732,7 @@ where
 /// new BODY. If BODY is not empty, that's an error. This is used purely as a
 /// helper function during deserialize.
 fn struct_vec_to_body<'a, T, M>(
-    body: &mut Option<Cow<'_, [u8]>>,
+    body: &mut Option<Vec<u8>>,
     map: &mut M,
 ) -> core::result::Result<(), M::Error>
 where
@@ -723,7 +747,7 @@ where
     for v in val {
         buf.extend_from_slice(v.as_bytes());
     }
-    *body = Some(Cow::from(buf));
+    *body = Some(buf);
     Ok(())
 }
 
@@ -732,7 +756,7 @@ where
 /// into a new BODY. If BODY is not empty, that's an error. This is used purely
 /// as a helper function during deserialize.
 fn struct_to_body<'a, T, M>(
-    body: &mut Option<Cow<'_, [u8]>>,
+    body: &mut Option<Vec<u8>>,
     map: &mut M,
 ) -> core::result::Result<(), M::Error>
 where
@@ -753,7 +777,7 @@ where
         let h: T = map.next_value()?;
         buf.extend_from_slice(h.as_bytes());
     }
-    *body = Some(Cow::from(buf));
+    *body = Some(buf);
     Ok(())
 }
 
@@ -762,7 +786,7 @@ where
 /// into a new BODY. If BODY is not empty, that's an error. This is used purely
 /// as a helper function during deserialize.
 fn parameters_struct_to_body<'a, M>(
-    body: &mut Option<Cow<'_, [u8]>>,
+    body: &mut Option<Vec<u8>>,
     map: &mut M,
 ) -> core::result::Result<(), M::Error>
 where
@@ -773,7 +797,7 @@ where
     }
     let val: Vec<Parameter> = map.next_value()?;
     let buf = Parameters::new_tail_from_vec(val).unwrap();
-    *body = Some(Cow::from(buf));
+    *body = Some(buf);
     Ok(())
 }
 
@@ -783,7 +807,7 @@ where
 /// helper function during deserialize. This handles the sequences, and thus the
 /// elements in this vec can each be different.
 fn struct_sequence_to_body<'a, T, M>(
-    body: &mut Option<Cow<'_, [u8]>>,
+    body: &mut Option<Vec<u8>>,
     map: &mut M,
 ) -> core::result::Result<(), M::Error>
 where
@@ -798,12 +822,12 @@ where
     for v in val {
         buf.extend_from_slice(v.element_as_bytes());
     }
-    *body = Some(Cow::from(buf));
+    *body = Some(buf);
     Ok(())
 }
 
 #[cfg(feature = "serde")]
-impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
+impl<'de> Deserialize<'de> for SerdeEntryItem {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -959,10 +983,10 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
             }
         }
 
-        struct EntryItemVisitor;
+        struct SerdeEntryItemVisitor;
 
-        impl<'de> Visitor<'de> for EntryItemVisitor {
-            type Value = EntryItem<'de>;
+        impl<'de> Visitor<'de> for SerdeEntryItemVisitor {
+            type Value = SerdeEntryItem;
 
             fn expecting(
                 &self,
@@ -974,7 +998,7 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
             fn visit_map<V>(
                 self,
                 mut map: V,
-            ) -> core::result::Result<EntryItem<'static>, V::Error>
+            ) -> core::result::Result<SerdeEntryItem, V::Error>
             where
                 V: MapAccess<'de>,
             {
@@ -982,7 +1006,7 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
                 use crate::memory;
                 use crate::psp;
                 let mut header: Option<ENTRY_HEADER> = None;
-                let mut body: Option<Cow<'_, [u8]>> = None;
+                let mut body: Option<Vec<u8>> = None;
                 while let Some(key) = map.next_key()? {
                     match key {
                         Field::Header => {
@@ -1129,14 +1153,17 @@ impl<'a, 'de: 'a> Deserialize<'de> for EntryItem<'a> {
                     header.ok_or_else(|| de::Error::missing_field("header"))?;
                 let body =
                     body.ok_or_else(|| de::Error::missing_field("body"))?;
-                let buf = Cow::Owned(header);
-                Ok(EntryItem {
-                    header: buf,
-                    body: EntryItemBody::<Ptr<'static, [u8]>>::Struct(body),
+                Ok(SerdeEntryItem {
+                    header: header,
+                    body: body,
                 })
             }
         }
-        deserializer.deserialize_struct("EntryItem", FIELDS, EntryItemVisitor)
+        deserializer.deserialize_struct(
+            "EntryItem",
+            FIELDS,
+            SerdeEntryItemVisitor,
+        )
     }
 }
 

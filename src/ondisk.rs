@@ -1089,7 +1089,7 @@ make_accessors! {
         FromBytes, AsBytes, Unaligned, Clone, Debug,
     )]
     #[repr(C, packed)]
-    pub(crate) struct GROUP_HEADER {
+    pub struct GROUP_HEADER {
         pub(crate) signature || FourCC : [u8; 4],
         pub(crate) group_id || SerdeHex16 : LU16,
         pub(crate) header_size || SerdeHex16 : LU16, // == sizeof(GROUP_HEADER)

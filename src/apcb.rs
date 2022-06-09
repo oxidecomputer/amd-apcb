@@ -33,7 +33,9 @@ use zerocopy::LayoutVerified;
 #[cfg(feature = "std")]
 extern crate std;
 #[cfg(feature = "serde")]
-use crate::entry::EntryItem;
+use crate::entry::{EntryItem, SerdeEntryItem};
+#[cfg(feature = "serde")]
+use crate::group::SerdeGroupItem;
 #[cfg(feature = "serde")]
 use serde::de::{Deserialize, Deserializer};
 #[cfg(feature = "serde")]
@@ -59,19 +61,15 @@ pub struct Apcb<'a> {
 }
 
 #[cfg(feature = "serde")]
-#[cfg_attr(
-    feature = "serde",
-    derive(Default, serde::Serialize, serde::Deserialize)
-)]
+#[cfg_attr(feature = "serde", derive(Default, serde::Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub struct SerdeApcb<'a> {
+pub struct SerdeApcb {
     pub version: String,
     pub header: V2_HEADER,
     pub v3_header: Option<V3_HEADER_EXT>,
-    #[cfg_attr(feature = "serde", serde(borrow))]
-    pub groups: Vec<GroupItem<'a>>,
-    #[cfg_attr(feature = "serde", serde(borrow))]
-    pub entries: Vec<EntryItem<'a>>,
+    pub groups: Vec<SerdeGroupItem>,
+    //#[cfg_attr(feature = "serde", serde(borrow))]
+    pub entries: Vec<SerdeEntryItem>,
 }
 
 #[cfg(feature = "schemars")]
@@ -93,9 +91,9 @@ impl<'a> schemars::JsonSchema for Apcb<'a> {
 use core::convert::TryFrom;
 
 #[cfg(feature = "serde")]
-impl<'a> TryFrom<SerdeApcb<'_>> for Apcb<'a> {
+impl<'a> TryFrom<SerdeApcb> for Apcb<'a> {
     type Error = Error;
-    fn try_from(serde_apcb: SerdeApcb<'_>) -> Result<Self> {
+    fn try_from(serde_apcb: SerdeApcb) -> Result<Self> {
         let buf =
             Cow::from(vec![0xFFu8; serde_apcb.header.apcb_size.get() as usize]);
         let mut apcb = Apcb::create(buf, 42, &ApcbIoOptions::default())?;
@@ -119,16 +117,16 @@ impl<'a> TryFrom<SerdeApcb<'_>> for Apcb<'a> {
             )?;
         }
         for e in serde_apcb.entries {
-            let buf = match e.body_as_buf() {
-                Some(buf) => buf,
-                None => return Err(Error::EntryNotExtractable),
-            };
+            let buf = &e.body[..];
             match apcb.insert_entry(
-                e.id(),
-                e.instance_id(),
-                e.board_instance_mask(),
-                e.context_type(),
-                PriorityLevels::from(e.priority_mask()),
+                EntryId::decode(
+                    e.header.group_id.get(),
+                    e.header.entry_id.get(),
+                ),
+                e.header.instance_id.get(),
+                BoardInstances::from(e.header.board_instance_mask.get()),
+                ContextType::from_u8(e.header.context_type).unwrap(),
+                PriorityLevels::from(e.header.priority_mask),
                 buf,
             ) {
                 Ok(_) => {}
@@ -185,12 +183,12 @@ impl<'a> Serialize for Apcb<'a> {
 }
 
 #[cfg(feature = "serde")]
-impl<'a, 'de: 'a> Deserialize<'de> for Apcb<'a> {
+impl<'de, 'a: 'de> Deserialize<'de> for Apcb<'a> {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let sa: SerdeApcb<'_> = SerdeApcb::deserialize(deserializer)?;
+        let sa: SerdeApcb = SerdeApcb::deserialize(deserializer)?;
         Apcb::try_from(sa)
             .map_err(|e| serde::de::Error::custom(format!("{:?}", e)))
     }
@@ -362,9 +360,6 @@ impl<'a> ApcbIter<'a> {
             }
         };
         let body_len = body.len();
-
-        #[cfg(feature = "serde")]
-        let header = Cow::Borrowed(header);
 
         Ok(GroupItem {
             header,

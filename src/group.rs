@@ -1,4 +1,4 @@
-use crate::types::{Error, FileSystemError, Ptr, Result};
+use crate::types::{Error, FileSystemError, Result};
 
 use crate::entry::{EntryItem, EntryItemBody, EntryMutItem};
 use crate::ondisk::GroupId;
@@ -17,18 +17,38 @@ use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use pre::pre;
 
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
-
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct GroupItem<'a> {
-    #[cfg_attr(feature = "serde", serde(borrow))]
-    pub(crate) header: Ptr<'a, GROUP_HEADER>,
+    pub(crate) header: &'a GROUP_HEADER,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) buf: &'a [u8],
     #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) used_size: usize,
+}
+
+#[cfg(feature = "serde")]
+#[cfg_attr(
+    feature = "serde",
+    derive(Default, serde::Serialize, serde::Deserialize)
+)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct SerdeGroupItem {
+    pub header: GROUP_HEADER,
+}
+
+#[cfg(feature = "schemars")]
+impl<'a> schemars::JsonSchema for GroupItem<'a> {
+    fn schema_name() -> std::string::String {
+        SerdeGroupItem::schema_name()
+    }
+    fn json_schema(
+        gen: &mut schemars::gen::SchemaGenerator,
+    ) -> schemars::schema::Schema {
+        SerdeGroupItem::json_schema(gen)
+    }
+    fn is_referenceable() -> bool {
+        SerdeGroupItem::is_referenceable()
+    }
 }
 
 #[derive(Debug)]
@@ -113,12 +133,9 @@ impl<'a> GroupIter<'a> {
         let unit_size = header.unit_size;
         let entry_id = header.entry_id.get();
 
-        #[cfg(feature = "serde")]
-        let header = std::borrow::Cow::Borrowed(header);
-
         Ok(EntryItem {
             header,
-            body: EntryItemBody::<Ptr<'_, [u8]>>::from_slice(
+            body: EntryItemBody::<&'_ [u8]>::from_slice(
                 unit_size,
                 entry_id,
                 context_type,
