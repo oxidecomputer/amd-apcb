@@ -183,7 +183,7 @@ impl<'a> Serialize for Apcb<'a> {
 }
 
 #[cfg(feature = "serde")]
-impl<'de, 'a: 'de> Deserialize<'de> for Apcb<'a> {
+impl<'de> Deserialize<'de> for Apcb<'_> {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
     where
         D: Deserializer<'de>,
