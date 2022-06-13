@@ -444,7 +444,7 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
         obj.properties
             .insert("header".to_owned(), <ENTRY_HEADER>::json_schema(gen));
         obj.properties.insert(
-            "Tokens".to_owned(),
+            "tokens".to_owned(),
             <Vec<TokensEntryItem<'_>>>::json_schema(gen),
         );
         obj.properties.insert(
