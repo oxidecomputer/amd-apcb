@@ -310,7 +310,7 @@ mod tests {
             0,
             BoardInstances::all(),
             PriorityLevels::from_level(PriorityLevel::Normal),
-            &ConsoleOutControl::builder().build(),
+            &ConsoleOutControl::default(),
             &[],
         )?;
 
@@ -347,7 +347,7 @@ mod tests {
 
         let (console_out_control, _) =
             entry.body_as_struct_mut::<ConsoleOutControl>().unwrap();
-        assert!(*console_out_control == ConsoleOutControl::builder().build());
+        assert!(*console_out_control == ConsoleOutControl::default());
         if console_out_control
             .abl_console_out_control
             .enable_console_logging()?
