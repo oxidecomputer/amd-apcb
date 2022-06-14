@@ -184,6 +184,12 @@ impl DummyErrorChecks for bool {}
 /// optionally specified serde type that is used during serialization and
 /// deserialization
 ///
+/// This also defines a "builder" fn that will be used by the deserializers at
+/// the very beginning. That fn just calls "default()" (out of
+/// necessity--because we don't want to have lots of extra partial struct
+/// definitions). This is different to what make_bitfield_serde does
+/// (where it calls "new()") (on purpose).
+///
 /// Field syntax:
 /// NAME [|| SERDE_TYPE : TYPE] [: TYPE] [| pub get TYPE [: pub set TYPE]]
 macro_rules! make_accessors {(
@@ -216,6 +222,10 @@ macro_rules! make_accessors {(
         #[allow(dead_code)]
         pub fn build(&self) -> Self {
             self.clone()
+        }
+        #[allow(dead_code)]
+        pub fn builder() -> Self {
+            Self::default()
         }
         $(
             $(
