@@ -1186,6 +1186,9 @@ macro_rules! make_bitfield_serde {(
     }
 
     impl $StructName {
+        pub fn builder() -> Self {
+            Self::new() // NOT default
+        }
         pub fn build(&self) -> Self {
             self.clone()
         }
@@ -1522,7 +1525,6 @@ impl_bitfield_primitive_conversion!(
 );
 
 impl Default for ParameterAttributes {
-    // FIXME: remove
     fn default() -> Self {
         Self::new()
     }
@@ -1704,7 +1706,6 @@ impl Parameter {
 }
 
 impl Default for Parameter {
-    // FIXME: remove
     fn default() -> Self {
         Self::new(&ParameterAttributes::default(), 0).unwrap()
     }
@@ -2073,9 +2074,6 @@ pub mod memory {
     }
 
     impl AblConsoleOutControl {
-        pub fn builder() -> Self {
-            Self::default()
-        }
         pub fn new() -> Self {
             Self::default()
         }
@@ -2226,9 +2224,6 @@ pub mod memory {
     }
 
     impl NaplesAblConsoleOutControl {
-        pub fn builder() -> Self {
-            Self::default()
-        }
         pub fn new() -> Self {
             Self::default()
         }
@@ -2413,11 +2408,6 @@ pub mod memory {
         }
     );
     impl DummyErrorChecks for Ddr4DimmRanks {}
-    impl Ddr4DimmRanks {
-        pub fn builder() -> Self {
-            Self::new()
-        }
-    }
 
     impl From<Ddr4DimmRanks> for u32 {
         fn from(source: Ddr4DimmRanks) -> u32 {
@@ -2450,11 +2440,6 @@ pub mod memory {
     impl DummyErrorChecks for LrdimmDdr4DimmRanks {}
     impl Default for LrdimmDdr4DimmRanks {
         fn default() -> Self {
-            Self::new()
-        }
-    }
-    impl LrdimmDdr4DimmRanks {
-        pub fn builder() -> Self {
             Self::new()
         }
     }
@@ -2560,11 +2545,6 @@ pub mod memory {
             Self::new()
         }
     }
-    impl DdrRates {
-        pub fn builder() -> Self {
-            Self::new()
-        }
-    }
     impl_bitfield_primitive_conversion!(
         DdrRates,
         0b0000_0001_0101_0101_0101_0101_0111_1000,
@@ -2591,11 +2571,6 @@ pub mod memory {
     }
 
     impl_bitfield_primitive_conversion!(DimmsPerChannelSelector, 0b1111, u32);
-    impl DimmsPerChannelSelector {
-        pub fn builder() -> Self {
-            Self::new()
-        }
-    }
 
     #[derive(Clone, Copy)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -2713,9 +2688,6 @@ pub mod memory {
     }
     impl_bitfield_primitive_conversion!(RdimmDdr4Voltages, 0b1, u32);
     impl RdimmDdr4Voltages {
-        pub fn builder() -> Self {
-            Self::new()
-        }
         pub fn default() -> Self {
             let mut r = Self::new();
             r.set__1_2V(true);
@@ -2848,11 +2820,8 @@ pub mod memory {
         define_compat_bitfield_field!(v_1_25, _1_25V);
     }
     impl_bitfield_primitive_conversion!(UdimmDdr4Voltages, 0b111, u32);
-    impl UdimmDdr4Voltages {
-        pub fn builder() -> Self {
-            Self::new()
-        }
-        pub fn default() -> Self {
+    impl Default for UdimmDdr4Voltages { // XXX remove
+        fn default() -> Self {
             Self::new()
         }
     }
@@ -2905,12 +2874,6 @@ pub mod memory {
         }
     }
 
-    impl UdimmDdr4CadBusElement {
-        pub fn builder() -> Self {
-            Self::default()
-        }
-    }
-
     impl EntryCompatible for UdimmDdr4CadBusElement {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             match entry_id {
@@ -2950,9 +2913,6 @@ pub mod memory {
     }
     impl_bitfield_primitive_conversion!(LrdimmDdr4Voltages, 0b1, u32);
     impl LrdimmDdr4Voltages {
-        pub fn builder() -> Self {
-            Self::new()
-        }
         pub fn default() -> Self {
             let mut lr = Self::new();
             lr.set__1_2V(true);
@@ -3993,9 +3953,6 @@ Clone)]
         }
 
         impl $struct_name {
-            pub fn builder() -> Self {
-                Self::new()
-            }
             pub fn error_reporting_gpio(&self) -> Result<Option<Gpio>> {
                 match self.enable_error_reporting_gpio {
                     BU8(1) => Ok(Some(self.error_reporting_gpio)),
@@ -4165,11 +4122,6 @@ Clone)]
         0b0111_0111_0111,
         u32
     );
-    impl Ddr4OdtPatDimmRankBitmaps {
-        pub fn builder() -> Self {
-            Self::new()
-        }
-    }
     type OdtPatPattern = B4; // TODO: Meaning
 
     make_bitfield_serde! {
@@ -4184,11 +4136,6 @@ Clone)]
         }
     }
     impl_bitfield_primitive_conversion!(OdtPatPatterns, 0b1111_0000_1111, u32);
-    impl OdtPatPatterns {
-        pub fn builder() -> Self {
-            Self::new()
-        }
-    }
     impl Default for OdtPatPatterns {
         fn default() -> Self {
             Self::new()
@@ -4374,14 +4321,8 @@ Clone)]
         u64
     );
 
-    impl DdrPostPackageRepairBody {
-        pub fn builder() -> Self {
-            Self::new()
-        }
-    }
-
     make_accessors! {
-        #[derive(Default, FromBytes, AsBytes, Unaligned, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct DdrPostPackageRepairElement {
             body: [u8; 8], // no| pub get DdrPostPackageRepairBody : pub set DdrPostPackageRepairBody,
@@ -4429,9 +4370,6 @@ Clone)]
                 body: [0, 0, 0, 0, 0, 0, 0, 0xff],
             }
         }
-        pub fn builder() -> Self {
-            Self::invalid()
-        }
         #[inline]
         pub fn set_body(&mut self, value: Option<DdrPostPackageRepairBody>) {
             match value {
@@ -4442,6 +4380,11 @@ Clone)]
                     self.body = Self::invalid().body;
                 }
             }
+        }
+    }
+    impl Default for DdrPostPackageRepairElement {
+        fn default() -> Self {
+            Self::invalid()
         }
     }
 
@@ -4482,11 +4425,6 @@ Clone)]
                             }
                         }
                         impl_bitfield_primitive_conversion!(ChannelIdsSelection, 0b1111_1111, u8);
-                        impl ChannelIdsSelection {
-                            pub fn builder() -> Self {
-                                Self::new()
-                            }
-                        }
                         impl Default for ChannelIdsSelection {
                             fn default() -> Self {
                                 Self::new()
@@ -4563,9 +4501,6 @@ Clone)]
                         impl_bitfield_primitive_conversion!(SocketIds, 0b1111_1111, u8);
                         impl SocketIds {
                             pub const ALL: Self = Self::from_bytes([0xff]);
-                            pub fn builder() -> Self {
-                                Self::new()
-                            }
                         }
                         impl Default for SocketIds {
                             fn default() -> Self {
@@ -4586,11 +4521,6 @@ Clone)]
                             }
                         }
                         impl_bitfield_primitive_conversion!(DimmSlotsSelection, 0b1111, u8);
-                        impl DimmSlotsSelection {
-                            pub fn builder() -> Self {
-                                Self::new()
-                            }
-                        }
                         impl Default for DimmSlotsSelection {
                             fn default() -> Self {
                                 Self::new()
@@ -5668,13 +5598,9 @@ Clone)]
                             }
                         }
 
-
                         impl Terminator {
                             pub fn new() -> Self {
                                 Self::default()
-                            }
-                            pub fn builder() -> Self {
-                                Self::new()
                             }
                         }
 
@@ -7449,11 +7375,6 @@ make_bitfield_serde! {
         pub s1_gpp2_off : bool | pub get bool : pub set bool,
         pub s1_gpp3_off : bool | pub get bool : pub set bool,
         pub _reserved_2 || SerdeHex8 : B3,
-    }
-}
-impl FchGppClkMapSelection {
-    pub fn builder() -> Self {
-        Self::new()
     }
 }
 
