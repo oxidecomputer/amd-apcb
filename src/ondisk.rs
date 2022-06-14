@@ -2540,11 +2540,6 @@ pub mod memory {
                                 * AMD-missing pub ddr4400, set_ddr4400: 33, */
         }
     );
-    impl Default for DdrRates {
-        fn default() -> Self {
-            Self::new()
-        }
-    }
     impl_bitfield_primitive_conversion!(
         DdrRates,
         0b0000_0001_0101_0101_0101_0101_0111_1000,
@@ -2561,12 +2556,6 @@ pub mod memory {
             pub three_dimms: bool | pub get bool : pub set bool,
             pub four_dimms: bool | pub get bool : pub set bool,
             pub _reserved_1 || SerdeHex32 : B28,
-        }
-    }
-
-    impl Default for DimmsPerChannelSelector {
-        fn default() -> Self {
-            Self::new()
         }
     }
 
@@ -2820,11 +2809,6 @@ pub mod memory {
         define_compat_bitfield_field!(v_1_25, _1_25V);
     }
     impl_bitfield_primitive_conversion!(UdimmDdr4Voltages, 0b111, u32);
-    impl Default for UdimmDdr4Voltages { // XXX remove
-        fn default() -> Self {
-            Self::new()
-        }
-    }
 
     // Usually an array of those is used
     make_accessors! {
@@ -3799,14 +3783,6 @@ pub mod memory {
         u32
     );
 
-    impl Default for ErrorOutControlBeepCodePeakAttr {
-        fn default() -> Self {
-            ErrorOutControlBeepCodePeakAttr {
-                bytes: [0, 0, 0, 0],
-            }
-        }
-    }
-
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
@@ -3820,11 +3796,6 @@ pub mod memory {
         Psp = 8,
         Smu = 9,
         Unknown = 0xf, // that's specified as "Unknown".
-    }
-    impl Default for ErrorOutControlBeepCodeErrorType {
-        fn default() -> Self {
-            ErrorOutControlBeepCodeErrorType::General
-        }
     }
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
@@ -3861,9 +3832,9 @@ pub mod memory {
     impl Default for ErrorOutControlBeepCode {
         fn default() -> Self {
             ErrorOutControlBeepCode::new(
-                ErrorOutControlBeepCodeErrorType::default(),
+                ErrorOutControlBeepCodeErrorType::General,
                 0,
-                ErrorOutControlBeepCodePeakAttr::default(),
+                ErrorOutControlBeepCodePeakAttr::new(),
             )
         }
     }
@@ -4136,11 +4107,6 @@ Clone)]
         }
     }
     impl_bitfield_primitive_conversion!(OdtPatPatterns, 0b1111_0000_1111, u32);
-    impl Default for OdtPatPatterns {
-        fn default() -> Self {
-            Self::new()
-        }
-    }
 
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
@@ -4212,11 +4178,6 @@ Clone)]
         0b0011_0011_0011,
         u32
     );
-    impl Default for LrdimmDdr4OdtPatDimmRankBitmaps {
-        fn default() -> Self {
-            Self::new()
-        }
-    }
 
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
@@ -4425,11 +4386,6 @@ Clone)]
                             }
                         }
                         impl_bitfield_primitive_conversion!(ChannelIdsSelection, 0b1111_1111, u8);
-                        impl Default for ChannelIdsSelection {
-                            fn default() -> Self {
-                                Self::new()
-                            }
-                        }
 
                         #[derive(PartialEq)]
                         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -4502,11 +4458,6 @@ Clone)]
                         impl SocketIds {
                             pub const ALL: Self = Self::from_bytes([0xff]);
                         }
-                        impl Default for SocketIds {
-                            fn default() -> Self {
-                                Self::new()
-                            }
-                        }
 
                         make_bitfield_serde! {
                             #[bitfield(bits = 8)]
@@ -4521,11 +4472,6 @@ Clone)]
                             }
                         }
                         impl_bitfield_primitive_conversion!(DimmSlotsSelection, 0b1111, u8);
-                        impl Default for DimmSlotsSelection {
-                            fn default() -> Self {
-                                Self::new()
-                            }
-                        }
                         #[derive(Clone, Copy)]
                         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
                         #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
