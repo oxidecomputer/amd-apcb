@@ -11,8 +11,6 @@
   * u0xae7f0df4 = bmc_rcb_wrong_attr_dis: 0=en, 1=dis, skip=0xff
 * FchSmbusSpeed::Auto missing?
 * Sanity-check MaxFreqElement::new argument 1
-* update_checksum split into two parts!!!!
-  Maybe automate them, though.
 * define_ErrorOutControl: CHECK DEFAULT VALUES!
 * RdimmDdr4CadBusElement::new: has address_command_control as one conglomerate--should be split.
 
@@ -20,8 +18,6 @@
 
 * Error log should also be readable maybe.
 * GroupMutIter: Also validate()
-* Sanity-check "new" fns that exist
-* Add "new" fn for the others, too?
 * IdRevApcbMapping
   * id_and_feature_mask: bit 7: 1=user controlled; 0=normal
 * OdtPatElement: Availability of dimm0_rank, dimm1_rank should be conditional.
@@ -60,7 +56,6 @@
 
 # Unimportant/later
 
-* Make builder pattern constructors
 * apcb::insert_entry: Replace by shifts and masks (if not compile time)
 * insert_token: "&" instead of "%"
 * Check error handling crate "failure" or "anyhow". `#[source]`

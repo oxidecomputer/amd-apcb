@@ -1524,12 +1524,6 @@ impl_bitfield_primitive_conversion!(
     u32
 );
 
-impl Default for ParameterAttributes {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl ParameterAttributes {
     pub fn size(&self) -> u16 {
         (self.size_minus_one() as u16) + 1
@@ -1707,7 +1701,7 @@ impl Parameter {
 
 impl Default for Parameter {
     fn default() -> Self {
-        Self::new(&ParameterAttributes::default(), 0).unwrap()
+        Self::new(&ParameterAttributes::new(), 0).unwrap()
     }
 }
 
