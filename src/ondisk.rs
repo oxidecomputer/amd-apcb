@@ -2388,6 +2388,8 @@ pub mod memory {
     }
 
     make_bitfield_serde!(
+        /// For example, single_rank=true && dual_rank=true means that this
+        /// allows either single or dual rank.
         #[bitfield(bits = 4)]
         #[derive(
             Default, Clone, Copy, PartialEq, BitfieldSpecifier,
@@ -2418,6 +2420,8 @@ pub mod memory {
     impl_bitfield_primitive_conversion!(Ddr4DimmRanks, 0b1111, u32);
 
     make_bitfield_serde!(
+        /// For example, unpopulated=true && lr=true means that this allows
+        /// either unpopulated or lr.
         #[bitfield(bits = 4)]
         #[derive(
             Clone, Copy, PartialEq, BitfieldSpecifier,
@@ -4101,6 +4105,7 @@ Clone)]
     impl_bitfield_primitive_conversion!(OdtPatPatterns, 0b1111_0000_1111, u32);
 
     make_accessors! {
+        /// See PPR 12.7.2.2 DRAM ODT Pin Control
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct Ddr4OdtPatElement {
@@ -4172,6 +4177,7 @@ Clone)]
     );
 
     make_accessors! {
+        /// See PPR DRAM ODT Pin Control
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4OdtPatElement {
@@ -7210,8 +7216,8 @@ pub enum CbsMemSpeedDdr4 {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum FchSmbusSpeed {
-    Value(u8), /* x in 66 MHz / (4 x)
-                * Auto */
+    Value(u8), /* x in 66 MHz / (4 x) */
+    // FIXME: Auto ?
 }
 impl FromPrimitive for FchSmbusSpeed {
     fn from_u64(value: u64) -> Option<Self> {
@@ -7763,14 +7769,18 @@ make_token_accessors! {
         MemUdimmCapable(default 0, id 0x3cf8a8ec) | pub get bool : pub set bool, // Rome
         MemSodimmCapable(default 0, id 0x7c61c187) | pub get bool : pub set bool, // Rome
         MemRdimmCapable(default 0, id 0x81726666) | pub get bool : pub set bool, // Rome
+        /// Leaving this off is very bad (does not boot anymore).
         MemLrdimmCapable(default 0, id 0x14fbf20) | pub get bool : pub set bool,
+        /// Leaving this off is very bad (does not boot anymore).
         MemDimmTypeLpddr3Capable(default 0, id 0xad96aa30) | pub get bool : pub set bool, // Rome
         MemDimmTypeDdr3Capable(default 0, id 0x789210c) | pub get bool : pub set bool, // Rome
         MemQuadRankCapable(default 0, id 0xe6dfd3dc) | pub get bool : pub set bool, // Rome
 
         // Unsorted Milan; defaults wrong!
 
+        /// Leaving this off is very bad (does not boot anymore).
         MemModeUnganged(default 0, id 0x3ce1180) | pub get bool : pub set bool,
+        /// This is optional
         GnbAdditionalFeatures(default 0, id 0xf4c7789) | pub get bool : pub set bool, // Milan
         GnbAdditionalFeatureDsm(default 0, id 0x31a6afad) | pub get bool : pub set bool, // Milan
         VgaProgram(default 0, id 0x6570Eace) | pub get bool : pub set bool, // Milan
