@@ -7462,6 +7462,21 @@ impl ToPrimitive for FchGppClkMap {
     }
 }
 
+make_bitfield_serde! {
+    #[bitfield(bits = 8)]
+    #[repr(u8)]
+    #[derive(Debug, Copy, Clone, PartialEq)]
+    pub struct MemPmuBistTestSelect {
+        pub algorithm_1: bool | pub get bool : pub set bool,
+        pub algorithm_2: bool | pub get bool : pub set bool,
+        pub algorithm_3: bool | pub get bool : pub set bool,
+        pub algorithm_4: bool | pub get bool : pub set bool,
+        pub algorithm_5: bool | pub get bool : pub set bool,
+        pub _reserved_0 || SerdeHex8 : B3,
+    }
+}
+impl_bitfield_primitive_conversion!(MemPmuBistTestSelect, 0b11111, u8);
+
 make_token_accessors! {
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     #[non_exhaustive]
@@ -7503,8 +7518,7 @@ make_token_accessors! {
         MemHealBistEnable(default 0, id 0xfba2_3a28) | pub get MemHealBistEnable : pub set MemHealBistEnable,
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemSelfHealBistEnable(default 0, id 0x2c23_924c) | pub get u8 : pub set u8, // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
-        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
-        MemPmuBistTestSelect(default 0, id 0x7034_fbfb) | pub get u8 : pub set u8, // TODO: Before using default, fix default.  It's possibly not correct.; note: range 1...7
+        MemPmuBistTestSelect(default 31, id 0x7034_fbfb) | pub get MemPmuBistTestSelect : pub set MemPmuBistTestSelect,
         MemHealTestSelect(default 0, id 0x5908_2cf2) | pub get MemHealTestSelect : pub set MemHealTestSelect,
         MemHealPprType(default 0, id 0x5418_1a61) | pub get MemHealPprType : pub set MemHealPprType,
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
