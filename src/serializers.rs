@@ -801,3 +801,8 @@ make_serde!(
     SerdeParameterAttributes,
     [time_point, token, size_minus_one, _reserved_0,]
 );
+make_serde!(
+    MemPmuBistTestSelect,
+    SerdeMemPmuBistTestSelect,
+    [algorithm_1, algorithm_2, algorithm_3, algorithm_4, algorithm_5, _reserved_0,]
+);
