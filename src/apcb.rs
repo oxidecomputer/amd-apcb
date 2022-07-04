@@ -95,7 +95,7 @@ impl<'a> TryFrom<SerdeApcb> for Apcb<'a> {
     type Error = Error;
     fn try_from(serde_apcb: SerdeApcb) -> Result<Self> {
         let buf =
-            Cow::from(vec![0xFFu8; serde_apcb.header.apcb_size.get() as usize]);
+            Cow::from(vec![0xFFu8; Self::MAX_SIZE]);
         let mut apcb = Apcb::create(buf, 42, &ApcbIoOptions::default())?;
         *apcb.header_mut()? = serde_apcb.header;
         // We reset apcb_size to header_size as this is naturally extended as we
