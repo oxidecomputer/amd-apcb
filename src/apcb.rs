@@ -98,16 +98,21 @@ impl<'a> TryFrom<SerdeApcb> for Apcb<'a> {
             Cow::from(vec![0xFFu8; Self::MAX_SIZE]);
         let mut apcb = Apcb::create(buf, 42, &ApcbIoOptions::default())?;
         *apcb.header_mut()? = serde_apcb.header;
-        // We reset apcb_size to header_size as this is naturally extended as we
-        // add groups and entries.
-        apcb.header_mut()?.apcb_size =
-            (serde_apcb.header.header_size.get() as u32).into();
         match serde_apcb.v3_header {
             Some(v3) => {
+                assert!(size_of::<V3_HEADER_EXT>() + size_of::<V2_HEADER>() == 128);
+                apcb.header_mut()?.header_size.set(128);
                 apcb.v3_header_ext_mut()?.map(|mut v| *v = v3);
             }
-            None => {}
+            None => {
+                apcb.header_mut()?.header_size.set(size_of::<V2_HEADER>().try_into().unwrap());
+            }
         }
+        // We reset apcb_size to header_size as this is naturally extended as we
+        // add groups and entries.
+        let mut header = apcb.header_mut()?;
+        let header_size = header.header_size.get();
+        header.apcb_size.set(header_size.into());
         // These groups already exist: We've just successfully parsed them,
         // there's no reason the groupid should be invalid.
         for g in serde_apcb.groups {
