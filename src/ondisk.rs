@@ -31,8 +31,6 @@ use byteorder::WriteBytesExt;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "serde-hex")]
 use serde_hex::{SerHex, StrictPfx};
-#[cfg(feature = "std")]
-use std::fmt;
 
 /// Work around Rust issue# 51443, in case it ever will be phased out.
 /// (zerocopy 0.5.0 has a as_bytes_mut with a Self-where--which is not supposed
@@ -215,7 +213,7 @@ macro_rules! make_serde_hex {
         )?
         #[cfg(feature = "std")]
         impl std::fmt::Display for $serde_ty {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 write!(f, $format_string, self.0)
             }
         }
