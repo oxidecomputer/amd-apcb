@@ -66,7 +66,7 @@ pub struct Apcb<'a> {
 pub struct SerdeApcb {
     pub version: String,
     pub header: V2_HEADER,
-    pub v3_header: Option<V3_HEADER_EXT>,
+    pub v3_header_ext: Option<V3_HEADER_EXT>,
     pub groups: Vec<SerdeGroupItem>,
     //#[cfg_attr(feature = "serde", serde(borrow))]
     pub entries: Vec<SerdeEntryItem>,
@@ -98,7 +98,7 @@ impl<'a> TryFrom<SerdeApcb> for Apcb<'a> {
             Cow::from(vec![0xFFu8; Self::MAX_SIZE]);
         let mut apcb = Apcb::create(buf, 42, &ApcbIoOptions::default())?;
         *apcb.header_mut()? = serde_apcb.header;
-        match serde_apcb.v3_header {
+        match serde_apcb.v3_header_ext {
             Some(v3) => {
                 assert!(size_of::<V3_HEADER_EXT>() + size_of::<V2_HEADER>() == 128);
                 apcb.header_mut()?.header_size.set(128);
@@ -175,12 +175,12 @@ impl<'a> Serialize for Apcb<'a> {
                 .header()
                 .map_err(|_| serde::ser::Error::custom("invalid V2_HEADER"))?,
         )?;
-        let v3_header: Option<V3_HEADER_EXT> = self
+        let v3_header_ext: Option<V3_HEADER_EXT> = self
             .v3_header_ext()
             .map_err(|e| serde::ser::Error::custom(format!("{:?}", e)))?
             .as_ref()
             .map(|h| **h);
-        state.serialize_field("v3_header_ext", &v3_header)?;
+        state.serialize_field("v3_header_ext", &v3_header_ext)?;
         state.serialize_field("groups", &groups)?;
         state.serialize_field("entries", &entries)?;
         state.end()
