@@ -5537,7 +5537,7 @@ Clone)]
                         impl Default for Terminator {
                             fn default() -> Self {
                                 Self {
-                                    type_: 0xfeef.into(),
+                                    type_: Self::TAG.into(),
                                 }
                             }
                         }
