@@ -6202,6 +6202,9 @@ pub enum BaudRate {
     _57600Baud = 7,
     #[cfg_attr(feature = "serde", serde(rename = "115200 Baud"))]
     _115200Baud = 8,
+    /// Note: This variant needs a custom AgesaBootloader.
+    #[cfg_attr(feature = "serde", serde(rename = "3000000 Baud"))]
+    _3000000Baud = 9,
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
