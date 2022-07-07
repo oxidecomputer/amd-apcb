@@ -68,6 +68,7 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
         #[cfg(feature = "serde")]
         #[non_exhaustive]
         #[derive(Serialize, Deserialize)]
+        #[serde(deny_unknown_fields)]
         #[repr(C)]
         pub enum Element {
              Unknown(Vec<u8>),

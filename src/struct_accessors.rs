@@ -62,6 +62,7 @@ impl<T: FromPrimitive> Getter<Result<T>> for u32 {
 #[derive(Default, Debug, PartialEq, FromBytes, AsBytes, Clone, Copy)]
 #[repr(C, packed)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 pub(crate) struct BU8(pub(crate) u8);
 impl Getter<Result<bool>> for BU8 {
     fn get1(self) -> Result<bool> {
@@ -303,6 +304,7 @@ macro_rules! make_accessors {(
         // Since the config format presumably needs to be
         // backward-compatible, that wouldn't be such a great idea.
         #[cfg_attr(feature = "serde", serde(rename = "" $StructName))]
+        #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
         pub(crate) struct [<Serde $StructName>] {
             $(
                 $(pub $field_name: $field_ty,)?

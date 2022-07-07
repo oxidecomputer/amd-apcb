@@ -62,6 +62,7 @@ pub struct Apcb<'a> {
 
 #[cfg(feature = "serde")]
 #[cfg_attr(feature = "serde", derive(Default, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SerdeApcb {
     pub version: String,
