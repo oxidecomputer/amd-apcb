@@ -31,6 +31,7 @@ pub struct GroupItem<'a> {
     feature = "serde",
     derive(Default, serde::Serialize, serde::Deserialize)
 )]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SerdeGroupItem {
     pub header: GROUP_HEADER,

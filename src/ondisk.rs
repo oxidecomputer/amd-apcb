@@ -538,6 +538,7 @@ impl FromPrimitive for CcxEntryId {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfEntryId {
     DefaultParameters, // Naples
@@ -987,6 +988,7 @@ impl FromPrimitive for RawEntryId {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum TokenEntryId {
     Bool,
@@ -1128,6 +1130,7 @@ make_accessors! {
 #[derive(FromPrimitive, ToPrimitive, Debug, PartialEq, Copy, Clone)]
 #[non_exhaustive]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum ContextFormat {
     Raw = 0,
@@ -1138,6 +1141,7 @@ pub enum ContextFormat {
 #[derive(FromPrimitive, ToPrimitive, Debug, PartialEq, Copy, Clone)]
 #[non_exhaustive]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum ContextType {
     Struct = 0,
@@ -1227,6 +1231,7 @@ macro_rules! make_bitfield_serde {(
     #[cfg(feature = "serde")]
     paste::paste! {
         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+        #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
         #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
         #[cfg_attr(feature = "serde", serde(rename = "" $StructName))]
         pub(crate) struct [<Serde $StructName>] {
@@ -1658,9 +1663,6 @@ impl EntryCompatible for Parameters {
 make_accessors! {
     /// This is actually just a helper struct and is not on disk (at least not exactly).
     /// It's needed because the value area is not adjacent to the attribute.
-    //#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-    //#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-    //#[cfg_attr(feature = "serde", serde(rename = "Parameter"))]
     #[derive(Debug, Copy, Clone)]
     pub struct Parameter {
         time_point: ParameterTimePoint | pub get ParameterTimePoint : pub set ParameterTimePoint,
@@ -1749,6 +1751,7 @@ pub mod df {
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     #[non_exhaustive]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum SlinkRegionInterleavingSize {
         #[cfg_attr(feature = "serde", serde(rename = "256 B"))]
@@ -1801,6 +1804,7 @@ pub mod df {
     #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
     #[repr(C, packed)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub struct SlinkConfig {
         pub regions: [SlinkRegion; 4],
@@ -2282,6 +2286,7 @@ pub mod memory {
 
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum PortType {
         PcieHt0 = 0,
@@ -2298,6 +2303,7 @@ pub mod memory {
 
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum PortSize {
         #[cfg_attr(feature = "serde", serde(rename = "8 Bit"))]
@@ -2459,6 +2465,7 @@ pub mod memory {
     #[derive(Clone, Copy, PartialEq, FromPrimitive, ToPrimitive)]
     #[non_exhaustive]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum CadBusClkDriveStrength {
         Auto = 0xFF,
@@ -2559,6 +2566,7 @@ pub mod memory {
 
     #[derive(Clone, Copy)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum DimmsPerChannel {
         NoSlot,   // 0xf0
@@ -2623,6 +2631,7 @@ pub mod memory {
         }
     }
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     #[cfg_attr(feature = "serde", serde(rename = "RdimmDdr4Voltages"))]
     pub struct CustomSerdeRdimmDdr4Voltages {
@@ -2787,6 +2796,7 @@ pub mod memory {
         }
     }
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     #[cfg_attr(feature = "serde", serde(rename = "UdimmDdr4Voltages"))]
     pub struct CustomSerdeUdimmDdr4Voltages {
@@ -2879,6 +2889,7 @@ pub mod memory {
         }
     }
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     #[cfg_attr(feature = "serde", serde(rename = "LrdimmDdr4Voltages"))]
     pub struct CustomSerdeLrdimmDdr4Voltages {
@@ -2993,6 +3004,7 @@ pub mod memory {
     // See <https://github.com/LongJohnCoder/ddr-doc/blob/gh-pages/jedec/JESD79-4.pdf> Table 3
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum RttNom {
         Off = 0,
@@ -3022,6 +3034,7 @@ pub mod memory {
     pub type RttPark = RttNom;
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum RttWr {
         Off = 0,
@@ -3039,6 +3052,7 @@ pub mod memory {
 
     #[derive(FromPrimitive, ToPrimitive, Clone, Copy)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum VrefDqRange1 {
         #[cfg_attr(feature = "serde", serde(rename = "60.00%"))]
@@ -3147,6 +3161,7 @@ pub mod memory {
 
     #[derive(FromPrimitive, ToPrimitive, Clone, Copy)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum VrefDqRange2 {
         #[cfg_attr(feature = "serde", serde(rename = "45.00%"))]
@@ -3258,6 +3273,7 @@ pub mod memory {
     /// module-based systems, while Range2 is intended for point-to-point-based
     /// systems. In each range, Vref can be adjusted in steps of 0.65% VDDQ.
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum VrefDq {
         Range1(VrefDqRange1),
@@ -3781,6 +3797,7 @@ pub mod memory {
 
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     #[non_exhaustive]
     pub enum ErrorOutControlBeepCodeErrorType {
@@ -3804,6 +3821,7 @@ pub mod memory {
     }
     #[cfg(feature = "serde")]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     #[cfg_attr(feature = "serde", serde(rename = "ErrorOutControlBeepCode"))]
     pub(crate) struct CustomSerdeErrorOutControlBeepCode {
@@ -4290,6 +4308,7 @@ Clone)]
 
     #[cfg(feature = "serde")]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     #[cfg_attr(
         feature = "serde",
@@ -4387,6 +4406,7 @@ Clone)]
 
                         #[derive(PartialEq)]
                         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+                        #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
                         #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
                         pub enum ChannelIds {
                             Any, // 0xff
@@ -4472,6 +4492,7 @@ Clone)]
                         impl_bitfield_primitive_conversion!(DimmSlotsSelection, 0b1111, u8);
                         #[derive(Clone, Copy)]
                         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+                        #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
                         #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
                         pub enum DimmSlots {
                             Any, // 0xff
@@ -4809,6 +4830,7 @@ Clone)]
 
                         #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
                         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+                        #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
                         #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
                         pub enum TimingMode {
                             Auto = 0,
@@ -4818,6 +4840,7 @@ Clone)]
 
                         #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
                         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+                        #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
                         #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
                         pub enum MemBusSpeedType { // in MHz
                             Ddr400 = 200,
@@ -4931,6 +4954,7 @@ Clone)]
                         #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy,
                 Clone)]
                         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+                        #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
                         #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
                         pub enum MemTechnologyType {
                             Ddr2 = 0,
@@ -5277,6 +5301,7 @@ Clone)]
 
                         #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
                         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+                        #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
                         #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
                         pub enum MemPowerPolicyType {
                             Performance = 0,
@@ -5324,6 +5349,7 @@ Clone)]
 
                         #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
                         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+                        #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
                         #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
                         pub enum MotherboardLayerCount {
                             #[cfg_attr(feature = "serde", serde(rename="4"))]
@@ -5834,6 +5860,7 @@ pub mod psp {
 
     #[derive(Debug, PartialEq, Copy, Clone)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum RevAndFeatureValue {
         Value(u8),
@@ -6154,6 +6181,7 @@ pub mod psp {
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum BaudRate {
     #[cfg_attr(feature = "serde", serde(rename = "2400 Baud"))]
@@ -6178,6 +6206,7 @@ pub enum BaudRate {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemActionOnBistFailure {
     DoNothing = 0,
@@ -6186,6 +6215,7 @@ pub enum MemActionOnBistFailure {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemDataPoison {
     Disabled = 0,
@@ -6195,6 +6225,7 @@ pub enum MemDataPoison {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemMaxActivityCount {
     Untested = 0,
@@ -6237,6 +6268,7 @@ impl MemMaxActivityCount {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemRcwWeakDriveDisable {
     Disabled = 0,
@@ -6245,6 +6277,7 @@ pub enum MemRcwWeakDriveDisable {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemSelfRefreshExitStaggering {
     Disabled = 0,
@@ -6254,6 +6287,7 @@ pub enum MemSelfRefreshExitStaggering {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum CbsMemAddrCmdParityRetryDdr4 {
     Disabled = 0,
@@ -6263,6 +6297,7 @@ pub enum CbsMemAddrCmdParityRetryDdr4 {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum CcxSevAsidCount {
     #[cfg_attr(feature = "serde", serde(rename = "253"))]
@@ -6274,6 +6309,7 @@ pub enum CcxSevAsidCount {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum FchConsoleOutSuperIoType {
     Auto = 0,
@@ -6283,6 +6319,7 @@ pub enum FchConsoleOutSuperIoType {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum FchConsoleSerialPort {
     SuperIo = 0,
@@ -6292,6 +6329,7 @@ pub enum FchConsoleSerialPort {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfToggle {
     Disabled = 0,
@@ -6301,6 +6339,7 @@ pub enum DfToggle {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemTsmeMode {
     Disabled = 0,
@@ -6310,6 +6349,7 @@ pub enum MemTsmeMode {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemNvdimmPowerSource {
     DeviceManaged = 1,
@@ -6320,6 +6360,7 @@ pub enum MemNvdimmPowerSource {
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemRdimmTimingCmdParLatency {
     #[cfg_attr(feature = "serde", serde(rename = "1 nCK"))]
@@ -6355,6 +6396,7 @@ impl MemRdimmTimingCmdParLatency {
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemThrottleCtrlRollWindowDepth {
     Memclks(NonZeroU8),
@@ -6364,6 +6406,7 @@ pub enum MemThrottleCtrlRollWindowDepth {
 /// See UMC::SpazCtrl: AutoRefFineGranMode.
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemAutoRefreshFineGranMode {
     Fixed1Times = 0,
@@ -6376,6 +6419,7 @@ pub enum MemAutoRefreshFineGranMode {
 /// See UMC::CH::ThrottleCtrl: DisRefCmdThrotCnt.
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemAutoRefreshsCountForThrottling {
     Enabled = 0,
@@ -6413,6 +6457,7 @@ impl ToPrimitive for MemThrottleCtrlRollWindowDepth {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemControllerWritingCrcMode {
     Disabled = 0,
@@ -6421,6 +6466,7 @@ pub enum MemControllerWritingCrcMode {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemHealPprType {
     SoftRepair = 0,
@@ -6430,6 +6476,7 @@ pub enum MemHealPprType {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemHealTestSelect {
     Normal = 0,
@@ -6439,6 +6486,7 @@ pub enum MemHealTestSelect {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfExtIpSyncFloodPropagation {
     Allow = 0,
@@ -6448,6 +6496,7 @@ pub enum DfExtIpSyncFloodPropagation {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfSyncFloodPropagation {
     Allow = 0,
@@ -6457,6 +6506,7 @@ pub enum DfSyncFloodPropagation {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfMemInterleaving {
     None = 0,
@@ -6469,6 +6519,7 @@ pub enum DfMemInterleaving {
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfMemInterleavingSize {
     #[cfg_attr(feature = "serde", serde(rename = "256 B"))]
@@ -6486,6 +6537,7 @@ pub enum DfMemInterleavingSize {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfDramNumaPerSocket {
     None = 0,
@@ -6497,6 +6549,7 @@ pub enum DfDramNumaPerSocket {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfRemapAt1TiB {
     Disabled = 0,
@@ -6507,6 +6560,7 @@ pub enum DfRemapAt1TiB {
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfXgmiLinkConfig {
     #[cfg_attr(feature = "serde", serde(rename = "2 links connected"))]
@@ -6532,6 +6586,7 @@ impl DfXgmiLinkConfig {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfPstateModeSelect {
     Normal = 0,
@@ -6543,6 +6598,7 @@ pub enum DfPstateModeSelect {
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum GnbSmuDfPstateFclkLimit {
     #[cfg_attr(feature = "serde", serde(rename = "1600 MHz"))]
@@ -6588,6 +6644,7 @@ impl GnbSmuDfPstateFclkLimit {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum SecondPcieLinkSpeed {
     Keep = 0,
@@ -6597,6 +6654,7 @@ pub enum SecondPcieLinkSpeed {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum BmcLinkSpeed {
     PcieGen1 = 1,
@@ -6606,6 +6664,7 @@ pub enum BmcLinkSpeed {
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum SecondPcieLinkMaxPayload {
     #[cfg_attr(feature = "serde", serde(rename = "128 B"))]
@@ -6625,6 +6684,7 @@ pub enum SecondPcieLinkMaxPayload {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum WorkloadProfile {
     Disabled = 0,
@@ -6650,6 +6710,7 @@ pub enum WorkloadProfile {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemControllerPmuTrainFfeDdr4 {
     Disabled = 0,
@@ -6659,6 +6720,7 @@ pub enum MemControllerPmuTrainFfeDdr4 {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemControllerPmuTrainDfeDdr4 {
     Disabled = 0,
@@ -6669,6 +6731,7 @@ pub enum MemControllerPmuTrainDfeDdr4 {
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemControllerPmuTrainingMode {
     #[cfg_attr(feature = "serde", serde(rename = "1D"))]
@@ -6684,6 +6747,7 @@ pub enum MemControllerPmuTrainingMode {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum UmaMode {
     None = 0,
@@ -6693,6 +6757,7 @@ pub enum UmaMode {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemMbistTest {
     Disabled = 0,
@@ -6701,6 +6766,7 @@ pub enum MemMbistTest {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemMbistPatternSelect {
     Prbs = 0,
@@ -6711,6 +6777,7 @@ pub enum MemMbistPatternSelect {
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemMbistAggressorsChannels {
     Disabled = 0,
@@ -6736,6 +6803,7 @@ impl MemMbistAggressorsChannels {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemMbistTestMode {
     PhysicalInterface = 0,
@@ -6746,6 +6814,7 @@ pub enum MemMbistTestMode {
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemMbistDataEyeType {
     #[cfg_attr(feature = "serde", serde(rename = "1D Voltage"))]
@@ -6773,6 +6842,7 @@ fn test_volate() {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfXgmiTxEqMode {
     Disabled = 0,
@@ -6785,6 +6855,7 @@ pub enum DfXgmiTxEqMode {
 #[allow(non_camel_case_types)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfXgmiLinkMaxSpeed {
     #[cfg_attr(feature = "serde", serde(rename = "6.4 Gbit/s"))]
@@ -6851,6 +6922,7 @@ pub type DfXgmi4LinkMaxSpeed = DfXgmiLinkMaxSpeed;
 /// Placement of private memory regions (PSP, SMU, CC6)
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfSysStorageAtTopOfMem {
     /// CCD0 and CCD1 at the top of specific memory region (default)
@@ -6866,6 +6938,7 @@ pub enum DfSysStorageAtTopOfMem {
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum BmcGen2TxDeemphasis {
     Csr = 0,
@@ -6877,6 +6950,7 @@ pub enum BmcGen2TxDeemphasis {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum BmcRcbCheckingMode {
     EnableRcbChecking = 0,
@@ -6887,6 +6961,7 @@ pub enum BmcRcbCheckingMode {
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum EccSymbolSize {
     x4 = 0,
@@ -6926,6 +7001,7 @@ impl FromPrimitive1 for bool {
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DxioPhyParamVga {
     Value(u32), // not 0xffff_ffff
@@ -6971,6 +7047,7 @@ impl ToPrimitive for DxioPhyParamVga {
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DxioPhyParamPole {
     Value(u32), // not 0xffff_ffff
@@ -7016,6 +7093,7 @@ impl ToPrimitive for DxioPhyParamPole {
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DxioPhyParamDc {
     Value(u32), // not 0xffff_ffff
@@ -7061,6 +7139,7 @@ impl ToPrimitive for DxioPhyParamDc {
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DxioPhyParamIqofc {
     Value(i32),
@@ -7091,6 +7170,7 @@ impl ToPrimitive for DxioPhyParamIqofc {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemClockValue {
     // in MHz
@@ -7127,6 +7207,7 @@ type MemBusFrequencyLimit = MemClockValue;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum CbsMemPowerDownDelay {
     Value(u16), // not 0, not 0xffff
@@ -7175,6 +7256,7 @@ pub type MemUserTimingMode = memory::platform_specific_override::TimingMode;
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemHealBistEnable {
     Disabled = 0,
@@ -7185,6 +7267,7 @@ pub enum MemHealBistEnable {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum CbsMemSpeedDdr4 {
     Ddr333 = 4,
@@ -7214,6 +7297,7 @@ pub enum CbsMemSpeedDdr4 {
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum FchSmbusSpeed {
     Value(u8), /* x in 66 MHz / (4 x) */
@@ -7249,6 +7333,7 @@ impl ToPrimitive for FchSmbusSpeed {
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfCakeCrcThresholdBounds {
     Value(u32), // x: 0...1_000_000d; Percentage is 0.00001% * x
@@ -7283,6 +7368,7 @@ impl ToPrimitive for DfCakeCrcThresholdBounds {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemTrainingHdtControl {
     DetailedDebugMessages = 5,
@@ -7295,6 +7381,7 @@ pub enum MemTrainingHdtControl {
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum PspEnableDebugMode {
     Disabled = 0,
@@ -7324,6 +7411,7 @@ make_bitfield_serde! {
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum FchGppClkMap {
     On,

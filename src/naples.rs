@@ -8,6 +8,7 @@ use modular_bitfield::prelude::*;
     Debug, PartialEq, num_derive::FromPrimitive, Clone, Copy, BitfieldSpecifier,
 )]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[non_exhaustive]
 #[bits = 8]
@@ -38,6 +39,7 @@ impl Default for ParameterTimePoint {
     Debug, PartialEq, num_derive::FromPrimitive, Clone, Copy, BitfieldSpecifier,
 )]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[non_exhaustive]
 #[bits = 13]

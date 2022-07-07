@@ -277,6 +277,7 @@ use serde_hex::{SerHex, StrictPfx};
 
 #[cfg(feature = "serde")]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub(crate) enum SerdeTokensEntryItem {
     Bool(BoolToken),
