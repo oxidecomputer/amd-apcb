@@ -18,6 +18,7 @@ pub enum Error {
     EntryUniqueKeyViolation,
     EntryTypeMismatch,
     TokenNotFound,
+    TokenOrderingViolation,
     TokenUniqueKeyViolation,
     TokenRange,
     ParameterNotFound,

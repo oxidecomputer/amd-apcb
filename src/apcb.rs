@@ -144,6 +144,11 @@ impl<'a> TryFrom<SerdeApcb> for Apcb<'a> {
             };
         }
         apcb.update_checksum()?;
+        // That may seem overly paranoid--but the serde deserializers
+        // usually don't have a whole-world view (they only see their
+        // input subtree) and thus they sometimes can't validate
+        // everything on-the-fly.
+        apcb.validate()?;
         Ok(apcb)
     }
 }

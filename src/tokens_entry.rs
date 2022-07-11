@@ -1,6 +1,7 @@
 use crate::ondisk::{
     take_header_from_collection, take_header_from_collection_mut, BoolToken,
-    ByteToken, DwordToken, TokenEntryId, WordToken, TOKEN_ENTRY,
+    ByteToken, DwordToken, TokenEntryId, WordToken, TOKEN_ENTRY, ENTRY_HEADER,
+    ContextFormat,
 };
 use crate::types::{Error, FileSystemError, Result};
 use core::convert::TryFrom;
@@ -15,17 +16,23 @@ use serde::ser::{Serialize, Serializer};
 #[allow(dead_code)] // unit_size is not read when building without serde
 pub struct TokensEntryBodyItem<BufferType> {
     unit_size: u8,
-    entry_id: TokenEntryId,
+    key_pos: u8,
+    key_size: u8,
+    context_format: u8,
+    entry_id: u16,
     buf: BufferType,
     used_size: usize,
 }
 
+// Note: Only construct those if unit_size, key_pos and key_size are correct!
 pub struct TokensEntryIter<'a> {
+    context_format: u8,
     entry_id: TokenEntryId,
     buf: &'a [u8],
     remaining_used_size: usize,
 }
 
+// Note: Only construct those if unit_size, key_pos and key_size are correct!
 pub struct TokensEntryIterMut<'a> {
     entry_id: TokenEntryId,
     buf: &'a mut [u8],
@@ -34,29 +41,48 @@ pub struct TokensEntryIterMut<'a> {
 
 impl<BufferType> TokensEntryBodyItem<BufferType> {
     pub(crate) fn new(
-        unit_size: u8,
-        entry_id: u16,
+        header: &ENTRY_HEADER,
         buf: BufferType,
         used_size: usize,
     ) -> Result<Self> {
-        if unit_size != 8 {
+        Ok(Self {
+            unit_size: header.unit_size,
+            key_pos: header.key_pos,
+            key_size: header.key_size,
+            context_format: header.context_format,
+            entry_id: header.entry_id.get(),
+            buf,
+            used_size,
+        })
+    }
+    pub(crate) fn prepare_iter(&self) -> Result<TokenEntryId> {
+        if self.unit_size != 8 {
             return Err(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
                 "ENTRY_HEADER::unit_size",
             ));
         }
-        Ok(Self {
-            unit_size,
-            entry_id: TokenEntryId::from_u16(entry_id).ok_or(
-                Error::FileSystem(
-                    FileSystemError::InconsistentHeader,
-                    "ENTRY_HEADER::entry_id",
-                ),
-            )?,
-            buf,
-            used_size,
-        })
+        if self.key_pos != 0 {
+            return Err(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "ENTRY_HEADER::key_pos",
+            ));
+        }
+        if self.key_size != 4 {
+            return Err(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "ENTRY_HEADER::key_size",
+            ));
+        }
+        let entry_id = TokenEntryId::from_u16(self.entry_id).ok_or(
+            Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "ENTRY_HEADER::entry_id",
+            ),
+        )?;
+        Ok(entry_id)
     }
+
 }
 
 #[derive(Debug)]
@@ -524,9 +550,28 @@ impl<'a> TokensEntryIter<'a> {
     }
     /// Validates the entries (recursively).  Also consumes iterator.
     pub(crate) fn validate(mut self) -> Result<()> {
+        let context_format = ContextFormat::from_u8(self.context_format).ok_or(
+            Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "ENTRY_HEADER::context_format",
+            ),
+        )?;
+        if context_format != ContextFormat::SortAscending {
+            return Err(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "ENTRY_HEADER::context_format",
+            ));
+        }
+        let mut previous_id = 0_u32;
         while self.remaining_used_size > 0 {
             match self.next1() {
-                Ok(_) => {}
+                Ok(item) => {
+                    let id = item.id();
+                    if id < previous_id {
+                        return Err(Error::TokenOrderingViolation)
+                    }
+                    previous_id = id
+                }
                 Err(e) => {
                     return Err(e);
                 }
@@ -551,23 +596,26 @@ impl<'a> Iterator for TokensEntryIter<'a> {
 }
 
 impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
-    pub fn iter(&self) -> TokensEntryIter<'_> {
-        TokensEntryIter {
-            entry_id: self.entry_id,
+    pub fn iter(&self) -> Result<TokensEntryIter<'_>> {
+        let entry_id = self.prepare_iter()?;
+        Ok(TokensEntryIter {
+            context_format: self.context_format,
+            entry_id,
             buf: self.buf,
             remaining_used_size: self.used_size,
-        }
+        })
     }
 
-    pub fn iter_mut(&mut self) -> TokensEntryIterMut<'_> {
-        TokensEntryIterMut {
-            entry_id: self.entry_id,
+    pub fn iter_mut(&mut self) -> Result<TokensEntryIterMut<'_>> {
+        let entry_id = self.prepare_iter()?;
+        Ok(TokensEntryIterMut {
+            entry_id,
             buf: self.buf,
             remaining_used_size: self.used_size,
-        }
+        })
     }
     pub fn token(&self, token_id: u32) -> Option<TokensEntryItem<'_>> {
-        for entry in self.iter() {
+        for entry in self.iter().ok()? {
             if entry.id() == token_id {
                 return Some(entry);
             }
@@ -578,7 +626,7 @@ impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
         &mut self,
         token_id: u32,
     ) -> Option<TokensEntryItemMut<'_>> {
-        for entry in self.iter_mut() {
+        for entry in self.iter_mut().ok()? {
             if entry.id() == token_id {
                 return Some(entry);
             }
@@ -597,7 +645,7 @@ impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
         token_id: u32,
         token_value: u32,
     ) -> Result<()> {
-        let mut iter = self.iter_mut();
+        let mut iter = self.iter_mut()?;
         match #[assure(
             "Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`",
             reason = "See our own precondition"
@@ -614,20 +662,22 @@ impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
     }
 
     pub(crate) fn delete_token(&mut self, token_id: u32) -> Result<()> {
-        self.iter_mut().delete_token(token_id)
+        self.iter_mut()?.delete_token(token_id)
     }
 }
 
 impl<'a> TokensEntryBodyItem<&'a [u8]> {
-    pub fn iter(&self) -> TokensEntryIter<'_> {
-        TokensEntryIter {
-            entry_id: self.entry_id,
+    pub fn iter(&self) -> Result<TokensEntryIter<'_>> {
+        let entry_id = self.prepare_iter()?;
+        Ok(TokensEntryIter {
+            context_format: self.context_format,
+            entry_id,
             buf: &self.buf,
             remaining_used_size: self.used_size,
-        }
+        })
     }
     pub fn token(&self, token_id: u32) -> Option<TokensEntryItem<'_>> {
-        for entry in self.iter() {
+        for entry in self.iter().ok()? {
             if entry.id() == token_id {
                 return Some(entry);
             }

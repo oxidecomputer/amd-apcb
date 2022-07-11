@@ -97,18 +97,6 @@ impl<'a> GroupIter<'a> {
             FileSystemError::InconsistentHeader,
             "ENTRY_HEADER::group_id",
         ))?;
-        ContextFormat::from_u8(header.context_format).ok_or(
-            Error::FileSystem(
-                FileSystemError::InconsistentHeader,
-                "ENTRY_HEADER::context_format",
-            ),
-        )?;
-        let context_type = ContextType::from_u8(header.context_type).ok_or(
-            Error::FileSystem(
-                FileSystemError::InconsistentHeader,
-                "ENTRY_HEADER::context_type",
-            ),
-        )?;
         let entry_size = header.entry_size.get() as usize;
 
         let payload_size = entry_size
@@ -131,17 +119,11 @@ impl<'a> GroupIter<'a> {
             }
         };
 
-        let unit_size = header.unit_size;
-        let entry_id = header.entry_id.get();
+        let body = EntryItemBody::<&[u8]>::from_slice(header, body)?;
 
         Ok(EntryItem {
             header,
-            body: EntryItemBody::<&'_ [u8]>::from_slice(
-                unit_size,
-                entry_id,
-                context_type,
-                body,
-            )?,
+            body,
         })
     }
 
@@ -290,12 +272,6 @@ impl<'a> GroupMutIter<'a> {
                     ));
                 }
             };
-        let context_type = ContextType::from_u8(header.context_type).ok_or(
-            Error::FileSystem(
-                FileSystemError::InconsistentHeader,
-                "ENTRY_HEADER::context_type",
-            ),
-        )?;
         let entry_size = header.entry_size.get() as usize;
 
         let payload_size = entry_size
@@ -318,16 +294,10 @@ impl<'a> GroupMutIter<'a> {
             }
         };
 
-        let unit_size = header.unit_size;
-        let entry_id = header.entry_id.get();
+        let body = EntryItemBody::<&mut [u8]>::from_slice(header, body)?;
         Ok(EntryMutItem {
             header,
-            body: EntryItemBody::<&'_ mut [u8]>::from_slice(
-                unit_size,
-                entry_id,
-                context_type,
-                body,
-            )?,
+            body,
         })
     }
 
