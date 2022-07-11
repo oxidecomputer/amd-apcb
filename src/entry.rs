@@ -39,15 +39,17 @@ pub enum EntryItemBody<BufferType> {
 }
 
 impl<'a> EntryItemBody<&'a mut [u8]> {
-    pub(crate) fn from_slice(
-        unit_size: u8,
-        entry_id: u16,
-        context_type: ContextType,
-        b: &'a mut [u8],
+    pub(crate) fn from_slice(header: &ENTRY_HEADER, b: &'a mut [u8],
     ) -> Result<EntryItemBody<&'a mut [u8]>> {
+        let context_type = ContextType::from_u8(header.context_type).ok_or(
+            Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "ENTRY_HEADER::context_type",
+            ),
+        )?;
         match context_type {
             ContextType::Struct => {
-                if unit_size != 0 {
+                if header.unit_size != 0 {
                     return Err(Error::FileSystem(
                         FileSystemError::InconsistentHeader,
                         "ENTRY_HEADER::unit_size",
@@ -57,8 +59,8 @@ impl<'a> EntryItemBody<&'a mut [u8]> {
             }
             ContextType::Tokens => {
                 let used_size = b.len();
-                Ok(Self::Tokens(TokensEntryBodyItem::<&'_ mut [u8]>::new(
-                    unit_size, entry_id, b, used_size,
+                Ok(Self::Tokens(TokensEntryBodyItem::<&mut [u8]>::new(
+                    header, b, used_size,
                 )?))
             }
             ContextType::Parameters => Err(Error::EntryTypeMismatch),
@@ -68,14 +70,18 @@ impl<'a> EntryItemBody<&'a mut [u8]> {
 
 impl<'a> EntryItemBody<&'a [u8]> {
     pub(crate) fn from_slice(
-        unit_size: u8,
-        entry_id: u16,
-        context_type: ContextType,
+        header: &ENTRY_HEADER,
         b: &'a [u8],
     ) -> Result<EntryItemBody<&'a [u8]>> {
+        let context_type = ContextType::from_u8(header.context_type).ok_or(
+            Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "ENTRY_HEADER::context_type",
+            ),
+        )?;
         match context_type {
             ContextType::Struct => {
-                if unit_size != 0 {
+                if header.unit_size != 0 {
                     return Err(Error::FileSystem(
                         FileSystemError::InconsistentHeader,
                         "ENTRY_HEADER::unit_size",
@@ -85,8 +91,8 @@ impl<'a> EntryItemBody<&'a [u8]> {
             }
             ContextType::Tokens => {
                 let used_size = b.len();
-                Ok(Self::Tokens(TokensEntryBodyItem::<&'_ [u8]>::new(
-                    unit_size, entry_id, b, used_size,
+                Ok(Self::Tokens(TokensEntryBodyItem::<&[u8]>::new(
+                    header, b, used_size,
                 )?))
             }
             ContextType::Parameters => Err(Error::EntryTypeMismatch),
@@ -95,7 +101,7 @@ impl<'a> EntryItemBody<&'a [u8]> {
     pub(crate) fn validate(&self) -> Result<()> {
         match self {
             EntryItemBody::Tokens(tokens) => {
-                tokens.iter().validate()?;
+                tokens.iter()?.validate()?;
             }
             EntryItemBody::Struct(_) => {}
         }
@@ -587,7 +593,9 @@ impl<'a> Serialize for EntryItem<'a> {
         // manually.
         match &self.body {
             EntryItemBody::<_>::Tokens(tokens) => {
-                let v = tokens.iter().collect::<Vec<_>>();
+                let v = tokens.iter()
+                    .map_err(|e| serde::ser::Error::custom(format!("{:?}", e)))?
+                    .collect::<Vec<_>>();
                 state.serialize_field("tokens", &v)?;
             }
             EntryItemBody::<_>::Struct(buf) => {
@@ -714,7 +722,7 @@ where
                 ));
             }
             if let Ok(te) = TOKEN_ENTRY::try_from(v) {
-                buf.extend_from_slice(te.as_bytes());
+                buf.extend_from_slice(te.as_bytes())
             } else {
                 return Err(de::Error::invalid_value(
                     de::Unexpected::Enum,
@@ -1159,11 +1167,20 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
                 })
             }
         }
-        deserializer.deserialize_struct(
+        let mut result = deserializer.deserialize_struct(
             "EntryItem",
             FIELDS,
             SerdeEntryItemVisitor,
-        )
+        )?;
+        let header = &result.header;
+        if header.context_format == ContextFormat::SortAscending as u8
+        && header.context_type == (ContextType::Tokens as u8) {
+            let body = result.body.as_mut_slice();
+            let mut tokens = zerocopy::LayoutVerified::<_, [crate::ondisk::TOKEN_ENTRY]>::new_slice_unaligned(body)
+                .ok_or(de::Error::custom("tokens could not be sorted"))?;
+            tokens.sort_by(|a, b| a.key.get().cmp(&b.key.get()));
+        }
+        Ok(result)
     }
 }
 

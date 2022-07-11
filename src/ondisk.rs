@@ -1134,8 +1134,7 @@ make_accessors! {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum ContextFormat {
     Raw = 0,
-    SortAscending = 1,  // (sort by unit size)
-    SortDescending = 2, // don't use
+    SortAscending = 1,  // (sort by key)
 }
 
 #[derive(FromPrimitive, ToPrimitive, Debug, PartialEq, Copy, Clone)]
@@ -1447,7 +1446,7 @@ impl Default for ENTRY_HEADER {
 
 pub const ENTRY_ALIGNMENT: usize = 4;
 
-#[derive(FromBytes, AsBytes, Clone)]
+#[derive(FromBytes, AsBytes, Clone, Unaligned)]
 #[repr(C, packed)]
 pub struct TOKEN_ENTRY {
     pub key: LU32,
