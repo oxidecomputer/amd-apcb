@@ -5,6 +5,7 @@ use crate::ondisk::{
     BoardInstances, ContextFormat, ContextType, EntryCompatible, EntryId,
     HeaderWithTail, MutSequenceElementFromBytes, PriorityLevels,
     SequenceElementFromBytes,
+    TOKEN_ENTRY,
 };
 use crate::ondisk::{Parameters, ParametersIter};
 use crate::tokens_entry::TokensEntryBodyItem;
@@ -101,7 +102,7 @@ impl<'a> EntryItemBody<&'a [u8]> {
     pub(crate) fn validate(&self) -> Result<()> {
         match self {
             EntryItemBody::Tokens(tokens) => {
-                tokens.iter()?.validate()?;
+                tokens.validate()?;
             }
             EntryItemBody::Struct(_) => {}
         }
@@ -451,7 +452,7 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
             .insert("header".to_owned(), <ENTRY_HEADER>::json_schema(gen));
         obj.properties.insert(
             "tokens".to_owned(),
-            <Vec<TokensEntryItem<'_>>>::json_schema(gen),
+            <Vec<TokensEntryItem<&'_ TOKEN_ENTRY>>>::json_schema(gen),
         );
         obj.properties.insert(
             "LrdimmDdr4OdtPatElement".to_owned(),
@@ -695,7 +696,7 @@ fn token_vec_to_body<'a, M>(
 where
     M: MapAccess<'a>,
 {
-    use crate::ondisk::{TokenEntryId, TOKEN_ENTRY};
+    use crate::ondisk::TokenEntryId;
     use crate::tokens_entry::SerdeTokensEntryItem;
     use core::convert::TryFrom;
     if body.is_some() {
