@@ -192,7 +192,19 @@ impl DummyErrorChecks for bool {}
 /// (where it calls "new()") (on purpose).
 ///
 /// Field syntax:
-/// NAME [|| SERDE_TYPE : TYPE] [: TYPE] [| pub get TYPE [: pub set TYPE]]
+/// NAME [|| SERDE_TYPE] : TYPE
+///      [| pub get GETTER_RETURN_TYPE [: pub set SETTER_PARAMETER_TYPE]]
+///
+/// The brackets denote optional parts.
+/// Defines field NAME as TYPE. TYPE usually has to be the lowest-level
+/// machine type (so it's "Little-endian u32", or "3 bits", or similar).
+/// SERDE_TYPE, if given, will be the type used for the serde field.
+/// If SERDE_TYPE is not given, TYPE will be used instead.
+/// The "pub get" will use the given GETTER_RETURN_TYPE as the resulting type
+/// of the generated getter, using Getter converters to get there as needed.
+/// The "pub set" will use the given SETTER_PARAMETER_TYPE as the
+/// parameter type of the generated setter, using Setter converters to get
+/// there as needed.
 macro_rules! make_accessors {(
     $(#[$struct_meta:meta])*
     $struct_vis:vis
