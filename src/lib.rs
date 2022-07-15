@@ -235,13 +235,14 @@ is NO automatic connection between Foo and SerdeFoo. Instead, the user is
 supposed to do the connection (and conversion), possibly to ANOTHER custom
 serde struct the user wrote manually.
 
-If the conversion is 1:1 after all, there's a macro make_serde for
-simplifying that in serializers.rs. You give it the two (existing!) struct
+If the conversion is 1:1 after all, there's a macro
+`impl_struct_serde_conversion` for simplifying that, in `serializers.rs`.
+You give it the two (existing!) struct
 names and a list of fields and it will generate converters to and fro
 (using the fns serde_... that were generated earlier).
 Long term (with changing requirements), those conversions will become less
-and less straightforward and more manual and so usage of make_serde will
-decrease.
+and less straightforward and more manual and so usage of
+`impl_struct_serde_conversion` will decrease.
 
 For tokens, there's a macro make_token_accessors in src/token_accessors.rs.
 
