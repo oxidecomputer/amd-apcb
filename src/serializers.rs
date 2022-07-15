@@ -14,7 +14,7 @@ use crate::psp::*;
 
 // Note: This is written such that it will fail if the underlying struct has
 // fields added/removed/renamed--if those have a public setter.
-macro_rules! make_serde{($StructName:ident, $SerdeStructName:ident, [$($field_name:ident),* $(,)?]
+macro_rules! impl_struct_serde_conversion{($StructName:ident, $SerdeStructName:ident, [$($field_name:ident),* $(,)?]
 ) => (
     paste::paste!{
         #[cfg(feature = "serde")]
@@ -54,7 +54,7 @@ macro_rules! make_serde{($StructName:ident, $SerdeStructName:ident, [$($field_na
     }
 )}
 
-make_serde!(
+impl_struct_serde_conversion!(
     ENTRY_HEADER,
     SerdeENTRY_HEADER,
     [
@@ -72,7 +72,7 @@ make_serde!(
     ]
 );
 
-make_serde!(
+impl_struct_serde_conversion!(
     PriorityLevels,
     SerdePriorityLevels,
     [
@@ -86,7 +86,7 @@ make_serde!(
     ]
 );
 
-make_serde!(
+impl_struct_serde_conversion!(
     Ddr4DataBusElement,
     SerdeDdr4DataBusElement,
     [
@@ -105,17 +105,17 @@ make_serde!(
         vref_dq,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     Ddr4DimmRanks,
     SerdeDdr4DimmRanks,
     [unpopulated, single_rank, dual_rank, quad_rank,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     LrdimmDdr4DimmRanks,
     SerdeLrdimmDdr4DimmRanks,
     [unpopulated, lr, _reserved_1,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     DdrRates,
     SerdeDdrRates,
     [
@@ -153,12 +153,12 @@ make_serde!(
         _reserved_19,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     RdimmDdr4Voltages,
     CustomSerdeRdimmDdr4Voltages,
     [_1_2V, _reserved_1,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     RdimmDdr4CadBusElement,
     SerdeRdimmDdr4CadBusElement,
     [
@@ -178,12 +178,12 @@ make_serde!(
         clk_drive_strength,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     UdimmDdr4Voltages,
     CustomSerdeUdimmDdr4Voltages,
     [_1_5V, _1_35V, _1_25V, _reserved_1,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     UdimmDdr4CadBusElement,
     SerdeUdimmDdr4CadBusElement,
     [
@@ -203,12 +203,12 @@ make_serde!(
         clk_drive_strength,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     LrdimmDdr4Voltages,
     CustomSerdeLrdimmDdr4Voltages,
     [_1_2V, _reserved_1,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     LrdimmDdr4CadBusElement,
     SerdeLrdimmDdr4CadBusElement,
     [
@@ -229,7 +229,7 @@ make_serde!(
     ]
 );
 
-make_serde!(
+impl_struct_serde_conversion!(
     V2_HEADER,
     SerdeV2_HEADER,
     [
@@ -243,7 +243,7 @@ make_serde!(
         _reserved_2,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     V3_HEADER_EXT,
     SerdeV3_HEADER_EXT,
     [
@@ -267,7 +267,7 @@ make_serde!(
         signature_ending,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     GROUP_HEADER,
     SerdeGROUP_HEADER,
     [
@@ -279,7 +279,7 @@ make_serde!(
         group_size,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     BoardIdGettingMethodEeprom,
     SerdeBoardIdGettingMethodEeprom,
     [
@@ -290,7 +290,7 @@ make_serde!(
         board_rev_offset,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     IdRevApcbMapping,
     SerdeIdRevApcbMapping,
     [
@@ -300,7 +300,7 @@ make_serde!(
         board_instance_index,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     SlinkRegion,
     SerdeSlinkRegion,
     [
@@ -312,7 +312,7 @@ make_serde!(
         _reserved_,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     AblConsoleOutControl,
     SerdeAblConsoleOutControl,
     [
@@ -330,7 +330,7 @@ make_serde!(
         abl_console_port,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     NaplesAblConsoleOutControl,
     SerdeNaplesAblConsoleOutControl,
     [
@@ -347,12 +347,12 @@ make_serde!(
         abl_console_port,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     AblBreakpointControl,
     SerdeAblBreakpointControl,
     [enable_breakpoint, break_on_all_dies,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     ExtVoltageControl,
     SerdeExtVoltageControl,
     [
@@ -368,7 +368,7 @@ make_serde!(
         _reserved_2,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     LrdimmDdr4DataBusElement,
     SerdeLrdimmDdr4DataBusElement,
     [
@@ -387,23 +387,23 @@ make_serde!(
         vref_dq,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     MaxFreqElement,
     SerdeMaxFreqElement,
     [dimm_slots_per_channel, _reserved_, conditions, speeds,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     LrMaxFreqElement,
     SerdeLrMaxFreqElement,
     [dimm_slots_per_channel, _reserved_, conditions, speeds,]
 );
-make_serde!(Gpio, SerdeGpio, [pin, iomux_control, bank_control,]);
-make_serde!(
+impl_struct_serde_conversion!(Gpio, SerdeGpio, [pin, iomux_control, bank_control,]);
+impl_struct_serde_conversion!(
     ErrorOutControlBeepCode,
     CustomSerdeErrorOutControlBeepCode,
     [custom_error_type, peak_map, peak_attr,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     ErrorOutControl116,
     SerdeErrorOutControl116,
     [
@@ -431,7 +431,7 @@ make_serde!(
         _reserved_end,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     ErrorOutControl112,
     SerdeErrorOutControl112,
     [
@@ -460,36 +460,36 @@ make_serde!(
     ]
 );
 
-make_serde!(
+impl_struct_serde_conversion!(
     DimmsPerChannelSelector,
     SerdeDimmsPerChannelSelector,
     [one_dimm, two_dimms, three_dimms, four_dimms, _reserved_1,]
 );
 
-make_serde!(
+impl_struct_serde_conversion!(
     ErrorOutControlBeepCodePeakAttr,
     SerdeErrorOutControlBeepCodePeakAttr,
     [peak_count, pulse_width, repeat_count, _reserved_1,]
 );
 
-make_serde!(
+impl_struct_serde_conversion!(
     OdtPatPatterns,
     SerdeOdtPatPatterns,
     [reading_pattern, _reserved_1, writing_pattern, _reserved_2,]
 );
 
-make_serde!(
+impl_struct_serde_conversion!(
     LrdimmDdr4OdtPatDimmRankBitmaps,
     SerdeLrdimmDdr4OdtPatDimmRankBitmaps,
     [dimm0, dimm1, dimm2, _reserved_1,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     Ddr4OdtPatDimmRankBitmaps,
     SerdeDdr4OdtPatDimmRankBitmaps,
     [dimm0, dimm1, dimm2, _reserved_1,]
 );
 
-make_serde!(
+impl_struct_serde_conversion!(
     DimmSlotsSelection,
     SerdeDimmSlotsSelection,
     [
@@ -500,13 +500,13 @@ make_serde!(
         _reserved_1,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     ChannelIdsSelection,
     SerdeChannelIdsSelection,
     [a, b, c, d, e, f, g, h,]
 );
 
-make_serde!(
+impl_struct_serde_conversion!(
     SocketIds,
     SerdeSocketIds,
     [
@@ -515,7 +515,7 @@ make_serde!(
     ]
 );
 
-make_serde!(
+impl_struct_serde_conversion!(
     Ddr4OdtPatElement,
     SerdeDdr4OdtPatElement,
     [
@@ -526,7 +526,7 @@ make_serde!(
         cs3_odt_patterns,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     LrdimmDdr4OdtPatElement,
     SerdeLrdimmDdr4OdtPatElement,
     [
@@ -537,37 +537,37 @@ make_serde!(
         cs3_odt_patterns,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     CkeTristateMap,
     SerdeCkeTristateMap,
     [type_, payload_size, sockets, channels, dimms, connections,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     OdtTristateMap,
     SerdeOdtTristateMap,
     [type_, payload_size, sockets, channels, dimms, connections,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     CsTristateMap,
     SerdeCsTristateMap,
     [type_, payload_size, sockets, channels, dimms, connections,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     MaxDimmsPerChannel,
     SerdeMaxDimmsPerChannel,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     MemclkMap,
     SerdeMemclkMap,
     [type_, payload_size, sockets, channels, dimms, connections,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     MaxChannelsPerSocket,
     SerdeMaxChannelsPerSocket,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     MemBusSpeed,
     SerdeMemBusSpeed,
     [
@@ -580,12 +580,12 @@ make_serde!(
         bus_speed,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     MaxCsPerChannel,
     SerdeMaxCsPerChannel,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     MemTechnology,
     SerdeMemTechnology,
     [
@@ -597,7 +597,7 @@ make_serde!(
         technology_type,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     WriteLevellingSeedDelay,
     SerdeWriteLevellingSeedDelay,
     [
@@ -610,7 +610,7 @@ make_serde!(
         ecc_seed,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     RxEnSeed,
     SerdeRxEnSeed,
     [
@@ -623,22 +623,22 @@ make_serde!(
         ecc_seed,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     LrDimmNoCs6Cs7Routing,
     SerdeLrDimmNoCs6Cs7Routing,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     SolderedDownSodimm,
     SerdeSolderedDownSodimm,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     LvDimmForce1V5,
     SerdeLvDimmForce1V5,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     MinimumRwDataEyeWidth,
     SerdeMinimumRwDataEyeWidth,
     [
@@ -651,27 +651,27 @@ make_serde!(
         min_write_data_eye_width,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     CpuFamilyFilter,
     SerdeCpuFamilyFilter,
     [type_, payload_size, cpu_family_revision,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     SolderedDownDimmsPerChannel,
     SerdeSolderedDownDimmsPerChannel,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     MemPowerPolicy,
     SerdeMemPowerPolicy,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     MotherboardLayers,
     SerdeMotherboardLayers,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     IdApcbMapping,
     SerdeIdApcbMapping,
     [
@@ -680,17 +680,17 @@ make_serde!(
         board_instance_index,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     BoardIdGettingMethodCustom,
     SerdeBoardIdGettingMethodCustom,
     [access_method, feature_mask,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     BoardIdGettingMethodGpio,
     SerdeBoardIdGettingMethodGpio,
     [access_method, bit_locations,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     BoardIdGettingMethodSmbus,
     SerdeBoardIdGettingMethodSmbus,
     [
@@ -703,7 +703,7 @@ make_serde!(
         register_index,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     FchGppClkMapSelection,
     SerdeFchGppClkMapSelection,
     [
@@ -721,13 +721,13 @@ make_serde!(
         _reserved_2,
     ]
 );
-make_serde!(Terminator, SerdeTerminator, [type_,]);
-make_serde!(
+impl_struct_serde_conversion!(Terminator, SerdeTerminator, [type_,]);
+impl_struct_serde_conversion!(
     DdrPostPackageRepairElement,
     CustomSerdeDdrPostPackageRepairElement,
     [raw_body,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     DdrPostPackageRepairBody,
     SerdeDdrPostPackageRepairBody,
     [
@@ -745,7 +745,7 @@ make_serde!(
         _reserved_1,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     DimmInfoSmbusElement,
     SerdeDimmInfoSmbusElement,
     [
@@ -759,17 +759,17 @@ make_serde!(
         mux_channel,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     ConsoleOutControl,
     SerdeConsoleOutControl,
     [abl_console_out_control, abl_breakpoint_control, _reserved_,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     NaplesConsoleOutControl,
     SerdeNaplesConsoleOutControl,
     [abl_console_out_control, abl_breakpoint_control, _reserved_,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     BoardInstances,
     SerdeBoardInstances,
     [
@@ -791,17 +791,17 @@ make_serde!(
         instance_15,
     ]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     Parameter,
     SerdeParameter,
     [time_point, token, value_size, value, _reserved_0,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     ParameterAttributes,
     SerdeParameterAttributes,
     [time_point, token, size_minus_one, _reserved_0,]
 );
-make_serde!(
+impl_struct_serde_conversion!(
     MemPmuBistTestSelect,
     SerdeMemPmuBistTestSelect,
     [algorithm_1, algorithm_2, algorithm_3, algorithm_4, algorithm_5, _reserved_0,]
