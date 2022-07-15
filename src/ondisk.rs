@@ -7834,7 +7834,7 @@ make_token_accessors! {
 
         // Df
 
-        /// [F17M30] needs it to be true
+        /// F17M30 needs it to be true
         DfGroupDPlatform(default 0, id 0x6831_8493) | pub get bool : pub set bool,
 
         // Dxio
