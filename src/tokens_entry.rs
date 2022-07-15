@@ -8,6 +8,7 @@ use core::convert::TryFrom;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
 use pre::pre;
+use zerocopy::ByteSlice;
 
 #[cfg(feature = "serde")]
 use serde::ser::{Serialize, Serializer};
@@ -25,17 +26,10 @@ pub struct TokensEntryBodyItem<BufferType> {
 }
 
 // Note: Only construct those if unit_size, key_pos and key_size are correct!
-pub struct TokensEntryIter<'a> {
+pub struct TokensEntryIter<BufferType: ByteSlice> {
     context_format: u8,
     entry_id: TokenEntryId,
-    buf: &'a [u8],
-    remaining_used_size: usize,
-}
-
-// Note: Only construct those if unit_size, key_pos and key_size are correct!
-pub struct TokensEntryIterMut<'a> {
-    entry_id: TokenEntryId,
-    buf: &'a mut [u8],
+    buf: BufferType,
     remaining_used_size: usize,
 }
 
@@ -85,13 +79,12 @@ impl<BufferType> TokensEntryBodyItem<BufferType> {
 
 }
 
-#[derive(Debug)]
-pub struct TokensEntryItemMut<'a> {
-    entry_id: TokenEntryId,
-    token: &'a mut TOKEN_ENTRY,
+pub struct TokensEntryItem<TokenType> {
+    pub(crate) entry_id: TokenEntryId,
+    pub(crate) token: TokenType,
 }
 
-impl<'a> TokensEntryItemMut<'a> {
+impl<'a> TokensEntryItem<&'a mut TOKEN_ENTRY> {
     pub fn id(&self) -> u32 {
         self.token.key.get()
     }
@@ -127,14 +120,14 @@ impl<'a> TokensEntryItemMut<'a> {
     }
 }
 
-impl<'a> TokensEntryIterMut<'a> {
+impl<'a> TokensEntryIter<&'a mut [u8]> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what
     /// this function does. Note: The caller needs to manually decrease
     /// remaining_used_size for each call if desired.
     fn next_item<'b>(
         entry_id: TokenEntryId,
         buf: &mut &'b mut [u8],
-    ) -> Result<TokensEntryItemMut<'b>> {
+    ) -> Result<TokensEntryItem<&'b mut TOKEN_ENTRY>> {
         if buf.is_empty() {
             return Err(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
@@ -151,7 +144,7 @@ impl<'a> TokensEntryIterMut<'a> {
                     ));
                 }
             };
-        Ok(TokensEntryItemMut { entry_id, token })
+        Ok(TokensEntryItem { entry_id, token })
     }
 
     /// Find the place BEFORE which the entry TOKEN_ID is supposed to go.
@@ -212,7 +205,7 @@ impl<'a> TokensEntryIterMut<'a> {
         &mut self,
         token_id: u32,
         token_value: u32,
-    ) -> Result<TokensEntryItemMut<'a>> {
+    ) -> Result<TokensEntryItem<&'a mut TOKEN_ENTRY>> {
         let token_size = size_of::<TOKEN_ENTRY>();
 
         // Make sure that move_insertion_point_before does not notice the new
@@ -251,7 +244,7 @@ impl<'a> TokensEntryIterMut<'a> {
 
         token.key.set(token_id);
         token.value.set(0); // always valid
-        let mut result = TokensEntryItemMut {
+        let mut result = TokensEntryItem {
             entry_id: self.entry_id,
             token,
         };
@@ -280,8 +273,8 @@ impl<'a> TokensEntryIterMut<'a> {
     }
 }
 
-impl<'a> Iterator for TokensEntryIterMut<'a> {
-    type Item = TokensEntryItemMut<'a>;
+impl<'a> Iterator for TokensEntryIter<&'a mut [u8]> {
+    type Item = TokensEntryItem<&'a mut TOKEN_ENTRY>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.remaining_used_size == 0 {
@@ -349,9 +342,9 @@ impl SerdeTokensEntryItem {
 }
 
 #[cfg(feature = "serde")]
-impl From<&TokensEntryItem<'_>> for SerdeTokensEntryItem {
-    fn from(item: &TokensEntryItem<'_>) -> Self {
-        let entry = &*item.entry;
+impl From<&TokensEntryItem<&'_ TOKEN_ENTRY>> for SerdeTokensEntryItem {
+    fn from(item: &TokensEntryItem<&'_ TOKEN_ENTRY>) -> Self {
+        let entry = &*item.token;
         let key = entry.key.get();
         let mut st = Self::Unknown {
             entry_id: item.entry_id,
@@ -408,13 +401,8 @@ impl core::convert::TryFrom<SerdeTokensEntryItem> for TOKEN_ENTRY {
     }
 }
 
-pub struct TokensEntryItem<'a> {
-    pub(crate) entry_id: TokenEntryId,
-    pub(crate) entry: &'a TOKEN_ENTRY,
-}
-
 #[cfg(feature = "schemars")]
-impl<'a> schemars::JsonSchema for TokensEntryItem<'a> {
+impl<'a> schemars::JsonSchema for TokensEntryItem<&'a TOKEN_ENTRY> {
     fn schema_name() -> std::string::String {
         SerdeTokensEntryItem::schema_name()
     }
@@ -429,7 +417,7 @@ impl<'a> schemars::JsonSchema for TokensEntryItem<'a> {
 }
 
 #[cfg(feature = "serde")]
-impl<'a> Serialize for TokensEntryItem<'a> {
+impl<'a> Serialize for TokensEntryItem<&'a TOKEN_ENTRY> {
     fn serialize<S>(
         &self,
         serializer: S,
@@ -441,9 +429,9 @@ impl<'a> Serialize for TokensEntryItem<'a> {
     }
 }
 
-impl<'a> core::fmt::Debug for TokensEntryItem<'a> {
+impl<'a> core::fmt::Debug for TokensEntryItem<&'a TOKEN_ENTRY> {
     fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let entry = &*self.entry;
+        let entry = &*self.token;
         let key = entry.key.get();
         let mut ds = fmt.debug_struct("TokensEntryItem_TOKEN_ENTRY");
         ds.field("entry_id", &self.entry_id);
@@ -484,12 +472,12 @@ impl<'a> core::fmt::Debug for TokensEntryItem<'a> {
     }
 }
 
-impl<'a> TokensEntryItem<'a> {
+impl<'a> TokensEntryItem<&'a TOKEN_ENTRY> {
     pub fn id(&self) -> u32 {
-        self.entry.key.get()
+        self.token.key.get()
     }
     pub fn value(&self) -> u32 {
-        self.entry.value.get()
+        self.token.value.get()
             & match self.entry_id {
                 TokenEntryId::Bool => 0x1,
                 TokenEntryId::Byte => 0xFF,
@@ -500,14 +488,14 @@ impl<'a> TokensEntryItem<'a> {
     }
 }
 
-impl<'a> TokensEntryIter<'a> {
+impl<'a> TokensEntryIter<&'a [u8]> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what
     /// this function does. Note: The caller needs to manually decrease
     /// remaining_used_size for each call if desired.
     fn next_item<'b>(
         entry_id: TokenEntryId,
         buf: &mut &'b [u8],
-    ) -> Result<TokensEntryItem<'b>> {
+    ) -> Result<TokensEntryItem<&'b TOKEN_ENTRY>> {
         if buf.is_empty() {
             return Err(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
@@ -526,10 +514,10 @@ impl<'a> TokensEntryIter<'a> {
         };
         Ok(TokensEntryItem {
             entry_id,
-            entry: header,
+            token: header,
         })
     }
-    pub(crate) fn next1(&mut self) -> Result<TokensEntryItem<'a>> {
+    pub(crate) fn next1(&mut self) -> Result<TokensEntryItem<&'a TOKEN_ENTRY>> {
         if self.remaining_used_size == 0 {
             panic!("Internal error");
         }
@@ -581,8 +569,8 @@ impl<'a> TokensEntryIter<'a> {
     }
 }
 
-impl<'a> Iterator for TokensEntryIter<'a> {
-    type Item = TokensEntryItem<'a>;
+impl<'a> Iterator for TokensEntryIter<&'a [u8]> {
+    type Item = TokensEntryItem<&'a TOKEN_ENTRY>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.remaining_used_size == 0 {
@@ -595,8 +583,31 @@ impl<'a> Iterator for TokensEntryIter<'a> {
     }
 }
 
+impl<BufferType: ByteSlice> TokensEntryBodyItem<BufferType> {
+    pub fn iter(&self) -> Result<TokensEntryIter<&'_ [u8]>> {
+        let entry_id = self.prepare_iter()?;
+        Ok(TokensEntryIter {
+            context_format: self.context_format,
+            entry_id,
+            buf: &self.buf,
+            remaining_used_size: self.used_size,
+        })
+    }
+    pub fn token(&self, token_id: u32) -> Option<TokensEntryItem<&'_ TOKEN_ENTRY>> {
+        for entry in self.iter().ok()? {
+            if entry.id() == token_id {
+                return Some(entry);
+            }
+        }
+        None
+    }
+    pub fn validate(&self) -> Result<()> {
+        self.iter()?.validate()
+    }
+}
+
 impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
-    pub fn iter(&self) -> Result<TokensEntryIter<'_>> {
+    pub fn iter_mut(&mut self) -> Result<TokensEntryIter<&'_ mut [u8]>> {
         let entry_id = self.prepare_iter()?;
         Ok(TokensEntryIter {
             context_format: self.context_format,
@@ -605,27 +616,10 @@ impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
             remaining_used_size: self.used_size,
         })
     }
-
-    pub fn iter_mut(&mut self) -> Result<TokensEntryIterMut<'_>> {
-        let entry_id = self.prepare_iter()?;
-        Ok(TokensEntryIterMut {
-            entry_id,
-            buf: self.buf,
-            remaining_used_size: self.used_size,
-        })
-    }
-    pub fn token(&self, token_id: u32) -> Option<TokensEntryItem<'_>> {
-        for entry in self.iter().ok()? {
-            if entry.id() == token_id {
-                return Some(entry);
-            }
-        }
-        None
-    }
     pub fn token_mut(
         &mut self,
         token_id: u32,
-    ) -> Option<TokensEntryItemMut<'_>> {
+    ) -> Option<TokensEntryItem<&'_ mut TOKEN_ENTRY>> {
         for entry in self.iter_mut().ok()? {
             if entry.id() == token_id {
                 return Some(entry);
@@ -663,25 +657,5 @@ impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
 
     pub(crate) fn delete_token(&mut self, token_id: u32) -> Result<()> {
         self.iter_mut()?.delete_token(token_id)
-    }
-}
-
-impl<'a> TokensEntryBodyItem<&'a [u8]> {
-    pub fn iter(&self) -> Result<TokensEntryIter<'_>> {
-        let entry_id = self.prepare_iter()?;
-        Ok(TokensEntryIter {
-            context_format: self.context_format,
-            entry_id,
-            buf: &self.buf,
-            remaining_used_size: self.used_size,
-        })
-    }
-    pub fn token(&self, token_id: u32) -> Option<TokensEntryItem<'_>> {
-        for entry in self.iter().ok()? {
-            if entry.id() == token_id {
-                return Some(entry);
-            }
-        }
-        None
     }
 }
