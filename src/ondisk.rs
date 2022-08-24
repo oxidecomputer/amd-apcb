@@ -7479,6 +7479,62 @@ make_bitfield_serde! {
 }
 impl_bitfield_primitive_conversion!(MemPmuBistTestSelect, 0b11111, u8);
 
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum GnbAdditionalFeatureDsm {
+    Disabled = 0,
+    Enabled = 1,
+    Auto = 0xff,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum GnbAdditionalFeatureDsmDetector {
+    Disabled = 0,
+    Enabled = 1,
+    Auto = 0xff, // undoc
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum PspSevMode {
+    Disabled = 1,
+    Enabled = 0,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemTccd5ReadCommandSpacingMode {
+    Disabled = 1,
+    Enabled = 0,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum ReservedDramModuleDrtmMode {
+    Disabled = 0,
+    Enabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum FchI2cSdaHoldOverrideMode {
+    IgnoreBoth = 0,
+    OverrideBoth = 1,
+}
+
 make_token_accessors! {
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     #[non_exhaustive]
@@ -7490,6 +7546,7 @@ make_token_accessors! {
         // PSP
 
         PspEnableDebugMode(default 0, id 0xd109_1cd0) | pub get PspEnableDebugMode : pub set PspEnableDebugMode,
+        PspSevMode(default 0, id 0xadc8_33e4) | pub get PspSevMode : pub set PspSevMode, // Milan
 
         // Memory Controller
 
@@ -7520,11 +7577,12 @@ make_token_accessors! {
         MemHealBistEnable(default 0, id 0xfba2_3a28) | pub get MemHealBistEnable : pub set MemHealBistEnable,
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemSelfHealBistEnable(default 0, id 0x2c23_924c) | pub get u8 : pub set u8, // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
-        MemPmuBistTestSelect(default 31, id 0x7034_fbfb) | pub get MemPmuBistTestSelect : pub set MemPmuBistTestSelect,
+        MemPmuBistTestSelect(default 7, id 0x7034_fbfb) | pub get MemPmuBistTestSelect : pub set MemPmuBistTestSelect,
         MemHealTestSelect(default 0, id 0x5908_2cf2) | pub get MemHealTestSelect : pub set MemHealTestSelect,
         MemHealPprType(default 0, id 0x5418_1a61) | pub get MemHealPprType : pub set MemHealPprType,
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemHealMaxBankFails(default 3, id 0x632e_55d8) | pub get u8 : pub set u8, // per bank
+        MemTccd5ReadCommandSpacingMode(default 1, id 0x96a5_ed6e) | pub get MemTccd5ReadCommandSpacingMode : pub set MemTccd5ReadCommandSpacingMode, // Milan
 
         // Ccx
 
@@ -7565,6 +7623,8 @@ make_token_accessors! {
         SecondPcieLinkSpeed(default 0, id 0x8723_750f) | pub get SecondPcieLinkSpeed : pub set SecondPcieLinkSpeed,
         SecondPcieLinkMaxPayload(default 0xff, id 0xe02d_f04b) | pub get SecondPcieLinkMaxPayload : pub set SecondPcieLinkMaxPayload, // Milan
         WorkloadProfile(default 0, id 0x22f4_299f) | pub get WorkloadProfile : pub set WorkloadProfile, // Milan
+        DvArbiterMin(default 1, id 0x640d_d003) | pub get u8 : pub set u8, // TODO: nicer type
+        DvArbiterMax(default 0xa, id 0x6cad_6da9) | pub get u8 : pub set u8, // TODO: nicer type
 
         // MBIST for Milan and Rome; defaults wrong!
 
@@ -7608,6 +7668,11 @@ make_token_accessors! {
 
         MemOverrideDimmSpdMaxActivityCount(default 0xff, id 0x853cdaa) | pub get MemMaxActivityCount : pub set MemMaxActivityCount,
         GnbSmuDfPstateFclkLimit(default 0xff, id 0xea388ac3) | pub get GnbSmuDfPstateFclkLimit : pub set GnbSmuDfPstateFclkLimit, // Milan
+        /// Note: Use this for Milan 1.0.0.4 or higher. For older Milan, use GnbAdditionalFeatureDsm
+        GnbAdditionalFeatureDsm2(default 0xff, id 0x31a6afad) | pub get GnbAdditionalFeatureDsm : pub set GnbAdditionalFeatureDsm, // Milan 1.0.0.4
+        /// Note: Use this for Milan 1.0.0.4 or higher. For older Milan, use GnbAdditionalFeatureDsmDetector
+        GnbAdditionalFeatureDsmDetector2(default 0xff, id 0xf576_8cee) | pub get GnbAdditionalFeatureDsmDetector : pub set GnbAdditionalFeatureDsmDetector, // Milan 1.0.0.4
+        ReservedDramModuleDrtmMode(default 0, id 0xb051_e421) | pub get ReservedDramModuleDrtmMode : pub set ReservedDramModuleDrtmMode, // Milan
 
         // Unsorted Rome; ungrouped; defaults wrong!
 
@@ -7695,6 +7760,13 @@ make_token_accessors! {
         // Fch
 
         FchGppClkMap(default 0xffff, id 0xcd7e_6983) | pub get FchGppClkMap : pub set FchGppClkMap,
+
+        /// Whether FchI2cSdaRxHold and FchI2cSdaTxHold will be used
+        FchI2cSdaHoldOverrideMode(default 0, id 0x545d_7662) | pub get FchI2cSdaHoldOverrideMode : pub set FchI2cSdaHoldOverrideMode, // Milan
+        /// See FCH::I2C::IC_SDA_HOLD. Unit: number of ic_clk periods.
+        FchI2cSdaRxHold(default 0, id 0xa4ba_c3d5) | pub get u16 : pub set u16, // Milan
+        /// See FCH::I2C::IC_SDA_HOLD. Unit: number of ic_clk periods.
+        FchI2cSdaTxHold(default 0, id 0x9518_f953) | pub get u16 : pub set u16, // Milan
 
         // Unsorted Milan; obsolete and ungrouped; defaults wrong!
 
@@ -7803,6 +7875,9 @@ make_token_accessors! {
         PcieResetGpioPin(default 0, id 0x596663ac) | pub get u32 : pub set u32, // value 0xffffffff // Rome; FIXME: enum?
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         CpuFetchFromSpiApBase(default 0, id 0xd403ea0e) | pub get u32 : pub set u32, // value 0xfff00000 // Rome
+
+        GnbAdditionalFeatureOffRamp(default 40, id 0xe851_6128) | pub get u32 : pub set u32, // FIXME: nicer user type
+        GnbAdditionalFeatureOnRamp(default 70, id 0x8d40_76dd) | pub get u32 : pub set u32, // FIXME: nicer user type
     }
 }
 make_token_accessors! {
@@ -7852,6 +7927,8 @@ make_token_accessors! {
 
         /// F17M30 needs it to be true
         DfGroupDPlatform(default 0, id 0x6831_8493) | pub get bool : pub set bool,
+        DfPickerThrottleEnable(default 0, id 0x0bcb_d809) | pub get bool : pub set bool,
+        DfNps1With4ChannelInterleavedRdimm4ChannelNonInterleavedNvdimm(default 0, id 0x9d6e_e05e) | pub get bool : pub set bool, // Milan
 
         // Dxio
 
@@ -7886,11 +7963,13 @@ make_token_accessors! {
         MemModeUnganged(default 0, id 0x3ce1180) | pub get bool : pub set bool,
         /// This is optional
         GnbAdditionalFeatures(default 0, id 0xf4c7789) | pub get bool : pub set bool, // Milan
-        GnbAdditionalFeatureDsm(default 0, id 0x31a6afad) | pub get bool : pub set bool, // Milan
+        /// Note: Use GnbAdditionalFeatureDsm2 for Milan 1.0.0.4 or higher. For older Milan, use GnbAdditionalFeatureDsmDetector
+        GnbAdditionalFeatureDsm(default 0, id 0x31a6afad) | pub get bool : pub set bool, // Milan < 1.0.0.4
         VgaProgram(default 0, id 0x6570Eace) | pub get bool : pub set bool, // Milan
         MemNvdimmNDisable(default 0, id 0x941a92d4) | pub get bool : pub set bool, // Milan
         GnbAdditionalFeatureL3PerformanceBias(default 0, id 0xa003b37a) | pub get bool : pub set bool, // Milan
-        GnbAdditionalFeatureDsmDetector(default 0, id 0xf5768cee) | pub get bool : pub set bool, // Milan
+        /// Note: Use GnbAdditionalFeatureDsmDetector2 for Milan 1.0.0.4 or higher. For older Milan, use GnbAdditionalFeatureDsmDetector
+        GnbAdditionalFeatureDsmDetector(default 0, id 0xf5768cee) | pub get bool : pub set bool, // Milan < 1.0.0.4
 
         // Unsorted Rome; ungrouped; defaults wrong!
 
