@@ -385,10 +385,10 @@ impl core::convert::TryFrom<SerdeTokensEntryItem> for TOKEN_ENTRY {
         st: SerdeTokensEntryItem,
     ) -> core::result::Result<Self, Self::Error> {
         match st {
-            SerdeTokensEntryItem::Bool(t) => TOKEN_ENTRY::try_from(t),
-            SerdeTokensEntryItem::Byte(t) => TOKEN_ENTRY::try_from(t),
-            SerdeTokensEntryItem::Word(t) => TOKEN_ENTRY::try_from(t),
-            SerdeTokensEntryItem::Dword(t) => TOKEN_ENTRY::try_from(t),
+            SerdeTokensEntryItem::Bool(t) => TOKEN_ENTRY::try_from(&t),
+            SerdeTokensEntryItem::Byte(t) => TOKEN_ENTRY::try_from(&t),
+            SerdeTokensEntryItem::Word(t) => TOKEN_ENTRY::try_from(&t),
+            SerdeTokensEntryItem::Dword(t) => TOKEN_ENTRY::try_from(&t),
             SerdeTokensEntryItem::Unknown {
                 entry_id: _,
                 tag,
@@ -657,5 +657,59 @@ impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
 
     pub(crate) fn delete_token(&mut self, token_id: u32) -> Result<()> {
         self.iter_mut()?.delete_token(token_id)
+    }
+}
+
+impl TokenEntryId {
+    pub(crate) fn ensure_abl0_compatibility(&self, abl0_version: u32, tokens: &TokensEntryBodyItem<&[u8]>) -> Result<()> {
+        match *self {
+            TokenEntryId::Bool => {
+                for token in tokens.iter()? {
+                    let token_id = token.id();
+                    if !BoolToken::valid_for_abl0_raw(abl0_version, token_id) {
+                        return Err(Error::TokenVersionMismatch {
+                            token_id,
+                            abl0_version,
+                        })
+                    }
+                }
+            }
+            TokenEntryId::Byte => {
+                for token in tokens.iter()? {
+                    let token_id = token.id();
+                    if !ByteToken::valid_for_abl0_raw(abl0_version, token_id) {
+                        return Err(Error::TokenVersionMismatch {
+                            token_id,
+                            abl0_version,
+                        })
+                    }
+                }
+            }
+            TokenEntryId::Word => {
+                for token in tokens.iter()? {
+                    let token_id = token.id();
+                    if !WordToken::valid_for_abl0_raw(abl0_version, token_id) {
+                        return Err(Error::TokenVersionMismatch {
+                            token_id,
+                            abl0_version,
+                        })
+                    }
+                }
+            }
+            TokenEntryId::Dword => {
+                for token in tokens.iter()? {
+                    let token_id = token.id();
+                    if !DwordToken::valid_for_abl0_raw(abl0_version, token_id) {
+                        return Err(Error::TokenVersionMismatch {
+                            token_id,
+                            abl0_version,
+                        })
+                    }
+                }
+            }
+            TokenEntryId::Unknown(_) => {
+            }
+        }
+        Ok(())
     }
 }

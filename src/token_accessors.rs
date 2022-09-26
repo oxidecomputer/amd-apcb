@@ -5,7 +5,7 @@ use crate::entry::EntryItemBody;
 use crate::ondisk::BoardInstances;
 use crate::ondisk::GroupId;
 use crate::ondisk::PriorityLevels;
-use crate::ondisk::{ContextType, EntryId, TokenEntryId};
+use crate::ondisk::{ContextType, EntryId, TokenEntryId, WordToken, DwordToken, ByteToken, BoolToken};
 use crate::types::Error;
 use crate::types::Result;
 
@@ -14,6 +14,7 @@ pub struct TokensMut<'a, 'b> {
     pub(crate) instance_id: u16,
     pub(crate) board_instance_mask: BoardInstances,
     pub(crate) priority_mask: PriorityLevels,
+    pub(crate) abl0_version: Option<u32>,
 }
 pub struct Tokens<'a, 'b> {
     pub(crate) apcb: &'b Apcb<'a>,
@@ -28,6 +29,7 @@ impl<'a, 'b> TokensMut<'a, 'b> {
         instance_id: u16,
         board_instance_mask: BoardInstances,
         priority_mask: PriorityLevels,
+        abl0_version: Option<u32>,
     ) -> Result<Self> {
         match apcb.insert_group(GroupId::Token, *b"TOKN") {
             Err(Error::GroupUniqueKeyViolation) => {}
@@ -41,6 +43,7 @@ impl<'a, 'b> TokensMut<'a, 'b> {
             instance_id,
             board_instance_mask,
             priority_mask,
+            abl0_version,
         })
     }
 
@@ -103,6 +106,21 @@ impl<'a, 'b> TokensMut<'a, 'b> {
                     }
                     _ => {}
                 };
+                if let Some(abl0_version) = self.abl0_version {
+                    let valid = match token_entry_id {
+                        TokenEntryId::Bool => BoolToken::valid_for_abl0_raw(abl0_version, token_id),
+                        TokenEntryId::Byte => ByteToken::valid_for_abl0_raw(abl0_version, token_id),
+                        TokenEntryId::Word => WordToken::valid_for_abl0_raw(abl0_version, token_id),
+                        TokenEntryId::Dword => DwordToken::valid_for_abl0_raw(abl0_version, token_id),
+                        TokenEntryId::Unknown(_) => false
+                    };
+                    if !valid {
+                        return Err(Error::TokenVersionMismatch {
+                            token_id,
+                            abl0_version,
+                        })
+                    }
+                }
                 self.apcb.insert_token(
                     entry_id,
                     self.instance_id,
@@ -153,7 +171,7 @@ impl<'a, 'b> Tokens<'a, 'b> {
         })
     }
 
-    pub(crate) fn get(
+    pub fn get(
         &self,
         token_entry_id: TokenEntryId,
         field_key: u32,
@@ -188,13 +206,21 @@ impl<'a, 'b> Tokens<'a, 'b> {
 /// NAME(TYPE, default DEFAULT_VALUE, id TOKEN_ID) = KEY: pub get TYPE [: pub
 /// set TYPE]
 /// The ATTRIBUTES (`#`...) make it into the resulting enum variant.
+/// We ensure that MINIMAL_VERSION <= abl0_version < FRONTIER_VERSION at
+/// runtime.
 macro_rules! make_token_accessors {(
     $(#[$enum_meta:meta])*
     $enum_vis:vis enum $enum_name:ident: {$field_entry_id:expr} {
         $(
             $(#[$field_meta:meta])*
             $field_vis:vis
-            $field_name:ident(default $field_default_value:expr, id $field_key:expr) | $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?
+            $field_name:ident(
+              $(minimal_version $minimal_version:expr,
+                frontier_version $frontier_version:expr,)?
+              default $field_default_value:expr, id $field_key:expr)
+              | $getter_vis:vis
+              get $field_user_ty:ty
+              $(: $setter_vis:vis set $field_setter_user_ty:ty)?
         ),* $(,)?
     }
 ) => (
@@ -205,7 +231,7 @@ macro_rules! make_token_accessors {(
     $enum_vis enum $enum_name {
         $(
          $(#[$field_meta])*
-         $field_name($field_user_ty),
+         $field_name($field_user_ty), // = $field_key
         )*
     }
     impl core::convert::TryFrom<&TOKEN_ENTRY> for $enum_name {
@@ -223,9 +249,9 @@ macro_rules! make_token_accessors {(
             }
         }
     }
-    impl core::convert::TryFrom<$enum_name> for TOKEN_ENTRY {
+    impl core::convert::TryFrom<&$enum_name> for TOKEN_ENTRY {
         type Error = Error;
-        fn try_from(x: $enum_name) -> core::result::Result<Self, Self::Error> {
+        fn try_from(x: &$enum_name) -> core::result::Result<Self, Self::Error> {
           $(
             if let $enum_name::$field_name(value) = x {
                 Ok(Self {
@@ -276,6 +302,28 @@ macro_rules! make_token_accessors {(
             )?
             }
     )*
+    impl $enum_name {
+      #[allow(unused_variables)]
+      pub(crate) fn valid_for_abl0_raw(abl0_version: u32, field_key: u32) -> bool {
+       $(
+           if (field_key == $field_key) {
+             $(
+               #[allow(unused_comparisons)]
+               return abl0_version >= $minimal_version && abl0_version < $frontier_version;
+             )?
+             #[allow(unreachable_code)]
+             return true
+           } else
+       )*
+       {
+           false
+       }
+      }
+      pub fn valid_for_abl0(&self, abl0_version: u32) -> core::result::Result<bool, Error> {
+          let token_entry = TOKEN_ENTRY::try_from(self)?;
+          Ok(Self::valid_for_abl0_raw(abl0_version, token_entry.key.get()))
+      }
+    }
 )}
 
 pub(crate) use make_token_accessors;
