@@ -776,6 +776,7 @@ mod tests {
                 0,
                 BoardInstances::from_instance(0).unwrap(),
                 PriorityLevels::from_level(PriorityLevel::Normal),
+                None,
             )
             .unwrap();
         let mut tokens = apcb
@@ -783,6 +784,7 @@ mod tests {
                 0,
                 BoardInstances::from_instance(0).unwrap(),
                 PriorityLevels::from_level(PriorityLevel::Normal),
+                None,
             )
             .unwrap();
         assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::_4800Baud);
@@ -1044,17 +1046,18 @@ mod tests {
             EntryId::Token(TokenEntryId::Byte),
             0,
             BoardInstances::from_instance(0).unwrap(),
-            0x014FBF20,
+            0xae46_cea4, // AblSerialBaudRate
             1,
         )?;
         apcb.insert_token(
             EntryId::Token(TokenEntryId::Byte),
             0,
             BoardInstances::from_instance(0).unwrap(),
-            0x42,
+            0x640d_d003, // DvArbiterMin
             2,
         )?;
 
+        apcb.validate(Some(0x1004_5012)).unwrap();
         apcb.save().unwrap();
         let apcb =
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
@@ -1096,12 +1099,14 @@ mod tests {
             EntryItemBody::<_>::Tokens(tokens) => {
                 let mut tokens = tokens.iter().unwrap();
 
+                // Note: Tokens were reordered by insert_token.
+
                 let token = tokens.next().ok_or(Error::TokenNotFound)?;
-                assert!(token.id() == 0x42);
+                assert!(token.id() == 0x640d_d003);
                 assert!(token.value() == 2);
 
                 let token = tokens.next().ok_or(Error::TokenNotFound)?;
-                assert!(token.id() == 0x014FBF20);
+                assert!(token.id() == 0xae46_cea4);
                 assert!(token.value() == 1);
 
                 assert!(matches!(tokens.next(), None));
@@ -1113,6 +1118,168 @@ mod tests {
         assert!(matches!(entries.next(), None));
 
         assert!(matches!(groups.next(), None));
+        Ok(())
+    }
+
+    #[test]
+    fn insert_two_tokens_versioned() -> Result<(), Error> {
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
+        let mut apcb =
+            Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
+                .unwrap();
+        apcb.insert_group(GroupId::Psp, *b"PSPG")?;
+        apcb.insert_group(GroupId::Memory, *b"MEMG")?;
+        apcb.insert_group(GroupId::Token, *b"TOKN")?;
+        //let mut apcb = Apcb::load(&mut buffer[0..],
+        // &ApcbIoOptions::default()).unwrap();
+        apcb.insert_entry(
+            EntryId::Psp(PspEntryId::BoardIdGettingMethod),
+            0,
+            BoardInstances::all(),
+            ContextType::Struct,
+            PriorityLevels::from_level(PriorityLevel::Low),
+            &[1u8; 48],
+        )?;
+        // makes it work let mut apcb = Apcb::load(&mut buffer[0..],
+        // &ApcbIoOptions::default()).unwrap();
+        apcb.insert_entry(
+            EntryId::Psp(PspEntryId::Unknown(97)),
+            0,
+            BoardInstances::all(),
+            ContextType::Struct,
+            PriorityLevels::from_level(PriorityLevel::Normal),
+            &[2u8; 1],
+        )?;
+
+        // let mut apcb = Apcb::load(&mut buffer[0..],
+        // &ApcbIoOptions::default()).unwrap();
+
+        // Insert empty "Token Entry"
+        // insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id:
+        // u16, board_instance_mask: BoardInstances, context_type: ContextType,
+        // payload: &[u8], priority_mask: u8
+        apcb.insert_entry(
+            EntryId::Token(TokenEntryId::Bool),
+            0,
+            BoardInstances::from_instance(0).unwrap(),
+            ContextType::Tokens,
+            PriorityLevels::from_level(PriorityLevel::Normal),
+            &[],
+        )?;
+
+        apcb.save().unwrap();
+        let mut apcb =
+            Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
+
+        apcb.insert_token(
+            EntryId::Token(TokenEntryId::Bool),
+            0,
+            BoardInstances::from_instance(0).unwrap(),
+            0xf5768cee, // GnbAdditionalFeatureDsmDetector
+            1,
+        )?;
+        apcb.insert_token(
+            EntryId::Token(TokenEntryId::Bool),
+            0,
+            BoardInstances::from_instance(0).unwrap(),
+            0xe702_4a21, // PspStopOnError
+            1,
+        )?;
+
+        // Try what happens when ABL0 version is too new
+        match apcb.validate(Some(0x1004_5012)) {
+            Ok(_) => {
+                panic!("Validation should have failed")
+            }
+            _ => {
+            }
+        }
+        // Try what happens when ABL0 version is old enough
+        apcb.validate(Some(0x42)).unwrap();
+        Ok(())
+    }
+
+    #[test]
+    fn insert_two_tokens_wrong_entry_versioned() -> Result<(), Error> {
+        let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
+        let mut apcb =
+            Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
+                .unwrap();
+        apcb.insert_group(GroupId::Psp, *b"PSPG")?;
+        apcb.insert_group(GroupId::Memory, *b"MEMG")?;
+        apcb.insert_group(GroupId::Token, *b"TOKN")?;
+        //let mut apcb = Apcb::load(&mut buffer[0..],
+        // &ApcbIoOptions::default()).unwrap();
+        apcb.insert_entry(
+            EntryId::Psp(PspEntryId::BoardIdGettingMethod),
+            0,
+            BoardInstances::all(),
+            ContextType::Struct,
+            PriorityLevels::from_level(PriorityLevel::Low),
+            &[1u8; 48],
+        )?;
+        // makes it work let mut apcb = Apcb::load(&mut buffer[0..],
+        // &ApcbIoOptions::default()).unwrap();
+        apcb.insert_entry(
+            EntryId::Psp(PspEntryId::Unknown(97)),
+            0,
+            BoardInstances::all(),
+            ContextType::Struct,
+            PriorityLevels::from_level(PriorityLevel::Normal),
+            &[2u8; 1],
+        )?;
+
+        // let mut apcb = Apcb::load(&mut buffer[0..],
+        // &ApcbIoOptions::default()).unwrap();
+
+        // Insert empty "Token Entry"
+        // insert_entry(&mut self, group_id: u16, entry_id: u16, instance_id:
+        // u16, board_instance_mask: BoardInstances, context_type: ContextType,
+        // payload: &[u8], priority_mask: u8
+        apcb.insert_entry(
+            EntryId::Token(TokenEntryId::Byte),
+            0,
+            BoardInstances::from_instance(0).unwrap(),
+            ContextType::Tokens,
+            PriorityLevels::from_level(PriorityLevel::Normal),
+            &[],
+        )?;
+
+        apcb.save().unwrap();
+        let mut apcb =
+            Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
+
+        apcb.insert_token(
+            EntryId::Token(TokenEntryId::Byte),
+            0,
+            BoardInstances::from_instance(0).unwrap(),
+            0xf5768cee, // GnbAdditionalFeatureDsmDetector
+            1,
+        )?;
+        apcb.insert_token(
+            EntryId::Token(TokenEntryId::Byte),
+            0,
+            BoardInstances::from_instance(0).unwrap(),
+            0xe702_4a21, // PspStopOnError
+            1,
+        )?;
+
+        // Try what happens when ABL0 version is too new
+        match apcb.validate(Some(0x1004_5012)) {
+            Ok(_) => {
+                panic!("Validation should have failed")
+            }
+            _ => {
+            }
+        }
+        // Try what happens when ABL0 version is old enough
+        match apcb.validate(Some(0x42)) {
+            Ok(_) => {
+                panic!("Validation should have failed")
+            }
+            _ => {
+            }
+        }
         Ok(())
     }
 

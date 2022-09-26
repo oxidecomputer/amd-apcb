@@ -144,11 +144,6 @@ impl<'a> TryFrom<SerdeApcb> for Apcb<'a> {
             };
         }
         apcb.update_checksum()?;
-        // That may seem overly paranoid--but the serde deserializers
-        // usually don't have a whole-world view (they only see their
-        // input subtree) and thus they sometimes can't validate
-        // everything on-the-fly.
-        apcb.validate()?;
         Ok(apcb)
     }
 }
@@ -554,8 +549,12 @@ impl<'a> Apcb<'a> {
         }
         Ok(None)
     }
-    pub fn validate(&self) -> Result<()> {
-        self.groups()?.validate()
+    /// Validates the contents.
+    /// If ABL0_VERSION is Some, also validates against that AGESA
+    /// bootloader version.
+    pub fn validate(&self, abl0_version: Option<u32>) -> Result<()> {
+        self.groups()?.validate()?;
+        self.ensure_abl0_compatibility(abl0_version)
     }
     pub fn groups_mut(&mut self) -> Result<ApcbIterMut<'_>> {
         let used_size = self.used_size;
@@ -1415,13 +1414,15 @@ impl<'a> Apcb<'a> {
     /// PRIORITY_MASK is used if the entry needs to be created.
     /// The proxy takes care of creating the group, entry and token as
     /// necessary.  It does not delete stuff.
+    /// ABL0_VERSION is the version of the AGESA bootloader used
     pub fn tokens_mut<'b>(
         &'b mut self,
         instance_id: u16,
         board_instance_mask: BoardInstances,
         priority_mask: PriorityLevels,
+        abl0_version: Option<u32>,
     ) -> Result<TokensMut<'a, 'b>> {
-        TokensMut::new(self, instance_id, board_instance_mask, priority_mask)
+        TokensMut::new(self, instance_id, board_instance_mask, priority_mask, abl0_version)
     }
     /// Constructs a attribute accessor proxy for the given combination of
     /// (INSTANCE_ID, BOARD_INSTANCE_MASK).  ENTRY_ID is inferred on access.
@@ -1431,5 +1432,31 @@ impl<'a> Apcb<'a> {
         board_instance_mask: BoardInstances,
     ) -> Result<Tokens<'a, 'b>> {
         Tokens::new(self, instance_id, board_instance_mask)
+    }
+    /// Ensures that the APCB is compatible with the ABL0_VERSION given
+    /// (which is supposed to be the version extracted from the Abl0 blob
+    /// file--or None if it could not be found).
+    pub(crate) fn ensure_abl0_compatibility(&self, abl0_version: Option<u32>) -> Result<()> {
+        if let Some(abl0_version) = abl0_version {
+            if let Ok(Some(group)) = self.group(GroupId::Token) {
+                for entry in group.entries() {
+                    let entry_id = entry.id();
+                    let tokens = match &entry.body {
+                        EntryItemBody::<_>::Tokens(tokens) => {
+                            tokens
+                        }
+                        _ => {
+                            return Err(Error::EntryTypeMismatch)
+                        }
+                    };
+                    if let EntryId::Token(token_entry_id) = entry_id {
+                        token_entry_id.ensure_abl0_compatibility(abl0_version, tokens)?;
+                    } else {
+                        return Err(Error::EntryTypeMismatch)
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 }

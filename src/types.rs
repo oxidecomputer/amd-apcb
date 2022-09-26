@@ -21,6 +21,10 @@ pub enum Error {
     TokenOrderingViolation,
     TokenUniqueKeyViolation,
     TokenRange,
+    TokenVersionMismatch {
+        token_id: u32,
+        abl0_version: u32,
+    },
     ParameterNotFound,
     ParameterRange,
     // Errors used only for Serde

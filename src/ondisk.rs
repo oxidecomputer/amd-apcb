@@ -14,6 +14,7 @@ use byteorder::{LittleEndian, ReadBytesExt};
 use core::clone::Clone;
 use core::cmp::Ordering;
 use core::convert::TryInto;
+use core::convert::TryFrom;
 use core::mem::{size_of, take};
 use core::num::NonZeroU8;
 use four_cc::FourCC;
@@ -7535,6 +7536,8 @@ pub enum FchI2cSdaHoldOverrideMode {
     OverrideBoth = 1,
 }
 
+const UNLIMITED_VERSION: u32 = !0u32;
+
 make_token_accessors! {
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     #[non_exhaustive]
@@ -7671,7 +7674,8 @@ make_token_accessors! {
         /// Note: Use this for Milan 1.0.0.4 or higher. For older Milan, use GnbAdditionalFeatureDsm
         GnbAdditionalFeatureDsm2(default 0xff, id 0x31a6afad) | pub get GnbAdditionalFeatureDsm : pub set GnbAdditionalFeatureDsm, // Milan 1.0.0.4
         /// Note: Use this for Milan 1.0.0.4 or higher. For older Milan, use GnbAdditionalFeatureDsmDetector
-        GnbAdditionalFeatureDsmDetector2(default 0xff, id 0xf576_8cee) | pub get GnbAdditionalFeatureDsmDetector : pub set GnbAdditionalFeatureDsmDetector, // Milan 1.0.0.4
+        GnbAdditionalFeatureDsmDetector2(minimal_version 0x1004_5012, frontier_version UNLIMITED_VERSION,
+                                         default 0xff, id 0xf576_8cee) | pub get GnbAdditionalFeatureDsmDetector : pub set GnbAdditionalFeatureDsmDetector, // Milan 1.0.0.4
         ReservedDramModuleDrtmMode(default 0, id 0xb051_e421) | pub get ReservedDramModuleDrtmMode : pub set ReservedDramModuleDrtmMode, // Milan
 
         // Unsorted Rome; ungrouped; defaults wrong!
@@ -7969,7 +7973,7 @@ make_token_accessors! {
         MemNvdimmNDisable(default 0, id 0x941a92d4) | pub get bool : pub set bool, // Milan
         GnbAdditionalFeatureL3PerformanceBias(default 0, id 0xa003b37a) | pub get bool : pub set bool, // Milan
         /// Note: Use GnbAdditionalFeatureDsmDetector2 for Milan 1.0.0.4 or higher. For older Milan, use GnbAdditionalFeatureDsmDetector
-        GnbAdditionalFeatureDsmDetector(default 0, id 0xf5768cee) | pub get bool : pub set bool, // Milan < 1.0.0.4
+        GnbAdditionalFeatureDsmDetector(minimal_version 0, frontier_version 0x1004_5012, default 0, id 0xf5768cee) | pub get bool : pub set bool, // Milan < 1.0.0.4
 
         // Unsorted Rome; ungrouped; defaults wrong!
 
