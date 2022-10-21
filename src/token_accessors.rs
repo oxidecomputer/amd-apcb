@@ -116,6 +116,7 @@ impl<'a, 'b> TokensMut<'a, 'b> {
                     };
                     if !valid {
                         return Err(Error::TokenVersionMismatch {
+                            entry_id: token_entry_id,
                             token_id,
                             abl0_version,
                         })

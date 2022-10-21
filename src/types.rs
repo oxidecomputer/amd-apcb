@@ -1,3 +1,5 @@
+use crate::ondisk::TokenEntryId;
+
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum FileSystemError {
@@ -22,6 +24,7 @@ pub enum Error {
     TokenUniqueKeyViolation,
     TokenRange,
     TokenVersionMismatch {
+        entry_id: TokenEntryId,
         token_id: u32,
         abl0_version: u32,
     },

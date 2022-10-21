@@ -668,6 +668,7 @@ impl TokenEntryId {
                     let token_id = token.id();
                     if !BoolToken::valid_for_abl0_raw(abl0_version, token_id) {
                         return Err(Error::TokenVersionMismatch {
+                            entry_id: *self,
                             token_id,
                             abl0_version,
                         })
@@ -679,6 +680,7 @@ impl TokenEntryId {
                     let token_id = token.id();
                     if !ByteToken::valid_for_abl0_raw(abl0_version, token_id) {
                         return Err(Error::TokenVersionMismatch {
+                            entry_id: *self,
                             token_id,
                             abl0_version,
                         })
@@ -690,6 +692,7 @@ impl TokenEntryId {
                     let token_id = token.id();
                     if !WordToken::valid_for_abl0_raw(abl0_version, token_id) {
                         return Err(Error::TokenVersionMismatch {
+                            entry_id: *self,
                             token_id,
                             abl0_version,
                         })
@@ -701,6 +704,7 @@ impl TokenEntryId {
                     let token_id = token.id();
                     if !DwordToken::valid_for_abl0_raw(abl0_version, token_id) {
                         return Err(Error::TokenVersionMismatch {
+                            entry_id: *self,
                             token_id,
                             abl0_version,
                         })
