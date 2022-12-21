@@ -5,7 +5,10 @@ use crate::entry::EntryItemBody;
 use crate::ondisk::BoardInstances;
 use crate::ondisk::GroupId;
 use crate::ondisk::PriorityLevels;
-use crate::ondisk::{ContextType, EntryId, TokenEntryId, WordToken, DwordToken, ByteToken, BoolToken};
+use crate::ondisk::{
+    BoolToken, ByteToken, ContextType, DwordToken, EntryId, TokenEntryId,
+    WordToken,
+};
 use crate::types::Error;
 use crate::types::Result;
 
@@ -52,10 +55,8 @@ impl<'a, 'b> TokensMut<'a, 'b> {
         token_entry_id: TokenEntryId,
         field_key: u32,
     ) -> Result<u32> {
-        let group = self
-            .apcb
-            .group(GroupId::Token)?
-            .ok_or(Error::GroupNotFound)?;
+        let group =
+            self.apcb.group(GroupId::Token)?.ok_or(Error::GroupNotFound)?;
         let entry = group
             .entry_exact(
                 EntryId::Token(token_entry_id),
@@ -108,18 +109,30 @@ impl<'a, 'b> TokensMut<'a, 'b> {
                 };
                 if let Some(abl0_version) = self.abl0_version {
                     let valid = match token_entry_id {
-                        TokenEntryId::Bool => BoolToken::valid_for_abl0_raw(abl0_version, token_id),
-                        TokenEntryId::Byte => ByteToken::valid_for_abl0_raw(abl0_version, token_id),
-                        TokenEntryId::Word => WordToken::valid_for_abl0_raw(abl0_version, token_id),
-                        TokenEntryId::Dword => DwordToken::valid_for_abl0_raw(abl0_version, token_id),
-                        TokenEntryId::Unknown(_) => false
+                        TokenEntryId::Bool => BoolToken::valid_for_abl0_raw(
+                            abl0_version,
+                            token_id,
+                        ),
+                        TokenEntryId::Byte => ByteToken::valid_for_abl0_raw(
+                            abl0_version,
+                            token_id,
+                        ),
+                        TokenEntryId::Word => WordToken::valid_for_abl0_raw(
+                            abl0_version,
+                            token_id,
+                        ),
+                        TokenEntryId::Dword => DwordToken::valid_for_abl0_raw(
+                            abl0_version,
+                            token_id,
+                        ),
+                        TokenEntryId::Unknown(_) => false,
                     };
                     if !valid {
                         return Err(Error::TokenVersionMismatch {
                             entry_id: token_entry_id,
                             token_id,
                             abl0_version,
-                        })
+                        });
                     }
                 }
                 self.apcb.insert_token(
@@ -165,11 +178,7 @@ impl<'a, 'b> Tokens<'a, 'b> {
         instance_id: u16,
         board_instance_mask: BoardInstances,
     ) -> Result<Self> {
-        Ok(Self {
-            apcb,
-            instance_id,
-            board_instance_mask,
-        })
+        Ok(Self { apcb, instance_id, board_instance_mask })
     }
 
     pub fn get(
@@ -177,10 +186,8 @@ impl<'a, 'b> Tokens<'a, 'b> {
         token_entry_id: TokenEntryId,
         field_key: u32,
     ) -> Result<u32> {
-        let group = self
-            .apcb
-            .group(GroupId::Token)?
-            .ok_or(Error::GroupNotFound)?;
+        let group =
+            self.apcb.group(GroupId::Token)?.ok_or(Error::GroupNotFound)?;
         let entry = group
             .entry_exact(
                 EntryId::Token(token_entry_id),

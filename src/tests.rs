@@ -766,9 +766,8 @@ mod tests {
         assert!(matches!(entries.next(), None));
 
         assert!(matches!(groups.next(), None));
-        let tokens = apcb
-            .tokens(0, BoardInstances::from_instance(0).unwrap())
-            .unwrap();
+        let tokens =
+            apcb.tokens(0, BoardInstances::from_instance(0).unwrap()).unwrap();
         assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::_4800Baud);
 
         let _tokens = apcb
@@ -788,9 +787,7 @@ mod tests {
             )
             .unwrap();
         assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::_4800Baud);
-        tokens
-            .set_abl_serial_baud_rate(BaudRate::_9600Baud)
-            .unwrap();
+        tokens.set_abl_serial_baud_rate(BaudRate::_9600Baud).unwrap();
         assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::_9600Baud);
         Ok(())
     }
@@ -1191,8 +1188,7 @@ mod tests {
             Ok(_) => {
                 panic!("Validation should have failed")
             }
-            _ => {
-            }
+            _ => {}
         }
         // Try what happens when ABL0 version is old enough
         apcb.validate(Some(0x42)).unwrap();
@@ -1269,16 +1265,14 @@ mod tests {
             Ok(_) => {
                 panic!("Validation should have failed")
             }
-            _ => {
-            }
+            _ => {}
         }
         // Try what happens when ABL0 version is old enough
         match apcb.validate(Some(0x42)) {
             Ok(_) => {
                 panic!("Validation should have failed")
             }
-            _ => {
-            }
+            _ => {}
         }
         Ok(())
     }
@@ -1488,9 +1482,8 @@ mod tests {
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
-        let mut platform_specific_overrides = entry
-            .body_as_struct_sequence_mut::<MutElementRef<'_>>()
-            .unwrap();
+        let mut platform_specific_overrides =
+            entry.body_as_struct_sequence_mut::<MutElementRef<'_>>().unwrap();
         let platform_specific_overrides =
             platform_specific_overrides.iter_mut().unwrap();
         let mut lvdimm_count = 0;
@@ -1561,12 +1554,8 @@ mod tests {
         let element = RdimmDdr4CadBusElement::new(
             2,
             DdrRates::new().with_ddr3200(true),
-            Ddr4DimmRanks::new()
-                .with_single_rank(true)
-                .with_dual_rank(true),
-            Ddr4DimmRanks::new()
-                .with_single_rank(true)
-                .with_dual_rank(true),
+            Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true),
+            Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true),
             0x2a2d2d,
         )
         .unwrap();
@@ -1595,9 +1584,8 @@ mod tests {
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
-        let mut items = entry
-            .body_as_struct_array_mut::<RdimmDdr4CadBusElement>()
-            .unwrap();
+        let mut items =
+            entry.body_as_struct_array_mut::<RdimmDdr4CadBusElement>().unwrap();
         let mut items = items.iter_mut();
         let item = items.next().ok_or(Error::EntryNotFound)?;
 
@@ -1642,12 +1630,8 @@ mod tests {
         let element = Ddr4DataBusElement::new(
             2,
             DdrRates::new().with_ddr3200(true),
-            Ddr4DimmRanks::new()
-                .with_single_rank(true)
-                .with_dual_rank(true),
-            Ddr4DimmRanks::new()
-                .with_single_rank(true)
-                .with_dual_rank(true),
+            Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true),
+            Ddr4DimmRanks::new().with_single_rank(true).with_dual_rank(true),
             RttNom::Off,
             RttWr::Off,
             RttPark::_48Ohm,
@@ -1680,9 +1664,8 @@ mod tests {
         assert!(entry.instance_id() == 0);
         assert!(entry.board_instance_mask() == BoardInstances::all());
 
-        let mut items = entry
-            .body_as_struct_array_mut::<Ddr4DataBusElement>()
-            .unwrap();
+        let mut items =
+            entry.body_as_struct_array_mut::<Ddr4DataBusElement>().unwrap();
         let mut items = items.iter_mut();
         let item = items.next().ok_or(Error::EntryNotFound)?;
 

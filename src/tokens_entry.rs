@@ -1,7 +1,7 @@
 use crate::ondisk::{
     take_header_from_collection, take_header_from_collection_mut, BoolToken,
-    ByteToken, DwordToken, TokenEntryId, WordToken, TOKEN_ENTRY, ENTRY_HEADER,
-    ContextFormat,
+    ByteToken, ContextFormat, DwordToken, TokenEntryId, WordToken,
+    ENTRY_HEADER, TOKEN_ENTRY,
 };
 use crate::types::{Error, FileSystemError, Result};
 use core::convert::TryFrom;
@@ -68,15 +68,13 @@ impl<BufferType> TokensEntryBodyItem<BufferType> {
                 "ENTRY_HEADER::key_size",
             ));
         }
-        let entry_id = TokenEntryId::from_u16(self.entry_id).ok_or(
-            Error::FileSystem(
+        let entry_id =
+            TokenEntryId::from_u16(self.entry_id).ok_or(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
                 "ENTRY_HEADER::entry_id",
-            ),
-        )?;
+            ))?;
         Ok(entry_id)
     }
-
 }
 
 pub struct TokensEntryItem<TokenType> {
@@ -220,8 +218,7 @@ impl<'a> TokensEntryIter<&'a mut [u8]> {
         self.move_insertion_point_before(token_id)?;
         // Move the entries from after the insertion point to the right (in
         // order to make room before for our new entry).
-        self.buf
-            .copy_within(0..self.remaining_used_size, token_size as usize);
+        self.buf.copy_within(0..self.remaining_used_size, token_size as usize);
 
         self.remaining_used_size = self
             .remaining_used_size
@@ -244,10 +241,7 @@ impl<'a> TokensEntryIter<&'a mut [u8]> {
 
         token.key.set(token_id);
         token.value.set(0); // always valid
-        let mut result = TokensEntryItem {
-            entry_id: self.entry_id,
-            token,
-        };
+        let mut result = TokensEntryItem { entry_id: self.entry_id, token };
 
         // This has better error checking
         result.set_value(token_value)?;
@@ -260,8 +254,7 @@ impl<'a> TokensEntryIter<&'a mut [u8]> {
         self.move_point_to(token_id)?;
         let token_size = size_of::<TOKEN_ENTRY>();
         // Move the tokens behind this one to the left
-        self.buf
-            .copy_within(token_size..self.remaining_used_size, 0);
+        self.buf.copy_within(token_size..self.remaining_used_size, 0);
         self.remaining_used_size = self
             .remaining_used_size
             .checked_sub(token_size as usize)
@@ -332,11 +325,7 @@ impl SerdeTokensEntryItem {
             Self::Byte(_) => TokenEntryId::Byte,
             Self::Word(_) => TokenEntryId::Word,
             Self::Dword(_) => TokenEntryId::Dword,
-            Self::Unknown {
-                entry_id,
-                tag: _,
-                value: _,
-            } => *entry_id,
+            Self::Unknown { entry_id, tag: _, value: _ } => *entry_id,
         }
     }
 }
@@ -389,14 +378,9 @@ impl core::convert::TryFrom<SerdeTokensEntryItem> for TOKEN_ENTRY {
             SerdeTokensEntryItem::Byte(t) => TOKEN_ENTRY::try_from(&t),
             SerdeTokensEntryItem::Word(t) => TOKEN_ENTRY::try_from(&t),
             SerdeTokensEntryItem::Dword(t) => TOKEN_ENTRY::try_from(&t),
-            SerdeTokensEntryItem::Unknown {
-                entry_id: _,
-                tag,
-                value,
-            } => Ok(Self {
-                key: tag.into(),
-                value: value.into(),
-            }),
+            SerdeTokensEntryItem::Unknown { entry_id: _, tag, value } => {
+                Ok(Self { key: tag.into(), value: value.into() })
+            }
         }
     }
 }
@@ -512,10 +496,7 @@ impl<'a> TokensEntryIter<&'a [u8]> {
                 ));
             }
         };
-        Ok(TokensEntryItem {
-            entry_id,
-            token: header,
-        })
+        Ok(TokensEntryItem { entry_id, token: header })
     }
     pub(crate) fn next1(&mut self) -> Result<TokensEntryItem<&'a TOKEN_ENTRY>> {
         if self.remaining_used_size == 0 {
@@ -538,12 +519,11 @@ impl<'a> TokensEntryIter<&'a [u8]> {
     }
     /// Validates the entries (recursively).  Also consumes iterator.
     pub(crate) fn validate(mut self) -> Result<()> {
-        let context_format = ContextFormat::from_u8(self.context_format).ok_or(
-            Error::FileSystem(
+        let context_format = ContextFormat::from_u8(self.context_format)
+            .ok_or(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
                 "ENTRY_HEADER::context_format",
-            ),
-        )?;
+            ))?;
         if context_format != ContextFormat::SortAscending {
             return Err(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
@@ -556,7 +536,7 @@ impl<'a> TokensEntryIter<&'a [u8]> {
                 Ok(item) => {
                     let id = item.id();
                     if id < previous_id {
-                        return Err(Error::TokenOrderingViolation)
+                        return Err(Error::TokenOrderingViolation);
                     }
                     previous_id = id
                 }
@@ -593,7 +573,10 @@ impl<BufferType: ByteSlice> TokensEntryBodyItem<BufferType> {
             remaining_used_size: self.used_size,
         })
     }
-    pub fn token(&self, token_id: u32) -> Option<TokensEntryItem<&'_ TOKEN_ENTRY>> {
+    pub fn token(
+        &self,
+        token_id: u32,
+    ) -> Option<TokensEntryItem<&'_ TOKEN_ENTRY>> {
         for entry in self.iter().ok()? {
             if entry.id() == token_id {
                 return Some(entry);
@@ -661,7 +644,11 @@ impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
 }
 
 impl TokenEntryId {
-    pub(crate) fn ensure_abl0_compatibility(&self, abl0_version: u32, tokens: &TokensEntryBodyItem<&[u8]>) -> Result<()> {
+    pub(crate) fn ensure_abl0_compatibility(
+        &self,
+        abl0_version: u32,
+        tokens: &TokensEntryBodyItem<&[u8]>,
+    ) -> Result<()> {
         match *self {
             TokenEntryId::Bool => {
                 for token in tokens.iter()? {
@@ -671,7 +658,7 @@ impl TokenEntryId {
                             entry_id: *self,
                             token_id,
                             abl0_version,
-                        })
+                        });
                     }
                 }
             }
@@ -683,7 +670,7 @@ impl TokenEntryId {
                             entry_id: *self,
                             token_id,
                             abl0_version,
-                        })
+                        });
                     }
                 }
             }
@@ -695,7 +682,7 @@ impl TokenEntryId {
                             entry_id: *self,
                             token_id,
                             abl0_version,
-                        })
+                        });
                     }
                 }
             }
@@ -707,12 +694,11 @@ impl TokenEntryId {
                             entry_id: *self,
                             token_id,
                             abl0_version,
-                        })
+                        });
                     }
                 }
             }
-            TokenEntryId::Unknown(_) => {
-            }
+            TokenEntryId::Unknown(_) => {}
         }
         Ok(())
     }

@@ -121,10 +121,7 @@ impl<'a> GroupIter<'a> {
 
         let body = EntryItemBody::<&[u8]>::from_slice(header, body)?;
 
-        Ok(EntryItem {
-            header,
-            body,
-        })
+        Ok(EntryItem { header, body })
     }
 
     pub(crate) fn next1(&mut self) -> Result<EntryItem<'a>> {
@@ -295,10 +292,7 @@ impl<'a> GroupMutIter<'a> {
         };
 
         let body = EntryItemBody::<&mut [u8]>::from_slice(header, body)?;
-        Ok(EntryMutItem {
-            header,
-            body,
-        })
+        Ok(EntryMutItem { header, body })
     }
 
     /// Find the place BEFORE which the entry (GROUP_ID, ENTRY_ID, INSTANCE_ID,
@@ -413,12 +407,10 @@ impl<'a> GroupMutIter<'a> {
                 "ENTRY_HEADER:entry_size",
             ))?;
         let padding_size =
-            padding_size
-                .checked_sub(payload_size)
-                .ok_or(Error::FileSystem(
-                    FileSystemError::PayloadTooBig,
-                    "ENTRY_HEADER:entry_size",
-                ))?;
+            padding_size.checked_sub(payload_size).ok_or(Error::FileSystem(
+                FileSystemError::PayloadTooBig,
+                "ENTRY_HEADER:entry_size",
+            ))?;
 
         // Make sure that move_insertion_point_before does not notice the new
         // uninitialized entry
@@ -469,9 +461,7 @@ impl<'a> GroupMutIter<'a> {
         // Note: The following is settable by the user via EntryMutItem
         // set-accessors: context_type, context_format, unit_size,
         // priority_mask, key_size, key_pos
-        header
-            .board_instance_mask
-            .set(u16::from(board_instance_mask));
+        header.board_instance_mask.set(u16::from(board_instance_mask));
         let body = take_body_from_collection_mut(&mut buf, payload_size, 1)
             .ok_or(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
@@ -590,15 +580,13 @@ impl<'a> GroupMutItem<'a> {
             board_instance_mask,
             size_diff,
         )?;
-        let entry_size: u16 = entry_size
-            .try_into()
-            .map_err(|_| Error::ArithmeticOverflow)?;
+        let entry_size: u16 =
+            entry_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
         let entry = entries.next().ok_or(Error::EntryNotFound)?;
 
         if size_diff > 0 {
-            let size_diff: usize = size_diff
-                .try_into()
-                .map_err(|_| Error::ArithmeticOverflow)?;
+            let size_diff: usize =
+                size_diff.try_into().map_err(|_| Error::ArithmeticOverflow)?;
             old_used_size = old_used_size
                 .checked_sub(size_diff)
                 .ok_or(Error::ArithmeticOverflow)?
@@ -694,9 +682,8 @@ impl<'a> GroupMutItem<'a> {
             .entry_exact_mut(entry_id, instance_id, board_instance_mask)
             .ok_or(Error::EntryNotFound)?;
         entry.delete_token(token_id)?;
-        let mut token_size_diff: i64 = token_size
-            .try_into()
-            .map_err(|_| Error::ArithmeticOverflow)?;
+        let mut token_size_diff: i64 =
+            token_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
         token_size_diff = -token_size_diff;
         #[assure("If `size_diff > 0`, caller needs to have expanded the group by `size_diff` already.  If `size_diff < 0`, caller needs to call `resize_entry_by` BEFORE resizing the group.", reason = "Our caller will do that, after calling us")]
         self.resize_entry_by(

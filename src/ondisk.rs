@@ -13,8 +13,8 @@ use crate::types::Result;
 use byteorder::{LittleEndian, ReadBytesExt};
 use core::clone::Clone;
 use core::cmp::Ordering;
-use core::convert::TryInto;
 use core::convert::TryFrom;
+use core::convert::TryInto;
 use core::mem::{size_of, take};
 use core::num::NonZeroU8;
 use four_cc::FourCC;
@@ -262,7 +262,6 @@ type SerdeHex16 = u16;
 type SerdeHex32 = u32;
 #[cfg(not(feature = "serde-hex"))]
 type SerdeHex64 = u64;
-
 
 macro_rules! make_array_accessors {
     ($res_ty:ty, $array_ty:ty) => {
@@ -1135,7 +1134,7 @@ make_accessors! {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum ContextFormat {
     Raw = 0,
-    SortAscending = 1,  // (sort by key)
+    SortAscending = 1, // (sort by key)
 }
 
 #[derive(FromPrimitive, ToPrimitive, Debug, PartialEq, Copy, Clone)]
@@ -1793,10 +1792,7 @@ pub mod df {
     impl SlinkRegion {
         // Not sure why AMD still uses those--but it does use them, so whatever.
         pub fn dummy(socket: u8) -> SlinkRegion {
-            SlinkRegion {
-                socket,
-                ..Self::default()
-            }
+            SlinkRegion { socket, ..Self::default() }
         }
     }
 
@@ -2085,10 +2081,7 @@ pub mod memory {
     }
     impl Default for AblBreakpointControl {
         fn default() -> Self {
-            Self {
-                enable_breakpoint: BU8(1),
-                break_on_all_dies: BU8(1),
-            }
+            Self { enable_breakpoint: BU8(1), break_on_all_dies: BU8(1) }
         }
     }
 
@@ -3762,18 +3755,10 @@ pub mod memory {
 
     impl Gpio {
         pub fn new(pin: u8, iomux_control: u8, bank_control: u8) -> Self {
-            Self {
-                pin,
-                iomux_control,
-                bank_control,
-            }
+            Self { pin, iomux_control, bank_control }
         }
         pub fn default() -> Self {
-            Self {
-                pin: 0,
-                iomux_control: 0,
-                bank_control: 0,
-            }
+            Self { pin: 0, iomux_control: 0, bank_control: 0 }
         }
     }
 
@@ -4344,9 +4329,7 @@ Clone)]
         }
         #[inline]
         pub fn invalid() -> DdrPostPackageRepairElement {
-            Self {
-                body: [0, 0, 0, 0, 0, 0, 0, 0xff],
-            }
+            Self { body: [0, 0, 0, 0, 0, 0, 0, 0xff] }
         }
         #[inline]
         pub fn set_body(&mut self, value: Option<DdrPostPackageRepairBody>) {
@@ -5959,10 +5942,7 @@ pub mod psp {
 
     impl Default for BoardIdGettingMethodCustom {
         fn default() -> Self {
-            Self {
-                access_method: 0xF.into(),
-                feature_mask: 0.into(),
-            }
+            Self { access_method: 0xF.into(), feature_mask: 0.into() }
         }
     }
 
@@ -6017,10 +5997,7 @@ pub mod psp {
 
     impl BoardIdGettingMethodGpio {
         pub fn new(bit_locations: [Gpio; 4]) -> Self {
-            Self {
-                access_method: 3.into(),
-                bit_locations,
-            }
+            Self { access_method: 3.into(), bit_locations }
         }
     }
 
@@ -7304,7 +7281,7 @@ pub enum CbsMemSpeedDdr4 {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum FchSmbusSpeed {
     Value(u8), /* x in 66 MHz / (4 x) */
-    // FIXME: Auto ?
+               // FIXME: Auto ?
 }
 impl FromPrimitive for FchSmbusSpeed {
     fn from_u64(value: u64) -> Option<Self> {

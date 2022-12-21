@@ -1,4 +1,3 @@
-
 const V3_CONFIG_STR: &str = r#"
 {
         version: "0.1.0",
@@ -214,9 +213,8 @@ const V2_CONFIG_STR: &str = r#"
 #[cfg(feature = "serde")]
 #[test]
 fn test_v3_header() {
-    let configuration: amd_apcb::Apcb =
-        serde_yaml::from_str(&V3_CONFIG_STR)
-            .expect("configuration be valid JSON");
+    let configuration: amd_apcb::Apcb = serde_yaml::from_str(&V3_CONFIG_STR)
+        .expect("configuration be valid JSON");
     let header = configuration.header().unwrap();
     assert_eq!(header.unique_apcb_instance().unwrap(), 2);
     assert_eq!(header.header_size.get(), 128);
@@ -227,9 +225,8 @@ fn test_v3_header() {
 #[cfg(feature = "serde")]
 #[test]
 fn test_v2_header() {
-    let configuration: amd_apcb::Apcb =
-        serde_yaml::from_str(&V2_CONFIG_STR)
-            .expect("configuration be valid JSON");
+    let configuration: amd_apcb::Apcb = serde_yaml::from_str(&V2_CONFIG_STR)
+        .expect("configuration be valid JSON");
     let header = configuration.header().unwrap();
     assert_eq!(header.header_size.get(), 32);
     assert_eq!(header.unique_apcb_instance().unwrap(), 2);

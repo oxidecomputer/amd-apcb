@@ -4,8 +4,7 @@ use crate::ondisk::{
     take_header_from_collection, take_header_from_collection_mut,
     BoardInstances, ContextFormat, ContextType, EntryCompatible, EntryId,
     HeaderWithTail, MutSequenceElementFromBytes, PriorityLevels,
-    SequenceElementFromBytes,
-    TOKEN_ENTRY,
+    SequenceElementFromBytes, TOKEN_ENTRY,
 };
 use crate::ondisk::{Parameters, ParametersIter};
 use crate::tokens_entry::TokensEntryBodyItem;
@@ -40,7 +39,9 @@ pub enum EntryItemBody<BufferType> {
 }
 
 impl<'a> EntryItemBody<&'a mut [u8]> {
-    pub(crate) fn from_slice(header: &ENTRY_HEADER, b: &'a mut [u8],
+    pub(crate) fn from_slice(
+        header: &ENTRY_HEADER,
+        b: &'a mut [u8],
     ) -> Result<EntryItemBody<&'a mut [u8]>> {
         let context_type = ContextType::from_u8(header.context_type).ok_or(
             Error::FileSystem(
@@ -203,10 +204,7 @@ pub struct StructArrayEntryMutItem<'a, T: Sized + FromBytes + AsBytes> {
 
 impl<'a, T: 'a + Sized + FromBytes + AsBytes> StructArrayEntryMutItem<'a, T> {
     pub fn iter_mut(&mut self) -> StructArrayEntryMutIter<'_, T> {
-        StructArrayEntryMutIter {
-            buf: self.buf,
-            _item: PhantomData,
-        }
+        StructArrayEntryMutIter { buf: self.buf, _item: PhantomData }
     }
 }
 
@@ -351,10 +349,7 @@ impl<'a> EntryMutItem<'a> {
                         take_header_from_collection_mut::<H>(&mut buf)?;
                     Some((
                         header,
-                        StructArrayEntryMutItem {
-                            buf,
-                            _item: PhantomData,
-                        },
+                        StructArrayEntryMutItem { buf, _item: PhantomData },
                     ))
                 } else {
                     None
@@ -594,7 +589,8 @@ impl<'a> Serialize for EntryItem<'a> {
         // manually.
         match &self.body {
             EntryItemBody::<_>::Tokens(tokens) => {
-                let v = tokens.iter()
+                let v = tokens
+                    .iter()
                     .map_err(|e| serde::ser::Error::custom(format!("{:?}", e)))?
                     .collect::<Vec<_>>();
                 state.serialize_field("tokens", &v)?;
@@ -1162,10 +1158,7 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
                     header.ok_or_else(|| de::Error::missing_field("header"))?;
                 let body =
                     body.ok_or_else(|| de::Error::missing_field("body"))?;
-                Ok(SerdeEntryItem {
-                    header: header,
-                    body: body,
-                })
+                Ok(SerdeEntryItem { header: header, body: body })
             }
         }
         let mut result = deserializer.deserialize_struct(
@@ -1175,10 +1168,14 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
         )?;
         let header = &result.header;
         if header.context_format == ContextFormat::SortAscending as u8
-        && header.context_type == (ContextType::Tokens as u8) {
+            && header.context_type == (ContextType::Tokens as u8)
+        {
             let body = result.body.as_mut_slice();
-            let mut tokens = zerocopy::LayoutVerified::<_, [crate::ondisk::TOKEN_ENTRY]>::new_slice_unaligned(body)
-                .ok_or(de::Error::custom("tokens could not be sorted"))?;
+            let mut tokens = zerocopy::LayoutVerified::<
+                _,
+                [crate::ondisk::TOKEN_ENTRY],
+            >::new_slice_unaligned(body)
+            .ok_or(de::Error::custom("tokens could not be sorted"))?;
             tokens.sort_by(|a, b| a.key.get().cmp(&b.key.get()));
         }
         Ok(result)
@@ -1261,10 +1258,7 @@ pub struct StructArrayEntryItem<'a, T: Sized + FromBytes> {
 
 impl<'a, T: 'a + Sized + FromBytes> StructArrayEntryItem<'a, T> {
     pub fn iter(&self) -> StructArrayEntryIter<'_, T> {
-        StructArrayEntryIter {
-            buf: self.buf,
-            _item: PhantomData,
-        }
+        StructArrayEntryIter { buf: self.buf, _item: PhantomData }
     }
 
     /// This is mostly useful for Naples Parameters.  They are modeled as a
@@ -1392,10 +1386,7 @@ impl<'a> EntryItem<'a> {
                     let header = take_header_from_collection::<H>(&mut buf)?;
                     Some((
                         header,
-                        StructArrayEntryItem {
-                            buf,
-                            _item: PhantomData,
-                        },
+                        StructArrayEntryItem { buf, _item: PhantomData },
                     ))
                 } else {
                     None
@@ -1413,10 +1404,7 @@ impl<'a> EntryItem<'a> {
                 if T::is_entry_compatible(self.id(), buf) {
                     let element_count: usize = buf.len() / size_of::<T>();
                     if buf.len() == element_count * size_of::<T>() {
-                        Some(StructArrayEntryItem {
-                            buf,
-                            _item: PhantomData,
-                        })
+                        Some(StructArrayEntryItem { buf, _item: PhantomData })
                     } else {
                         None
                     }
