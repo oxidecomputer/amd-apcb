@@ -75,15 +75,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     PriorityLevels,
     SerdePriorityLevels,
-    [
-        hard_force,
-        high,
-        medium,
-        event_logging,
-        low,
-        normal,
-        _reserved_1,
-    ]
+    [hard_force, high, medium, event_logging, low, normal, _reserved_1,]
 );
 
 impl_struct_serde_conversion!(
@@ -270,14 +262,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     GROUP_HEADER,
     SerdeGROUP_HEADER,
-    [
-        signature,
-        group_id,
-        header_size,
-        version,
-        _reserved_,
-        group_size,
-    ]
+    [signature, group_id, header_size, version, _reserved_, group_size,]
 );
 impl_struct_serde_conversion!(
     BoardIdGettingMethodEeprom,
@@ -303,14 +288,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     SlinkRegion,
     SerdeSlinkRegion,
-    [
-        size,
-        alignment,
-        socket,
-        phys_nbio_map,
-        interleaving,
-        _reserved_,
-    ]
+    [size, alignment, socket, phys_nbio_map, interleaving, _reserved_,]
 );
 impl_struct_serde_conversion!(
     AblConsoleOutControl,
@@ -397,7 +375,11 @@ impl_struct_serde_conversion!(
     SerdeLrMaxFreqElement,
     [dimm_slots_per_channel, _reserved_, conditions, speeds,]
 );
-impl_struct_serde_conversion!(Gpio, SerdeGpio, [pin, iomux_control, bank_control,]);
+impl_struct_serde_conversion!(
+    Gpio,
+    SerdeGpio,
+    [pin, iomux_control, bank_control,]
+);
 impl_struct_serde_conversion!(
     ErrorOutControlBeepCode,
     CustomSerdeErrorOutControlBeepCode,
@@ -492,13 +474,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     DimmSlotsSelection,
     SerdeDimmSlotsSelection,
-    [
-        dimm_slot_0,
-        dimm_slot_1,
-        dimm_slot_2,
-        dimm_slot_3,
-        _reserved_1,
-    ]
+    [dimm_slot_0, dimm_slot_1, dimm_slot_2, dimm_slot_3, _reserved_1,]
 );
 impl_struct_serde_conversion!(
     ChannelIdsSelection,
@@ -570,15 +546,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     MemBusSpeed,
     SerdeMemBusSpeed,
-    [
-        type_,
-        payload_size,
-        sockets,
-        channels,
-        dimms,
-        timing_mode,
-        bus_speed,
-    ]
+    [type_, payload_size, sockets, channels, dimms, timing_mode, bus_speed,]
 );
 impl_struct_serde_conversion!(
     MaxCsPerChannel,
@@ -588,40 +556,17 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     MemTechnology,
     SerdeMemTechnology,
-    [
-        type_,
-        payload_size,
-        sockets,
-        channels,
-        dimms,
-        technology_type,
-    ]
+    [type_, payload_size, sockets, channels, dimms, technology_type,]
 );
 impl_struct_serde_conversion!(
     WriteLevellingSeedDelay,
     SerdeWriteLevellingSeedDelay,
-    [
-        type_,
-        payload_size,
-        sockets,
-        channels,
-        dimms,
-        seed,
-        ecc_seed,
-    ]
+    [type_, payload_size, sockets, channels, dimms, seed, ecc_seed,]
 );
 impl_struct_serde_conversion!(
     RxEnSeed,
     SerdeRxEnSeed,
-    [
-        type_,
-        payload_size,
-        sockets,
-        channels,
-        dimms,
-        seed,
-        ecc_seed,
-    ]
+    [type_, payload_size, sockets, channels, dimms, seed, ecc_seed,]
 );
 impl_struct_serde_conversion!(
     LrDimmNoCs6Cs7Routing,
@@ -674,11 +619,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     IdApcbMapping,
     SerdeIdApcbMapping,
-    [
-        id_and_feature_mask,
-        id_and_feature_value,
-        board_instance_index,
-    ]
+    [id_and_feature_mask, id_and_feature_value, board_instance_index,]
 );
 impl_struct_serde_conversion!(
     BoardIdGettingMethodCustom,
@@ -804,5 +745,12 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     MemPmuBistTestSelect,
     SerdeMemPmuBistTestSelect,
-    [algorithm_1, algorithm_2, algorithm_3, algorithm_4, algorithm_5, _reserved_0,]
+    [
+        algorithm_1,
+        algorithm_2,
+        algorithm_3,
+        algorithm_4,
+        algorithm_5,
+        _reserved_0,
+    ]
 );

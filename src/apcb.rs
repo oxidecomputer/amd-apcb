@@ -49,9 +49,7 @@ pub struct ApcbIoOptions {
 
 impl Default for ApcbIoOptions {
     fn default() -> Self {
-        Self {
-            check_checksum: true,
-        }
+        Self { check_checksum: true }
     }
 }
 
@@ -95,18 +93,21 @@ use core::convert::TryFrom;
 impl<'a> TryFrom<SerdeApcb> for Apcb<'a> {
     type Error = Error;
     fn try_from(serde_apcb: SerdeApcb) -> Result<Self> {
-        let buf =
-            Cow::from(vec![0xFFu8; Self::MAX_SIZE]);
+        let buf = Cow::from(vec![0xFFu8; Self::MAX_SIZE]);
         let mut apcb = Apcb::create(buf, 42, &ApcbIoOptions::default())?;
         *apcb.header_mut()? = serde_apcb.header;
         match serde_apcb.v3_header_ext {
             Some(v3) => {
-                assert!(size_of::<V3_HEADER_EXT>() + size_of::<V2_HEADER>() == 128);
+                assert!(
+                    size_of::<V3_HEADER_EXT>() + size_of::<V2_HEADER>() == 128
+                );
                 apcb.header_mut()?.header_size.set(128);
                 apcb.v3_header_ext_mut()?.map(|mut v| *v = v3);
             }
             None => {
-                apcb.header_mut()?.header_size.set(size_of::<V2_HEADER>().try_into().unwrap());
+                apcb.header_mut()?
+                    .header_size
+                    .set(size_of::<V2_HEADER>().try_into().unwrap());
             }
         }
         // We reset apcb_size to header_size as this is naturally extended as we
@@ -250,11 +251,7 @@ impl<'a> ApcbIterMut<'a> {
             };
         let body_len = body.len();
 
-        Ok(GroupMutItem {
-            header,
-            buf: body,
-            used_size: body_len,
-        })
+        Ok(GroupMutItem { header, buf: body, used_size: body_len })
     }
 
     /// Moves the point to the group with the given GROUP_ID.  Returns (offset,
@@ -367,11 +364,7 @@ impl<'a> ApcbIter<'a> {
         };
         let body_len = body.len();
 
-        Ok(GroupItem {
-            header,
-            buf: body,
-            used_size: body_len,
-        })
+        Ok(GroupItem { header, buf: body, used_size: body_len })
     }
     pub(crate) fn next1(&mut self) -> Result<GroupItem<'a>> {
         if self.remaining_used_size == 0 {
@@ -1051,12 +1044,10 @@ impl<'a> Apcb<'a> {
         let buf = &mut self.beginning_of_groups_mut()?[offset..];
         buf.copy_within(group_size..(apcb_size as usize), 0);
         self.used_size =
-            self.used_size
-                .checked_sub(group_size)
-                .ok_or(Error::FileSystem(
-                    FileSystemError::InconsistentHeader,
-                    "GROUP_HEADER::group_size",
-                ))?;
+            self.used_size.checked_sub(group_size).ok_or(Error::FileSystem(
+                FileSystemError::InconsistentHeader,
+                "GROUP_HEADER::group_size",
+            ))?;
         Ok(())
     }
 
@@ -1095,9 +1086,8 @@ impl<'a> Apcb<'a> {
 
         let size = size_of::<GROUP_HEADER>();
         let old_apcb_size = self.header()?.apcb_size.get();
-        let new_apcb_size = old_apcb_size
-            .checked_add(size as u32)
-            .ok_or(Error::OutOfSpace)?;
+        let new_apcb_size =
+            old_apcb_size.checked_add(size as u32).ok_or(Error::OutOfSpace)?;
         let old_used_size = self.used_size;
         let new_used_size =
             old_used_size.checked_add(size).ok_or(Error::OutOfSpace)?;
@@ -1127,11 +1117,7 @@ impl<'a> Apcb<'a> {
             ))?;
         let body_len = body.len();
 
-        Ok(GroupMutItem {
-            header,
-            buf: body,
-            used_size: body_len,
-        })
+        Ok(GroupMutItem { header, buf: body, used_size: body_len })
     }
 
     pub(crate) fn calculate_checksum(
@@ -1304,10 +1290,7 @@ impl<'a> Apcb<'a> {
                 ));
             }
         }
-        let result = Self {
-            backing_store: bs,
-            used_size,
-        };
+        let result = Self { backing_store: bs, used_size };
 
         match result.groups()?.validate() {
             Ok(_) => {}
@@ -1372,9 +1355,7 @@ impl<'a> Apcb<'a> {
                 "V2_HEADER",
             ))?;
             *header = Default::default();
-            header
-                .unique_apcb_instance
-                .set(initial_unique_apcb_instance);
+            header.unique_apcb_instance.set(initial_unique_apcb_instance);
 
             let v3_header_ext =
                 take_header_from_collection_mut::<V3_HEADER_EXT>(
@@ -1422,7 +1403,13 @@ impl<'a> Apcb<'a> {
         priority_mask: PriorityLevels,
         abl0_version: Option<u32>,
     ) -> Result<TokensMut<'a, 'b>> {
-        TokensMut::new(self, instance_id, board_instance_mask, priority_mask, abl0_version)
+        TokensMut::new(
+            self,
+            instance_id,
+            board_instance_mask,
+            priority_mask,
+            abl0_version,
+        )
     }
     /// Constructs a attribute accessor proxy for the given combination of
     /// (INSTANCE_ID, BOARD_INSTANCE_MASK).  ENTRY_ID is inferred on access.
@@ -1436,23 +1423,23 @@ impl<'a> Apcb<'a> {
     /// Ensures that the APCB is compatible with the ABL0_VERSION given
     /// (which is supposed to be the version extracted from the Abl0 blob
     /// file--or None if it could not be found).
-    pub(crate) fn ensure_abl0_compatibility(&self, abl0_version: Option<u32>) -> Result<()> {
+    pub(crate) fn ensure_abl0_compatibility(
+        &self,
+        abl0_version: Option<u32>,
+    ) -> Result<()> {
         if let Some(abl0_version) = abl0_version {
             if let Ok(Some(group)) = self.group(GroupId::Token) {
                 for entry in group.entries() {
                     let entry_id = entry.id();
                     let tokens = match &entry.body {
-                        EntryItemBody::<_>::Tokens(tokens) => {
-                            tokens
-                        }
-                        _ => {
-                            return Err(Error::EntryTypeMismatch)
-                        }
+                        EntryItemBody::<_>::Tokens(tokens) => tokens,
+                        _ => return Err(Error::EntryTypeMismatch),
                     };
                     if let EntryId::Token(token_entry_id) = entry_id {
-                        token_entry_id.ensure_abl0_compatibility(abl0_version, tokens)?;
+                        token_entry_id
+                            .ensure_abl0_compatibility(abl0_version, tokens)?;
                     } else {
-                        return Err(Error::EntryTypeMismatch)
+                        return Err(Error::EntryTypeMismatch);
                     }
                 }
             }
