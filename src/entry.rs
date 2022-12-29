@@ -4,7 +4,7 @@ use crate::ondisk::{
     take_header_from_collection, take_header_from_collection_mut,
     BoardInstances, ContextFormat, ContextType, EntryCompatible, EntryId,
     HeaderWithTail, MutSequenceElementFromBytes, PriorityLevels,
-    SequenceElementFromBytes, TOKEN_ENTRY,
+    SequenceElementFromBytes,
 };
 use crate::ondisk::{Parameters, ParametersIter};
 use crate::tokens_entry::TokensEntryBodyItem;
@@ -16,7 +16,7 @@ use pre::pre;
 use zerocopy::{AsBytes, FromBytes};
 
 #[cfg(feature = "serde")]
-use crate::ondisk::Parameter;
+use crate::ondisk::{Parameter, TOKEN_ENTRY};
 #[cfg(feature = "serde")]
 use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
 #[cfg(feature = "serde")]
