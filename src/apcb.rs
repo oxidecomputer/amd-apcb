@@ -530,7 +530,7 @@ impl<'a> Apcb<'a> {
     }
     pub fn groups(&self) -> Result<ApcbIter<'_>> {
         Ok(ApcbIter {
-            buf: &*self.beginning_of_groups()?,
+            buf: self.beginning_of_groups()?,
             remaining_used_size: self.used_size,
         })
     }
@@ -617,6 +617,7 @@ impl<'a> Apcb<'a> {
         let self_beginning_of_groups_len = self.beginning_of_groups()?.len();
         let mut groups = self.groups_mut()?;
         let (offset, old_group_size) = groups.move_point_to(group_id)?;
+        #[allow(clippy::comparison_chain)]
         if size_diff > 0 {
             // Grow
 
@@ -687,6 +688,7 @@ impl<'a> Apcb<'a> {
         self.group_mut(group_id)?.ok_or(Error::GroupNotFound)
     }
     /// Note: board_instance_mask needs to be exact.
+    #[allow(clippy::too_many_arguments)]
     #[pre]
     fn internal_insert_entry(
         &mut self,
@@ -1342,9 +1344,7 @@ impl<'a> Apcb<'a> {
         #[cfg(feature = "serde")]
         let backing_store: &mut [u8] = bs.to_mut();
 
-        for i in 0..backing_store.len() {
-            backing_store[i] = 0xFF;
-        }
+        backing_store.fill(0xFF);
         {
             let mut backing_store = &mut *backing_store;
             let mut header = take_header_from_collection_mut::<V2_HEADER>(

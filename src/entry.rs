@@ -1271,9 +1271,9 @@ impl<'a, T: 'a + Sized + FromBytes> StructArrayEntryItem<'a, T> {
 
 /// Naples
 impl Parameters {
-    pub fn iter<'a>(
-        tail: StructArrayEntryItem<'a, u8>,
-    ) -> Result<ParametersIter<'a>> {
+    pub fn iter(
+        tail: StructArrayEntryItem<'_, u8>,
+    ) -> Result<ParametersIter<'_>> {
         ParametersIter::new(tail.into_slice())
     }
     pub fn get(
@@ -1281,13 +1281,10 @@ impl Parameters {
         key: ParameterTokenConfig,
     ) -> Result<u64> {
         for parameter in Self::iter(tail)? {
-            match parameter.token() {
-                Ok(t) => {
-                    if t == key {
-                        return Ok(parameter.value()?);
-                    }
+            if let Ok(t) = parameter.token() {
+                if t == key {
+                    return parameter.value();
                 }
-                Err(_) => {}
             }
         }
         Err(Error::ParameterNotFound)
