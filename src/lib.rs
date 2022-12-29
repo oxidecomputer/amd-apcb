@@ -267,7 +267,6 @@ care--as opposed to what bitfield itself would do if given a chance).
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(elided_lifetimes_in_paths)]
 #![allow(clippy::collapsible_if)]
-#![feature(generic_associated_types)]
 
 #[cfg(test)]
 #[macro_use]
