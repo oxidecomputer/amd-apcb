@@ -1,3 +1,4 @@
+#[cfg(feature = "serde")]
 const V3_CONFIG_STR: &str = r#"
 {
         version: "0.1.0",
@@ -90,6 +91,7 @@ const V3_CONFIG_STR: &str = r#"
 }
 "#;
 
+#[cfg(feature = "serde")]
 const INVALID_CONFIG_STR: &str = r#"
 {
         version: "0.1.0",
@@ -182,6 +184,7 @@ const INVALID_CONFIG_STR: &str = r#"
 }
 "#;
 
+#[cfg(feature = "serde")]
 const V2_CONFIG_STR: &str = r#"
 {
         version: "0.1.0",

@@ -187,17 +187,13 @@ impl GroupItem<'_> {
         instance_id: u16,
         board_instance_mask: BoardInstances,
     ) -> Option<EntryItem<'_>> {
-        for entry in self.entries() {
-            if entry.id() == id
+        self.entries().find(|entry| {
+            entry.id() == id
                 && entry.instance_id() == instance_id
                 && u16::from(entry.board_instance_mask())
                     & u16::from(board_instance_mask)
                     != 0
-            {
-                return Some(entry);
-            }
-        }
-        None
+        })
     }
 
     /// This finds the entry with the given ID, INSTANCE_ID and exact
@@ -208,20 +204,16 @@ impl GroupItem<'_> {
         instance_id: u16,
         board_instance_mask: BoardInstances,
     ) -> Option<EntryItem<'_>> {
-        for entry in self.entries() {
-            if entry.id() == id
+        self.entries().find(|entry| {
+            entry.id() == id
                 && entry.instance_id() == instance_id
                 && entry.board_instance_mask() == board_instance_mask
-            {
-                return Some(entry);
-            }
-        }
-        None
+        })
     }
 
     pub fn entries(&self) -> GroupIter<'_> {
         GroupIter {
-            header: &*self.header,
+            header: self.header,
             buf: self.buf,
             remaining_used_size: self.used_size,
         }
@@ -384,6 +376,7 @@ impl<'a> GroupMutIter<'a> {
     }
     /// Inserts the given entry data at the right spot.
     #[pre("Caller already grew the group by `payload_size + size_of::<ENTRY_HEADER>()`")]
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn insert_entry(
         &mut self,
         entry_id: EntryId,
@@ -512,17 +505,13 @@ impl<'a> GroupMutItem<'a> {
         instance_id: u16,
         board_instance_mask: BoardInstances,
     ) -> Option<EntryMutItem<'_>> {
-        for entry in self.entries_mut() {
-            if entry.id() == id
+        self.entries_mut().find(|entry| {
+            entry.id() == id
                 && entry.instance_id() == instance_id
                 && u16::from(entry.board_instance_mask())
                     & u16::from(board_instance_mask)
                     != 0
-            {
-                return Some(entry);
-            }
-        }
-        None
+        })
     }
 
     /// Note: BOARD_INSTANCE_MASK needs to be exact.
@@ -535,15 +524,11 @@ impl<'a> GroupMutItem<'a> {
         instance_id: u16,
         board_instance_mask: BoardInstances,
     ) -> Option<EntryMutItem<'_>> {
-        for entry in self.entries_mut() {
-            if entry.id() == id
+        self.entries_mut().find(|entry| {
+            entry.id() == id
                 && entry.instance_id() == instance_id
                 && entry.board_instance_mask() == board_instance_mask
-            {
-                return Some(entry);
-            }
-        }
-        None
+        })
     }
 
     pub(crate) fn delete_entry(

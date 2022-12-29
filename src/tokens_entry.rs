@@ -210,7 +210,7 @@ impl<'a> TokensEntryIter<&'a mut [u8]> {
         // uninitialized token
         self.remaining_used_size = self
             .remaining_used_size
-            .checked_sub(token_size as usize)
+            .checked_sub(token_size)
             .ok_or(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
                 "TOKEN_ENTRY",
@@ -218,11 +218,11 @@ impl<'a> TokensEntryIter<&'a mut [u8]> {
         self.move_insertion_point_before(token_id)?;
         // Move the entries from after the insertion point to the right (in
         // order to make room before for our new entry).
-        self.buf.copy_within(0..self.remaining_used_size, token_size as usize);
+        self.buf.copy_within(0..self.remaining_used_size, token_size);
 
         self.remaining_used_size = self
             .remaining_used_size
-            .checked_add(token_size as usize)
+            .checked_add(token_size)
             .ok_or(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
                 "TOKEN_ENTRY",
@@ -257,7 +257,7 @@ impl<'a> TokensEntryIter<&'a mut [u8]> {
         self.buf.copy_within(token_size..self.remaining_used_size, 0);
         self.remaining_used_size = self
             .remaining_used_size
-            .checked_sub(token_size as usize)
+            .checked_sub(token_size)
             .ok_or(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
                 "TOKEN_ENTRY",
@@ -415,7 +415,7 @@ impl<'a> Serialize for TokensEntryItem<&'a TOKEN_ENTRY> {
 
 impl<'a> core::fmt::Debug for TokensEntryItem<&'a TOKEN_ENTRY> {
     fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let entry = &*self.token;
+        let entry = self.token;
         let key = entry.key.get();
         let mut ds = fmt.debug_struct("TokensEntryItem_TOKEN_ENTRY");
         ds.field("entry_id", &self.entry_id);
@@ -577,12 +577,7 @@ impl<BufferType: ByteSlice> TokensEntryBodyItem<BufferType> {
         &self,
         token_id: u32,
     ) -> Option<TokensEntryItem<&'_ TOKEN_ENTRY>> {
-        for entry in self.iter().ok()? {
-            if entry.id() == token_id {
-                return Some(entry);
-            }
-        }
-        None
+        (self.iter().ok()?).find(|entry| entry.id() == token_id)
     }
     pub fn validate(&self) -> Result<()> {
         self.iter()?.validate()
@@ -603,12 +598,7 @@ impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
         &mut self,
         token_id: u32,
     ) -> Option<TokensEntryItem<&'_ mut TOKEN_ENTRY>> {
-        for entry in self.iter_mut().ok()? {
-            if entry.id() == token_id {
-                return Some(entry);
-            }
-        }
-        None
+        (self.iter_mut().ok()?).find(|entry| entry.id() == token_id)
     }
 
     #[pre(

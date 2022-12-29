@@ -932,9 +932,7 @@ impl ToPrimitive for OemEntryId {
 impl FromPrimitive for OemEntryId {
     fn from_u64(value: u64) -> Option<Self> {
         if value < 0x1_0000 {
-            Some(match value {
-                x => Self::Unknown(x as u16),
-            })
+            Some(Self::Unknown(value as u16))
         } else {
             None
         }
@@ -969,9 +967,7 @@ impl ToPrimitive for RawEntryId {
 impl FromPrimitive for RawEntryId {
     fn from_u64(value: u64) -> Option<Self> {
         if value < 0x1_0000 {
-            Some(match value {
-                x => Self::Unknown(x as u16),
-            })
+            Some(Self::Unknown(value as u16))
         } else {
             None
         }
@@ -1545,8 +1541,8 @@ pub struct ParametersIter<'a> {
 }
 
 impl<'a> ParametersIter<'a> {
-    pub(crate) fn next_attributes<'b>(
-        buf: &mut &'b [u8],
+    pub(crate) fn next_attributes(
+        buf: &mut &[u8],
     ) -> Result<ParameterAttributes> {
         match take_header_from_collection::<u32>(buf) {
             Some(attributes) => {
@@ -2674,8 +2670,8 @@ pub mod memory {
         define_compat_bitfield_field!(v_1_2, _1_2V);
     }
     impl_bitfield_primitive_conversion!(RdimmDdr4Voltages, 0b1, u32);
-    impl RdimmDdr4Voltages {
-        pub fn default() -> Self {
+    impl Default for RdimmDdr4Voltages {
+        fn default() -> Self {
             let mut r = Self::new();
             r.set__1_2V(true);
             r
@@ -2896,8 +2892,8 @@ pub mod memory {
         define_compat_bitfield_field!(v_1_2, _1_2V);
     }
     impl_bitfield_primitive_conversion!(LrdimmDdr4Voltages, 0b1, u32);
-    impl LrdimmDdr4Voltages {
-        pub fn default() -> Self {
+    impl Default for LrdimmDdr4Voltages {
+        fn default() -> Self {
             let mut lr = Self::new();
             lr.set__1_2V(true);
             lr
@@ -2986,10 +2982,10 @@ pub mod memory {
 
     impl EntryCompatible for LrdimmDdr4CadBusElement {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
-            match entry_id {
-                EntryId::Memory(MemoryEntryId::PsLrdimmDdr4CadBus) => true,
-                _ => false,
-            }
+            matches!(
+                entry_id,
+                EntryId::Memory(MemoryEntryId::PsLrdimmDdr4CadBus)
+            )
         }
     }
 
@@ -3364,6 +3360,7 @@ pub mod memory {
     }
 
     impl Ddr4DataBusElement {
+        #[allow(clippy::too_many_arguments)]
         pub fn new(
             dimm_slots_per_channel: u32,
             ddr_rates: DdrRates,
@@ -3466,6 +3463,7 @@ pub mod memory {
     }
 
     impl LrdimmDdr4DataBusElement {
+        #[allow(clippy::too_many_arguments)]
         pub fn new(
             dimm_slots_per_channel: u32,
             ddr_rates: DdrRates,
@@ -3724,10 +3722,10 @@ pub mod memory {
 
     impl EntryCompatible for LrMaxFreqElement {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
-            match entry_id {
-                EntryId::Memory(MemoryEntryId::PsLrdimmDdr4MaxFreq) => true,
-                _ => false,
-            }
+            matches!(
+                entry_id,
+                EntryId::Memory(MemoryEntryId::PsLrdimmDdr4MaxFreq)
+            )
         }
     }
 
@@ -3756,9 +3754,6 @@ pub mod memory {
     impl Gpio {
         pub fn new(pin: u8, iomux_control: u8, bank_control: u8) -> Self {
             Self { pin, iomux_control, bank_control }
-        }
-        pub fn default() -> Self {
-            Self { pin: 0, iomux_control: 0, bank_control: 0 }
         }
     }
 
@@ -5914,19 +5909,22 @@ pub mod psp {
                 board_instance_index,
             })
         }
-        pub fn default() -> Self {
-            Self {
-                id_and_rev_and_feature_mask: 0x80,
-                id_and_feature_value: 0,
-                rev_and_feature_value: 0,
-                board_instance_index: 0,
-            }
-        }
         pub fn board_instance_mask(&self) -> Result<u16> {
             if self.board_instance_index <= 15 {
                 Ok(1u16 << self.board_instance_index)
             } else {
                 Err(Error::EntryTypeMismatch)
+            }
+        }
+    }
+
+    impl Default for IdRevApcbMapping {
+        fn default() -> Self {
+            Self {
+                id_and_rev_and_feature_mask: 0x80,
+                id_and_feature_value: 0,
+                rev_and_feature_value: 0,
+                board_instance_index: 0,
             }
         }
     }
@@ -7127,11 +7125,7 @@ pub enum DxioPhyParamIqofc {
 }
 impl FromPrimitive for DxioPhyParamIqofc {
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= -4 && value <= 4 {
-            Some(Self::Value(value as i32))
-        } else {
-            None
-        }
+        (-4..=4).contains(&value).then_some(Self::Value(value as i32))
     }
     fn from_u64(value: u64) -> Option<Self> {
         Self::from_i64(value as i64)
@@ -7152,6 +7146,7 @@ impl ToPrimitive for DxioPhyParamIqofc {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[repr(u32)]
 pub enum MemClockValue {
     // in MHz
     Ddr400 = 200,
@@ -7946,7 +7941,7 @@ make_token_accessors! {
         GnbAdditionalFeatures(default 0, id 0xf4c7789) | pub get bool : pub set bool, // Milan
         /// Note: Use GnbAdditionalFeatureDsm2 for Milan 1.0.0.4 or higher. For older Milan, use GnbAdditionalFeatureDsmDetector
         GnbAdditionalFeatureDsm(default 0, id 0x31a6afad) | pub get bool : pub set bool, // Milan < 1.0.0.4
-        VgaProgram(default 0, id 0x6570Eace) | pub get bool : pub set bool, // Milan
+        VgaProgram(default 0, id 0x6570eace) | pub get bool : pub set bool, // Milan
         MemNvdimmNDisable(default 0, id 0x941a92d4) | pub get bool : pub set bool, // Milan
         GnbAdditionalFeatureL3PerformanceBias(default 0, id 0xa003b37a) | pub get bool : pub set bool, // Milan
         /// Note: Use GnbAdditionalFeatureDsmDetector2 for Milan 1.0.0.4 or higher. For older Milan, use GnbAdditionalFeatureDsmDetector

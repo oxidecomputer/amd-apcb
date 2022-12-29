@@ -317,7 +317,7 @@ macro_rules! make_token_accessors {(
            if (field_key == $field_key) {
              $(
                #[allow(unused_comparisons)]
-               return abl0_version >= $minimal_version && abl0_version < $frontier_version;
+               return ($minimal_version..$frontier_version).contains(&abl0_version);
              )?
              #[allow(unreachable_code)]
              return true
