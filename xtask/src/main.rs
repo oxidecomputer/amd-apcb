@@ -23,7 +23,7 @@ impl BuildProfile {
     /// Returns a new BuildProfile constructed from the
     /// given args.
     fn new(matches: &clap::ArgMatches) -> BuildProfile {
-        if matches.contains_id("release") {
+        if matches.get_flag("release") {
             BuildProfile::Release
         } else {
             BuildProfile::Debug
@@ -68,12 +68,11 @@ impl BuildArgs {
 fn main() {
     let matches = parse_args();
     match matches.subcommand() {
-        Some(("build", m)) => build(BuildArgs::new(m), m.contains_id("locked")),
-        Some(("test", m)) => {
-            test(BuildProfile::new(m), m.contains_id("locked"))
-        }
+        Some(("build", m)) => build(BuildArgs::new(m), m.get_flag("locked")),
+        Some(("test", m)) => test(BuildArgs::new(m), m.get_flag("locked")),
+        Some(("tests", m)) => tests(BuildArgs::new(m), m.get_flag("locked")),
         Some(("expand", _m)) => expand(),
-        Some(("clippy", m)) => clippy(m.contains_id("locked")),
+        Some(("clippy", m)) => clippy(m.get_flag("locked")),
         Some(("clean", _m)) => clean(),
         _ => {
             println!("Unknown command");
@@ -99,7 +98,16 @@ fn parse_args() -> clap::ArgMatches {
         )
         .subcommand(
             clap::Command::new("test").about("Run unit tests").args(&[
-                clap::arg!(--locked "Build or test locked to Cargo.lock"),
+                clap::arg!(--locked "Test locked to Cargo.lock"),
+                clap::arg!(--release "Test optimized version")
+                    .conflicts_with("debug"),
+                clap::arg!(--debug "Test debug version (default)")
+                    .conflicts_with("release"),
+            ]),
+        )
+        .subcommand(
+            clap::Command::new("tests").about("Run tests").args(&[
+                clap::arg!(--locked "Test locked to Cargo.lock"),
                 clap::arg!(--release "Test optimized version")
                     .conflicts_with("debug"),
                 clap::arg!(--debug "Test debug version (default)")
@@ -120,33 +128,41 @@ fn parse_args() -> clap::ArgMatches {
 fn build(args: BuildArgs, with_locked: bool) {
     let build_type = args.profile.build_type().unwrap_or("");
     let locked = with_locked.then_some("--locked").unwrap_or("");
-    let args = format!(
-        "build {locked} {build_type}"
-    );
+    let args = format!("build {locked} {build_type}");
+    cmd(cargo(), args.split_whitespace()).run().expect("build successful");
+}
+
+/// Run unit tests.
+fn test(args: BuildArgs, with_locked: bool) {
+    let build_type = args.profile.build_type().unwrap_or("");
+    let locked = with_locked.then_some("--locked").unwrap_or("");
+    let args = format!("test {locked} {build_type}");
     cmd(cargo(), args.split_whitespace()).run().expect("build successful");
 }
 
 /// Runs tests.
-fn test(profile: BuildProfile, with_locked: bool) {
-    let build_type = profile.build_type().unwrap_or("");
+fn tests(args: BuildArgs, with_locked: bool) {
+    let build_type = args.profile.build_type().unwrap_or("");
     let locked = with_locked.then_some("--locked").unwrap_or("");
     let args = format!("test {locked} {build_type} --tests --lib");
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
     let args = format!("build {locked} {build_type} --features serde");
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
-    let args = format!("build {locked} {build_type} --features serde,schemars,serde-hex");
+    let args = format!(
+        "build {locked} {build_type} --features serde,schemars,serde-hex"
+    );
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
     let args = format!("build {locked} {build_type} --features serde,schemars --example fromyaml");
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
-    let args = format!("test {locked} {build_type} --test * --features serde,schemars");
+    let args = format!(
+        "test {locked} {build_type} --test * --features serde,schemars"
+    );
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
 }
 
 /// Expands macros.
 fn expand() {
-    cmd!(cargo(), "rustc", "--", "-Zunpretty=expanded")
-        .run()
-        .expect("expand successful");
+    cmd!(cargo(), "expand").run().expect("expand successful");
 }
 
 /// Runs the Clippy linter.
