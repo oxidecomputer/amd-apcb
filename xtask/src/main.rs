@@ -54,6 +54,8 @@ impl BuildProfile {
 #[derive(Clone, Debug)]
 struct BuildArgs {
     profile: BuildProfile,
+    locked: bool,
+    verbose: bool,
 }
 
 impl BuildArgs {
@@ -61,16 +63,18 @@ impl BuildArgs {
     /// arguments.  Debug is the default.
     fn new(matches: &clap::ArgMatches) -> BuildArgs {
         let profile = BuildProfile::new(matches);
-        BuildArgs { profile }
+        let locked = matches.get_flag("locked");
+        let verbose = matches.get_flag("verbose");
+        BuildArgs { profile, locked, verbose }
     }
 }
 
 fn main() {
     let matches = parse_args();
     match matches.subcommand() {
-        Some(("build", m)) => build(BuildArgs::new(m), m.get_flag("locked")),
-        Some(("test", m)) => test(BuildArgs::new(m), m.get_flag("locked")),
-        Some(("tests", m)) => tests(BuildArgs::new(m), m.get_flag("locked")),
+        Some(("build", m)) => build(BuildArgs::new(m)),
+        Some(("test", m)) => test(BuildArgs::new(m)),
+        Some(("tests", m)) => tests(BuildArgs::new(m)),
         Some(("expand", _m)) => expand(),
         Some(("clippy", m)) => clippy(m.get_flag("locked")),
         Some(("clean", _m)) => clean(),
@@ -90,6 +94,7 @@ fn parse_args() -> clap::ArgMatches {
         .subcommand(
             clap::Command::new("build").about("Builds").args(&[
                 clap::arg!(--locked "Build locked to Cargo.lock"),
+                clap::arg!(--verbose "Build verbosely"),
                 clap::arg!(--release "Build optimized version")
                     .conflicts_with("debug"),
                 clap::arg!(--debug "Build debug version (default)")
@@ -98,7 +103,8 @@ fn parse_args() -> clap::ArgMatches {
         )
         .subcommand(
             clap::Command::new("test").about("Run unit tests").args(&[
-                clap::arg!(--locked "Test locked to Cargo.lock"),
+                clap::arg!(--locked "Build or test locked to Cargo.lock"),
+                clap::arg!(--verbose "Build verbosely"),
                 clap::arg!(--release "Test optimized version")
                     .conflicts_with("debug"),
                 clap::arg!(--debug "Test debug version (default)")
@@ -106,8 +112,9 @@ fn parse_args() -> clap::ArgMatches {
             ]),
         )
         .subcommand(
-            clap::Command::new("tests").about("Run tests").args(&[
-                clap::arg!(--locked "Test locked to Cargo.lock"),
+            clap::Command::new("tests").about("Run system tests").args(&[
+                clap::arg!(--locked "Build or test locked to Cargo.lock"),
+                clap::arg!(--verbose "Build verbosely"),
                 clap::arg!(--release "Test optimized version")
                     .conflicts_with("debug"),
                 clap::arg!(--debug "Test debug version (default)")
@@ -125,37 +132,40 @@ fn parse_args() -> clap::ArgMatches {
 }
 
 /// Runs a cross-compiled build.
-fn build(args: BuildArgs, with_locked: bool) {
+fn build(args: BuildArgs) {
     let build_type = args.profile.build_type().unwrap_or("");
-    let locked = with_locked.then_some("--locked").unwrap_or("");
-    let args = format!("build {locked} {build_type}");
+    let locked = args.locked.then_some("--locked").unwrap_or("");
+    let verbose = args.verbose.then_some("--verbose").unwrap_or("");
+    let args = format!("build {locked} {verbose} {build_type}");
     cmd(cargo(), args.split_whitespace()).run().expect("build successful");
 }
 
-/// Run unit tests.
-fn test(args: BuildArgs, with_locked: bool) {
+/// Runs unit tests.
+fn test(args: BuildArgs) {
     let build_type = args.profile.build_type().unwrap_or("");
-    let locked = with_locked.then_some("--locked").unwrap_or("");
-    let args = format!("test {locked} {build_type}");
-    cmd(cargo(), args.split_whitespace()).run().expect("build successful");
-}
-
-/// Runs tests.
-fn tests(args: BuildArgs, with_locked: bool) {
-    let build_type = args.profile.build_type().unwrap_or("");
-    let locked = with_locked.then_some("--locked").unwrap_or("");
-    let args = format!("test {locked} {build_type} --tests --lib");
+    let locked = args.locked.then_some("--locked").unwrap_or("");
+    let verbose = args.verbose.then_some("--verbose").unwrap_or("");
+    let args = format!("test {locked} {verbose} {build_type}");
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
-    let args = format!("build {locked} {build_type} --features serde");
+}
+
+/// Runs system tests.
+fn tests(args: BuildArgs) {
+    let build_type = args.profile.build_type().unwrap_or("");
+    let locked = args.locked.then_some("--locked").unwrap_or("");
+    let verbose = args.verbose.then_some("--verbose").unwrap_or("");
+    let args = format!("test {locked} {build_type} {verbose} --tests --lib");
+    cmd(cargo(), args.split_whitespace()).run().expect("test successful");
+    let args = format!("build {locked} {build_type} {verbose} --features serde");
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
     let args = format!(
-        "build {locked} {build_type} --features serde,schemars,serde-hex"
+        "build {locked} {build_type} {verbose} --features serde,schemars,serde-hex"
     );
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
-    let args = format!("build {locked} {build_type} --features serde,schemars --example fromyaml");
+    let args = format!("build {locked} {build_type} {verbose} --features serde,schemars --example fromyaml");
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
     let args = format!(
-        "test {locked} {build_type} --test * --features serde,schemars"
+        "test {locked} {build_type} {verbose} --test * --features serde,schemars"
     );
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
 }
