@@ -556,7 +556,7 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
     }
 }
 #[cfg(feature = "schemars")]
-impl<'a> schemars::JsonSchema for SerdeEntryItem {
+impl schemars::JsonSchema for SerdeEntryItem {
     fn schema_name() -> std::string::String {
         EntryItem::schema_name()
     }
@@ -583,7 +583,7 @@ impl<'a> Serialize for EntryItem<'a> {
         use crate::memory;
         use crate::psp;
         let mut state = serializer.serialize_struct("EntryItem", 2)?;
-        state.serialize_field("header", &*self.header)?;
+        state.serialize_field("header", self.header)?;
 
         // TODO: Automate this type determination instead of maintaining this
         // manually.
@@ -591,7 +591,7 @@ impl<'a> Serialize for EntryItem<'a> {
             EntryItemBody::<_>::Tokens(tokens) => {
                 let v = tokens
                     .iter()
-                    .map_err(|e| serde::ser::Error::custom(format!("{:?}", e)))?
+                    .map_err(|e| serde::ser::Error::custom(format!("{e:?}")))?
                     .collect::<Vec<_>>();
                 state.serialize_field("tokens", &v)?;
             }
@@ -701,16 +701,15 @@ where
     let val: Vec<SerdeTokensEntryItem> = map.next_value()?;
     let mut buf: Vec<u8> = Vec::new();
 
-    if val.len() >= 1 {
+    if !val.is_empty() {
         // Ensure that all tokens in this entry have the same id.
-        let entry_id: TokenEntryId;
         if let TokenEntryId::Unknown(_eid) = val[0].entry_id() {
             return Err(de::Error::invalid_value(
                 de::Unexpected::Enum,
                 &"expected one of [Bool, Byte, Word, Dword]",
             ));
         }
-        entry_id = val[0].entry_id();
+        let entry_id = val[0].entry_id();
         for v in val {
             if entry_id != v.entry_id() {
                 return Err(de::Error::invalid_value(
@@ -867,7 +866,7 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
             PlatformTuning,
             Parameters,
         }
-        const FIELDS: &'static [&'static str] = &[
+        const FIELDS: &[&str] = &[
             "header",
             "tokens",
             "LrdimmDdr4OdtPatElement",
@@ -1158,7 +1157,7 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
                     header.ok_or_else(|| de::Error::missing_field("header"))?;
                 let body =
                     body.ok_or_else(|| de::Error::missing_field("body"))?;
-                Ok(SerdeEntryItem { header: header, body: body })
+                Ok(SerdeEntryItem { header, body })
             }
         }
         let mut result = deserializer.deserialize_struct(

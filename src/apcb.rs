@@ -102,7 +102,9 @@ impl<'a> TryFrom<SerdeApcb> for Apcb<'a> {
                     size_of::<V3_HEADER_EXT>() + size_of::<V2_HEADER>() == 128
                 );
                 apcb.header_mut()?.header_size.set(128);
-                apcb.v3_header_ext_mut()?.map(|mut v| *v = v3);
+                if let Some(mut v) = apcb.v3_header_ext_mut()? {
+                    *v = v3;
+                }
             }
             None => {
                 apcb.header_mut()?
@@ -138,8 +140,7 @@ impl<'a> TryFrom<SerdeApcb> for Apcb<'a> {
             ) {
                 Ok(_) => {}
                 Err(err) => {
-                    // print!("Deserializing entry {:?} failed with {:?}", e,
-                    // err);
+                    // print!("Deserializing entry {e:?} failed with {err:?}");
                     return Err(err);
                 }
             };
@@ -165,7 +166,7 @@ impl<'a> Serialize for Apcb<'a> {
         state.serialize_field("version", env!("CARGO_PKG_VERSION"))?;
         let groups = self
             .groups()
-            .map_err(|e| serde::ser::Error::custom(format!("{:?}", e)))?
+            .map_err(|e| serde::ser::Error::custom(format!("{e:?}")))?
             .collect::<Vec<_>>();
         let mut entries: Vec<EntryItem<'_>> = Vec::new();
         for g in &groups {
@@ -179,7 +180,7 @@ impl<'a> Serialize for Apcb<'a> {
         )?;
         let v3_header_ext: Option<V3_HEADER_EXT> = self
             .v3_header_ext()
-            .map_err(|e| serde::ser::Error::custom(format!("{:?}", e)))?
+            .map_err(|e| serde::ser::Error::custom(format!("{e:?}")))?
             .as_ref()
             .map(|h| **h);
         state.serialize_field("v3_header_ext", &v3_header_ext)?;
@@ -197,7 +198,7 @@ impl<'de> Deserialize<'de> for Apcb<'_> {
     {
         let sa: SerdeApcb = SerdeApcb::deserialize(deserializer)?;
         Apcb::try_from(sa)
-            .map_err(|e| serde::de::Error::custom(format!("{:?}", e)))
+            .map_err(|e| serde::de::Error::custom(format!("{e:?}")))
     }
 }
 

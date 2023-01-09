@@ -333,7 +333,7 @@ impl SerdeTokensEntryItem {
 #[cfg(feature = "serde")]
 impl From<&TokensEntryItem<&'_ TOKEN_ENTRY>> for SerdeTokensEntryItem {
     fn from(item: &TokensEntryItem<&'_ TOKEN_ENTRY>) -> Self {
-        let entry = &*item.token;
+        let entry = item.token;
         let key = entry.key.get();
         let mut st = Self::Unknown {
             entry_id: item.entry_id,
