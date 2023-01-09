@@ -999,7 +999,7 @@ use std::fmt::{Formatter, Result as FResult};
 #[cfg(feature = "serde")]
 impl serde::de::Expected for TokenEntryId {
     fn fmt(&self, f: &mut Formatter<'_>) -> FResult {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 
@@ -1729,7 +1729,7 @@ impl Parameters {
                     .write_u32::<LittleEndian>(value as u32)
                     .map_err(|_| Error::ParameterRange)?,
                 8 => result
-                    .write_u64::<LittleEndian>(value as u64)
+                    .write_u64::<LittleEndian>(value)
                     .map_err(|_| Error::ParameterRange)?,
                 _ => Err(Error::EntryTypeMismatch)?,
             }
