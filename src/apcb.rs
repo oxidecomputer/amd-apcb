@@ -699,7 +699,7 @@ impl<'a> Apcb<'a> {
         context_type: ContextType,
         payload_size: usize,
         priority_mask: PriorityLevels,
-        payload_initializer: &mut dyn FnMut(&mut [u8]),
+        payload_initializer: impl Fn(&mut [u8]),
     ) -> Result<()> {
         let group_id = entry_id.group_id();
         let mut group =
@@ -766,7 +766,7 @@ impl<'a> Apcb<'a> {
             context_type,
             payload_size,
             priority_mask,
-            &mut |body: &mut [u8]| {
+            |body: &mut [u8]| {
                 body.copy_from_slice(payload);
             },
         )
@@ -799,7 +799,7 @@ impl<'a> Apcb<'a> {
             ContextType::Struct,
             payload_size,
             priority_mask,
-            &mut |body: &mut [u8]| {
+            |body: &mut [u8]| {
                 let mut body = body;
                 for item in payload {
                     let source = item.checked_as_bytes(entry_id).unwrap();
@@ -840,7 +840,7 @@ impl<'a> Apcb<'a> {
             ContextType::Struct,
             payload_size,
             priority_mask,
-            &mut |body: &mut [u8]| {
+            |body: &mut [u8]| {
                 let mut body = body;
                 for item in payload {
                     let source = item.as_bytes();
@@ -882,7 +882,7 @@ impl<'a> Apcb<'a> {
                 ContextType::Struct,
                 payload_size,
                 priority_mask,
-                &mut |body: &mut [u8]| {
+                |body: &mut [u8]| {
                     let mut body = body;
                     let (a, rest) = body.split_at_mut(blob.len());
                     a.copy_from_slice(blob);
@@ -928,7 +928,7 @@ impl<'a> Apcb<'a> {
             ContextType::Struct,
             payload_size,
             PriorityLevels::new(),
-            &mut |body: &mut [u8]| {
+            |body: &mut [u8]| {
                 let mut body = body;
                 for parameter in items {
                     let raw_key =
