@@ -385,7 +385,7 @@ impl<'a> GroupMutIter<'a> {
         entry_allocation: u16,
         context_type: ContextType,
         payload_size: usize,
-        payload_initializer: &mut dyn FnMut(&mut [u8]),
+        payload_initializer: impl Fn(&mut [u8]),
         priority_mask: PriorityLevels,
     ) -> Result<()> {
         let group_id = entry_id.group_id();
