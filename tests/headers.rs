@@ -6,43 +6,18 @@ const V3_CONFIG_STR: &str = r#"
                 signature: "APCB",
                 header_size: 0x0000,
                 version: 48,
-                apcb_size: 0x00001274,
                 unique_apcb_instance: 0x00000002,
-                checksum_byte: 0x79,
-                _reserved_1: [
-                        0x00,
-                        0x00,
-                        0x00
-                ],
-                _reserved_2: [
-                        0x00000000,
-                        0x00000000,
-                        0x00000000
-                ]
         },
         v3_header_ext: {
                 signature: "ECB2",
-                _reserved_1: 0x0000,
                 _reserved_2: 0x0010,
                 struct_version: 18,
                 data_version: 256,
                 ext_header_size: 0x00000060,
-                _reserved_3: 0x0000,
                 _reserved_4: 0xffff,
                 _reserved_5: 0x0040,
-                _reserved_6: 0x0000,
-                _reserved_7: [
-                        0x00000000,
-                        0x00000000
-                ],
                 data_offset: 0x0058,
                 header_checksum: 0x00,
-                _reserved_8: 0x00,
-                _reserved_9: [
-                        0x00000000,
-                        0x00000000,
-                        0x00000000
-                ],
                 integrity_sign: [
                         0x00,
                         0x42,
@@ -76,11 +51,6 @@ const V3_CONFIG_STR: &str = r#"
                         0x00,
                         0x00,
                         0x00
-                ],
-                _reserved_10: [
-                        0x00000000,
-                        0x00000000,
-                        0x00000000
                 ],
                 signature_ending: "BCBA"
         },
@@ -101,41 +71,18 @@ const INVALID_CONFIG_STR: &str = r#"
                 version: 48,
                 apcb_size: 0x00001274,
                 unique_apcb_instance: 0x00000002,
-                checksum_byte: 0x79,
-                _reserved_1: [
-                        0x00,
-                        0x00,
-                        0x00
-                ],
-                _reserved_2: [
-                        0x00000000,
-                        0x00000000,
-                        0x00000000
-                ]
+                checksum_byte: 0x79
         },
         v3_headerquux: {
                 signature: "ECB2",
-                _reserved_1: 0x0000,
                 _reserved_2: 0x0010,
                 struct_version: 18,
                 data_version: 256,
                 ext_header_size: 0x00000060,
-                _reserved_3: 0x0000,
                 _reserved_4: 0xffff,
                 _reserved_5: 0x0040,
-                _reserved_6: 0x0000,
-                _reserved_7: [
-                        0x00000000,
-                        0x00000000
-                ],
                 data_offset: 0x0058,
                 header_checksum: 0x00,
-                _reserved_8: 0x00,
-                _reserved_9: [
-                        0x00000000,
-                        0x00000000,
-                        0x00000000
-                ],
                 integrity_sign: [
                         0x00,
                         0x42,
@@ -170,11 +117,6 @@ const INVALID_CONFIG_STR: &str = r#"
                         0x00,
                         0x00
                 ],
-                _reserved_10: [
-                        0x00000000,
-                        0x00000000,
-                        0x00000000
-                ],
                 signature_ending: "BCBA"
         },
         groups: [
@@ -192,19 +134,7 @@ const V2_CONFIG_STR: &str = r#"
                 signature: "APCB",
                 header_size: 0x0000,
                 version: 48,
-                apcb_size: 0x00001274,
                 unique_apcb_instance: 0x00000002,
-                checksum_byte: 0x79,
-                _reserved_1: [
-                        0x00,
-                        0x00,
-                        0x00
-                ],
-                _reserved_2: [
-                        0x00000000,
-                        0x00000000,
-                        0x00000000
-                ]
         },
         groups: [
         ],

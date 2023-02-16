@@ -192,7 +192,7 @@ impl DummyErrorChecks for bool {}
 /// (where it calls "new()") (on purpose).
 ///
 /// Field syntax:
-/// NAME [|| SERDE_TYPE] : TYPE
+/// NAME [|| [SERDE_META]* SERDE_TYPE] : TYPE
 ///      [| pub get GETTER_RETURN_TYPE [: pub set SETTER_PARAMETER_TYPE]]
 ///
 /// The brackets denote optional parts.
@@ -213,7 +213,7 @@ macro_rules! make_accessors {(
             $(#[$field_meta:meta])*
             $field_vis:vis
             $field_name:ident
-            $(|| $serde_ty:ty : $field_orig_ty:ty)?
+            $(|| $(#[$serde_field_orig_meta:meta])* $serde_ty:ty : $field_orig_ty:ty)?
             $(: $field_ty:ty)?
             $(| $getter_vis:vis get $field_user_ty:ty
               $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
@@ -320,7 +320,7 @@ macro_rules! make_accessors {(
         pub(crate) struct [<Serde $StructName>] {
             $(
                 $(pub $field_name: $field_ty,)?
-                $(pub $field_name: $serde_ty,)?
+                $($(#[$serde_field_orig_meta])* pub $field_name: $serde_ty,)?
             )*
         }
     }

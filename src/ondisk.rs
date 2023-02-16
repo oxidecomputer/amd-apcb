@@ -293,13 +293,16 @@ make_accessors! {
     #[repr(C, packed)]
     pub struct V2_HEADER {
         pub signature || FourCC : [u8; 4],
-        pub header_size || SerdeHex16 : LU16, // == sizeof(V2_HEADER); but 128 for V3
+        // This is automatically recalculated after deserialization.
+        pub header_size || #[cfg_attr(feature = "serde", serde(default))] SerdeHex16 : LU16, // == sizeof(V2_HEADER); but 128 for V3
         pub version || u16 : LU16,     // == 0x30
-        pub apcb_size || SerdeHex32 : LU32 | pub get u32 : pub set u32,
+        // This is automatically recalculated after deserialization.
+        pub apcb_size || #[cfg_attr(feature = "serde", serde(default))] SerdeHex32 : LU32 | pub get u32 : pub set u32,
         pub unique_apcb_instance || SerdeHex32 : LU32 | pub get u32 : pub set u32,
-        pub checksum_byte || SerdeHex8 : u8,
-        _reserved_1 || [SerdeHex8; 3] : [u8; 3],                // 0
-        _reserved_2 || [SerdeHex32; 3] : [LU32; 3], // 0
+        // This is automatically recalculated after deserialization.
+        pub checksum_byte || #[cfg_attr(feature = "serde", serde(default))] SerdeHex8 : u8,
+        _reserved_1 || #[cfg_attr(feature = "serde", serde(default))] [SerdeHex8; 3] : [u8; 3],
+        _reserved_2 || #[cfg_attr(feature = "serde", serde(default))] [SerdeHex32; 3] : [LU32; 3],
     }
 }
 
@@ -318,6 +321,19 @@ impl Default for V2_HEADER {
     }
 }
 
+#[allow(dead_code)]
+fn serde_v3_header_ext_reserved_2() -> SerdeHex16 {
+    V3_HEADER_EXT::default()._reserved_2.into()
+}
+#[allow(dead_code)]
+fn serde_v3_header_ext_reserved_4() -> SerdeHex16 {
+    V3_HEADER_EXT::default()._reserved_4.into()
+}
+#[allow(dead_code)]
+fn serde_v3_header_ext_reserved_5() -> SerdeHex16 {
+    V3_HEADER_EXT::default()._reserved_5.into()
+}
+
 // The funny reserved values here were such that older firmware (which
 // expects a V2_HEADER and does not honor its header_size) can skip this
 // unknown struct.
@@ -333,28 +349,37 @@ make_accessors! {
     #[repr(C, packed)]
     pub struct V3_HEADER_EXT {
         pub signature || FourCC : [u8; 4],
-        _reserved_1 || SerdeHex16 : LU16,          // 0
-        _reserved_2 || SerdeHex16 : LU16, // 0x10 // GROUP_HEADER::header_size
-        pub struct_version || u16 : LU16, // GROUP_HEADER::version
-        pub data_version || u16 : LU16, // GROUP_HEADER::_reserved_
-        pub ext_header_size || SerdeHex32 : LU32 | pub get u32 : pub set u32, // 96 // GROUP_HEADER::group_size
-        _reserved_3 || SerdeHex16 : LU16, // 0 // ENTRY_HEADER::group_id
-        _reserved_4 || SerdeHex16 : LU16, // 0xFFFF // ENTRY_HEADER::entry_id
+        _reserved_1 || #[cfg_attr(feature = "serde", serde(default))] SerdeHex16 : LU16,
+        // At this location in memory, old readers expect GROUP_HEADER::header_size instead.
+        _reserved_2 || #[cfg_attr(feature = "serde", serde(default = "serde_v3_header_ext_reserved_2"))] SerdeHex16 : LU16,
+        // At this location in memory, old readers expect GROUP_HEADER::version instead.
+        pub struct_version || u16 : LU16,
+        // At this location in memory, old readers expect GROUP_HEADER::_reserved_ instead.
+        pub data_version || u16 : LU16,
+        // At this location in memory, old readers expect GROUP_HEADER::group_size instead.
+        pub ext_header_size || SerdeHex32 : LU32 | pub get u32 : pub set u32,
+        _reserved_3 || #[cfg_attr(feature = "serde", serde(default))] SerdeHex16 : LU16, // ENTRY_HEADER::group_id
+        // At this location in memory, old readers expect ENTRY_HEADER::entry_id instead.
+        _reserved_4 || #[cfg_attr(feature = "serde", serde(default = "serde_v3_header_ext_reserved_4"))] SerdeHex16 : LU16,
         // _reserved_5 includes 0x10 for the entry header; that
         // gives 48 Byte payload for the entry--which is inconsistent with the
         // size of the fields following afterwards.
-        _reserved_5 || SerdeHex16 : LU16, // 0x40 // ENTRY_HEADER::entry_size
-        _reserved_6 || SerdeHex16 : LU16, // 0x00 // ENTRY_HEADER::instance_id
+        // At this location in memory, old readers expect ENTRY_HEADER::entry_size instead.
+        _reserved_5 || #[cfg_attr(feature = "serde", serde(default = "serde_v3_header_ext_reserved_5"))] SerdeHex16 : LU16,
+        // At this location in memory, old readers expect ENTRY_HEADER::instance_id instead.
+        _reserved_6 || #[cfg_attr(feature = "serde", serde(default))] SerdeHex16 : LU16,
         // ENTRY_HEADER::{context_type, context_format, unit_size, prority_mask,
         // key_size, key_pos, board_instance_mask}.  Those are all of
         // ENTRY_HEADER's fields.
-        _reserved_7 || [SerdeHex32; 2] : [LU32; 2], // 0 0
+        _reserved_7 || #[cfg_attr(feature = "serde", serde(default))] [SerdeHex32; 2] : [LU32; 2],
         pub data_offset || SerdeHex16 : LU16, // 0x58
-        pub header_checksum || SerdeHex8 : u8,
-        _reserved_8 || SerdeHex8 : u8,                     // 0
-        _reserved_9 || [SerdeHex32; 3] : [LU32; 3], // 0 0 0
-        pub integrity_sign || [SerdeHex8; 32] : [u8; 32],
-        _reserved_10 || [SerdeHex32; 3] : [LU32; 3], // 0 0 0
+        // This is unused--but make it optional in case we do need to
+        // calculate it in the future.
+        pub header_checksum || #[cfg_attr(feature = "serde", serde(default))] SerdeHex8 : u8,
+        _reserved_8 || #[cfg_attr(feature = "serde", serde(default))] SerdeHex8 : u8,
+        _reserved_9 || #[cfg_attr(feature = "serde", serde(default))] [SerdeHex32; 3] : [LU32; 3],
+        pub integrity_sign || #[cfg_attr(feature = "serde", serde(default))] [SerdeHex8; 32] : [u8; 32],
+        _reserved_10 || #[cfg_attr(feature = "serde", serde(default))] [SerdeHex32; 3] : [LU32; 3],
         pub signature_ending || FourCC : [u8; 4],       // "BCBA"
     }
 }
@@ -1118,8 +1143,9 @@ make_accessors! {
         pub(crate) group_id || SerdeHex16 : LU16,
         pub(crate) header_size || SerdeHex16 : LU16, // == sizeof(GROUP_HEADER)
         pub(crate) version || SerdeHex16 : LU16,     // == 0 << 4 | 1
-        _reserved_ || SerdeHex16 : LU16,
-        pub(crate) group_size || SerdeHex32 : LU32, // including header!
+        _reserved_ || #[cfg_attr(feature = "serde", serde(default))] SerdeHex16 : LU16,
+        // This is automatically calculated on deserialization.
+        pub(crate) group_size || #[cfg_attr(feature = "serde", serde(default))] SerdeHex32 : LU32, // including header!
     }
 }
 
@@ -1231,8 +1257,8 @@ macro_rules! make_bitfield_serde {(
         #[cfg_attr(feature = "serde", serde(rename = "" $StructName))]
         pub(crate) struct [<Serde $StructName>] {
             $(
-                $(#[serde(default)] pub $field_name : <$field_ty as Specifier>::InOut,)?
-                $(#[serde(default)] pub $field_name : $serde_ty,)?
+                $(#[cfg_attr(feature = "serde", serde(default))] pub $field_name : <$field_ty as Specifier>::InOut,)?
+                $(#[cfg_attr(feature = "serde", serde(default))] pub $field_name : $serde_ty,)?
             )*
         }
     }
@@ -1410,7 +1436,8 @@ make_accessors! {
     pub(crate) struct ENTRY_HEADER {
         pub(crate) group_id || SerdeHex16 : LU16, // should be equal to the group's group_id
         pub(crate) entry_id || SerdeHex16 : LU16, // meaning depends on context_type
-        pub(crate) entry_size || SerdeHex16 : LU16, // including header
+        // The value of the field is automatically calculated on deserialization.
+        pub(crate) entry_size || #[cfg_attr(feature = "serde", serde(default))] SerdeHex16 : LU16, // including header
         pub(crate) instance_id || SerdeHex16 : LU16 | pub get u16 : pub set u16,
         pub(crate) context_type || ContextType : u8 | pub get ContextType : pub set ContextType,  // see ContextType enum
         pub(crate) context_format || ContextFormat : u8 | pub get ContextFormat: pub set ContextFormat, // see ContextFormat enum
@@ -1769,7 +1796,7 @@ pub mod df {
             socket: u8, // 0|1
             phys_nbio_map || SerdeHex8 : u8 | pub get u8 : pub set u8, // bitmap
             interleaving || SlinkRegionInterleavingSize : u8 | pub get SlinkRegionInterleavingSize : pub set SlinkRegionInterleavingSize,
-            _reserved_ || [SerdeHex8; 4] : [u8; 4],
+            _reserved_ || #[cfg_attr(feature = "serde", serde(default))] [SerdeHex8; 4] : [u8; 4],
         }
     }
     impl Default for SlinkRegion {
@@ -2026,7 +2053,7 @@ pub mod memory {
             enable_mem_pmu_sram_write_logging || bool : BU8 | pub get bool : pub set bool,
             enable_mem_test_verbose_logging || bool : BU8 | pub get bool : pub set bool,
             enable_mem_basic_output_logging || bool : BU8 | pub get bool : pub set bool,
-            _reserved_ || SerdeHex16 : LU16,
+            _reserved_ || #[cfg_attr(feature = "serde", serde(default))] SerdeHex16 : LU16,
             abl_console_port || SerdeHex32 : LU32 | pub get u32 : pub set u32,
         }
     }
@@ -2108,7 +2135,7 @@ pub mod memory {
         pub struct ConsoleOutControl {
             pub abl_console_out_control: AblConsoleOutControl,
             pub abl_breakpoint_control: AblBreakpointControl,
-            _reserved_ || SerdeHex16 : LU16,
+            _reserved_ || #[cfg_attr(feature = "serde", serde(default))] SerdeHex16 : LU16,
         }
     }
 
@@ -2166,7 +2193,7 @@ pub mod memory {
         #[repr(C, packed)]
         pub struct NaplesAblConsoleOutControl {
             enable_console_logging || bool : BU8 | pub get bool : pub set bool,
-            _reserved_0 || [SerdeHex8; 3] : [u8; 3],
+            _reserved_0 || #[cfg_attr(feature = "serde", serde(default))] [SerdeHex8; 3] : [u8; 3],
             abl_console_port || SerdeHex32 : U32<LittleEndian> | pub get u32 : pub set u32,
             enable_mem_flow_logging || bool : BU8 | pub get bool : pub set bool,
             enable_mem_setreg_logging || bool : BU8 | pub get bool : pub set bool,
@@ -2220,7 +2247,7 @@ pub mod memory {
         pub struct NaplesConsoleOutControl {
             pub abl_console_out_control: NaplesAblConsoleOutControl,
             pub abl_breakpoint_control: AblBreakpointControl,
-            _reserved_ || SerdeHex16 : U16<LittleEndian>,
+            _reserved_ || #[cfg_attr(feature = "serde", serde(default))] SerdeHex16 : U16<LittleEndian>,
         }
     }
 
@@ -2313,7 +2340,7 @@ pub mod memory {
         #[repr(C, packed)]
         pub struct ExtVoltageControl {
             enabled || bool : BU8 | pub get bool : pub set bool,
-            _reserved_ || [SerdeHex8; 3] : [u8; 3],
+            _reserved_ || #[cfg_attr(feature = "serde", serde(default))] [SerdeHex8; 3] : [u8; 3],
             input_port || SerdeHex32 : LU32 | pub get u32 : pub set u32,
             output_port || SerdeHex32 : LU32 | pub get u32 : pub set u32,
             input_port_size || PortSize : LU32 | pub get PortSize : pub set PortSize,
@@ -2321,7 +2348,7 @@ pub mod memory {
             input_port_type || PortType : LU32 | pub get PortType : pub set PortType, // default: 6 (FCH)
             output_port_type || PortType : LU32 | pub get PortType : pub set PortType, // default: 6 (FCH)
             clear_acknowledgement || bool : BU8 | pub get bool : pub set bool,
-            _reserved_2 || [SerdeHex8; 3] : [u8; 3],
+            _reserved_2 || #[cfg_attr(feature = "serde", serde(default))] [SerdeHex8; 3] : [u8; 3],
         }
     }
 
@@ -2691,9 +2718,9 @@ pub mod memory {
             dimm1_ranks || Ddr4DimmRanks : LU32 | pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
 
             gear_down_mode || bool : BLU16 | pub get bool : pub set bool,
-            _reserved_ || SerdeHex16 : LU16,
+            _reserved_ || #[cfg_attr(feature = "serde", serde(default))] SerdeHex16 : LU16,
             slow_mode || bool : BLU16 | pub get bool : pub set bool, // (probably) 2T is slow, 1T is fast
-            _reserved_2 || SerdeHex16 : LU16,
+            _reserved_2 || #[cfg_attr(feature = "serde", serde(default))] SerdeHex16 : LU16,
             address_command_control || SerdeHex32 : LU32 | pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
 
             cke_drive_strength || CadBusCkeDriveStrength : u8 | pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
@@ -2818,9 +2845,9 @@ pub mod memory {
             dimm1_ranks || Ddr4DimmRanks : LU32 | pub get Ddr4DimmRanks : pub set Ddr4DimmRanks,
 
             gear_down_mode || SerdeHex16 : LU16 | pub get u16 : pub set u16,
-            _reserved_ || SerdeHex16 : LU16,
+            _reserved_ || #[cfg_attr(feature = "serde", serde(default))] SerdeHex16 : LU16,
             slow_mode || SerdeHex16 : LU16 | pub get u16 : pub set u16,
-            _reserved_2 || SerdeHex16 : LU16,
+            _reserved_2 || #[cfg_attr(feature = "serde", serde(default))] SerdeHex16 : LU16,
             address_command_control || SerdeHex32 : LU32 | pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
 
             cke_drive_strength || CadBusAddressCommandDriveStrength : u8 | pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
@@ -2913,9 +2940,9 @@ pub mod memory {
             dimm1_ranks || LrdimmDdr4DimmRanks : LU32 | pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks,
 
             gear_down_mode || SerdeHex16 : LU16 | pub get u16 : pub set u16,
-            _reserved_ || SerdeHex16 : LU16,
+            _reserved_ || #[cfg_attr(feature = "serde", serde(default))] SerdeHex16 : LU16,
             slow_mode || SerdeHex16 : LU16 | pub get u16 : pub set u16,
-            _reserved_2 || SerdeHex16 : LU16,
+            _reserved_2 || #[cfg_attr(feature = "serde", serde(default))] SerdeHex16 : LU16,
             address_command_control || SerdeHex32 : LU32 | pub get u32 : pub set u32, // 24 bit; often all used bytes are equal
 
             cke_drive_strength || CadBusCkeDriveStrength : u8 | pub get CadBusCkeDriveStrength : pub set CadBusCkeDriveStrength,
@@ -3566,7 +3593,7 @@ pub mod memory {
         #[repr(C, packed)]
         pub struct MaxFreqElement {
             dimm_slots_per_channel || DimmsPerChannel : u8 | pub get DimmsPerChannel : pub set DimmsPerChannel,
-            _reserved_ || SerdeHex8 : u8,
+            _reserved_ || #[cfg_attr(feature = "serde", serde(default))] SerdeHex8 : u8,
             conditions || [SerdeHex16; 4] : [LU16; 4], // number of dimm on a channel, number of single-rank dimm, number of dual-rank dimm, number of quad-rank dimm
             speeds || [SerdeHex16; 3] : [LU16; 3], // speed limit with voltage 1.5 V, 1.35 V, 1.25 V // FIXME make accessible
         }
@@ -3673,7 +3700,7 @@ pub mod memory {
         #[repr(C, packed)]
         pub struct LrMaxFreqElement {
             dimm_slots_per_channel || SerdeHex8 : u8 | pub get u8 : pub set u8,
-            _reserved_ || SerdeHex8 : u8,
+            _reserved_ || #[cfg_attr(feature = "serde", serde(default))] SerdeHex8 : u8,
             pub conditions || [SerdeHex16; 4] : [LU16; 4], // maybe: number of dimm on a channel, 0, number of lr dimm, 0 // FIXME: Make accessible
             pub speeds || [SerdeHex16; 3] : [LU16; 3], // maybe: speed limit with voltage 1.5 V, 1.35 V, 1.25 V; FIXME: Make accessible
         }
@@ -3898,22 +3925,22 @@ Clone)]
                 output_delay || SerdeHex32 : LU32 | pub get u32 : pub set u32, // if no handshake; in units of 10 ns.
                 output_port || SerdeHex32 : LU32 | pub get u32 : pub set u32,
                 stop_on_first_fatal_error || bool : BU8 | pub get bool : pub set bool,
-                _reserved_ || [SerdeHex8; 3] : [u8; 3],
+                _reserved_ || #[cfg_attr(feature = "serde", serde(default))] [SerdeHex8; 3] : [u8; 3],
                 input_port_size || PortSize : LU32 | pub get PortSize : pub set PortSize,
                 output_port_size || PortSize : LU32 | pub get PortSize : pub set PortSize,
                 input_port_type || PortType : LU32 | pub get PortType : pub set PortType, // PortType; default: 6
                 output_port_type || PortType : LU32 | pub get PortType : pub set PortType, // PortType; default: 6
                 clear_acknowledgement || bool : BU8 | pub get bool : pub set bool,
-                _reserved_before_gpio || [SerdeHex8; $padding_before_gpio] : [u8; $padding_before_gpio],
+                _reserved_before_gpio || #[cfg_attr(feature = "serde", serde(default))] [SerdeHex8; $padding_before_gpio] : [u8; $padding_before_gpio],
                 pub error_reporting_gpio: Gpio,
-                _reserved_after_gpio || [SerdeHex8; $padding_after_gpio] : [u8; $padding_after_gpio],
+                _reserved_after_gpio || #[cfg_attr(feature = "serde", serde(default))] [SerdeHex8; $padding_after_gpio] : [u8; $padding_after_gpio],
                 beep_code_table: [ErrorOutControlBeepCode; 8], // FIXME: Make accessible
                 //beep_code_table: [ErrorOutControlBeepCode; 8] | pub get
                 //    [ErrorOutControlBeepCode; 8] : pub set [ErrorOutControlBeepCode; 8], // FIXME: Make accessible
                 enable_heart_beat || bool : BU8 | pub get bool : pub set bool,
                 enable_power_good_gpio || bool : BU8 | pub get bool : pub set bool,
                 pub power_good_gpio: Gpio,
-                _reserved_end || [SerdeHex8; 3] : [u8; 3], // pad
+                _reserved_end || #[cfg_attr(feature = "serde", serde(default))] [SerdeHex8; 3] : [u8; 3], // pad
             }
         }
 
@@ -4528,6 +4555,10 @@ Clone)]
 
                             impl $struct_ {
                                 const TAG: u16 = $type_;
+                                #[allow(dead_code)]
+                                fn serde_default_tag() -> SerdeHex8 {
+                                    (Self::TAG as u8).into()
+                                }
                             }
 
                             impl EntryCompatible for $struct_ {
@@ -4582,7 +4613,7 @@ Clone)]
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Clone)]
                             #[repr(C, packed)]
                             pub struct CkeTristateMap {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "CkeTristateMap::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -4621,7 +4652,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct OdtTristateMap {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "OdtTristateMap::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -4659,7 +4690,7 @@ Clone)]
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct CsTristateMap {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "CsTristateMap::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -4697,7 +4728,7 @@ Clone)]
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MaxDimmsPerChannel {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "MaxDimmsPerChannel::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -4735,7 +4766,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MemclkMap {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "MemclkMap::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -4773,7 +4804,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MaxChannelsPerSocket {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "MaxChannelsPerSocket::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,  // Note: must always be "any"
@@ -4854,7 +4885,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MemBusSpeed {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "MemBusSpeed::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -4896,7 +4927,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MaxCsPerChannel {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "MaxCsPerChannel::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -4952,7 +4983,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MemTechnology {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "MemTechnology::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds, // Note: must always be "any" here
@@ -4990,7 +5021,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct WriteLevellingSeedDelay {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "WriteLevellingSeedDelay::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -5023,7 +5054,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct RxEnSeed {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "RxEnSeed::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -5064,7 +5095,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct LrDimmNoCs6Cs7Routing {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "LrDimmNoCs6Cs7Routing::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -5101,7 +5132,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct SolderedDownSodimm {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "SolderedDownSodimm::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -5138,7 +5169,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct LvDimmForce1V5 {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "LvDimmForce1V5::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds, // Note: always "all"
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds, // Note: always "all"
@@ -5175,7 +5206,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MinimumRwDataEyeWidth {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "MinimumRwDataEyeWidth::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -5216,7 +5247,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct CpuFamilyFilter {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "CpuFamilyFilter::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 cpu_family_revision || SerdeHex32 : LU32 | pub get u32 : pub set u32,
                             }
@@ -5245,7 +5276,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct SolderedDownDimmsPerChannel {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "SolderedDownDimmsPerChannel::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
@@ -5292,7 +5323,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MemPowerPolicy {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "MemPowerPolicy::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds, // Note: always "all"
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds, // Note: always "all"
@@ -5341,7 +5372,7 @@ Clone)]
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MotherboardLayers {
-                                type_ || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "MotherboardLayers::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
                                 payload_size || SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds, // Note: always "all"
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds, // Note: always "all"
@@ -5466,6 +5497,10 @@ Clone)]
                             const_assert!($total_size as usize == size_of::<$struct_>());
                             impl $struct_ {
                                 const TAG: u16 = $type_;
+                                #[allow(dead_code)]
+                                fn serde_default_tag() -> SerdeHex16 {
+                                    Self::TAG.into()
+                                }
                             }
 
                             impl EntryCompatible for $struct_ {
@@ -5533,7 +5568,8 @@ Clone)]
         Clone, Copy)]
                             #[repr(C, packed)]
                             pub struct Terminator {
-                                type_ || SerdeHex16 : LU16 | pub get u16 : pub set u16,
+                                // The value of this field will automatically be set on deserialization.
+                                type_ || #[cfg_attr(feature = "serde", serde(default = "Terminator::serde_default_tag"))] SerdeHex16 : LU16 | pub get u16 : pub set u16,
                             }
                         }
                         impl_EntryCompatible!(Terminator, 0xfeef, 2);
