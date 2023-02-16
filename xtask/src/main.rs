@@ -145,7 +145,9 @@ fn test(args: BuildArgs) {
     let build_type = args.profile.build_type().unwrap_or("");
     let locked = args.locked.then_some("--locked").unwrap_or("");
     let verbose = args.verbose.then_some("--verbose").unwrap_or("");
-    let args = format!("test {locked} {verbose} {build_type}");
+    // This should not run the integration tests, otherwise serde_yaml
+    // will fail because there's no serde.
+    let args = format!("test --tests --lib {locked} {verbose} {build_type}");
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
 }
 
