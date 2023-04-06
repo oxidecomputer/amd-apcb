@@ -7702,7 +7702,7 @@ make_token_accessors! {
         Df3LinkMaxXgmiSpeed(default 0, id 0x53ba449b) | pub get DfXgmi3LinkMaxSpeed : pub set DfXgmi3LinkMaxSpeed, // value 0xff // Rome
         Df4LinkMaxXgmiSpeed(default 0, id 0x3f307cb3) | pub get DfXgmi4LinkMaxSpeed : pub set DfXgmi4LinkMaxSpeed, // value 0xff //  Rome
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
-        MemDramDoubleRefreshRate(default 0, id 0x44d40026) | pub get u8 : pub set u8, // value 0 // Rome
+        MemDramDoubleRefreshRate(default 0, id 0x44d40026) | pub get u8 : pub set u8, // value 0 // Rome; see also MemDramDoubleRefreshRateMilan
         /// See UMC::CH::ThrottleCtrl RollWindowDepth
         MemRollWindowDepth(default 0xff, id 0x5985083a) | pub get MemThrottleCtrlRollWindowDepth : pub set MemThrottleCtrlRollWindowDepth, // Rome
         DfPstateModeSelect(default 0xff, id 0xaeb84b12) | pub get DfPstateModeSelect : pub set DfPstateModeSelect, // value 0xff // Rome
@@ -7930,6 +7930,7 @@ make_token_accessors! {
         MemEccSyncFlood(default 0, id 0x88bd_40c2) | pub get bool : pub set bool,
         MemRestoreControl(default 0, id 0xfedb_01f8) | pub get bool : pub set bool,
         MemPostPackageRepairEnable(default 0, id 0xcdc0_3e4e) | pub get bool : pub set bool,
+        MemDramDoubleRefreshRateMilan(default 0, id 0x974e_8e7c) | pub get bool : pub set bool, // Milan
 
         // Ccx
 
