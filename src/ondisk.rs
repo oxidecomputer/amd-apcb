@@ -4559,6 +4559,10 @@ Clone)]
                                 fn serde_default_tag() -> SerdeHex8 {
                                     (Self::TAG as u8).into()
                                 }
+                                #[allow(dead_code)]
+                                fn serde_default_payload_size() -> SerdeHex8 {
+                                    $payload_size.try_into().unwrap()
+                                }
                             }
 
                             impl EntryCompatible for $struct_ {
@@ -4614,7 +4618,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct CkeTristateMap {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "CkeTristateMap::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "CkeTristateMap::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots,
@@ -4653,7 +4657,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct OdtTristateMap {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "OdtTristateMap::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "OdtTristateMap::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots,
@@ -4691,7 +4695,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct CsTristateMap {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "CsTristateMap::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "CsTristateMap::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots,
@@ -4729,7 +4733,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct MaxDimmsPerChannel {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "MaxDimmsPerChannel::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "MaxDimmsPerChannel::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: must always be "any"
@@ -4767,7 +4771,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct MemclkMap {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "MemclkMap::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "MemclkMap::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: must always be "all"
@@ -4805,7 +4809,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct MaxChannelsPerSocket {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "MaxChannelsPerSocket::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "MaxChannelsPerSocket::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,  // Note: must always be "any"
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: must always be "any" here
@@ -4886,7 +4890,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct MemBusSpeed {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "MemBusSpeed::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "MemBusSpeed::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: must always be "all"
@@ -4928,7 +4932,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct MaxCsPerChannel {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "MaxCsPerChannel::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "MaxCsPerChannel::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: must always be "Any"
@@ -4984,7 +4988,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct MemTechnology {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "MemTechnology::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "MemTechnology::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds, // Note: must always be "any" here
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: must always be "any" here
@@ -5022,7 +5026,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct WriteLevellingSeedDelay {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "WriteLevellingSeedDelay::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "WriteLevellingSeedDelay::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots,
@@ -5055,7 +5059,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct RxEnSeed {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "RxEnSeed::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "RxEnSeed::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots,
@@ -5096,7 +5100,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct LrDimmNoCs6Cs7Routing {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "LrDimmNoCs6Cs7Routing::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "LrDimmNoCs6Cs7Routing::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots,
@@ -5133,7 +5137,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct SolderedDownSodimm {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "SolderedDownSodimm::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "SolderedDownSodimm::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: always "all"
@@ -5170,7 +5174,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct LvDimmForce1V5 {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "LvDimmForce1V5::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "LvDimmForce1V5::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds, // Note: always "all"
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds, // Note: always "all"
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: always "all"
@@ -5207,7 +5211,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct MinimumRwDataEyeWidth {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "MinimumRwDataEyeWidth::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "MinimumRwDataEyeWidth::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: always "all"
@@ -5248,7 +5252,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct CpuFamilyFilter {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "CpuFamilyFilter::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "CpuFamilyFilter::serde_default_payload_size"))] SerdeHex8 : u8,
                                 cpu_family_revision || SerdeHex32 : LU32 | pub get u32 : pub set u32,
                             }
                         }
@@ -5277,7 +5281,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct SolderedDownDimmsPerChannel {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "SolderedDownDimmsPerChannel::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "SolderedDownDimmsPerChannel::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: always "all"
@@ -5324,7 +5328,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct MemPowerPolicy {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "MemPowerPolicy::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "MemPowerPolicy::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds, // Note: always "all"
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds, // Note: always "all"
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: always "all"
@@ -5373,7 +5377,7 @@ Clone)]
                             #[repr(C, packed)]
                             pub struct MotherboardLayers {
                                 type_ || #[cfg_attr(feature = "serde", serde(default = "MotherboardLayers::serde_default_tag"))] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || SerdeHex8 : u8,
+                                payload_size || #[cfg_attr(feature = "serde", serde(default = "MotherboardLayers::serde_default_payload_size"))] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds, // Note: always "all"
                                 channels || ChannelIds : u8 | pub get ChannelIds : pub set ChannelIds, // Note: always "all"
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: always "all"
