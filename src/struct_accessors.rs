@@ -2,9 +2,9 @@
 
 use crate::types::Error;
 use crate::types::Result;
-use byteorder::LittleEndian;
 use four_cc::FourCC;
 use num_traits::{FromPrimitive, ToPrimitive};
+use zerocopy::byteorder::LittleEndian;
 use zerocopy::{AsBytes, FromBytes, U16, U32, U64};
 
 #[cfg(feature = "serde")]

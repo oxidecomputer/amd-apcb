@@ -10,7 +10,6 @@ use crate::token_accessors::{make_token_accessors, Tokens, TokensMut};
 use crate::types::Error;
 use crate::types::PriorityLevel;
 use crate::types::Result;
-use byteorder::{LittleEndian, ReadBytesExt};
 use core::clone::Clone;
 use core::cmp::Ordering;
 use core::convert::TryFrom;
@@ -24,6 +23,7 @@ use num_derive::ToPrimitive;
 use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use paste::paste;
+use zerocopy::byteorder::LittleEndian;
 use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32, U64};
 
 #[cfg(feature = "serde")]
@@ -1598,6 +1598,18 @@ impl<'a> ParametersIter<'a> {
             }
         }
     }
+    fn read_u8(raw_value: &[u8]) -> Option<u8> {
+        <[u8; 1]>::try_from(raw_value).ok().map(u8::from_le_bytes)
+    }
+    fn read_u16le(raw_value: &[u8]) -> Option<u16> {
+        <[u8; 2]>::try_from(raw_value).ok().map(u16::from_le_bytes)
+    }
+    fn read_u32le(raw_value: &[u8]) -> Option<u32> {
+        <[u8; 4]>::try_from(raw_value).ok().map(u32::from_le_bytes)
+    }
+    fn read_u64le(raw_value: &[u8]) -> Option<u64> {
+        <[u8; 8]>::try_from(raw_value).ok().map(u64::from_le_bytes)
+    }
 }
 
 impl Iterator for ParametersIter<'_> {
@@ -1612,33 +1624,32 @@ impl Iterator for ParametersIter<'_> {
             1 | 2 | 4 | 8 => {
                 let raw_value =
                     take_body_from_collection(&mut self.values, size, 1)?;
-                let mut raw_value = raw_value;
                 match raw_value.len() {
                     1 => Some(
                         Parameter::new(
                             &attributes,
-                            raw_value.read_u8().ok()?.into(),
+                            Self::read_u8(raw_value)?.into(),
                         )
                         .ok()?,
                     ),
                     2 => Some(
                         Parameter::new(
                             &attributes,
-                            raw_value.read_u16::<LittleEndian>().ok()?.into(),
+                            Self::read_u16le(raw_value)?.into(),
                         )
                         .ok()?,
                     ),
                     4 => Some(
                         Parameter::new(
                             &attributes,
-                            raw_value.read_u32::<LittleEndian>().ok()?.into(),
+                            Self::read_u32le(raw_value)?.into(),
                         )
                         .ok()?,
                     ),
                     8 => Some(
                         Parameter::new(
                             &attributes,
-                            raw_value.read_u64::<LittleEndian>().ok()?,
+                            Self::read_u64le(raw_value)?,
                         )
                         .ok()?,
                     ),
@@ -1740,7 +1751,7 @@ impl Parameters {
         for parameter in &source {
             let raw_attributes = u32::from(parameter.attributes()?);
             result
-                .write_u32::<LittleEndian>(raw_attributes)
+                .write_u32::<byteorder::LittleEndian>(raw_attributes)
                 .map_err(|_| Error::ParameterRange)?;
         }
         for parameter in &source {
@@ -1750,13 +1761,13 @@ impl Parameters {
                     .write_u8(value as u8)
                     .map_err(|_| Error::ParameterRange)?,
                 2 => result
-                    .write_u16::<LittleEndian>(value as u16)
+                    .write_u16::<byteorder::LittleEndian>(value as u16)
                     .map_err(|_| Error::ParameterRange)?,
                 4 => result
-                    .write_u32::<LittleEndian>(value as u32)
+                    .write_u32::<byteorder::LittleEndian>(value as u32)
                     .map_err(|_| Error::ParameterRange)?,
                 8 => result
-                    .write_u64::<LittleEndian>(value)
+                    .write_u64::<byteorder::LittleEndian>(value)
                     .map_err(|_| Error::ParameterRange)?,
                 _ => Err(Error::EntryTypeMismatch)?,
             }
