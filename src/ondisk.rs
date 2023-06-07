@@ -1,5 +1,9 @@
-// This file contains the Apcb on-disk format.  Please only change it in
-// coordination with the AMD PSP team.  Even then, you probably shouldn't.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+//! This file contains the Apcb on-disk format.  Please only change it in
+//! coordination with the AMD PSP team.  Even then, you probably shouldn't.
 
 //#![feature(trace_macros)] trace_macros!(true);
 #![allow(non_snake_case)]
