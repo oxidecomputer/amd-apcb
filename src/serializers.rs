@@ -1,9 +1,14 @@
-// This file contains the serializers for the ondisk formats.
-// These are meant automatically make serde use a temporary serde-aware struct
-// as a proxy when serializing/deserializing a non-serde-aware struct. Note that
-// if too many fields are private, it means that those are not in the proxy
-// struct in the first place. This might cause problems. Also, serialization can
-// fail if the nice simple user-visible type cannot represent what we are doing.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+//! This file contains the serializers for the ondisk formats.
+//! These are meant automatically make serde use a temporary serde-aware
+//! struct as a proxy when serializing/deserializing a non-serde-aware struct.
+//! Note that fields which are private are not in the proxy struct in
+//! the first place. This might cause problems. Also, serialization can
+//! fail if the nice simple user-visible type cannot represent what we
+//! are doing.
 
 use crate::df::*;
 use crate::memory::platform_tuning::*;
