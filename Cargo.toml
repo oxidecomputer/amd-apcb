@@ -1,6 +1,6 @@
 [package]
 name = "amd-apcb"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Oxide Computer"]
 edition = "2018"
 
