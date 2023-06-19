@@ -1,6 +1,6 @@
 [package]
 name = "amd-apcb"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Oxide Computer"]
 edition = "2018"
 
@@ -28,10 +28,11 @@ serde = { version = "1.0", default-features = false, features = ["derive"], opti
 serde-hex = { version = "0.1.0", optional = true }
 schemars = { version = "0.8.8", optional = true }
 parse_int = { version = "0.6.0", optional = true }
+thiserror = { version = "1.0.38", optional = true }
 
 [features]
 default = []
-std = ["byteorder/std", "four-cc/std"]
+std = ["byteorder/std", "four-cc/std", "thiserror"]
 schemars = ["std", "dep:schemars", "four-cc/schemars"]
 serde = ["std", "dep:serde", "dep:parse_int", "four-cc/serde"]
 serde-hex = ["std", "dep:serde", "dep:serde-hex"]
