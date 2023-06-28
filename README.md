@@ -16,4 +16,4 @@ For details, see the generated documentation.
 
 Run
 
-    make tests
+    cargo xtask test
