@@ -175,9 +175,14 @@ impl DummyErrorChecks for u8 {}
 impl DummyErrorChecks for bool {}
 
 /// This macro expects a struct as a parameter (attributes are fine) and then,
-/// first, defines the exact same struct. Afterwards, it automatically impls
-/// getters (and setters) for the fields where there was "get" (and "set")
-/// specified.  The getters and setters so generated are hardcoded as calling
+/// first, defines the exact same struct, and also a more user-friendly struct
+/// (name starts with "Serde") that can be used for serde (note: if you want
+/// to use it for that, you still have to impl Serialize and Deserialize for
+/// the former manually--forwarding to the respective "Serde" struct--which
+/// does have "Serialize" and "Deserialize" implemented).
+/// Afterwards, it automatically impls getters (and maybe setters) for the
+/// fields where there was "get" (and maybe "set") specified.
+/// The getters and setters so generated are hardcoded as calling
 /// self.field.get1 and self.field.set1, respectively.  These are usually
 /// provided by a Getter and Setter trait impl (for example the ones in the same
 /// file this macro is in).
