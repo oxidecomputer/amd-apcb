@@ -446,9 +446,9 @@ impl<'a> Apcb<'a> {
     pub fn header_mut(
         &mut self,
     ) -> Result<LayoutVerified<&mut [u8], V2_HEADER>> {
-        #[cfg(not(feature = "serde"))]
+        #[cfg(not(feature = "std"))]
         let bs: &mut [u8] = self.backing_store;
-        #[cfg(feature = "serde")]
+        #[cfg(feature = "std")]
         let bs: &mut [u8] = self.backing_store.to_mut();
         let (header, _) =
             LayoutVerified::<&mut [u8], V2_HEADER>::new_unaligned_from_prefix(
@@ -489,9 +489,9 @@ impl<'a> Apcb<'a> {
     pub fn v3_header_ext_mut(
         &mut self,
     ) -> Result<Option<LayoutVerified<&mut [u8], V3_HEADER_EXT>>> {
-        #[cfg(not(feature = "serde"))]
+        #[cfg(not(feature = "std"))]
         let bs: &mut [u8] = self.backing_store;
-        #[cfg(feature = "serde")]
+        #[cfg(feature = "std")]
         let bs: &mut [u8] = self.backing_store.to_mut();
         let (header, rest) =
             LayoutVerified::<&mut [u8], V2_HEADER>::new_unaligned_from_prefix(
@@ -528,9 +528,9 @@ impl<'a> Apcb<'a> {
         if self.v3_header_ext()?.is_some() {
             offset = size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>();
         }
-        #[cfg(feature = "serde")]
+        #[cfg(feature = "std")]
         return Ok(&mut self.backing_store.to_mut()[offset..]);
-        #[cfg(not(feature = "serde"))]
+        #[cfg(not(feature = "std"))]
         Ok(&mut self.backing_store[offset..])
     }
     pub fn groups(&self) -> Result<ApcbIter<'_>> {
@@ -1173,9 +1173,9 @@ impl<'a> Apcb<'a> {
     ) -> Result<Self> {
         let backing_store_len = bs.len();
 
-        #[cfg(not(feature = "serde"))]
+        #[cfg(not(feature = "std"))]
         let backing_store: &mut [u8] = bs;
-        #[cfg(feature = "serde")]
+        #[cfg(feature = "std")]
         let backing_store: &mut [u8] = bs.to_mut();
 
         let (header, mut rest) =
@@ -1344,9 +1344,9 @@ impl<'a> Apcb<'a> {
         initial_unique_apcb_instance: u32,
         options: &ApcbIoOptions,
     ) -> Result<Self> {
-        #[cfg(not(feature = "serde"))]
+        #[cfg(not(feature = "std"))]
         let backing_store: &mut [u8] = bs;
-        #[cfg(feature = "serde")]
+        #[cfg(feature = "std")]
         let backing_store: &mut [u8] = bs.to_mut();
 
         backing_store.fill(0xFF);

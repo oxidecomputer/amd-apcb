@@ -69,10 +69,10 @@ macro_rules! collect_EntryCompatible_impl_into_enum {
              $($state_mut)*
         }
 
-        #[cfg(feature = "serde")]
+        #[cfg(feature = "std")]
         #[non_exhaustive]
-        #[derive(Serialize, Deserialize)]
-        #[serde(deny_unknown_fields)]
+        #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+        #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
         #[repr(C)]
         pub enum Element {
              Unknown(Vec<u8>),
