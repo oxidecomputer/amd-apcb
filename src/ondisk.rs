@@ -1023,7 +1023,7 @@ pub enum TokenEntryId {
     Unknown(u16),
 }
 
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 use std::fmt::{Formatter, Result as FResult};
 
 #[cfg(feature = "serde")]
@@ -2317,7 +2317,7 @@ pub mod memory {
         }
     }
 
-    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone, Default)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
@@ -2325,16 +2325,12 @@ pub mod memory {
         PcieHt0 = 0,
         PcieHt1 = 2,
         PcieMmio = 5,
+        #[default]
         FchHtIo = 6,
         FchMmio = 7,
     }
-    impl Default for PortType {
-        fn default() -> Self {
-            PortType::FchHtIo
-        }
-    }
 
-    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone, Default)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
@@ -2344,12 +2340,8 @@ pub mod memory {
         #[cfg_attr(feature = "serde", serde(rename = "16 Bit"))]
         _16Bit = 2,
         #[cfg_attr(feature = "serde", serde(rename = "32 Bit"))]
+        #[default]
         _32Bit = 4,
-    }
-    impl Default for PortSize {
-        fn default() -> Self {
-            PortSize::_32Bit
-        }
     }
 
     make_accessors! {
