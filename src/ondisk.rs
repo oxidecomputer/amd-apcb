@@ -1240,13 +1240,13 @@ macro_rules! make_bitfield_serde {(
                     }
                 )?
                 $(
-                    pub(crate) fn [<serde_with_ $field_name>]<'a>(self : &mut Self, value: $field_ty) -> &mut Self {
+                    pub(crate) fn [<serde_with_ $field_name>](self : &mut Self, value: $field_ty) -> &mut Self {
                         self.[<set_ $field_name>](value.into());
                         self
                     }
                 )?
                 $(
-                    pub(crate) fn [<serde_with_ $field_name>]<'a>(self : &mut Self, value: $serde_ty) -> &mut Self {
+                    pub(crate) fn [<serde_with_ $field_name>](self : &mut Self, value: $serde_ty) -> &mut Self {
                         self.[<set_ $field_name>](value.into());
                         self
                     }
