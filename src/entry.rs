@@ -415,7 +415,7 @@ impl<'a> EntryMutItem<'a> {
 #[cfg(feature = "std")]
 extern crate std;
 
-#[cfg(feature = "std")]
+#[cfg(feature = "serde")]
 use std::fmt;
 
 #[derive(Clone)]

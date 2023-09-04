@@ -1108,7 +1108,7 @@ impl<'a> Apcb<'a> {
         let mut beginning_of_group =
             &mut self.beginning_of_groups_mut()?[old_used_size..new_used_size];
 
-        let mut header = take_header_from_collection_mut::<GROUP_HEADER>(
+        let header = take_header_from_collection_mut::<GROUP_HEADER>(
             &mut beginning_of_group,
         )
         .ok_or(Error::FileSystem(
@@ -1353,7 +1353,7 @@ impl<'a> Apcb<'a> {
         backing_store.fill(0xFF);
         {
             let mut backing_store = &mut *backing_store;
-            let mut header = take_header_from_collection_mut::<V2_HEADER>(
+            let header = take_header_from_collection_mut::<V2_HEADER>(
                 &mut backing_store,
             )
             .ok_or(Error::FileSystem(

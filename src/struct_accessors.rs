@@ -270,7 +270,7 @@ macro_rules! make_accessors {(
                       #[inline]
                       #[allow(dead_code)]
                       $setter_vis
-                      fn [<with_ $field_name>]<'a>(self: &mut Self, value: $field_setter_user_ty) -> &mut Self {
+                      fn [<with_ $field_name>](self: &mut Self, value: $field_setter_user_ty) -> &mut Self {
                           let result = self;
                           result.$field_name.set1(value);
                           result
@@ -289,7 +289,7 @@ macro_rules! make_accessors {(
                 }
                 #[inline]
                 #[allow(dead_code)]
-                pub(crate) fn [<serde_with_ $field_name>]<'a>(self: &mut Self, value: $serde_ty) -> &mut Self {
+                pub(crate) fn [<serde_with_ $field_name>](self: &mut Self, value: $serde_ty) -> &mut Self {
                     let result = self;
                     result.$field_name.set1(value);
                     result
@@ -306,7 +306,7 @@ macro_rules! make_accessors {(
                 }
                 #[inline]
                 #[allow(dead_code)]
-                pub(crate) fn [<serde_with_ $field_name>]<'a>(self: &mut Self, value: $field_ty) -> &mut Self {
+                pub(crate) fn [<serde_with_ $field_name>](self: &mut Self, value: $field_ty) -> &mut Self {
                     let result = self;
                     result.$field_name = value.into();
                     result
