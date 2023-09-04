@@ -2317,7 +2317,9 @@ pub mod memory {
         }
     }
 
-    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone, Default)]
+    #[derive(
+        Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone, Default,
+    )]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
@@ -2330,7 +2332,9 @@ pub mod memory {
         FchMmio = 7,
     }
 
-    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone, Default)]
+    #[derive(
+        Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone, Default,
+    )]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
