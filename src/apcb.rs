@@ -57,6 +57,7 @@ impl Default for ApcbIoOptions {
     }
 }
 
+#[cfg_attr(feature = "std", derive(Clone))]
 pub struct Apcb<'a> {
     used_size: usize,
     pub backing_store: PtrMut<'a, [u8]>,
