@@ -19,7 +19,7 @@ use core::cmp::Ordering;
 use core::convert::TryFrom;
 use core::convert::TryInto;
 use core::mem::{size_of, take};
-use core::num::NonZeroU8;
+use core::num::{NonZeroU8, NonZeroU16};
 use four_cc::FourCC;
 use modular_bitfield::prelude::*;
 use num_derive::FromPrimitive;
@@ -6941,6 +6941,43 @@ pub enum MemDataPoison {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemSpdVerifyCrc {
+    Skip = 0,
+    Verify = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemOdtsMode {
+    Disabled = 0,
+    Enabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemEcsModeDdr {
+    EcsAuto = 0,
+    EcsManual = 1,
+    Auto = 0xff,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemBootTimePostPackageRepair {
+    Disabled = 0,
+    Enabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemMaxActivityCount {
     Untested = 0,
     #[cfg_attr(feature = "serde", serde(rename = "700000"))]
@@ -7025,6 +7062,28 @@ pub enum CcxSevAsidCount {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum CcxApicMode {
+    Compatibility = 0,
+    #[cfg_attr(feature = "serde", serde(rename = "xAPIC"))]
+    XApic = 1,
+    #[cfg_attr(feature = "serde", serde(rename = "x2APIC"))]
+    X2Apic = 2,
+    Auto = 0xFF,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum FchConsoleOutMode {
+    Disabled = 0,
+    Enabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum FchConsoleOutSuperIoType {
     Auto = 0,
     Type1 = 1,
@@ -7039,6 +7098,32 @@ pub enum FchConsoleSerialPort {
     SuperIo = 0,
     Uart0Mmio = 1,
     Uart1Mmio = 2,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum FchConsoleOutSerialPortIoBase {
+    #[cfg_attr(feature = "serde", serde(rename = "3f8"))]
+    _3f8 = 0,
+    #[cfg_attr(feature = "serde", serde(rename = "2f8"))]
+    _2f8 = 1,
+    #[cfg_attr(feature = "serde", serde(rename = "3e8"))]
+    _3e8 = 2,
+    #[cfg_attr(feature = "serde", serde(rename = "2e8"))]
+    _2e8 = 3,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum FchIc3TransferSpeed {
+    #[cfg_attr(feature = "serde", serde(alias = "12.5 MHz"))]
+    Sdr0 = 0,
+    #[cfg_attr(feature = "serde", serde(alias = "6 MHz"))]
+    Sdr2 = 2,
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
@@ -7112,8 +7197,8 @@ impl MemRdimmTimingCmdParLatency {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub enum MemThrottleCtrlRollWindowDepth {
-    Memclks(NonZeroU8),
+pub enum MemThrottleCtrlRollWindowDepth<T> {
+    Memclks(T),
     // 0: _reserved_
 }
 
@@ -7140,7 +7225,7 @@ pub enum MemAutoRefreshsCountForThrottling {
     Disabled = 1,
 }
 
-impl FromPrimitive for MemThrottleCtrlRollWindowDepth {
+impl FromPrimitive for MemThrottleCtrlRollWindowDepth<NonZeroU8> {
     fn from_u64(value: u64) -> Option<Self> {
         if value > 0 && value <= 0xff {
             let value = NonZeroU8::new(value as u8)?;
@@ -7158,7 +7243,35 @@ impl FromPrimitive for MemThrottleCtrlRollWindowDepth {
         }
     }
 }
-impl ToPrimitive for MemThrottleCtrlRollWindowDepth {
+impl ToPrimitive for MemThrottleCtrlRollWindowDepth<NonZeroU8> {
+    fn to_i64(&self) -> Option<i64> {
+        match self {
+            Self::Memclks(x) => Some((*x).get().into()),
+        }
+    }
+    fn to_u64(&self) -> Option<u64> {
+        Some(self.to_i64()? as u64)
+    }
+}
+impl FromPrimitive for MemThrottleCtrlRollWindowDepth<NonZeroU16> {
+    fn from_u64(value: u64) -> Option<Self> {
+        if value > 0 && value <= 0xffff {
+            let value = NonZeroU16::new(value as u16)?;
+            Some(Self::Memclks(value))
+        } else {
+            None
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 {
+            let value: u64 = value.try_into().ok()?;
+            Self::from_u64(value)
+        } else {
+            None
+        }
+    }
+}
+impl ToPrimitive for MemThrottleCtrlRollWindowDepth<NonZeroU16> {
     fn to_i64(&self) -> Option<i64> {
         match self {
             Self::Memclks(x) => Some((*x).get().into()),
@@ -7253,6 +7366,34 @@ pub enum DfMemInterleavingSize {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum DfCxlToggle {
+    Disabled = 0,
+    Enabled = 1,
+    Auto = 0xff,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum DfCcdBwThrottleLevel {
+    #[cfg_attr(feature = "serde", serde(rename = "Level 0"))]
+    _0 = 0,
+    #[cfg_attr(feature = "serde", serde(rename = "Level 1"))]
+    _1 = 1,
+    #[cfg_attr(feature = "serde", serde(rename = "Level 2"))]
+    _2 = 2,
+    #[cfg_attr(feature = "serde", serde(rename = "Level 3"))]
+    _3 = 3,
+    #[cfg_attr(feature = "serde", serde(rename = "Level 4"))]
+    _4 = 4,
+    Auto = 0xff,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfDramNumaPerSocket {
     None = 0,
     One = 1,
@@ -7309,6 +7450,16 @@ pub enum DfPstateModeSelect {
     Auto = 0xff,
 }
 
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum DfPfOrganization {
+    Dedicated = 0,
+    Shared = 2,
+    Auto = 0xff,
+}
+
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -7360,11 +7511,17 @@ impl GnbSmuDfPstateFclkLimit {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-pub enum SecondPcieLinkSpeed {
+pub enum AdditionalPcieLinkSpeed {
     Keep = 0,
     Gen1 = 1,
     Gen2 = 2,
+    Gen3 = 3, // Not documented?
 }
+
+// TODO: Not explicitly documented but seems to be the case?
+pub type SecondPcieLinkSpeed = AdditionalPcieLinkSpeed;
+pub type ThirdPcieLinkSpeed = AdditionalPcieLinkSpeed;
+pub type FourthPcieLinkSpeed = AdditionalPcieLinkSpeed;
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -7486,6 +7643,7 @@ pub enum MemMbistPatternSelect {
     Prbs = 0,
     Sso = 1,
     Both = 2,
+    Auto = 0xFF,
 }
 
 #[allow(non_camel_case_types, non_snake_case)]
@@ -7522,7 +7680,18 @@ impl MemMbistAggressorsChannels {
 pub enum MemMbistTestMode {
     PhysicalInterface = 0,
     DataEye = 1,
-    // Both = , ?
+    Both = 2,
+    Auto = 0xff,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemHealingBistRepairTypeDdr {
+    Soft = 0,
+    Hard = 1,
+    None = 2,
 }
 
 #[allow(non_camel_case_types, non_snake_case)]
@@ -7769,13 +7938,10 @@ pub enum DxioPhyParamPole {
 }
 impl FromPrimitive for DxioPhyParamPole {
     fn from_u64(value: u64) -> Option<Self> {
-        if value < 0x1_0000_0000 {
-            match value {
-                0xffff_ffff => Some(Self::Skip),
-                x => Some(Self::Value(x as u32)),
-            }
-        } else {
-            None
+        match value {
+            0xffff_ffff => Some(Self::Skip),
+            0..=0xFFFFFFFE => Some(Self::Value(value as u32)),
+            _ => None,
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
@@ -7857,11 +8023,15 @@ impl ToPrimitive for DxioPhyParamDc {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DxioPhyParamIqofc {
     Value(i32),
-    // Skip
+    Skip,
 }
 impl FromPrimitive for DxioPhyParamIqofc {
     fn from_i64(value: i64) -> Option<Self> {
-        (-4..=4).contains(&value).then_some(Self::Value(value as i32))
+        match value {
+            0x7FFFFFFF => Some(Self::Skip),
+            -4..=4 => Some(Self::Value(value as i32)),
+            _ => None
+        }
     }
     fn from_u64(value: u64) -> Option<Self> {
         Self::from_i64(value as i64)
@@ -7871,6 +8041,7 @@ impl ToPrimitive for DxioPhyParamIqofc {
     fn to_i64(&self) -> Option<i64> {
         match self {
             Self::Value(x) => Some((*x).into()),
+            Self::Skip => Some(0x7FFFFFFF),
         }
     }
     fn to_u64(&self) -> Option<u64> {
@@ -7911,6 +8082,54 @@ pub enum MemClockValue {
     Ddr4267 = 2133,
     Ddr4333 = 2167,
     Ddr4400 = 2200,
+    Ddr4467 = 2233,
+    Ddr4533 = 2267,
+    Ddr4600 = 2300,
+    Ddr4667 = 2333,
+    Ddr4733 = 2367,
+    Ddr4800 = 2400,
+    Ddr4867 = 2433,
+    Ddr4933 = 2467,
+    Ddr5000 = 2500,
+    Ddr5100 = 2550,
+    Ddr5200 = 2600,
+    Ddr5300 = 2650,
+    Ddr5400 = 2700,
+    Ddr5500 = 2750,
+    Ddr5600 = 2800,
+    Ddr5700 = 2850,
+    Ddr5800 = 2900,
+    Ddr5900 = 2950,
+    Ddr6000 = 3000,
+    Ddr6100 = 3050,
+    Ddr6200 = 3100,
+    Ddr6300 = 3150,
+    Ddr6400 = 3200,
+    Ddr6500 = 3250,
+    Ddr6600 = 3300,
+    Ddr6700 = 3350,
+    Ddr6800 = 3400,
+    Ddr6900 = 3450,
+    Ddr7000 = 3500,
+    Ddr7100 = 3550,
+    Ddr7200 = 3600,
+    Ddr7300 = 3650,
+    Ddr7400 = 3700,
+    Ddr7500 = 3750,
+    Ddr7600 = 3800,
+    Ddr7700 = 3850,
+    Ddr7800 = 3900,
+    Ddr7900 = 3950,
+    Ddr8000 = 4000,
+    Ddr8100 = 4050,
+    Ddr8200 = 4100,
+    Ddr8300 = 4150,
+    Ddr8400 = 4200,
+    Ddr8500 = 4250,
+    Ddr8533 = 4267,
+    Ddr8600 = 4300,
+    Ddr8700 = 4350,
+    Ddr8800 = 4400,
     Auto = 0xffff_ffff, // FIXME: verify
 }
 
@@ -8077,17 +8296,102 @@ impl ToPrimitive for DfCakeCrcThresholdBounds {
     }
 }
 
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum DfXgmiChannelType {
+    #[default]
+    Disabled,
+    LongReach,
+}
+
+impl FromPrimitive for DfXgmiChannelType {
+    fn from_u64(value: u64) -> Option<Self> {
+        match value {
+            0 => Some(Self::Disabled),
+            1 => Some(Self::LongReach),
+            _ => None,
+        }
+    }
+    fn from_i64(value: i64) -> Option<Self> {
+        if value >= 0 {
+            Self::from_u64(value as u64)
+        } else {
+            None
+        }
+    }
+}
+impl ToPrimitive for DfXgmiChannelType {
+    fn to_u64(&self) -> Option<u64> {
+        match self {
+            Self::Disabled => Some(0),
+            Self::LongReach => Some(1),
+        }
+    }
+    fn to_i64(&self) -> Option<i64> {
+        let result = self.to_u64()?;
+        Some(result as i64)
+    }
+}
+
+impl From<DfXgmiChannelType> for u8 {
+    fn from(value: DfXgmiChannelType) -> Self {
+        match value {
+            DfXgmiChannelType::Disabled => 0,
+            DfXgmiChannelType::LongReach => 1,
+        }
+    }
+}
+impl From<u8> for DfXgmiChannelType {
+    fn from(value: u8) -> Self {
+        match value {
+            0 => DfXgmiChannelType::Disabled,
+            1 => DfXgmiChannelType::LongReach,
+            _ => panic!("Invalid value for DfXgmiChannelType: {value}"),
+        }
+    }
+}
+
+make_bitfield_serde! {
+    #[bitfield(bits = 32)]
+    #[derive(PartialEq, Debug, Copy, Clone)]
+    #[repr(u32)]
+    pub struct DfXgmiChannelTypeSelect {
+        pub s0l0 || DfXgmiChannelType : B4 | pub get DfXgmiChannelType : pub set DfXgmiChannelType,
+        pub s0l1 || DfXgmiChannelType : B4 | pub get DfXgmiChannelType : pub set DfXgmiChannelType,
+        pub s0l2 || DfXgmiChannelType : B4 | pub get DfXgmiChannelType : pub set DfXgmiChannelType,
+        pub s0l3 || DfXgmiChannelType : B4 | pub get DfXgmiChannelType : pub set DfXgmiChannelType,
+        pub s1l0 || DfXgmiChannelType : B4 | pub get DfXgmiChannelType : pub set DfXgmiChannelType,
+        pub s1l1 || DfXgmiChannelType : B4 | pub get DfXgmiChannelType : pub set DfXgmiChannelType,
+        pub s1l2 || DfXgmiChannelType : B4 | pub get DfXgmiChannelType : pub set DfXgmiChannelType,
+        pub s1l3 || DfXgmiChannelType : B4 | pub get DfXgmiChannelType : pub set DfXgmiChannelType,
+    }
+}
+impl_bitfield_primitive_conversion!(
+    DfXgmiChannelTypeSelect,
+    0b1111_1111_1111_1111,
+    u32
+);
+
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemTrainingHdtControl {
-    DetailedDebugMessages = 5,
-    CoarseDebugMessages = 10,
-    StageCompletionMessages = 200,
-    StageCompletionMessages1 = 201, // FIXME
-    // TODO: Seen in the wild: 201
+    DetailedDebugMessages = 0x04,
+    CoarseDebugMessages = 0x0a,
+    StageCompletionMessages = 0xc8,
+    #[cfg_attr(feature = "serde", serde(alias = "StageCompletionMessages1"))]
+    AssertionMessages = 0xc9,
     FirmwareCompletionMessagesOnly = 0xfe,
+    Auto = 0xff,
+}
+
+impl MemTrainingHdtControl {
+    #[allow(non_upper_case_globals)]
+    #[deprecated(note = "Name has since been fixed to 'AssertionMessages'")]
+    pub const StageCompletionMessages1: Self = Self::AssertionMessages;
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
@@ -8109,14 +8413,16 @@ make_bitfield_serde! {
         pub s0_gpp4_off : bool | pub get bool : pub set bool,
         pub s0_gpp2_off : bool | pub get bool : pub set bool,
         pub s0_gpp3_off : bool | pub get bool : pub set bool,
-        pub _reserved_1 || #[serde(default)] SerdeHex8 : B3,
+        pub s0_gpp5_off : bool | pub get bool : pub set bool,
+        pub _reserved_1 || #[serde(default)] SerdeHex8 : B2,
 
         pub s1_gpp0_off : bool | pub get bool : pub set bool,
         pub s1_gpp1_off : bool | pub get bool : pub set bool,
         pub s1_gpp4_off : bool | pub get bool : pub set bool,
         pub s1_gpp2_off : bool | pub get bool : pub set bool,
         pub s1_gpp3_off : bool | pub get bool : pub set bool,
-        pub _reserved_2 || #[serde(default)] SerdeHex8 : B3,
+        pub s1_gpp5_off : bool | pub get bool : pub set bool,
+        pub _reserved_2 || #[serde(default)] SerdeHex8 : B2,
     }
 }
 
@@ -8131,17 +8437,14 @@ pub enum FchGppClkMap {
 }
 impl FromPrimitive for FchGppClkMap {
     fn from_u64(value: u64) -> Option<Self> {
-        if value < 0x100 {
-            match value {
-                0xffff => Some(Self::Auto),
-                0x0000 => Some(Self::On),
-                x => Some(Self::Value(FchGppClkMapSelection::from_bytes([
-                    (x & 0xff) as u8,
-                    (x >> 8) as u8,
-                ]))),
-            }
-        } else {
-            None
+        match value {
+            0xffff => Some(Self::Auto),
+            0x0000 => Some(Self::On),
+            x if value < 0x10000 => Some(Self::Value(FchGppClkMapSelection::from_bytes([
+                (x & 0xff) as u8,
+                (x >> 8) as u8,
+            ]))),
+            _ => None,
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
@@ -8188,6 +8491,25 @@ make_bitfield_serde! {
 }
 impl_bitfield_primitive_conversion!(MemPmuBistTestSelect, 0b11111, u8);
 
+make_bitfield_serde! {
+    #[bitfield(bits = 16)]
+    #[repr(u16)]
+    #[derive(Debug, Copy, Clone, PartialEq)]
+    pub struct MemPmuBistAlgorithmSelect {
+        pub algorithm_1: bool | pub get bool : pub set bool,
+        pub algorithm_2: bool | pub get bool : pub set bool,
+        pub algorithm_3: bool | pub get bool : pub set bool,
+        pub algorithm_4: bool | pub get bool : pub set bool,
+        pub algorithm_5: bool | pub get bool : pub set bool,
+        pub algorithm_6: bool | pub get bool : pub set bool,
+        pub algorithm_7: bool | pub get bool : pub set bool,
+        pub algorithm_8: bool | pub get bool : pub set bool,
+        pub algorithm_9: bool | pub get bool : pub set bool,
+        pub _reserved_0 || SerdeHex8 : B7,
+    }
+}
+impl_bitfield_primitive_conversion!(MemPmuBistAlgorithmSelect, 0b1_1111_1111, u16);
+
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
@@ -8221,6 +8543,17 @@ pub enum PspSevMode {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum PspApmlSbtsiSlaveMode {
+    #[cfg_attr(feature = "serde", serde(alias = "I3C"))]
+    I3c = 0,
+    #[cfg_attr(feature = "serde", serde(alias = "I2C"))]
+    I2c = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemTccd5ReadCommandSpacingMode {
     Disabled = 1,
     Enabled = 0,
@@ -8244,6 +8577,80 @@ pub enum FchI2cSdaHoldOverrideMode {
     OverrideBoth = 1,
 }
 
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum FchI2cI3cControllerMode {
+    #[cfg_attr(feature = "serde", serde(alias = "I3C"))]
+    I3c = 0,
+    #[cfg_attr(feature = "serde", serde(alias = "I2C"))]
+    I2c = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum FchI2cI3cSmbusSelect {
+    #[cfg_attr(feature = "serde", serde(alias = "I3C"))]
+    I3c = 0,
+    #[cfg_attr(feature = "serde", serde(alias = "I2C"))]
+    I2c = 1,
+    #[cfg_attr(feature = "serde", serde(alias = "SMBUS"))]
+    Smbus = 2,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum FchSpdControlOwnershipMode {
+    Linked = 0,
+    Separate = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemMbistDdrMode {
+    Disabled = 0,
+    Enabled = 1,
+    Auto = 0xff,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemMbistAggressorsChannelDdrMode {
+    SubChannel = 0,
+    Half = 1,
+    All = 2,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemMbistPerBitSlaveDieReportDdr {
+    Disabled = 0,
+    Enabled = 1,
+    Auto = 0xff,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemSelfHealing {
+    Disabled = 0,
+    Pmu = 1,
+    SelfHealing = 2,
+    Both = 3,
+}
+
 const UNLIMITED_VERSION: u32 = !0u32;
 
 make_token_accessors! {
@@ -8258,6 +8665,8 @@ make_token_accessors! {
 
         PspEnableDebugMode(default 0, id 0xd109_1cd0) | pub get PspEnableDebugMode : pub set PspEnableDebugMode,
         PspSevMode(default 0, id 0xadc8_33e4) | pub get PspSevMode : pub set PspSevMode, // Milan
+
+        PspApmlSbtsiSlaveMode(default 0, id 0xb666_1742) | pub get PspApmlSbtsiSlaveMode : pub set PspApmlSbtsiSlaveMode,
 
         // Memory Controller
 
@@ -8294,20 +8703,64 @@ make_token_accessors! {
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemHealMaxBankFails(default 3, id 0x632e_55d8) | pub get u8 : pub set u8, // per bank
         MemTccd5ReadCommandSpacingMode(default 1, id 0x96a5_ed6e) | pub get MemTccd5ReadCommandSpacingMode : pub set MemTccd5ReadCommandSpacingMode, // Milan
+        MemMaxRcdParityErrorRelay(default 8, id 0x9702_04a2) | pub get u8 : pub set u8,
+        MemMaxUeccErrorReplay(default 8, id 0x3096_b9a5) | pub get u8 : pub set u8,
+        MemMaxReadCrcErrorReplay(default 8, id 0x29ad_c904) | pub get u8 : pub set u8,
+        MemMaxWriteCrcErrorReplay(default 8, id 0x7342_fc94) | pub get u8 : pub set u8,
+        MemReadCrcEnableDdr(default 0, id 0x8360_33c6) | pub get u8 : pub set u8,
+        MemWriteCrcEnableDdr(default 0, id 0x7509_87bc) | pub get u8 : pub set u8,
+        MemPsErrorHandling(default 0, id 0x6c4c_cf38) | pub get u8 : pub set u8,
+        MemUeccRetryEnableDdr(default 0, id 0x4907_b13a) | pub get u8 : pub set u8,
+        MemSelfHealing(default 0, id 0x5522_05A3) | pub get MemSelfHealing: pub set MemSelfHealing,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        MemHealMaxBankFailsDdr(default 3, id 0xa94a_3a01) | pub get u8 : pub set u8,
+        MemDataPoisonDdr(default 0, id 0x8614_0d77) | pub get MemDataPoison : pub set MemDataPoison,
+        MemSpdVerifyCrc(default 0, id 0x87b6_d2d4) | pub get MemSpdVerifyCrc : pub set MemSpdVerifyCrc,
+        MemOdtsMode(default 0, id 0xaeb3_f914) | pub get MemOdtsMode : pub set MemOdtsMode,
+        MemEcsModeDdr(default 0xff, id 0xb384_6ddf) | pub get MemEcsModeDdr : pub set MemEcsModeDdr,
+        MemBootTimePostPackageRepair(default 0, id 0xe229_1e4a) | pub get MemBootTimePostPackageRepair : pub set MemBootTimePostPackageRepair,
+        // TODO: enum
+        MemMbistTestModeDdr(default 0, id 0x96df_25ca) | pub get u8 : pub set u8,
 
         // Ccx
 
         CcxSevAsidCount(default 1, id 0x5587_6720) | pub get CcxSevAsidCount : pub set CcxSevAsidCount,
+        CcxApicMode(default 0, id 0xf284_ad3f) | pub get CcxApicMode : pub set CcxApicMode,
 
         // Fch
 
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
-        FchConsoleOutMode(default 0, id 0xddb7_59da) | pub get u8 : pub set u8,
+        FchConsoleOutMode(default 0, id 0xddb7_59da) | pub get FchConsoleOutMode : pub set FchConsoleOutMode,
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         FchConsoleOutBasicEnable(default 0, id 0xa0903f98) | pub get u8 : pub set u8, // Rome (Obsolete)
         FchConsoleOutSerialPort(default 0, id 0xfff9_f34d) | pub get FchConsoleSerialPort : pub set FchConsoleSerialPort,
+        FchConsoleOutSerialPortIoBase(default 0, id 0x95dc_6839) | pub get FchConsoleOutSerialPortIoBase : pub set FchConsoleOutSerialPortIoBase,
         FchSmbusSpeed(default 42, id 0x2447_3329) | pub get FchSmbusSpeed : pub set FchSmbusSpeed,
         FchConsoleOutSuperIoType(default 0, id 0x5c8d_6e82) | pub get FchConsoleOutSuperIoType : pub set FchConsoleOutSuperIoType, // init mode
+        FchSpdControlOwnership(default 0, id 0x2329_5d81) | pub get FchSpdControlOwnershipMode : pub set FchSpdControlOwnershipMode,
+        FchIc3TransferSpeed(default 2, id 0x1ed8_fae5) | pub get FchIc3TransferSpeed : pub set FchIc3TransferSpeed,
+        FchI2cI3cController0Mode(default 0, id 0xb663_3a33) | pub get FchI2cI3cControllerMode : pub set FchI2cI3cControllerMode,
+        FchI2cI3cController1Mode(default 0, id 0xd2c7_be74) | pub get FchI2cI3cControllerMode : pub set FchI2cI3cControllerMode,
+        FchI2cI3cController2Mode(default 0, id 0x9ec3_f26b) | pub get FchI2cI3cControllerMode : pub set FchI2cI3cControllerMode,
+        FchI2cI3cController3Mode(default 0, id 0x83a0_b3d6) | pub get FchI2cI3cControllerMode : pub set FchI2cI3cControllerMode,
+        FchI2cI3cController4Mode(default 0, id 0xd7ac_3048) | pub get FchI2cI3cControllerMode : pub set FchI2cI3cControllerMode,
+        FchI2cI3cController5Mode(default 0, id 0xebc3_3806) | pub get FchI2cI3cControllerMode : pub set FchI2cI3cControllerMode,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        FchIc3PushPullHighCount(default 0x08, id 0xe180_bc26) | pub get u8 : pub set u8,
+
+        FchI2cI3cSmbusSelect0(default 1, id 0x811f_7fbd) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
+        FchI2cI3cSmbusSelect1(default 1, id 0x32bd_7f95) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
+        FchI2cI3cSmbusSelect2(default 1, id 0x8e27_5326) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
+        FchI2cI3cSmbusSelect3(default 1, id 0xed13_9de8) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
+
+        // TODO: Replaced at some point with APCB_TOKEN_UID_I2C_4 / APCB_TOKEN_UID_I2C_5 ?
+        FchI2cI3cSmbusSelect4(default 1, id 0x2158_efca) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
+        FchI2cI3cSmbusSelect5(default 1, id 0x5caa_a37b) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
+
+        // TODO: Maybe should be called `FchI2cSdaRxHold` but that's already a WordToken
+        FchIcSdaRxHold(default 0, id 0xa4ba_c3d5) | pub get u8: pub set u8,
+
+        FchI3cSdaHoldSwitchDelay(default 2, id 0xccae_84e7) | pub get u8 : pub set u8,
 
         // Df
 
@@ -8328,14 +8781,69 @@ make_token_accessors! {
         DfRemapAt1TiB(default 0, id 0x35ee_96f3) | pub get DfRemapAt1TiB : pub set DfRemapAt1TiB,
         DfXgmiTxEqMode(default 0xff, id 0xade7_9549) | pub get DfXgmiTxEqMode : pub set DfXgmiTxEqMode,
         DfInvertDramMap(default 0, id 0x6574_b2c0) | pub get DfToggle : pub set DfToggle,
+        DfXgmiCrcScale(default 5, id 0x5174_f4a0) | pub get u8 : pub set u8,
+        DfCxlMemInterleaving(default 0xFF, id 0x6387_09e6) | pub get DfCxlToggle : pub set DfCxlToggle,
+        DfCxlSublinkInterleaving(default 0xFF, id 0x66f_1625a) | pub get DfCxlToggle : pub set DfCxlToggle,
+        // TODO: Represent bitfield somehow
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiAcDcCoupledLink(default 0xff, id 0xa7ae_5713) | pub get u8 : pub set u8,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiCrcThreshold(default 0xff, id 0xc375_4da2) | pub get u8 : pub set u8,
+        DfCcdBwThrottleLevel(default 0xFF, id 0xd288_6dc9) | pub get DfCcdBwThrottleLevel : pub set DfCcdBwThrottleLevel,
+        DfPfOrganization(default 0, id 0xede8_930b) | pub get DfPfOrganization : pub set DfPfOrganization,
+
+        // Nbio
+
+        NbioSataMode(default 2, id 0xe8fd_e3b2) | pub get u8 : pub set u8,
+
+        // TODO: defaults?
+        // TODO: Reuse `SecondPcieLinkSpeed` enum for Third/Fourth variants?
+
+        SecondPcieLinkSpeed(default 0, id 0x8723_750f) | pub get SecondPcieLinkSpeed : pub set SecondPcieLinkSpeed,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        SecondPcieLinkStartLane(default 0, id 0xb164_8033) | pub get u8 : pub set u8,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        SecondPcieLinkEndLane(default 0, id 0x3bf3_23fd) | pub get u8 : pub set u8,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        SecondPcieLinkDevice(default 0, id 0x05d0_8d49) | pub get u8 : pub set u8,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        SecondPcieLinkFunction(default 0, id 0x1097_e009) | pub get u8 : pub set u8,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        SecondPcieLinkPortPresent(default 0, id 0x973c_eadd) | pub get u8 : pub set u8,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        SecondPcieLinkMaxPayload(default 0xff, id 0xe02d_f04b) | pub get SecondPcieLinkMaxPayload : pub set SecondPcieLinkMaxPayload, // Milan
+
+        ThirdPcieLinkSpeed(default 0, id 0x7963_3632) | pub get ThirdPcieLinkSpeed : pub set ThirdPcieLinkSpeed,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        ThirdPcieLinkStartLane(default 0, id 0x8ea3_bd2a) | pub get u8 : pub set u8,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        ThirdPcieLinkEndLane(default 0, id 0x8ec6_1b06) | pub get u8 : pub set u8,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        ThirdPcieLinkDevice(default 0, id 0xd922_71f3) | pub get u8 : pub set u8,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        ThirdPcieLinkFunction(default 0, id 0x2003_5400) | pub get u8 : pub set u8,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        ThirdPcieLinkPortPresent(default 0, id 0xebdc_f0f1) | pub get u8 : pub set u8,
+
+        FourthPcieLinkSpeed(default 0, id 0x0639_6763) | pub get FourthPcieLinkSpeed : pub set FourthPcieLinkSpeed,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        FourthPcieLinkStartLane(default 0, id 0x0870_533f) | pub get u8 : pub set u8,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        FourthPcieLinkEndLane(default 0, id 0xa876_54bf) | pub get u8 : pub set u8,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        FourthPcieLinkDevice(default 0, id 0x391e_6398) | pub get u8 : pub set u8,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        FourthPcieLinkFunction(default 0, id 0x09b0_0cd0) | pub get u8 : pub set u8,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        FourthPcieLinkPortPresent(default 0, id 0x4736_daf9) | pub get u8 : pub set u8,
 
         // Misc
 
-        SecondPcieLinkSpeed(default 0, id 0x8723_750f) | pub get SecondPcieLinkSpeed : pub set SecondPcieLinkSpeed,
-        SecondPcieLinkMaxPayload(default 0xff, id 0xe02d_f04b) | pub get SecondPcieLinkMaxPayload : pub set SecondPcieLinkMaxPayload, // Milan
         WorkloadProfile(default 0, id 0x22f4_299f) | pub get WorkloadProfile : pub set WorkloadProfile, // Milan
         DvArbiterMin(default 1, id 0x640d_d003) | pub get u8 : pub set u8, // TODO: nicer type
         DvArbiterMax(default 0xa, id 0x6cad_6da9) | pub get u8 : pub set u8, // TODO: nicer type
+
+        ProgSdxiClassCode(default 0, id 0xc43_82e8) | pub get u8 : pub set u8,
 
         // MBIST for Milan and Rome; defaults wrong!
 
@@ -8375,6 +8883,17 @@ make_token_accessors! {
         MemMbistPatternSelect(default 0, id 0xf527ebf8) | pub get MemMbistPatternSelect : pub set MemMbistPatternSelect, // Rome
         MemMbistAggressorOn(default 0, id 0x32361c4) | pub get bool : pub set bool, // Rome; obsolete
 
+        // MBIST for Genoa & Bergamo
+        MemMbistDdrMode(default 0, id 0x7dcb_2da5) | pub get MemMbistDdrMode: pub set MemMbistDdrMode,
+        MemMbistAggressorsDdr(default 0, id 0xb46e_f9ab) | pub get MemMbistTestMode : pub set MemMbistTestMode,
+        MemMbistAggressorsChannelDdrMode(default 0, id 0x2fc_8ca9) | pub get MemMbistAggressorsChannelDdrMode : pub set MemMbistAggressorsChannelDdrMode,
+        MemMbistPatternSelectDdr(default 0xFF, id 0x5988_cfa6) | pub get MemMbistPatternSelect : pub set MemMbistPatternSelect,
+        MemHealingBistRepairTypeDdr(default 0, id 0x9bf8_5c70) | pub get MemHealingBistRepairTypeDdr : pub set MemHealingBistRepairTypeDdr,
+        /// in powers of ten; 3..=12
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        MemMbistPatternLengthDdr(default 0, id 0x108b_b3e6) | pub get u8 : pub set u8,
+        MemMbistPerBitSlaveDieReportDdr(default 0xff, id 0x3b78_2d55) | pub get MemMbistPerBitSlaveDieReportDdr : pub set MemMbistPerBitSlaveDieReportDdr,
+
         // Unsorted Milan; defaults wrong!
 
         MemOverrideDimmSpdMaxActivityCount(default 0xff, id 0x853cdaa) | pub get MemMaxActivityCount : pub set MemMaxActivityCount,
@@ -8399,12 +8918,12 @@ make_token_accessors! {
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemParityErrorMaxReplayDdr4(default 0, id 0xc9e9a1c9) | pub get u8 : pub set u8, // value 8 // Rome // 0..=0x3f (6 bit)
         Df2LinkMaxXgmiSpeed(default 0, id 0xd19c_6e80)| pub get DfXgmi2LinkMaxSpeed : pub set DfXgmi2LinkMaxSpeed, // Genoa
-        Df3LinkMaxXgmiSpeed(default 0, id 0x53ba449b) | pub get DfXgmi3LinkMaxSpeed : pub set DfXgmi3LinkMaxSpeed, // value 0xff // Rome
-        Df4LinkMaxXgmiSpeed(default 0, id 0x3f307cb3) | pub get DfXgmi4LinkMaxSpeed : pub set DfXgmi4LinkMaxSpeed, // value 0xff //  Rome
+        Df3LinkMaxXgmiSpeed(default 0, id 0x53ba_449b) | pub get DfXgmi3LinkMaxSpeed : pub set DfXgmi3LinkMaxSpeed, // value 0xff // Rome
+        Df4LinkMaxXgmiSpeed(default 0, id 0x3f30_7cb3) | pub get DfXgmi4LinkMaxSpeed : pub set DfXgmi4LinkMaxSpeed, // value 0xff //  Rome
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemDramDoubleRefreshRate(default 0, id 0x44d40026) | pub get u8 : pub set u8, // value 0 // Rome; see also MemDramDoubleRefreshRateMilan
         /// See UMC::CH::ThrottleCtrl RollWindowDepth
-        MemRollWindowDepth(default 0xff, id 0x5985083a) | pub get MemThrottleCtrlRollWindowDepth : pub set MemThrottleCtrlRollWindowDepth, // Rome
+        MemRollWindowDepth(default 0xff, id 0x5985083a) | pub get MemThrottleCtrlRollWindowDepth<NonZeroU8> : pub set MemThrottleCtrlRollWindowDepth<NonZeroU8>, // Rome
         DfPstateModeSelect(default 0xff, id 0xaeb84b12) | pub get DfPstateModeSelect : pub set DfPstateModeSelect, // value 0xff // Rome
         DfXgmiConfig(default 3, id 0xb0b6ad3e) | pub get DfXgmiLinkConfig : pub set DfXgmiLinkConfig, // Rome
         /// See DramTiming15_UMCWPHY0_mp0_umc0 CmdParLatency (for the DDR4 Registering Clock Driver).
@@ -8468,6 +8987,19 @@ make_token_accessors! {
         // Memory Controller
 
         CbsMemPowerDownDelay(default 0xff, id 0x1ebe_755a) | pub get CbsMemPowerDownDelay : pub set CbsMemPowerDownDelay,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        // TODO: would be nice to not have to name this differently
+        MemRollWindowDepth2(default 0x1ff, id 0x5985_083a) | pub get MemThrottleCtrlRollWindowDepth<NonZeroU16> : pub set MemThrottleCtrlRollWindowDepth<NonZeroU16>,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        // TODO: would be nice to not have to name this differently
+        OdtsCmdThrottleCycles2(default 0x1FF, id 0x6931_8e90) | pub get u16 : pub set u16,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        MemPmuBistAlgorithmSelect(default 0x1ff, id 0xeb1b_26d3) | pub get MemPmuBistAlgorithmSelect : pub set MemPmuBistAlgorithmSelect,
+
+        // Ccx
+
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        CcxCpuWatchDogTimeout(default 0xffff, id 0xcfca_e1bd) | pub get u16 : pub set u16,
 
         // Fch
 
@@ -8479,6 +9011,26 @@ make_token_accessors! {
         FchI2cSdaRxHold(default 0, id 0xa4ba_c3d5) | pub get u16 : pub set u16, // Milan
         /// See FCH::I2C::IC_SDA_HOLD. Unit: number of ic_clk periods.
         FchI2cSdaTxHold(default 0, id 0x9518_f953) | pub get u16 : pub set u16, // Milan
+
+        // Df
+
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiInitPresetS0L0(default 0x4444, id 0xf577_49d9) | pub get u16 : pub set u16,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiInitPresetS0L1(default 0x4444, id 0x6d17_233f) | pub get u16 : pub set u16,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiInitPresetS0L2(default 0x4444, id 0x2c73_3c17) | pub get u16 : pub set u16,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiInitPresetS0L3(default 0x4444, id 0xc49e_23e3) | pub get u16 : pub set u16,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiInitPresetS1L0(default 0x4444, id 0xdb75_063f) | pub get u16 : pub set u16,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiInitPresetS1L1(default 0x4444, id 0x98ba_12f7) | pub get u16 : pub set u16,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiInitPresetS1L2(default 0x4444, id 0x01a9_16bc) | pub get u16 : pub set u16,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiInitPresetS1L3(default 0x4444, id 0x416f_f232) | pub get u16 : pub set u16,
+
 
         // Unsorted Milan; obsolete and ungrouped; defaults wrong!
 
@@ -8524,6 +9076,11 @@ make_token_accessors! {
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     #[non_exhaustive]
     pub enum DwordToken: {TokenEntryId::Dword} {
+        // Psp
+
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        PspOpnPlatformComptFusing(default 0x1, id 0x24b4_5ecd) | pub get u32 : pub set u32,
+
         // Memory Controller
 
         MemBusFrequencyLimit(default 1600, id 0x3497_0a3c) | pub get MemBusFrequencyLimit : pub set MemBusFrequencyLimit,
@@ -8550,12 +9107,68 @@ make_token_accessors! {
         DfPciMmioSize(default 0x1000_0000, id 0x3d9b_7d7b) | pub get u32 : pub set u32,
         DfCakeCrcThresholdBounds(default 100, id 0x9258_cf45) | pub get DfCakeCrcThresholdBounds : pub set DfCakeCrcThresholdBounds, // default: 0.001%
 
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiTxEqS0L0P01(default 0x007a_007a, id 0xe53_519b1) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiTxEqS0L0P23(default 0x007a_007a, id 0xc50_e790e) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiTxEqS0L1P01(default 0x007a_007a, id 0x68c_aed33) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiTxEqS0L1P23(default 0x007a_007a, id 0xaf5_6afaa) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiTxEqS0L2P01(default 0x007a_007a, id 0xd6c_ad603) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiTxEqS0L2P23(default 0x007a_007a, id 0x17e_59442) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiTxEqS0L3P01(default 0x007a_007a, id 0x606_1edce) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiTxEqS0L3P23(default 0x007a_007a, id 0x34d_bc7af) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiTxEqS1L0P01(default 0x007a_007a, id 0xd32_408f4) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiTxEqS1L0P23(default 0x007a_007a, id 0x524_3af4a) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiTxEqS1L1P01(default 0x007a_007a, id 0x026_b4760) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiTxEqS1L1P23(default 0x007a_007a, id 0x72b_f1cdf) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiTxEqS1L2P01(default 0x007a_007a, id 0xc8b_848a9) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiTxEqS1L2P23(default 0x007a_007a, id 0x0f3_a8f7f) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiTxEqS1L3P01(default 0x007a_007a, id 0x656_6d661) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiTxEqS1L3P23(default 0x007a_007a, id 0x902_d0192) | pub get u32 : pub set u32,
+
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiPresetP11(default 0x3000, id 0x088b_9701) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiPresetP12(default 0x3000, id 0x5c22_c08a) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiPresetP13(default 0x3000, id 0x2753_0c2f) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiPresetP14(default 0x3000, id 0x76ec_f33f) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiPresetP15(default 0x3000, id 0x532e_b058) | pub get u32 : pub set u32,
+
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiInitialPreset(default 0x44444444, id 0xC6F86640) | pub get u32 : pub set u32,
+
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfXgmiChannelTypeSelect(default 0x0, id 0x0db9_89c4) | pub get DfXgmiChannelTypeSelect : pub set DfXgmiChannelTypeSelect,
+
+        // TODO: use better types to ensure 1MiB alignment & correct bounds. also, better defaults?
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfPciMmioBaseLo(default 0xE0000000, id 0x7a4f_a9ed) | pub get u32 : pub set u32,
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        DfPciMmioBaseHi(default 0, id 0xf6b9_15bf) | pub get u32 : pub set u32,
+
         // Dxio
 
         DxioPhyParamVga(default 0xffff_ffff, id 0xde09_c43b) | pub get DxioPhyParamVga : pub set DxioPhyParamVga,
         DxioPhyParamPole(default 0xffff_ffff, id 0xb189_447e) | pub get DxioPhyParamPole : pub set DxioPhyParamPole,
         DxioPhyParamDc(default 0xffff_ffff, id 0x2066_7c30) | pub get DxioPhyParamDc : pub set DxioPhyParamDc,
-        DxioPhyParamIqofc(default 0, id 0x7e60_69c5) | pub get DxioPhyParamIqofc : pub set DxioPhyParamIqofc, // TODO: Before using default, fix default.  It's possibly not correct.
+        DxioPhyParamIqofc(default 0x7FFFFFFF, id 0x7e60_69c5) | pub get DxioPhyParamIqofc : pub set DxioPhyParamIqofc,
 
         // MBIST for Milan and Rome; defaults wrong!
 
@@ -8631,10 +9244,21 @@ make_token_accessors! {
         MemRestoreControl(default 0, id 0xfedb_01f8) | pub get bool : pub set bool,
         MemPostPackageRepairEnable(default 0, id 0xcdc0_3e4e) | pub get bool : pub set bool,
         MemDramDoubleRefreshRateMilan(default 0, id 0x974e_8e7c) | pub get bool : pub set bool, // Milan
+        MemSmeMkEnable(default 0, id 0x07a5_db75) | pub get bool : pub set bool,
+        MemTsmeEnable(default 0, id 0xf086_9eca) | pub get bool : pub set bool,
+        MemPopulationMsgControl(default 0, id 0x2ce1_24dc) | pub get bool : pub set bool,
+
+        // Why different than DisplayPmuTrainingResults who knows...
+        MemDisplayPmuTrainingResults(default 0, id 0xb8a6_3eba) | pub get bool : pub set bool,
 
         // Ccx
 
         CcxPpinOptIn(default 0, id 0x6a67_00fd) | pub get bool : pub set bool,
+        CcxCpuWatchdogEnable(default 1, id 0x7436_2038) | pub get bool : pub set bool,
+
+        // Nbio
+
+        NbioIommu(default 1, id 0x1ccc_9834) | pub get bool : pub set bool,
 
         // Df
 
@@ -8642,10 +9266,18 @@ make_token_accessors! {
         DfGroupDPlatform(default 0, id 0x6831_8493) | pub get bool : pub set bool,
         DfPickerThrottleEnable(default 0, id 0x0bcb_d809) | pub get bool : pub set bool,
         DfNps1With4ChannelInterleavedRdimm4ChannelNonInterleavedNvdimm(default 0, id 0x9d6e_e05e) | pub get bool : pub set bool, // Milan
+        DfCdma(default 0, id 0xd7d7_6f0c) | pub get bool : pub set bool,
+        DfXgmiPresetControlEnable(default 1, id 0x21aa_0c13) | pub get bool : pub set bool,
 
         // Dxio
 
         DxioVgaApiEnable(default 0, id 0xbd5a_a3c6) | pub get bool : pub set bool, // Milan
+
+        // Fch
+
+        FchEspiAblInitEnable(default 1, id 0x8795_8b5a) | pub get bool : pub set bool,
+        // Same as FchI2cSdaHoldOverrideMode but as bool instead of word token
+        FchI2cSdaHoldOverride(default 0, id 0x545d_7662) | pub get bool : pub set bool,
 
         // Misc
 

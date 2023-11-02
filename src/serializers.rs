@@ -669,12 +669,14 @@ impl_struct_serde_conversion!(
         s0_gpp4_off,
         s0_gpp2_off,
         s0_gpp3_off,
+        s0_gpp5_off,
         _reserved_1,
         s1_gpp0_off,
         s1_gpp1_off,
         s1_gpp4_off,
         s1_gpp2_off,
         s1_gpp3_off,
+        s1_gpp5_off,
         _reserved_2,
     ]
 );
@@ -767,6 +769,22 @@ impl_struct_serde_conversion!(
         algorithm_3,
         algorithm_4,
         algorithm_5,
+        _reserved_0,
+    ]
+);
+impl_struct_serde_conversion!(
+    MemPmuBistAlgorithmSelect,
+    SerdeMemPmuBistAlgorithmSelect,
+    [
+        algorithm_1,
+        algorithm_2,
+        algorithm_3,
+        algorithm_4,
+        algorithm_5,
+        algorithm_6,
+        algorithm_7,
+        algorithm_8,
+        algorithm_9,
         _reserved_0,
     ]
 );
@@ -924,4 +942,18 @@ impl_struct_serde_conversion!(
     MemDfeSearchElement32,
     SerdeMemDfeSearchElement32,
     [header, payload, payload_ext, _padding_0, _padding_1,]
+);
+impl_struct_serde_conversion!(
+    DfXgmiChannelTypeSelect,
+    SerdeDfXgmiChannelTypeSelect,
+    [
+        s0l0,
+        s0l1,
+        s0l2,
+        s0l3,
+        s1l0,
+        s1l1,
+        s1l2,
+        s1l3,
+    ]
 );
