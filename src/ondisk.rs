@@ -7530,6 +7530,7 @@ pub type FourthPcieLinkSpeed = AdditionalPcieLinkSpeed;
 pub enum BmcLinkSpeed {
     PcieGen1 = 1,
     PcieGen2 = 2,
+    PcieGen3 = 3,
 }
 
 #[allow(non_camel_case_types, non_snake_case)]
@@ -8053,6 +8054,27 @@ impl ToPrimitive for DxioPhyParamIqofc {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemTargetSpeed {
+    #[cfg_attr(feature = "serde", serde(rename = "3200 MT/s"))]
+    _3200 = 3200,
+    #[cfg_attr(feature = "serde", serde(rename = "3600 MT/s"))]
+    _3600 = 3600,
+    #[cfg_attr(feature = "serde", serde(rename = "4000 MT/s"))]
+    _4000 = 4000,
+    #[cfg_attr(feature = "serde", serde(rename = "4400 MT/s"))]
+    _4400 = 4400,
+    #[cfg_attr(feature = "serde", serde(rename = "4800 MT/s"))]
+    _4800 = 4800,
+    #[cfg_attr(feature = "serde", serde(rename = "5200 MT/s"))]
+    _5200 = 5200,
+    #[cfg_attr(feature = "serde", serde(rename = "5600 MT/s"))]
+    _5600 = 5600,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(u32)]
 pub enum MemClockValue {
     // in MHz
@@ -8491,6 +8513,48 @@ make_bitfield_serde! {
 }
 impl_bitfield_primitive_conversion!(MemPmuBistTestSelect, 0b11111, u8);
 
+#[derive(Debug, Default, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum EspiController {
+    #[default]
+    Controller0 = 0,
+    Controller1 = 1,
+}
+
+impl From<EspiController> for u8 {
+    fn from(value: EspiController) -> Self {
+        match value {
+            EspiController::Controller0 => 0,
+            EspiController::Controller1 => 1,
+        }
+    }
+}
+impl From<u8> for EspiController {
+    fn from(value: u8) -> Self {
+        match value {
+            0 => EspiController::Controller0,
+            1 => EspiController::Controller1,
+            _ => panic!("Invalid value for EspiController: {value}"),
+        }
+    }
+}
+
+make_bitfield_serde! {
+    #[bitfield(bits = 8)]
+    #[repr(u8)]
+    #[derive(Debug, Copy, Clone, PartialEq)]
+    pub struct FchConsoleOutSerialPortEspiControllerSelect {
+        pub espi_controller || EspiController : B1 | pub get EspiController : pub set EspiController,
+        pub _reserved_0 || SerdeHex8 : B2,
+        pub io_2e_2f_disabled: bool | pub get bool : pub set bool,
+        pub io_4e_4f_disabled: bool | pub get bool : pub set bool,
+        pub _reserved_1 || SerdeHex8 : B3,
+    }
+}
+impl_bitfield_primitive_conversion!(FchConsoleOutSerialPortEspiControllerSelect, 0b0001_1001, u8);
+
 make_bitfield_serde! {
     #[bitfield(bits = 16)]
     #[repr(u16)]
@@ -8566,6 +8630,43 @@ pub enum MemTccd5ReadCommandSpacingMode {
 pub enum ReservedDramModuleDrtmMode {
     Disabled = 0,
     Enabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum DfXgmiPresetControlMode {
+    Disabled = 0,
+    Enabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemPopulationMsgControlMode {
+    Warn = 0,
+    Halt = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemOdtsCmdThrottleMode {
+    Disabled = 0,
+    Enabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemRcdParityMode {
+    Disabled = 0,
+    Enabled = 1,
+    Auto = 0xff,
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
@@ -8664,7 +8765,6 @@ make_token_accessors! {
         // PSP
 
         PspEnableDebugMode(default 0, id 0xd109_1cd0) | pub get PspEnableDebugMode : pub set PspEnableDebugMode,
-        PspSevMode(default 0, id 0xadc8_33e4) | pub get PspSevMode : pub set PspSevMode, // Milan
 
         PspApmlSbtsiSlaveMode(default 0, id 0xb666_1742) | pub get PspApmlSbtsiSlaveMode : pub set PspApmlSbtsiSlaveMode,
 
@@ -8680,7 +8780,8 @@ make_token_accessors! {
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         CbsMemWriteCrcErrorMaxReplayDdr4(default 8, id 0x74a0_8bec) | pub get u8 : pub set u8,
         // Byte just like AMD
-        MemRcdParity(default 1, id 0x647d7662) | pub get bool : pub set bool,
+        MemRcdParity(default 1, id 0x647d_7662) | pub get bool : pub set bool,
+        MemRcdParityMode(default 1, id 0xc4f7_c913) | pub get MemRcdParityMode : pub set MemRcdParityMode,
         // Byte just like AMD
         CbsMemUncorrectedEccRetryDdr4(default 1, id 0xbff0_0125) | pub get bool : pub set bool,
         /// UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first)
@@ -8721,6 +8822,9 @@ make_token_accessors! {
         MemBootTimePostPackageRepair(default 0, id 0xe229_1e4a) | pub get MemBootTimePostPackageRepair : pub set MemBootTimePostPackageRepair,
         // TODO: enum
         MemMbistTestModeDdr(default 0, id 0x96df_25ca) | pub get u8 : pub set u8,
+        MemPopulationMsgControl(default 0, id 0x2ce1_24dc) | pub get MemPopulationMsgControlMode : pub set MemPopulationMsgControlMode,
+        // TODO: same as `MemOdtsCmdThrottleEnable` which is a BoolToken
+        MemOdtsCmdThrottleMode(default 1, id 0xc073_6395) | pub get MemOdtsCmdThrottleMode : pub set MemOdtsCmdThrottleMode,
 
         // Ccx
 
@@ -8737,7 +8841,6 @@ make_token_accessors! {
         FchConsoleOutSerialPortIoBase(default 0, id 0x95dc_6839) | pub get FchConsoleOutSerialPortIoBase : pub set FchConsoleOutSerialPortIoBase,
         FchSmbusSpeed(default 42, id 0x2447_3329) | pub get FchSmbusSpeed : pub set FchSmbusSpeed,
         FchConsoleOutSuperIoType(default 0, id 0x5c8d_6e82) | pub get FchConsoleOutSuperIoType : pub set FchConsoleOutSuperIoType, // init mode
-        FchSpdControlOwnership(default 0, id 0x2329_5d81) | pub get FchSpdControlOwnershipMode : pub set FchSpdControlOwnershipMode,
         FchIc3TransferSpeed(default 2, id 0x1ed8_fae5) | pub get FchIc3TransferSpeed : pub set FchIc3TransferSpeed,
         FchI2cI3cController0Mode(default 0, id 0xb663_3a33) | pub get FchI2cI3cControllerMode : pub set FchI2cI3cControllerMode,
         FchI2cI3cController1Mode(default 0, id 0xd2c7_be74) | pub get FchI2cI3cControllerMode : pub set FchI2cI3cControllerMode,
@@ -8759,8 +8862,12 @@ make_token_accessors! {
 
         // TODO: Maybe should be called `FchI2cSdaRxHold` but that's already a WordToken
         FchIcSdaRxHold(default 0, id 0xa4ba_c3d5) | pub get u8: pub set u8,
+        // Same as `FchI2cSdaHoldOverrideMode` but that's already a WordToken
+        FchI2cSdaHoldOverrideMode2(default 0, id 0x545d_7662) | pub get FchI2cSdaHoldOverrideMode : pub set FchI2cSdaHoldOverrideMode,
 
         FchI3cSdaHoldSwitchDelay(default 2, id 0xccae_84e7) | pub get u8 : pub set u8,
+
+        FchConsoleOutSerialPortEspiController(default 0, id 0xd9d2_97a6) | pub get FchConsoleOutSerialPortEspiControllerSelect : pub set FchConsoleOutSerialPortEspiControllerSelect,
 
         // Df
 
@@ -8791,6 +8898,7 @@ make_token_accessors! {
         DfXgmiCrcThreshold(default 0xff, id 0xc375_4da2) | pub get u8 : pub set u8,
         DfCcdBwThrottleLevel(default 0xFF, id 0xd288_6dc9) | pub get DfCcdBwThrottleLevel : pub set DfCcdBwThrottleLevel,
         DfPfOrganization(default 0, id 0xede8_930b) | pub get DfPfOrganization : pub set DfPfOrganization,
+        DfXgmiPresetControlMode(default 1, id 0x21aa_0c13) | pub get DfXgmiPresetControlMode : pub set DfXgmiPresetControlMode,
 
         // Nbio
 
@@ -8995,6 +9103,7 @@ make_token_accessors! {
         OdtsCmdThrottleCycles2(default 0x1FF, id 0x6931_8e90) | pub get u16 : pub set u16,
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemPmuBistAlgorithmSelect(default 0x1ff, id 0xeb1b_26d3) | pub get MemPmuBistAlgorithmSelect : pub set MemPmuBistAlgorithmSelect,
+        MemTargetSpeed(default 4800, id 0xd06d_bafb) | pub get MemTargetSpeed : pub set MemTargetSpeed,
 
         // Ccx
 
@@ -9216,6 +9325,7 @@ make_token_accessors! {
         PspEventLogDisplay(default 0, id 0x0c47_3e1c) | pub get bool : pub set bool,
         PspStopOnError(default 0, id 0xe702_4a21) | pub get bool : pub set bool,
         PspPsbAutoFuse(default 1, id 0x2fcd_70c9) | pub get bool : pub set bool,
+        PspSevMode(default 0, id 0xadc8_33e4) | pub get PspSevMode : pub set PspSevMode,
 
         // Memory Controller
 
@@ -9246,7 +9356,6 @@ make_token_accessors! {
         MemDramDoubleRefreshRateMilan(default 0, id 0x974e_8e7c) | pub get bool : pub set bool, // Milan
         MemSmeMkEnable(default 0, id 0x07a5_db75) | pub get bool : pub set bool,
         MemTsmeEnable(default 0, id 0xf086_9eca) | pub get bool : pub set bool,
-        MemPopulationMsgControl(default 0, id 0x2ce1_24dc) | pub get bool : pub set bool,
 
         // Why different than DisplayPmuTrainingResults who knows...
         MemDisplayPmuTrainingResults(default 0, id 0xb8a6_3eba) | pub get bool : pub set bool,
@@ -9267,7 +9376,6 @@ make_token_accessors! {
         DfPickerThrottleEnable(default 0, id 0x0bcb_d809) | pub get bool : pub set bool,
         DfNps1With4ChannelInterleavedRdimm4ChannelNonInterleavedNvdimm(default 0, id 0x9d6e_e05e) | pub get bool : pub set bool, // Milan
         DfCdma(default 0, id 0xd7d7_6f0c) | pub get bool : pub set bool,
-        DfXgmiPresetControlEnable(default 1, id 0x21aa_0c13) | pub get bool : pub set bool,
 
         // Dxio
 
@@ -9278,6 +9386,7 @@ make_token_accessors! {
         FchEspiAblInitEnable(default 1, id 0x8795_8b5a) | pub get bool : pub set bool,
         // Same as FchI2cSdaHoldOverrideMode but as bool instead of word token
         FchI2cSdaHoldOverride(default 0, id 0x545d_7662) | pub get bool : pub set bool,
+        FchSpdControlOwnership(default 0, id 0x2329_5d81) | pub get FchSpdControlOwnershipMode : pub set FchSpdControlOwnershipMode,
 
         // Misc
 

@@ -957,3 +957,14 @@ impl_struct_serde_conversion!(
         s1l3,
     ]
 );
+impl_struct_serde_conversion!(
+    FchConsoleOutSerialPortEspiControllerSelect,
+    SerdeFchConsoleOutSerialPortEspiControllerSelect,
+    [
+        espi_controller,
+        _reserved_0,
+        io_2e_2f_disabled,
+        io_4e_4f_disabled,
+        _reserved_1,
+    ]
+);
