@@ -10,9 +10,11 @@ use crate::ondisk::ENTRY_ALIGNMENT;
 use crate::ondisk::ENTRY_HEADER;
 use crate::ondisk::GROUP_HEADER;
 use crate::ondisk::TOKEN_ENTRY;
-pub use crate::ondisk::{
+use crate::ondisk::{
     take_body_from_collection, take_body_from_collection_mut,
     take_header_from_collection, take_header_from_collection_mut,
+};
+pub use crate::ondisk::{
     BoardInstances, ContextFormat, ContextType, EntryId, PriorityLevels,
 };
 use core::convert::TryInto;
