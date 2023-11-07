@@ -89,7 +89,10 @@ pub trait HeaderWithTail {
 /// Given *BUF (a collection of multiple items), retrieves the first of the
 /// items and returns it after advancing *BUF to the next item. If the item
 /// cannot be parsed, returns None and does not advance.
-pub fn take_header_from_collection_mut<'a, T: Sized + FromBytes + AsBytes>(
+pub(crate) fn take_header_from_collection_mut<
+    'a,
+    T: Sized + FromBytes + AsBytes,
+>(
     buf: &mut &'a mut [u8],
 ) -> Option<&'a mut T> {
     let xbuf = take(&mut *buf);
@@ -107,7 +110,7 @@ pub fn take_header_from_collection_mut<'a, T: Sized + FromBytes + AsBytes>(
 /// *BUF had been aligned to ALIGNMENT before the call, it also ensures that
 /// *BUF is aligned to ALIGNMENT after the call. If the item cannot be parsed,
 /// returns None and does not advance.
-pub fn take_body_from_collection_mut<'a>(
+pub(crate) fn take_body_from_collection_mut<'a>(
     buf: &mut &'a mut [u8],
     size: usize,
     alignment: usize,
@@ -131,7 +134,7 @@ pub fn take_body_from_collection_mut<'a>(
 /// Given *BUF (a collection of multiple items), retrieves the first of the
 /// items and returns it after advancing *BUF to the next item. If the item
 /// cannot be parsed, returns None and does not advance.
-pub fn take_header_from_collection<'a, T: Sized + FromBytes>(
+pub(crate) fn take_header_from_collection<'a, T: Sized + FromBytes>(
     buf: &mut &'a [u8],
 ) -> Option<&'a T> {
     let xbuf = take(&mut *buf);
@@ -149,7 +152,7 @@ pub fn take_header_from_collection<'a, T: Sized + FromBytes>(
 /// *BUF had been aligned to ALIGNMENT before the call, it also ensures that
 /// *BUF is aligned to ALIGNMENT after the call. If the item cannot be parsed,
 /// returns None and does not advance.
-pub fn take_body_from_collection<'a>(
+pub(crate) fn take_body_from_collection<'a>(
     buf: &mut &'a [u8],
     size: usize,
     alignment: usize,
