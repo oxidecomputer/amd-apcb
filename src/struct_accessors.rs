@@ -319,7 +319,7 @@ macro_rules! make_accessors {(
     paste::paste!{
         #[doc(hidden)]
         #[allow(non_camel_case_types)]
-        #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+        #[cfg_attr(feature = "serde", derive(Deserialize))]
         #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
         // Doing remoting automatically would make it impossible for the user to use another one.
         // Since the config format presumably needs to be
@@ -330,6 +330,32 @@ macro_rules! make_accessors {(
             $(
                 $(pub $field_name: $field_ty,)?
                 $($(#[$serde_field_orig_meta])* pub $field_name: $serde_ty,)?
+            )*
+        }
+    }
+
+    #[cfg(feature = "serde")]
+    paste::paste!{
+        /// Use this for serialization in order to make serde skip those fields
+        /// where the meaning of a raw value is unknown to us.
+        ///
+        /// Caller can then override Serializer::skip_field and thus find out
+        /// which fields were skipped, inferring where errors were.
+        #[doc(hidden)]
+        #[allow(non_camel_case_types)]
+        #[cfg_attr(feature = "serde", derive(Serialize))]
+        #[cfg_attr(feature = "serde", serde(rename = "" $StructName))]
+        // Rust's serde automatically has Options transparent--but not Results.
+        // See also <https://github.com/serde-rs/serde/issues/1042> for
+        // limitations (that don't hit us since our zerocopy structs
+        // can't have Option<Option<T>> anyway).
+        pub(crate) struct [<SerdePermissiveSerializing $StructName>] {
+            $(
+                $(#[serde(skip_serializing_if="Option::is_none")]
+                pub $field_name: Option<$field_ty>,)?
+                $(#[serde(skip_serializing_if="Option::is_none")]
+                $(#[$serde_field_orig_meta])*
+                pub $field_name: Option<$serde_ty>,)?
             )*
         }
     }

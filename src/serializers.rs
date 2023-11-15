@@ -19,7 +19,7 @@ use crate::psp::*;
 
 // Note: This is written such that it will fail if the underlying struct has
 // fields added/removed/renamed--if those have a public setter.
-macro_rules! impl_struct_serde_conversion{($StructName:ident, $SerdeStructName:ident, [$($field_name:ident),* $(,)?]
+macro_rules! impl_struct_serde_conversion{($StructName:ident, $SerdeStructName:ident, $SerializingStructName:ident, [$($field_name:ident),* $(,)?]
 ) => (
     paste::paste!{
         #[cfg(feature = "serde")]
@@ -37,9 +37,9 @@ macro_rules! impl_struct_serde_conversion{($StructName:ident, $SerdeStructName:i
         impl serde::Serialize for $StructName {
             fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
             where S: serde::Serializer, {
-                $SerdeStructName {
+                $SerializingStructName {
                     $(
-                        $field_name: self.[<serde_ $field_name>]().map_err(|_| serde::ser::Error::custom("value unknown"))?.into(),
+                        $field_name: self.[<serde_ $field_name>]().ok(),
                     )*
                 }.serialize(serializer)
             }
@@ -62,6 +62,7 @@ macro_rules! impl_struct_serde_conversion{($StructName:ident, $SerdeStructName:i
 impl_struct_serde_conversion!(
     ENTRY_HEADER,
     SerdeENTRY_HEADER,
+    SerdePermissiveSerializingENTRY_HEADER,
     [
         group_id,
         entry_id,
@@ -80,12 +81,14 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     PriorityLevels,
     SerdePriorityLevels,
+    SerdePermissiveSerializingPriorityLevels,
     [hard_force, high, medium, event_logging, low, normal, _reserved_1,]
 );
 
 impl_struct_serde_conversion!(
     Ddr4DataBusElement,
     SerdeDdr4DataBusElement,
+    SerdePermissiveSerializingDdr4DataBusElement,
     [
         dimm_slots_per_channel,
         ddr_rates,
@@ -105,16 +108,19 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     Ddr4DimmRanks,
     SerdeDdr4DimmRanks,
+    SerdePermissiveSerializingDdr4DimmRanks,
     [unpopulated, single_rank, dual_rank, quad_rank,]
 );
 impl_struct_serde_conversion!(
     LrdimmDdr4DimmRanks,
     SerdeLrdimmDdr4DimmRanks,
+    SerdePermissiveSerializingLrdimmDdr4DimmRanks,
     [unpopulated, lr, _reserved_1,]
 );
 impl_struct_serde_conversion!(
     DdrRates,
     SerdeDdrRates,
+    SerdePermissiveSerializingDdrRates,
     [
         _reserved_1,
         _reserved_2,
@@ -152,12 +158,14 @@ impl_struct_serde_conversion!(
 );
 impl_struct_serde_conversion!(
     RdimmDdr4Voltages,
-    CustomSerdeRdimmDdr4Voltages,
+    SerdeRdimmDdr4Voltages,
+    SerdePermissiveSerializingRdimmDdr4Voltages,
     [_1_2V, _reserved_1,]
 );
 impl_struct_serde_conversion!(
     RdimmDdr4CadBusElement,
     SerdeRdimmDdr4CadBusElement,
+    SerdePermissiveSerializingRdimmDdr4CadBusElement,
     [
         dimm_slots_per_channel,
         ddr_rates,
@@ -177,12 +185,14 @@ impl_struct_serde_conversion!(
 );
 impl_struct_serde_conversion!(
     UdimmDdr4Voltages,
-    CustomSerdeUdimmDdr4Voltages,
+    SerdeUdimmDdr4Voltages,
+    SerdePermissiveSerializingUdimmDdr4Voltages,
     [_1_5V, _1_35V, _1_25V, _reserved_1,]
 );
 impl_struct_serde_conversion!(
     UdimmDdr4CadBusElement,
     SerdeUdimmDdr4CadBusElement,
+    SerdePermissiveSerializingUdimmDdr4CadBusElement,
     [
         dimm_slots_per_channel,
         ddr_rates,
@@ -202,12 +212,14 @@ impl_struct_serde_conversion!(
 );
 impl_struct_serde_conversion!(
     LrdimmDdr4Voltages,
-    CustomSerdeLrdimmDdr4Voltages,
+    SerdeLrdimmDdr4Voltages,
+    SerdePermissiveSerializingLrdimmDdr4Voltages,
     [_1_2V, _reserved_1,]
 );
 impl_struct_serde_conversion!(
     LrdimmDdr4CadBusElement,
     SerdeLrdimmDdr4CadBusElement,
+    SerdePermissiveSerializingLrdimmDdr4CadBusElement,
     [
         dimm_slots_per_channel,
         ddr_rates,
@@ -229,6 +241,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     V2_HEADER,
     SerdeV2_HEADER,
+    SerdePermissiveSerializingV2_HEADER,
     [
         signature,
         header_size,
@@ -243,6 +256,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     V3_HEADER_EXT,
     SerdeV3_HEADER_EXT,
+    SerdePermissiveSerializingV3_HEADER_EXT,
     [
         signature,
         _reserved_1,
@@ -267,11 +281,13 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     GROUP_HEADER,
     SerdeGROUP_HEADER,
+    SerdePermissiveSerializingGROUP_HEADER,
     [signature, group_id, header_size, version, _reserved_, group_size,]
 );
 impl_struct_serde_conversion!(
     BoardIdGettingMethodEeprom,
     SerdeBoardIdGettingMethodEeprom,
+    SerdePermissiveSerializingBoardIdGettingMethodEeprom,
     [
         access_method,
         i2c_controller_index,
@@ -283,6 +299,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     IdRevApcbMapping,
     SerdeIdRevApcbMapping,
+    SerdePermissiveSerializingIdRevApcbMapping,
     [
         id_and_rev_and_feature_mask,
         id_and_feature_value,
@@ -293,11 +310,13 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     SlinkRegion,
     SerdeSlinkRegion,
+    SerdePermissiveSerializingSlinkRegion,
     [size, alignment, socket, phys_nbio_map, interleaving, _reserved_,]
 );
 impl_struct_serde_conversion!(
     AblConsoleOutControl,
     SerdeAblConsoleOutControl,
+    SerdePermissiveSerializingAblConsoleOutControl,
     [
         enable_console_logging,
         enable_mem_flow_logging,
@@ -316,6 +335,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     NaplesAblConsoleOutControl,
     SerdeNaplesAblConsoleOutControl,
+    SerdePermissiveSerializingNaplesAblConsoleOutControl,
     [
         enable_console_logging,
         enable_mem_flow_logging,
@@ -333,11 +353,13 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     AblBreakpointControl,
     SerdeAblBreakpointControl,
+    SerdePermissiveSerializingAblBreakpointControl,
     [enable_breakpoint, break_on_all_dies,]
 );
 impl_struct_serde_conversion!(
     ExtVoltageControl,
     SerdeExtVoltageControl,
+    SerdePermissiveSerializingExtVoltageControl,
     [
         enabled,
         _reserved_,
@@ -354,6 +376,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     LrdimmDdr4DataBusElement,
     SerdeLrdimmDdr4DataBusElement,
+    SerdePermissiveSerializingLrdimmDdr4DataBusElement,
     [
         dimm_slots_per_channel,
         ddr_rates,
@@ -373,26 +396,31 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     MaxFreqElement,
     SerdeMaxFreqElement,
+    SerdePermissiveSerializingMaxFreqElement,
     [dimm_slots_per_channel, _reserved_, conditions, speeds,]
 );
 impl_struct_serde_conversion!(
     LrMaxFreqElement,
     SerdeLrMaxFreqElement,
+    SerdePermissiveSerializingLrMaxFreqElement,
     [dimm_slots_per_channel, _reserved_, conditions, speeds,]
 );
 impl_struct_serde_conversion!(
     Gpio,
     SerdeGpio,
+    SerdePermissiveSerializingGpio,
     [pin, iomux_control, bank_control,]
 );
 impl_struct_serde_conversion!(
     ErrorOutControlBeepCode,
     CustomSerdeErrorOutControlBeepCode,
+    CustomSerdePermissiveSerializingErrorOutControlBeepCode,
     [custom_error_type, peak_map, peak_attr,]
 );
 impl_struct_serde_conversion!(
     ErrorOutControl116,
     SerdeErrorOutControl116,
+    SerdePermissiveSerializingErrorOutControl116,
     [
         enable_error_reporting,
         enable_error_reporting_gpio,
@@ -421,6 +449,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     ErrorOutControl112,
     SerdeErrorOutControl112,
+    SerdePermissiveSerializingErrorOutControl112,
     [
         enable_error_reporting,
         enable_error_reporting_gpio,
@@ -450,46 +479,54 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     DimmsPerChannelSelector,
     SerdeDimmsPerChannelSelector,
+    SerdePermissiveSerializingDimmsPerChannelSelector,
     [one_dimm, two_dimms, three_dimms, four_dimms, _reserved_1,]
 );
 
 impl_struct_serde_conversion!(
     ErrorOutControlBeepCodePeakAttr,
     SerdeErrorOutControlBeepCodePeakAttr,
+    SerdePermissiveSerializingErrorOutControlBeepCodePeakAttr,
     [peak_count, pulse_width, repeat_count, _reserved_1,]
 );
 
 impl_struct_serde_conversion!(
     OdtPatPatterns,
     SerdeOdtPatPatterns,
+    SerdePermissiveSerializingOdtPatPatterns,
     [reading_pattern, _reserved_1, writing_pattern, _reserved_2,]
 );
 
 impl_struct_serde_conversion!(
     LrdimmDdr4OdtPatDimmRankBitmaps,
     SerdeLrdimmDdr4OdtPatDimmRankBitmaps,
+    SerdePermissiveSerializingLrdimmDdr4OdtPatDimmRankBitmaps,
     [dimm0, dimm1, dimm2, _reserved_1,]
 );
 impl_struct_serde_conversion!(
     Ddr4OdtPatDimmRankBitmaps,
     SerdeDdr4OdtPatDimmRankBitmaps,
+    SerdePermissiveSerializingDdr4OdtPatDimmRankBitmaps,
     [dimm0, dimm1, dimm2, _reserved_1,]
 );
 
 impl_struct_serde_conversion!(
     DimmSlotsSelection,
     SerdeDimmSlotsSelection,
+    SerdePermissiveSerializingDimmSlotsSelection,
     [dimm_slot_0, dimm_slot_1, dimm_slot_2, dimm_slot_3, _reserved_1,]
 );
 impl_struct_serde_conversion!(
     ChannelIdsSelection,
     SerdeChannelIdsSelection,
+    SerdePermissiveSerializingChannelIdsSelection,
     [a, b, c, d, e, f, g, h,]
 );
 
 impl_struct_serde_conversion!(
     SocketIds,
     SerdeSocketIds,
+    SerdePermissiveSerializingSocketIds,
     [
         socket_0, socket_1, socket_2, socket_3, socket_4, socket_5, socket_6,
         socket_7,
@@ -499,6 +536,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     Ddr4OdtPatElement,
     SerdeDdr4OdtPatElement,
+    SerdePermissiveSerializingDdr4OdtPatElement,
     [
         dimm_rank_bitmaps,
         cs0_odt_patterns,
@@ -510,6 +548,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     LrdimmDdr4OdtPatElement,
     SerdeLrdimmDdr4OdtPatElement,
+    SerdePermissiveSerializingLrdimmDdr4OdtPatElement,
     [
         dimm_rank_bitmaps,
         cs0_odt_patterns,
@@ -521,76 +560,91 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     CkeTristateMap,
     SerdeCkeTristateMap,
+    SerdePermissiveSerializingCkeTristateMap,
     [type_, payload_size, sockets, channels, dimms, connections,]
 );
 impl_struct_serde_conversion!(
     OdtTristateMap,
     SerdeOdtTristateMap,
+    SerdePermissiveSerializingOdtTristateMap,
     [type_, payload_size, sockets, channels, dimms, connections,]
 );
 impl_struct_serde_conversion!(
     CsTristateMap,
     SerdeCsTristateMap,
+    SerdePermissiveSerializingCsTristateMap,
     [type_, payload_size, sockets, channels, dimms, connections,]
 );
 impl_struct_serde_conversion!(
     MaxDimmsPerChannel,
     SerdeMaxDimmsPerChannel,
+    SerdePermissiveSerializingMaxDimmsPerChannel,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
 impl_struct_serde_conversion!(
     MemclkMap,
     SerdeMemclkMap,
+    SerdePermissiveSerializingMemclkMap,
     [type_, payload_size, sockets, channels, dimms, connections,]
 );
 impl_struct_serde_conversion!(
     MaxChannelsPerSocket,
     SerdeMaxChannelsPerSocket,
+    SerdePermissiveSerializingMaxChannelsPerSocket,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
 impl_struct_serde_conversion!(
     MemBusSpeed,
     SerdeMemBusSpeed,
+    SerdePermissiveSerializingMemBusSpeed,
     [type_, payload_size, sockets, channels, dimms, timing_mode, bus_speed,]
 );
 impl_struct_serde_conversion!(
     MaxCsPerChannel,
     SerdeMaxCsPerChannel,
+    SerdePermissiveSerializingMaxCsPerChannel,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
 impl_struct_serde_conversion!(
     MemTechnology,
     SerdeMemTechnology,
+    SerdePermissiveSerializingMemTechnology,
     [type_, payload_size, sockets, channels, dimms, technology_type,]
 );
 impl_struct_serde_conversion!(
     WriteLevellingSeedDelay,
     SerdeWriteLevellingSeedDelay,
+    SerdePermissiveSerializingWriteLevellingSeedDelay,
     [type_, payload_size, sockets, channels, dimms, seed, ecc_seed,]
 );
 impl_struct_serde_conversion!(
     RxEnSeed,
     SerdeRxEnSeed,
+    SerdePermissiveSerializingRxEnSeed,
     [type_, payload_size, sockets, channels, dimms, seed, ecc_seed,]
 );
 impl_struct_serde_conversion!(
     LrDimmNoCs6Cs7Routing,
     SerdeLrDimmNoCs6Cs7Routing,
+    SerdePermissiveSerializingLrDimmNoCs6Cs7Routing,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
 impl_struct_serde_conversion!(
     SolderedDownSodimm,
     SerdeSolderedDownSodimm,
+    SerdePermissiveSerializingSolderedDownSodimm,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
 impl_struct_serde_conversion!(
     LvDimmForce1V5,
     SerdeLvDimmForce1V5,
+    SerdePermissiveSerializingLvDimmForce1V5,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
 impl_struct_serde_conversion!(
     MinimumRwDataEyeWidth,
     SerdeMinimumRwDataEyeWidth,
+    SerdePermissiveSerializingMinimumRwDataEyeWidth,
     [
         type_,
         payload_size,
@@ -604,41 +658,49 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     CpuFamilyFilter,
     SerdeCpuFamilyFilter,
+    SerdePermissiveSerializingCpuFamilyFilter,
     [type_, payload_size, cpu_family_revision,]
 );
 impl_struct_serde_conversion!(
     SolderedDownDimmsPerChannel,
     SerdeSolderedDownDimmsPerChannel,
+    SerdePermissiveSerializingSolderedDownDimmsPerChannel,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
 impl_struct_serde_conversion!(
     MemPowerPolicy,
     SerdeMemPowerPolicy,
+    SerdePermissiveSerializingMemPowerPolicy,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
 impl_struct_serde_conversion!(
     MotherboardLayers,
     SerdeMotherboardLayers,
+    SerdePermissiveSerializingMotherboardLayers,
     [type_, payload_size, sockets, channels, dimms, value,]
 );
 impl_struct_serde_conversion!(
     IdApcbMapping,
     SerdeIdApcbMapping,
+    SerdePermissiveSerializingIdApcbMapping,
     [id_and_feature_mask, id_and_feature_value, board_instance_index,]
 );
 impl_struct_serde_conversion!(
     BoardIdGettingMethodCustom,
     SerdeBoardIdGettingMethodCustom,
+    SerdePermissiveSerializingBoardIdGettingMethodCustom,
     [access_method, feature_mask,]
 );
 impl_struct_serde_conversion!(
     BoardIdGettingMethodGpio,
     SerdeBoardIdGettingMethodGpio,
+    SerdePermissiveSerializingBoardIdGettingMethodGpio,
     [access_method, bit_locations,]
 );
 impl_struct_serde_conversion!(
     BoardIdGettingMethodSmbus,
     SerdeBoardIdGettingMethodSmbus,
+    SerdePermissiveSerializingBoardIdGettingMethodSmbus,
     [
         access_method,
         i2c_controller_index,
@@ -652,6 +714,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     FchGppClkMapSelection,
     SerdeFchGppClkMapSelection,
+    SerdePermissiveSerializingFchGppClkMapSelection,
     [
         s0_gpp0_off,
         s0_gpp1_off,
@@ -667,15 +730,22 @@ impl_struct_serde_conversion!(
         _reserved_2,
     ]
 );
-impl_struct_serde_conversion!(Terminator, SerdeTerminator, [type_,]);
+impl_struct_serde_conversion!(
+    Terminator,
+    SerdeTerminator,
+    SerdePermissiveSerializingTerminator,
+    [type_,]
+);
 impl_struct_serde_conversion!(
     DdrPostPackageRepairElement,
     CustomSerdeDdrPostPackageRepairElement,
+    CustomSerdePermissiveSerializingDdrPostPackageRepairElement,
     [raw_body,]
 );
 impl_struct_serde_conversion!(
     DdrPostPackageRepairBody,
     SerdeDdrPostPackageRepairBody,
+    SerdePermissiveSerializingDdrPostPackageRepairBody,
     [
         bank,
         rank_multiplier,
@@ -694,6 +764,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     DimmInfoSmbusElement,
     SerdeDimmInfoSmbusElement,
+    SerdePermissiveSerializingDimmInfoSmbusElement,
     [
         dimm_slot_present,
         socket_id,
@@ -708,16 +779,19 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     ConsoleOutControl,
     SerdeConsoleOutControl,
+    SerdePermissiveSerializingConsoleOutControl,
     [abl_console_out_control, abl_breakpoint_control, _reserved_,]
 );
 impl_struct_serde_conversion!(
     NaplesConsoleOutControl,
     SerdeNaplesConsoleOutControl,
+    SerdePermissiveSerializingNaplesConsoleOutControl,
     [abl_console_out_control, abl_breakpoint_control, _reserved_,]
 );
 impl_struct_serde_conversion!(
     BoardInstances,
     SerdeBoardInstances,
+    SerdePermissiveSerializingBoardInstances,
     [
         instance_0,
         instance_1,
@@ -740,16 +814,19 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     Parameter,
     SerdeParameter,
+    SerdePermissiveSerializingParameter,
     [time_point, token, value_size, value, _reserved_0,]
 );
 impl_struct_serde_conversion!(
     ParameterAttributes,
     SerdeParameterAttributes,
+    SerdePermissiveSerializingParameterAttributes,
     [time_point, token, size_minus_one, _reserved_0,]
 );
 impl_struct_serde_conversion!(
     MemPmuBistTestSelect,
     SerdeMemPmuBistTestSelect,
+    SerdePermissiveSerializingMemPmuBistTestSelect,
     [
         algorithm_1,
         algorithm_2,
