@@ -19,8 +19,8 @@ use crate::ondisk::{
     HeaderWithTail, ParameterAttributes, SequenceElementAsBytes,
 };
 pub use crate::ondisk::{
-    BoardInstances, ContextFormat, ContextType, EntryCompatible, EntryId,
-    Parameter, PriorityLevels,
+    BoardInstances, ContextType, EntryCompatible, EntryId, Parameter,
+    PriorityLevels,
 };
 use crate::token_accessors::{Tokens, TokensMut};
 use core::convert::TryInto;
@@ -47,6 +47,7 @@ use serde::ser::{Serialize, SerializeStruct, Serializer};
 #[cfg(feature = "serde")]
 use std::borrow::Cow;
 
+#[derive(Clone)]
 pub struct ApcbIoOptions {
     pub check_checksum: bool,
 }
@@ -54,6 +55,19 @@ pub struct ApcbIoOptions {
 impl Default for ApcbIoOptions {
     fn default() -> Self {
         Self { check_checksum: true }
+    }
+}
+
+impl ApcbIoOptions {
+    pub fn builder() -> Self {
+        Self::default()
+    }
+    pub fn with_check_checksum(&mut self, value: bool) -> &mut Self {
+        self.check_checksum = value;
+        self
+    }
+    pub fn build(&self) -> Self {
+        self.clone()
     }
 }
 
