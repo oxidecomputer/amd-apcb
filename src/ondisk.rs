@@ -7482,7 +7482,7 @@ impl ToPrimitive for FchGppClkMap {
                 if result == 0xffff || result == 0x0000 {
                     None
                 } else {
-                    Some(result.try_into().ok()?)
+                    Some(result.into())
                 }
             }
             Self::Auto => Some(0xffff),
