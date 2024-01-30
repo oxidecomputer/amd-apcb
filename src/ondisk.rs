@@ -387,7 +387,7 @@ make_accessors! {
         _reserved_9 || #[serde(default)] [SerdeHex32; 3] : [LU32; 3],
         pub integrity_sign || #[serde(default)] [SerdeHex8; 32] : [u8; 32],
         _reserved_10 || #[serde(default)] [SerdeHex32; 3] : [LU32; 3],
-        pub signature_ending || FourCC : [u8; 4],       // "BCBA"
+        pub signature_ending || FourCC : [u8; 4],       // "BCPA"
     }
 }
 
@@ -411,7 +411,7 @@ impl Default for V3_HEADER_EXT {
             _reserved_9: [0u32.into(); 3],
             integrity_sign: [0; 32], // invalid--but unused by AMD Rome
             _reserved_10: [0u32.into(); 3],
-            signature_ending: *b"BCBA",
+            signature_ending: *b"BCPA",
         }
     }
 }
@@ -631,6 +631,9 @@ pub enum MemoryEntryId {
     DimmInfoSmbus,
     DimmConfigInfoId,
     MemOverclockConfig,
+    DdrDqPinMap,
+    Ddr5CaPinMap,
+    MemDfeSearch,
 
     PlatformSpecificOverride,
 
@@ -645,10 +648,15 @@ pub enum MemoryEntryId {
     PsRdimmDdr4DataBus,
     PsRdimmDdr4MaxFreq,
     PsRdimmDdr4StretchFreq,
+    PsRdimmDdr5Bus,
+    PsRdimmDdr5MaxFreq,
+    PsRdimmDdr5StretchFreq,
 
     Ps3dsRdimmDdr4MaxFreq,
     Ps3dsRdimmDdr4StretchFreq,
     Ps3dsRdimmDdr4DataBus,
+    Ps3dsRdimmDdr5MaxFreq,
+    Ps3dsRdimmDdr5StretchFreq,
 
     ConsoleOutControl,
     EventControl,
@@ -660,6 +668,8 @@ pub enum MemoryEntryId {
     PsLrdimmDdr4DataBus,
     PsLrdimmDdr4MaxFreq,
     PsLrdimmDdr4StretchFreq,
+    PsLrdimmDdr5MaxFreq,
+    PsLrdimmDdr5StretchFreq,
 
     PsSodimmDdr4OdtPat,
     PsSodimmDdr4CadBus,
@@ -690,6 +700,9 @@ impl ToPrimitive for MemoryEntryId {
             Self::DimmInfoSmbus => 0x31,
             Self::DimmConfigInfoId => 0x32,
             Self::MemOverclockConfig => 0x33,
+            Self::DdrDqPinMap => 0x35,
+            Self::Ddr5CaPinMap => 0x36,
+            Self::MemDfeSearch => 0x37,
 
             Self::PlatformSpecificOverride => 0x40,
 
@@ -704,10 +717,15 @@ impl ToPrimitive for MemoryEntryId {
             Self::PsRdimmDdr4DataBus => 0x48,
             Self::PsRdimmDdr4MaxFreq => 0x49,
             Self::PsRdimmDdr4StretchFreq => 0x4A,
+            Self::PsRdimmDdr5Bus => 0x89,
+            Self::PsRdimmDdr5MaxFreq => 0x8E,
+            Self::PsRdimmDdr5StretchFreq => 0x92,
 
             Self::Ps3dsRdimmDdr4MaxFreq => 0x4B,
             Self::Ps3dsRdimmDdr4StretchFreq => 0x4C,
             Self::Ps3dsRdimmDdr4DataBus => 0x4D,
+            Self::Ps3dsRdimmDdr5MaxFreq => 0x94,
+            Self::Ps3dsRdimmDdr5StretchFreq => 0x95,
 
             Self::ConsoleOutControl => 0x50,
             Self::EventControl => 0x51,
@@ -719,6 +737,8 @@ impl ToPrimitive for MemoryEntryId {
             Self::PsLrdimmDdr4DataBus => 0x56,
             Self::PsLrdimmDdr4MaxFreq => 0x57,
             Self::PsLrdimmDdr4StretchFreq => 0x58,
+            Self::PsLrdimmDdr5MaxFreq => 0x8F,
+            Self::PsLrdimmDdr5StretchFreq => 0x93,
 
             Self::PsSodimmDdr4OdtPat => 0x59,
             Self::PsSodimmDdr4CadBus => 0x5A,
@@ -755,6 +775,9 @@ impl FromPrimitive for MemoryEntryId {
                 0x31 => Self::DimmInfoSmbus,
                 0x32 => Self::DimmConfigInfoId,
                 0x33 => Self::MemOverclockConfig,
+                0x35 => Self::DdrDqPinMap,
+                0x36 => Self::Ddr5CaPinMap,
+                0x37 => Self::MemDfeSearch,
 
                 0x40 => Self::PlatformSpecificOverride,
 
@@ -800,6 +823,14 @@ impl FromPrimitive for MemoryEntryId {
                 0x74 => Self::PsDramdownDdr4StretchFreq,
 
                 0x75 => Self::PlatformTuning,
+
+                0x89 => Self::PsRdimmDdr5Bus,
+                0x8E => Self::PsRdimmDdr5MaxFreq,
+                0x8F => Self::PsLrdimmDdr5MaxFreq,
+                0x92 => Self::PsRdimmDdr5StretchFreq,
+                0x93 => Self::PsLrdimmDdr5StretchFreq,
+                0x94 => Self::Ps3dsRdimmDdr5MaxFreq,
+                0x95 => Self::Ps3dsRdimmDdr5StretchFreq,
 
                 x => Self::Unknown(x as u16),
             })
@@ -864,6 +895,8 @@ pub enum FchEntryId {
     DefaultParameters, // Naples
     Parameters,        // Naples
 
+    EspiInit, // Genoa
+
     Unknown(u16),
 }
 
@@ -872,6 +905,7 @@ impl ToPrimitive for FchEntryId {
         Some(match self {
             Self::DefaultParameters => 0x0B,
             Self::Parameters => 0x0C,
+            Self::EspiInit => 0x2001,
             Self::Unknown(x) => (*x) as i64,
         })
     }
@@ -886,6 +920,7 @@ impl FromPrimitive for FchEntryId {
             Some(match value {
                 0x0B => Self::DefaultParameters,
                 0x0C => Self::Parameters,
+                0x2001 => Self::EspiInit,
                 x => Self::Unknown(x as u16),
             })
         } else {
@@ -1028,7 +1063,6 @@ pub enum TokenEntryId {
 
 #[cfg(feature = "serde")]
 use std::fmt::{Formatter, Result as FResult};
-
 #[cfg(feature = "serde")]
 impl serde::de::Expected for TokenEntryId {
     fn fmt(&self, f: &mut Formatter<'_>) -> FResult {
@@ -2320,9 +2354,7 @@ pub mod memory {
         }
     }
 
-    #[derive(
-        Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone, Default,
-    )]
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
@@ -2330,14 +2362,16 @@ pub mod memory {
         PcieHt0 = 0,
         PcieHt1 = 2,
         PcieMmio = 5,
-        #[default]
         FchHtIo = 6,
         FchMmio = 7,
     }
+    impl Default for PortType {
+        fn default() -> Self {
+            PortType::FchHtIo
+        }
+    }
 
-    #[derive(
-        Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone, Default,
-    )]
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
@@ -2347,8 +2381,12 @@ pub mod memory {
         #[cfg_attr(feature = "serde", serde(rename = "16 Bit"))]
         _16Bit = 2,
         #[cfg_attr(feature = "serde", serde(rename = "32 Bit"))]
-        #[default]
         _32Bit = 4,
+    }
+    impl Default for PortSize {
+        fn default() -> Self {
+            PortSize::_32Bit
+        }
     }
 
     make_accessors! {
@@ -3562,6 +3600,339 @@ pub mod memory {
         }
     }
 
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct RdimmDdr5BusElementHeader {
+            total_size || u32 : LU32,
+            target_memclk || u32 : LU32,
+            dimm_slots_per_channel: u8,
+            dimm0_rank_bitmap: u8,
+            dimm1_rank_bitmap: u8,
+            sdram_io_width_bitmap: u8,
+        }
+    }
+
+    impl Default for RdimmDdr5BusElementHeader {
+        fn default() -> Self {
+            Self {
+                total_size: (size_of::<Self>() as u32).into(),
+                target_memclk: 2000.into(), // FIXME
+                dimm_slots_per_channel: 2,
+                dimm0_rank_bitmap: 4,
+                dimm1_rank_bitmap: 4,
+                sdram_io_width_bitmap: 1,
+            }
+        }
+    }
+
+    impl Getter<Result<RdimmDdr5BusElementHeader>> for RdimmDdr5BusElementHeader {
+        fn get1(self) -> Result<RdimmDdr5BusElementHeader> {
+            Ok(self)
+        }
+    }
+
+    impl Setter<RdimmDdr5BusElementHeader> for RdimmDdr5BusElementHeader {
+        fn set1(&mut self, value: RdimmDdr5BusElementHeader) {
+            *self = value
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct RdimmDdr5BusElementPayload {
+            total_size || u32 : LU32,
+            ca_timing_mode || u32 : LU32,
+            dimm0_rttnomwr || u32 : LU32,
+            dimm0_rttnomrd || u32 : LU32,
+            dimm0_rttwr || u32 : LU32,
+            dimm0_rttpack || u32 : LU32,
+            dimm0_dqs_rttpark || u32 : LU32,
+            dimm1_rttnomwr || u32 : LU32,
+            dimm1_rttnomrd || u32 : LU32,
+            dimm1_rttwr || u32 : LU32,
+            dimm1_rttpack || u32 : LU32,
+            dimm1_dqs_rttpark || u32 : LU32,
+            dram_drv || u32 : LU32,
+            ck_odt_a || u32 : LU32,
+            cs_odt_a || u32 : LU32,
+            ca_odt_a || u32 : LU32,
+            ck_odt_b || u32 : LU32,
+            cs_odt_b || u32 : LU32,
+            ca_odt_b || u32 : LU32,
+            p_odt || u32 : LU32,
+            dq_drv || u32 : LU32,
+            alert_pullup || u32 : LU32,
+            ca_drv || u32 : LU32,
+            phy_vref || u32 : LU32,
+            dq_vref || u32 : LU32,
+            ca_vref || u32 : LU32,
+            cs_vref || u32 : LU32,
+            d_ca_vref || u32 : LU32,
+            d_cs_vref || u32 : LU32,
+            rx_dfe || u32 : LU32,
+            tx_dfe || u32 : LU32,
+        }
+    }
+
+    impl Default for RdimmDdr5BusElementPayload {
+        fn default() -> Self {
+            Self {
+                total_size: (size_of::<Self>() as u32).into(),
+                ca_timing_mode: 1.into(),
+                dimm0_rttnomwr: 120.into(),
+                dimm0_rttnomrd: 120.into(),
+                dimm0_rttwr: 240.into(),
+                dimm0_rttpack: 60.into(),
+                dimm0_dqs_rttpark: 80.into(),
+                dimm1_rttnomwr: 120.into(),
+                dimm1_rttnomrd: 120.into(),
+                dimm1_rttwr: 240.into(),
+                dimm1_rttpack: 60.into(),
+                dimm1_dqs_rttpark: 80.into(),
+                dram_drv: 34.into(),
+                ck_odt_a: 0.into(),
+                cs_odt_a: 0.into(),
+                ca_odt_a: 0.into(),
+                ck_odt_b: 40.into(),
+                cs_odt_b: 40.into(),
+                ca_odt_b: 60.into(),
+                p_odt: 60.into(),
+                dq_drv: 34.into(),
+                alert_pullup: 80.into(),
+                ca_drv: 40.into(),
+                phy_vref: 45.into(),
+                dq_vref: 45.into(),
+                ca_vref: 63.into(),
+                cs_vref: 56.into(),
+                d_ca_vref: 32.into(),
+                d_cs_vref: 40.into(),
+                rx_dfe: 1.into(),
+                tx_dfe: 1.into(),
+            }
+        }
+    }
+
+    impl Getter<Result<RdimmDdr5BusElementPayload>> for RdimmDdr5BusElementPayload {
+        fn get1(self) -> Result<RdimmDdr5BusElementPayload> {
+            Ok(self)
+        }
+    }
+
+    impl Setter<RdimmDdr5BusElementPayload> for RdimmDdr5BusElementPayload {
+        fn set1(&mut self, value: RdimmDdr5BusElementPayload) {
+            *self = value
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct RdimmDdr5BusElement {
+            header: RdimmDdr5BusElementHeader,
+            payload: RdimmDdr5BusElementPayload,
+        }
+    }
+
+    impl Default for RdimmDdr5BusElement {
+        fn default() -> Self {
+            Self {
+                header: RdimmDdr5BusElementHeader::default(),
+                payload: RdimmDdr5BusElementPayload::default(),
+            }
+        }
+    }
+
+    impl EntryCompatible for RdimmDdr5BusElement {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::PsRdimmDdr5Bus) => true,
+                _ => false,
+            }
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct MemDfeSearchElementHeader {
+            total_size || u32 : LU32,
+            dimm_slots_per_channel: u8,
+            dimm0_rank_bitmap: u8,
+            dimm1_rank_bitmap: u8,
+            sdram_io_width_bitmap: u8,
+        }
+    }
+
+    impl Default for MemDfeSearchElementHeader {
+        fn default() -> Self {
+            Self {
+                total_size: (size_of::<Self>() as u32).into(),
+                dimm_slots_per_channel: 1,
+                dimm0_rank_bitmap: 2,
+                dimm1_rank_bitmap: 1,
+                sdram_io_width_bitmap: 255,
+            }
+        }
+    }
+
+    impl Getter<Result<MemDfeSearchElementHeader>> for MemDfeSearchElementHeader {
+        fn get1(self) -> Result<MemDfeSearchElementHeader> {
+            Ok(self)
+        }
+    }
+
+    impl Setter<MemDfeSearchElementHeader> for MemDfeSearchElementHeader {
+        fn set1(&mut self, value: MemDfeSearchElementHeader) {
+            *self = value
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct MemDfeSearchElementPayload {
+            total_size || u32 : LU32,
+            tx_dfe_tap_1_start || u8 : u8,
+            tx_dfe_tap_1_end || u8 : u8,
+            tx_dfe_tap_2_start || u8 : u8,
+            tx_dfe_tap_2_end || u8 : u8,
+            tx_dfe_tap_3_start || u8 : u8,
+            tx_dfe_tap_3_end || u8 : u8,
+            tx_dfe_tap_4_start || u8 : u8,
+            tx_dfe_tap_4_end || u8 : u8,
+        }
+    }
+    impl Default for MemDfeSearchElementPayload {
+        fn default() -> Self {
+            Self {
+                total_size: (size_of::<Self>() as u32).into(),
+                tx_dfe_tap_1_start: 0,
+                tx_dfe_tap_1_end: 24,
+                tx_dfe_tap_2_start: 0,
+                tx_dfe_tap_2_end: 0,
+                tx_dfe_tap_3_start: 0,
+                tx_dfe_tap_3_end: 0,
+                tx_dfe_tap_4_start: 0,
+                tx_dfe_tap_4_end: 0,
+            }
+        }
+    }
+
+    impl Getter<Result<MemDfeSearchElementPayload>> for MemDfeSearchElementPayload {
+        fn get1(self) -> Result<MemDfeSearchElementPayload> {
+            Ok(self)
+        }
+    }
+
+    impl Setter<MemDfeSearchElementPayload> for MemDfeSearchElementPayload {
+        fn set1(&mut self, value: MemDfeSearchElementPayload) {
+            *self = value
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct MemDfeSearchElementPayloadExt {
+            total_size || u32 : LU32,
+            rx_dfe_tap_2_min_mv || i8 : i8,
+            rx_dfe_tap_2_max_mv || i8 : i8,
+            rx_dfe_tap_3_min_mv || i8 : i8,
+            rx_dfe_tap_3_max_mv || i8 : i8,
+            rx_dfe_tap_4_min_mv || i8 : i8,
+            rx_dfe_tap_4_max_mv || i8 : i8,
+        }
+    }
+    impl Default for MemDfeSearchElementPayloadExt {
+        fn default() -> Self {
+            Self {
+                total_size: (size_of::<Self>() as u32).into(),
+                rx_dfe_tap_2_min_mv: 0, // FIXME
+                rx_dfe_tap_2_max_mv: 0, // FIXME
+                rx_dfe_tap_3_min_mv: 0, // FIXME
+                rx_dfe_tap_3_max_mv: 0, // FIXME
+                rx_dfe_tap_4_min_mv: 0, // FIXME
+                rx_dfe_tap_4_max_mv: 0, // FIXME
+            }
+        }
+    }
+
+    impl Getter<Result<MemDfeSearchElementPayloadExt>>
+        for MemDfeSearchElementPayloadExt
+    {
+        fn get1(self) -> Result<MemDfeSearchElementPayloadExt> {
+            Ok(self)
+        }
+    }
+
+    impl Setter<MemDfeSearchElementPayloadExt> for MemDfeSearchElementPayloadExt {
+        fn set1(&mut self, value: MemDfeSearchElementPayloadExt) {
+            *self = value
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct MemDfeSearchElement32 {
+            header: MemDfeSearchElementHeader,
+            payload: MemDfeSearchElementPayload,
+            payload_ext: MemDfeSearchElementPayloadExt,
+            _padding_0: u8,
+            _padding_1: u8,
+        }
+    }
+
+    impl Default for MemDfeSearchElement32 {
+        fn default() -> Self {
+            Self {
+                header: MemDfeSearchElementHeader::default(),
+                payload: MemDfeSearchElementPayload::default(),
+                payload_ext: MemDfeSearchElementPayloadExt::default(),
+                _padding_0: 0,
+                _padding_1: 0,
+            }
+        }
+    }
+
+    impl EntryCompatible for MemDfeSearchElement32 {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::MemDfeSearch) => true,
+                _ => false,
+            }
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct MemDfeSearchElement20 {
+            header: MemDfeSearchElementHeader,
+            payload: MemDfeSearchElementPayload,
+        }
+    }
+
+    impl Default for MemDfeSearchElement20 {
+        fn default() -> Self {
+            Self {
+                header: MemDfeSearchElementHeader::default(),
+                payload: MemDfeSearchElementPayload::default(),
+            }
+        }
+    }
+
+    impl EntryCompatible for MemDfeSearchElement20 {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::MemDfeSearch) => true,
+                _ => false,
+            }
+        }
+    }
+
     // ACTUAL 1/T, where T is one period.  For DDR, that means DDR400 has
     // frequency 200.
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
@@ -3696,15 +4067,24 @@ pub mod memory {
                 EntryId::Memory(MemoryEntryId::PsUdimmDdr4MaxFreq) => true,
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr4MaxFreq) => true,
                 EntryId::Memory(MemoryEntryId::Ps3dsRdimmDdr4MaxFreq) => true,
-                // Definitely not: EntryId::Memory(MemoryEntryId::PsLrdimmDdr4)
-                // => true TODO: Check
-                // EntryId::Memory(PsSodimmDdr4MaxFreq) => true
+                EntryId::Memory(MemoryEntryId::PsRdimmDdr5MaxFreq) => true,
+                EntryId::Memory(MemoryEntryId::Ps3dsRdimmDdr5MaxFreq) => true,
+                EntryId::Memory(MemoryEntryId::PsLrdimmDdr5MaxFreq) => true,
+
+                // Definitely not: EntryId::Memory(MemoryEntryId::PsLrdimmDdr4) => true.
+                // TODO: Check/ EntryId::Memory(PsSodimmDdr4MaxFreq) => true
                 // Definitely not: EntryId::PsDramdownDdr4MaxFreq => true
                 EntryId::Memory(MemoryEntryId::PsUdimmDdr4StretchFreq) => true,
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr4StretchFreq) => true,
                 EntryId::Memory(MemoryEntryId::Ps3dsRdimmDdr4StretchFreq) => {
                     true
                 }
+                EntryId::Memory(MemoryEntryId::PsRdimmDdr5StretchFreq) => true,
+                EntryId::Memory(MemoryEntryId::Ps3dsRdimmDdr5StretchFreq) => {
+                    true
+                }
+                EntryId::Memory(MemoryEntryId::PsLrdimmDdr5StretchFreq) => true,
+
                 _ => false,
             }
         }
@@ -4291,8 +4671,8 @@ Clone)]
                                 * heeding target_device instead */
             pub chip_select || SerdeHex8 : B2 | pub get u8 : pub set u8,
             pub column || SerdeHex16 : B10 | pub get u16 : pub set u16,
-            pub hard_repair: bool | pub get bool : pub set bool,
-            pub valid: bool | pub get bool : pub set bool,
+            pub hard_repair || #[serde(default)] bool : bool | pub get bool : pub set bool,
+            pub valid || #[serde(default)] bool : bool | pub get bool : pub set bool,
             pub target_device || SerdeHex8 : B5 | pub get u8 : pub set u8,
             pub row || SerdeHex32 : B18 | pub get u32 : pub set u32,
             pub socket || SerdeHex8 : B3 | pub get u8 : pub set u8,
@@ -4393,6 +4773,139 @@ Clone)]
                 entry_id,
                 EntryId::Memory(MemoryEntryId::DdrPostPackageRepair)
             )
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct DdrDqPinMapElementLane {
+            pins: [u8; 8],
+        }
+    }
+
+    impl DdrDqPinMapElementLane {
+        pub fn new(pins: [u8; 8]) -> Self {
+            Self { pins }
+        }
+    }
+
+    // XXX: Not that useful.
+    impl Default for DdrDqPinMapElementLane {
+        fn default() -> Self {
+            Self { pins: [0, 1, 2, 3, 4, 5, 6, 7] }
+        }
+    }
+
+    impl Getter<Result<[DdrDqPinMapElementLane; 8]>>
+        for [DdrDqPinMapElementLane; 8]
+    {
+        fn get1(self) -> Result<[DdrDqPinMapElementLane; 8]> {
+            Ok(self.map(|v| v))
+        }
+    }
+
+    impl Setter<[DdrDqPinMapElementLane; 8]> for [DdrDqPinMapElementLane; 8] {
+        fn set1(&mut self, value: [DdrDqPinMapElementLane; 8]) {
+            *self = value.map(|v| v);
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct DdrDqPinMapElement {
+            lanes: [DdrDqPinMapElementLane; 8], // lanes[lane][bit] == pin
+        }
+    }
+
+    impl Default for DdrDqPinMapElement {
+        fn default() -> Self {
+            Self {
+                lanes: [
+                    DdrDqPinMapElementLane::new([0, 1, 2, 3, 4, 5, 6, 7]),
+                    DdrDqPinMapElementLane::new([8, 9, 10, 11, 12, 13, 14, 15]),
+                    DdrDqPinMapElementLane::new([
+                        16, 17, 18, 19, 20, 21, 22, 23,
+                    ]),
+                    DdrDqPinMapElementLane::new([
+                        24, 25, 26, 27, 28, 29, 30, 31,
+                    ]),
+                    DdrDqPinMapElementLane::new([0, 1, 2, 3, 4, 5, 6, 7]),
+                    DdrDqPinMapElementLane::new([8, 9, 10, 11, 12, 13, 14, 15]),
+                    DdrDqPinMapElementLane::new([
+                        16, 17, 18, 19, 20, 21, 22, 23,
+                    ]),
+                    DdrDqPinMapElementLane::new([
+                        24, 25, 26, 27, 28, 29, 30, 31,
+                    ]),
+                ],
+            }
+        }
+    }
+
+    impl EntryCompatible for DdrDqPinMapElement {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::DdrDqPinMap) => true,
+                _ => false,
+            }
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct Ddr5CaPinMapElementLane {
+            pins: [u8; 14], // TODO: nicer pin type instead of u8; especially for 0xff "un"
+        }
+    }
+
+    impl Default for Ddr5CaPinMapElementLane {
+        fn default() -> Self {
+            Self { pins: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] }
+        }
+    }
+
+    impl Getter<Result<[Ddr5CaPinMapElementLane; 2]>>
+        for [Ddr5CaPinMapElementLane; 2]
+    {
+        fn get1(self) -> Result<[Ddr5CaPinMapElementLane; 2]> {
+            Ok(self.map(|v| v))
+        }
+    }
+
+    impl Setter<[Ddr5CaPinMapElementLane; 2]> for [Ddr5CaPinMapElementLane; 2] {
+        fn set1(&mut self, value: [Ddr5CaPinMapElementLane; 2]) {
+            *self = value.map(|v| v);
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct Ddr5CaPinMapElement {
+            lanes: [Ddr5CaPinMapElementLane; 2], // pins[lane][bit] == pin; pin == 0xff means un?
+        }
+    }
+
+    impl Default for Ddr5CaPinMapElement {
+        fn default() -> Self {
+            Self {
+                lanes: [
+                    Ddr5CaPinMapElementLane::default(),
+                    Ddr5CaPinMapElementLane::default(),
+                ],
+            }
+        }
+    }
+
+    impl EntryCompatible for Ddr5CaPinMapElement {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            match entry_id {
+                EntryId::Memory(MemoryEntryId::Ddr5CaPinMap) => true,
+                _ => false,
+            }
         }
     }
 
@@ -4774,6 +5287,66 @@ Clone)]
                                 Ok(Self {
                                     sockets: sockets.to_u8().unwrap(),
                                     channels: channels.to_u8().unwrap(),
+                                    dimms: DimmSlots::Any.to_u8().unwrap(),
+                                    value,
+                                    .. Self::default()
+                                })
+                            }
+                        }
+                        make_bitfield_serde! {
+                            #[bitfield(filled = true, bits = 16)]
+                            #[repr(u16)]
+                            #[derive(Clone, Copy, PartialEq)]
+                            pub struct ChannelIdsSelection12 {
+                                pub a || #[serde(default)] bool : bool | pub get bool : pub set bool,
+                                pub b || #[serde(default)] bool : bool | pub get bool : pub set bool,
+                                pub c || #[serde(default)] bool : bool | pub get bool : pub set bool,
+                                pub d || #[serde(default)] bool : bool | pub get bool : pub set bool,
+                                pub e || #[serde(default)] bool : bool | pub get bool : pub set bool,
+                                pub f || #[serde(default)] bool : bool | pub get bool : pub set bool,
+                                pub g || #[serde(default)] bool : bool | pub get bool : pub set bool,
+                                pub h || #[serde(default)] bool : bool | pub get bool : pub set bool,
+                                pub i || #[serde(default)] bool : bool | pub get bool : pub set bool,
+                                pub j || #[serde(default)] bool : bool | pub get bool : pub set bool,
+                                pub k || #[serde(default)] bool : bool | pub get bool : pub set bool,
+                                pub l || #[serde(default)] bool : bool | pub get bool : pub set bool,
+                                pub _reserved_1 || #[serde(default)] SerdeHex8 : B4,
+                            }
+                        }
+                        impl_bitfield_primitive_conversion!(ChannelIdsSelection12, 0b1111_1111_1111, u16);
+
+                        make_accessors! {
+                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                            #[repr(C, packed)]
+                            pub struct MaxDimmsPerChannel6 {
+                                type_ || #[serde(default = "MaxDimmsPerChannel::serde_default_tag")] SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                payload_size || #[serde(default = "MaxDimmsPerChannel::serde_default_payload_size")] SerdeHex8 : u8,
+                                sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
+                                channels || ChannelIdsSelection12 : LU16 | pub get ChannelIdsSelection12 : pub set ChannelIdsSelection12,
+                                dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: must always be "any"
+                                value || SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                _padding_0: u8,
+                            }
+                        }
+                        impl_EntryCompatible!(MaxDimmsPerChannel6, 4, 6);
+                        impl Default for MaxDimmsPerChannel6 {
+                            fn default() -> Self {
+                                Self {
+                                    type_: Self::TAG as u8,
+                                    payload_size: (size_of::<Self>() - 2) as u8,
+                                    sockets: SocketIds::ALL.to_u8().unwrap(),
+                                    channels: ChannelIds::Any.to_u16().unwrap().into(),
+                                    dimms: DimmSlots::Any.to_u8().unwrap(),
+                                    value: 2,
+                                    _padding_0: 0,
+                                }
+                            }
+                        }
+                        impl MaxDimmsPerChannel6 {
+                            pub fn new(sockets: SocketIds, channels: ChannelIds, value: u8) -> Result<Self> {
+                                Ok(Self {
+                                    sockets: sockets.to_u8().unwrap(),
+                                    channels: channels.to_u16().unwrap().into(),
                                     dimms: DimmSlots::Any.to_u8().unwrap(),
                                     value,
                                     .. Self::default()
@@ -5729,6 +6302,19 @@ Clone)]
             assert!(offset_of!(ErrorOutControl112, enable_heart_beat) == 104);
             assert!(offset_of!(ErrorOutControl112, power_good_gpio) == 106);
             const_assert!(size_of::<ErrorOutControl112>() == 112);
+            const_assert!(size_of::<DdrDqPinMapElement>() == 64);
+            const_assert!(size_of::<Ddr5CaPinMapElement>() == 28);
+            const_assert!(size_of::<RdimmDdr5BusElementHeader>() == 12);
+            const_assert!(size_of::<RdimmDdr5BusElementPayload>() == 124);
+            const_assert!(size_of::<RdimmDdr5BusElement>() == 12 + 124);
+            const_assert!(size_of::<MemDfeSearchElementHeader>() == 8);
+            const_assert!(size_of::<MemDfeSearchElementPayload>() == 12);
+            const_assert!(size_of::<MemDfeSearchElementPayloadExt>() == 10);
+            const_assert!(size_of::<MemDfeSearchElement32>() == 32);
+            assert!(offset_of!(MemDfeSearchElement32, payload) == 8);
+            assert!(offset_of!(MemDfeSearchElement32, payload_ext) == 8 + 12);
+            assert!(offset_of!(MemDfeSearchElement20, payload) == 8);
+            const_assert!(size_of::<MemDfeSearchElement20>() == 20);
         }
 
         #[test]
@@ -5853,6 +6439,100 @@ Clone)]
             assert!(header.enable_console_logging().unwrap());
             header.set_enable_console_logging(false);
             assert!(!header.enable_console_logging().unwrap());
+        }
+    }
+}
+
+pub mod fch {
+    use super::*;
+    use crate::struct_accessors::{
+        make_accessors, DummyErrorChecks, Getter, Setter, BLU16, BU8,
+    };
+    use crate::types::Result;
+
+    make_accessors! {
+        #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct EspiInit {
+            espi_enabled || bool : BU8 | pub get bool : pub set bool,
+
+            data_bus_select || SerdeHex8 : u8 | pub get u8 : pub set u8,
+            clock_pin_select || SerdeHex8 : u8 | pub get u8 : pub set u8,
+            cs_pin_select || SerdeHex8 : u8 | pub get u8 : pub set u8,
+            clock_frequency || SerdeHex8 : u8 | pub get u8 : pub set u8,
+            io_mode || SerdeHex8 : u8 | pub get u8 : pub set u8,
+            alert_mode || SerdeHex8 : u8 | pub get u8 : pub set u8,
+
+            pltrst_deassert || bool : BU8 | pub get bool : pub set bool,
+            io80_decoding_enabled || bool : BU8 | pub get bool : pub set bool,
+            io6064_decoding_enabled || bool : BU8 | pub get bool : pub set bool,
+
+            io_range_size || [SerdeHex8; 16] : [u8; 16], // | pub get [u8; 16] : pub set [u8; 16], // FIXME
+            io_range_base || [SerdeHex16; 16] : [LU16; 16], // | pub get [u16; 16] : pub set [u16; 16], // FIXME
+
+            mmio_range_size || [SerdeHex16; 5] : [LU16; 5], // | pub get [u16; 5] : pub set [u16; 5], // FIXME
+            mmio_range_base || [SerdeHex32; 5] : [LU32; 5], // | pub get [u32; 5] : pub set [u32; 5], // FIXME
+
+            irq_mask || SerdeHex32 : LU32, // | pub get LU32 : pub set u32, // FIXME bitmap
+            irq_polarity || SerdeHex32 : LU32, // | pub get LU32 : pub set u32, // FIXME bitmap
+
+            cputemp_rtctime_vw_enabled || bool : BU8, // | pub get bool : pub set bool,
+            cputemp_rtctime_vw_index_select || SerdeHex8 : u8, // | pub get u8 : pub set u8,
+
+            _dummy_1 : u8,
+            _dummy_2 : u8,
+
+            cpu_temp_mmio_base || SerdeHex32 : LU32 | pub get u32 : pub set u32, // FIXME
+            rtc_time_mmio_base || SerdeHex32 : LU32 | pub get u32 : pub set u32, // FIXME
+
+            bus_master_enabled || bool : BU8 | pub get bool : pub set bool,
+
+            _dummy_3: u8,
+            _dummy_4: u8,
+            _dummy_5: u8,
+        }
+    }
+
+    impl EntryCompatible for EspiInit {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            matches!(entry_id, EntryId::Fch(FchEntryId::EspiInit))
+        }
+    }
+
+    impl HeaderWithTail for EspiInit {
+        type TailArrayItemType<'de> = ();
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use static_assertions::const_assert;
+        #[test]
+        fn test_struct_sizes() {
+            assert!(offset_of!(EspiInit, espi_enabled) == 0);
+            assert!(offset_of!(EspiInit, data_bus_select) == 1);
+            assert!(offset_of!(EspiInit, clock_pin_select) == 2);
+            assert!(offset_of!(EspiInit, cs_pin_select) == 3);
+            assert!(offset_of!(EspiInit, clock_frequency) == 4);
+            assert!(offset_of!(EspiInit, io_mode) == 5);
+            assert!(offset_of!(EspiInit, alert_mode) == 6);
+            assert!(offset_of!(EspiInit, pltrst_deassert) == 7);
+            assert!(offset_of!(EspiInit, io80_decoding_enabled) == 8);
+            assert!(offset_of!(EspiInit, io6064_decoding_enabled) == 9);
+            assert!(offset_of!(EspiInit, io_range_size) == 10);
+            assert!(offset_of!(EspiInit, io_range_base) == 26);
+            assert!(offset_of!(EspiInit, mmio_range_size) == 58);
+            assert!(offset_of!(EspiInit, mmio_range_base) == 68);
+            assert!(offset_of!(EspiInit, irq_mask) == 88);
+            assert!(offset_of!(EspiInit, irq_polarity) == 92);
+            assert!(offset_of!(EspiInit, cputemp_rtctime_vw_enabled) == 96);
+            assert!(
+                offset_of!(EspiInit, cputemp_rtctime_vw_index_select) == 97
+            );
+            assert!(offset_of!(EspiInit, cpu_temp_mmio_base) == 100);
+            assert!(offset_of!(EspiInit, rtc_time_mmio_base) == 104);
+            assert!(offset_of!(EspiInit, bus_master_enabled) == 108);
+            assert!(size_of::<EspiInit>() == 112); // 109
         }
     }
 }
@@ -6842,7 +7522,7 @@ impl MemMbistAggressorsChannels {
 pub enum MemMbistTestMode {
     PhysicalInterface = 0,
     DataEye = 1,
-    Both = 2,
+    // Both = , ?
 }
 
 #[allow(non_camel_case_types, non_snake_case)]

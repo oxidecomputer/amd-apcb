@@ -11,6 +11,7 @@
 //! are doing.
 
 use crate::df::*;
+use crate::fch::*;
 use crate::memory::platform_tuning::*;
 use crate::memory::*;
 use crate::ondisk::memory::platform_specific_override::*;
@@ -39,7 +40,7 @@ macro_rules! impl_struct_serde_conversion{($StructName:ident, $SerdeStructName:i
             where S: serde::Serializer, {
                 $SerdeStructName {
                     $(
-                        $field_name: self.[<serde_ $field_name>]().map_err(|_| serde::ser::Error::custom("value unknown"))?.into(),
+                        $field_name: self.[<serde_ $field_name>]().map_err(|_| serde::ser::Error::custom(format!("value unknown for {}.{}", stringify!($StructName), stringify!($field_name))))?.into(),
                     )*
                 }.serialize(serializer)
             }
@@ -486,6 +487,11 @@ impl_struct_serde_conversion!(
     SerdeChannelIdsSelection,
     [a, b, c, d, e, f, g, h,]
 );
+impl_struct_serde_conversion!(
+    ChannelIdsSelection12,
+    SerdeChannelIdsSelection12,
+    [a, b, c, d, e, f, g, h, i, j, k, l, _reserved_1,]
+);
 
 impl_struct_serde_conversion!(
     SocketIds,
@@ -537,6 +543,11 @@ impl_struct_serde_conversion!(
     MaxDimmsPerChannel,
     SerdeMaxDimmsPerChannel,
     [type_, payload_size, sockets, channels, dimms, value,]
+);
+impl_struct_serde_conversion!(
+    MaxDimmsPerChannel6,
+    SerdeMaxDimmsPerChannel6,
+    [type_, payload_size, sockets, channels, dimms, value, _padding_0]
 );
 impl_struct_serde_conversion!(
     MemclkMap,
@@ -758,4 +769,159 @@ impl_struct_serde_conversion!(
         algorithm_5,
         _reserved_0,
     ]
+);
+impl_struct_serde_conversion!(
+    RdimmDdr5BusElementPayload,
+    SerdeRdimmDdr5BusElementPayload,
+    [
+        total_size,
+        ca_timing_mode,
+        dimm0_rttnomwr,
+        dimm0_rttnomrd,
+        dimm0_rttwr,
+        dimm0_rttpack,
+        dimm0_dqs_rttpark,
+        dimm1_rttnomwr,
+        dimm1_rttnomrd,
+        dimm1_rttwr,
+        dimm1_rttpack,
+        dimm1_dqs_rttpark,
+        dram_drv,
+        ck_odt_a,
+        cs_odt_a,
+        ca_odt_a,
+        ck_odt_b,
+        cs_odt_b,
+        ca_odt_b,
+        p_odt,
+        dq_drv,
+        alert_pullup,
+        ca_drv,
+        phy_vref,
+        dq_vref,
+        ca_vref,
+        cs_vref,
+        d_ca_vref,
+        d_cs_vref,
+        rx_dfe,
+        tx_dfe,
+    ]
+);
+impl_struct_serde_conversion!(
+    Ddr5CaPinMapElementLane,
+    SerdeDdr5CaPinMapElementLane,
+    [pins,]
+);
+impl_struct_serde_conversion!(
+    DdrDqPinMapElementLane,
+    SerdeDdrDqPinMapElementLane,
+    [pins,]
+);
+impl_struct_serde_conversion!(
+    DdrDqPinMapElement,
+    SerdeDdrDqPinMapElement,
+    [lanes,]
+);
+impl_struct_serde_conversion!(
+    RdimmDdr5BusElementHeader,
+    SerdeRdimmDdr5BusElementHeader,
+    [
+        total_size,
+        target_memclk,
+        dimm_slots_per_channel,
+        dimm0_rank_bitmap,
+        dimm1_rank_bitmap,
+        sdram_io_width_bitmap,
+    ]
+);
+impl_struct_serde_conversion!(
+    RdimmDdr5BusElement,
+    SerdeRdimmDdr5BusElement,
+    [header, payload,]
+);
+impl_struct_serde_conversion!(
+    EspiInit,
+    SerdeEspiInit,
+    [
+        espi_enabled,
+        data_bus_select,
+        clock_pin_select,
+        cs_pin_select,
+        clock_frequency,
+        io_mode,
+        alert_mode,
+        pltrst_deassert,
+        io80_decoding_enabled,
+        io6064_decoding_enabled,
+        io_range_size,
+        io_range_base,
+        mmio_range_size,
+        mmio_range_base,
+        irq_mask,
+        irq_polarity,
+        cputemp_rtctime_vw_enabled,
+        cputemp_rtctime_vw_index_select,
+        _dummy_1,
+        _dummy_2,
+        cpu_temp_mmio_base, // FIXME
+        rtc_time_mmio_base, // FIXME
+        bus_master_enabled,
+        _dummy_3,
+        _dummy_4,
+        _dummy_5,
+    ]
+);
+impl_struct_serde_conversion!(
+    Ddr5CaPinMapElement,
+    SerdeDdr5CaPinMapElement,
+    [lanes,]
+);
+impl_struct_serde_conversion!(
+    MemDfeSearchElementHeader,
+    SerdeMemDfeSearchElementHeader,
+    [
+        total_size,
+        dimm_slots_per_channel,
+        dimm0_rank_bitmap,
+        dimm1_rank_bitmap,
+        sdram_io_width_bitmap,
+    ]
+);
+impl_struct_serde_conversion!(
+    MemDfeSearchElementPayload,
+    SerdeMemDfeSearchElementPayload,
+    [
+        total_size,
+        tx_dfe_tap_1_start,
+        tx_dfe_tap_1_end,
+        tx_dfe_tap_2_start,
+        tx_dfe_tap_2_end,
+        tx_dfe_tap_3_start,
+        tx_dfe_tap_3_end,
+        tx_dfe_tap_4_start,
+        tx_dfe_tap_4_end,
+    ]
+);
+impl_struct_serde_conversion!(
+    MemDfeSearchElementPayloadExt,
+    SerdeMemDfeSearchElementPayloadExt,
+    [
+        total_size,
+        rx_dfe_tap_2_min_mv,
+        rx_dfe_tap_2_max_mv,
+        rx_dfe_tap_3_min_mv,
+        rx_dfe_tap_3_max_mv,
+        rx_dfe_tap_4_min_mv,
+        rx_dfe_tap_4_max_mv,
+    ]
+);
+impl_struct_serde_conversion!(
+    MemDfeSearchElement20,
+    SerdeMemDfeSearchElement20,
+    [header, payload,]
+);
+impl_struct_serde_conversion!(
+    MemDfeSearchElement32,
+    SerdeMemDfeSearchElement32,
+    [header, payload, payload_ext, _padding_0, _padding_1,]
 );
