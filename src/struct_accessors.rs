@@ -32,6 +32,11 @@ impl Getter<u8> for u8 {
         self
     }
 }
+impl Getter<Result<i8>> for i8 {
+    fn get1(self) -> Result<i8> {
+        Ok(self)
+    }
+}
 impl<'a> Getter<&'a [u8]> for &'a [u8] {
     fn get1(self) -> &'a [u8] {
         self
@@ -87,6 +92,11 @@ impl Getter<Result<FourCC>> for [u8; 4] {
 impl Setter<FourCC> for [u8; 4] {
     fn set1(&mut self, value: FourCC) {
         *self = value.0
+    }
+}
+impl Setter<i8> for i8 {
+    fn set1(&mut self, value: i8) {
+        *self = value
     }
 }
 
@@ -171,6 +181,8 @@ impl DummyErrorChecks for u32 {}
 impl DummyErrorChecks for u16 {}
 
 impl DummyErrorChecks for u8 {}
+
+impl DummyErrorChecks for i8 {}
 
 impl DummyErrorChecks for bool {}
 

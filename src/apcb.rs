@@ -19,8 +19,8 @@ use crate::ondisk::{
     HeaderWithTail, ParameterAttributes, SequenceElementAsBytes,
 };
 pub use crate::ondisk::{
-    BoardInstances, ContextType, EntryCompatible, EntryId, Parameter,
-    PriorityLevels,
+    BoardInstances, ContextType, EntryCompatible, EntryId,
+    Parameter, PriorityLevels,
 };
 use crate::token_accessors::{Tokens, TokensMut};
 use core::convert::TryInto;
@@ -446,7 +446,7 @@ impl<'a> Iterator for ApcbIter<'a> {
 impl<'a> Apcb<'a> {
     const NAPLES_VERSION: u16 = 0x20;
     const ROME_VERSION: u16 = 0x30;
-    pub const MAX_SIZE: usize = 0x2400;
+    pub const MAX_SIZE: usize = 0x4000;
 
     pub fn header(&self) -> Result<LayoutVerified<&[u8], V2_HEADER>> {
         let (header, _) =
@@ -1273,7 +1273,7 @@ impl<'a> Apcb<'a> {
                     "V3_HEADER_EXT::data_offset",
                 ));
             }
-            if value.signature_ending == *b"BCBA" {
+            if value.signature_ending == *b"BCPA" {
             } else {
                 return Err(Error::FileSystem(
                     FileSystemError::InconsistentHeader,

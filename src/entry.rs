@@ -438,6 +438,7 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
     fn json_schema(
         gen: &mut schemars::gen::SchemaGenerator,
     ) -> schemars::schema::Schema {
+        use crate::fch;
         use crate::memory;
         use crate::psp;
         use crate::tokens_entry::TokensEntryItem;
@@ -498,6 +499,26 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
             <Vec<memory::LrMaxFreqElement>>::json_schema(gen),
         );
         obj.properties.insert(
+            "Ddr5CaPinMapElement".to_owned(),
+            <Vec<memory::Ddr5CaPinMapElement>>::json_schema(gen),
+        );
+        obj.properties.insert(
+            "MemDfeSearchElement20".to_owned(),
+            <Vec<memory::MemDfeSearchElement20>>::json_schema(gen),
+        );
+        obj.properties.insert(
+            "MemDfeSearchElement32".to_owned(),
+            <Vec<memory::MemDfeSearchElement32>>::json_schema(gen),
+        );
+        obj.properties.insert(
+            "DdrDqPinMapElement".to_owned(),
+            <Vec<memory::DdrDqPinMapElement>>::json_schema(gen),
+        );
+        obj.properties.insert(
+            "RdimmDdr5BusElement".to_owned(),
+            <Vec<memory::RdimmDdr5BusElement>>::json_schema(gen),
+        );
+        obj.properties.insert(
             "ConsoleOutControl".to_owned(),
             <memory::ConsoleOutControl>::json_schema(gen),
         );
@@ -521,7 +542,8 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
             "SlinkConfig".to_owned(),
             <crate::df::SlinkConfig>::json_schema(gen),
         );
-
+        obj.properties
+            .insert("EspiInit".to_owned(), <fch::EspiInit>::json_schema(gen));
         obj.properties
             .insert("BoardIdGettingMethodGpio".to_owned(),
                 <(psp::BoardIdGettingMethodGpio,
@@ -584,6 +606,7 @@ impl<'a> Serialize for EntryItem<'a> {
         S: Serializer,
     {
         use crate::df::SlinkConfig;
+        use crate::fch;
         use crate::memory;
         use crate::psp;
         let mut state = serializer.serialize_struct("EntryItem", 2)?;
@@ -633,6 +656,21 @@ impl<'a> Serialize for EntryItem<'a> {
                 } else if let Some(s) = self.body_as_struct_array::<memory::LrMaxFreqElement>() {
                     let v = s.iter().collect::<Vec<_>>();
                     state.serialize_field("LrMaxFreqElement", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::Ddr5CaPinMapElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("Ddr5CaPinMapElement", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::MemDfeSearchElement20>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("MemDfeSearchElement20", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::MemDfeSearchElement32>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("MemDfeSearchElement32", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::DdrDqPinMapElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("DdrDqPinMapElement", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::RdimmDdr5BusElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("RdimmDdr5BusElement", &v)?;
                 } else if let Some((s, _)) = self.body_as_struct::<memory::ConsoleOutControl>() {
                     state.serialize_field("ConsoleOutControl", &s)?;
                 } else if let Some((s, _)) = self.body_as_struct::<memory::NaplesConsoleOutControl>() {
@@ -661,6 +699,8 @@ impl<'a> Serialize for EntryItem<'a> {
                     let v = s.iter().collect::<Vec<_>>();
                     let t = (header, v);
                     state.serialize_field("BoardIdGettingMethodCustom", &t)?;
+                } else if let Some((header, _)) = self.body_as_struct::<fch::EspiInit>() {
+                    state.serialize_field("EspiInit", &header)?;
                 } else if let Some(s) =
 self.body_as_struct_sequence::<memory::platform_specific_override::ElementRef<'_>>() {
                     let i = s.iter().unwrap();
@@ -855,6 +895,12 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
             LrdimmDdr4DataBusElement,
             MaxFreqElement,
             LrMaxFreqElement,
+            DdrDqPinMapElement,
+            Ddr5CaPinMapElement,
+            MemDfeSearchElement20,
+            MemDfeSearchElement32,
+            RdimmDdr5BusElement,
+
             // Body as struct
             ConsoleOutControl,
             ExtVoltageControl,
@@ -865,6 +911,8 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
             BoardIdGettingMethodEeprom,
             BoardIdGettingMethodSmbus,
             BoardIdGettingMethodCustom,
+            EspiInit,
+
             // struct sequence
             PlatformSpecificOverrides,
             PlatformTuning,
@@ -884,6 +932,11 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
             "LrdimmDdr4DataBusElement",
             "MaxFreqElement",
             "LrMaxFreqElement",
+            "DdrDqPinMapElement",
+            "Ddr5CaPinMapElement",
+            "MemDfeSearchElement20",
+            "MemDfeSearchElement32",
+            "RdimmDdr5BusElement",
             // Body as struct
             "ConsoleOutControl",
             "ExtVoltageControl",
@@ -894,6 +947,7 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
             "BoardIdGettingMethodEeprom",
             "BoardIdGettingMethodSmbus",
             "BoardIdGettingMethodCustom",
+            "EspiInit",
             // struct sequence
             "platform_specific_overrides",
             "platform_tuning",
@@ -956,6 +1010,22 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
                             }
                             "MaxFreqElement" => Ok(Field::MaxFreqElement),
                             "LrMaxFreqElement" => Ok(Field::LrMaxFreqElement),
+                            "DdrDqPinMapElement" => {
+                                Ok(Field::DdrDqPinMapElement)
+                            }
+                            "Ddr5CaPinMapElement" => {
+                                Ok(Field::Ddr5CaPinMapElement)
+                            }
+                            "MemDfeSearchElement20" => {
+                                Ok(Field::MemDfeSearchElement20)
+                            }
+                            "MemDfeSearchElement32" => {
+                                Ok(Field::MemDfeSearchElement32)
+                            }
+                            "RdimmDdr5BusElement" => {
+                                Ok(Field::RdimmDdr5BusElement)
+                            }
+
                             "ConsoleOutControl" => Ok(Field::ConsoleOutControl),
                             "ExtVoltageControl" => Ok(Field::ExtVoltageControl),
                             "ErrorOutControl116" => {
@@ -977,6 +1047,7 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
                             "BoardIdGettingMethodCustom" => {
                                 Ok(Field::BoardIdGettingMethodCustom)
                             }
+                            "EspiInit" => Ok(Field::EspiInit),
                             "platform_specific_overrides" => {
                                 Ok(Field::PlatformSpecificOverrides)
                             }
@@ -1011,6 +1082,7 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
                 V: MapAccess<'de>,
             {
                 use crate::df;
+                use crate::fch;
                 use crate::memory;
                 use crate::psp;
                 let mut header: Option<ENTRY_HEADER> = None;
@@ -1090,6 +1162,33 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
                                 &mut body, &mut map,
                             )?;
                         }
+                        Field::DdrDqPinMapElement => {
+                            struct_vec_to_body::<memory::DdrDqPinMapElement, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+                        Field::Ddr5CaPinMapElement => {
+                            struct_vec_to_body::<memory::Ddr5CaPinMapElement, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+                        Field::MemDfeSearchElement20 => {
+                            struct_vec_to_body::<
+                                memory::MemDfeSearchElement20,
+                                V,
+                            >(&mut body, &mut map)?;
+                        }
+                        Field::MemDfeSearchElement32 => {
+                            struct_vec_to_body::<
+                                memory::MemDfeSearchElement32,
+                                V,
+                            >(&mut body, &mut map)?;
+                        }
+                        Field::RdimmDdr5BusElement => {
+                            struct_vec_to_body::<memory::RdimmDdr5BusElement, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
 
                         Field::ConsoleOutControl => {
                             struct_to_body::<memory::ConsoleOutControl, V>(
@@ -1133,6 +1232,11 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
                         }
                         Field::BoardIdGettingMethodCustom => {
                             struct_to_body::<psp::BoardIdGettingMethodCustom, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+                        Field::EspiInit => {
+                            struct_to_body::<fch::EspiInit, V>(
                                 &mut body, &mut map,
                             )?;
                         }

@@ -1201,6 +1201,7 @@ mod tests {
 
     #[test]
     fn insert_two_tokens_wrong_entry_versioned() -> Result<(), Error> {
+        use crate::Error::TokenVersionMismatch;
         let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
@@ -1237,6 +1238,14 @@ mod tests {
         // u16, board_instance_mask: BoardInstances, context_type: ContextType,
         // payload: &[u8], priority_mask: u8
         apcb.insert_entry(
+            EntryId::Token(TokenEntryId::Bool),
+            0,
+            BoardInstances::from_instance(0).unwrap(),
+            ContextType::Tokens,
+            PriorityLevels::from_level(PriorityLevel::Normal),
+            &[],
+        )?;
+        apcb.insert_entry(
             EntryId::Token(TokenEntryId::Byte),
             0,
             BoardInstances::from_instance(0).unwrap(),
@@ -1250,17 +1259,17 @@ mod tests {
             Apcb::load(&mut buffer[0..], &ApcbIoOptions::default()).unwrap();
 
         apcb.insert_token(
-            EntryId::Token(TokenEntryId::Byte),
+            EntryId::Token(TokenEntryId::Bool),
             0,
             BoardInstances::from_instance(0).unwrap(),
-            0xf5768cee, // GnbAdditionalFeatureDsmDetector
+            0xf576_8cee, // GnbAdditionalFeatureDsmDetector
             1,
         )?;
         apcb.insert_token(
             EntryId::Token(TokenEntryId::Byte),
             0,
             BoardInstances::from_instance(0).unwrap(),
-            0xe702_4a21, // PspStopOnError
+            0xf576_8cee, // GnbAdditionalFeatureDsmDetector2
             1,
         )?;
 
@@ -1269,14 +1278,28 @@ mod tests {
             Ok(_) => {
                 panic!("Validation should have failed")
             }
-            _ => {}
+            Err(TokenVersionMismatch { entry_id, .. }) => {
+                assert!(entry_id == TokenEntryId::Bool);
+            }
+            Err(_) => {
+                panic!(
+                    "Validation should have failed with TokenVersionMismatch"
+                )
+            }
         }
         // Try what happens when ABL0 version is old enough
         match apcb.validate(Some(0x42)) {
             Ok(_) => {
                 panic!("Validation should have failed")
             }
-            _ => {}
+            Err(TokenVersionMismatch { entry_id, .. }) => {
+                assert!(entry_id == TokenEntryId::Byte);
+            }
+            Err(_) => {
+                panic!(
+                    "Validation should have failed with TokenVersionMismatch"
+                )
+            }
         }
         Ok(())
     }
