@@ -19,8 +19,8 @@ use crate::ondisk::{
     HeaderWithTail, ParameterAttributes, SequenceElementAsBytes,
 };
 pub use crate::ondisk::{
-    BoardInstances, ContextType, EntryCompatible, EntryId,
-    Parameter, PriorityLevels,
+    BoardInstances, ContextType, EntryCompatible, EntryId, Parameter,
+    PriorityLevels,
 };
 use crate::token_accessors::{Tokens, TokensMut};
 use core::convert::TryInto;
@@ -398,9 +398,13 @@ impl<'a> Iterator for ApcbIter<'a> {
 impl<'a> Apcb<'a> {
     const NAPLES_VERSION: u16 = 0x20;
     const ROME_VERSION: u16 = 0x30;
+<<<<<<< HEAD
     const V3_HEADER_EXT_SIZE: usize =
         size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>();
     pub const MAX_SIZE: usize = 0x4000;
+=======
+    pub const MAX_SIZE: usize = 0x5000;
+>>>>>>> 6fcd224 (Increase MAX_SIZE to 0x5000 to handle larger payload in Genoa 1.0.0.a firmware)
 
     pub fn header(&self) -> Result<LayoutVerified<&[u8], V2_HEADER>> {
         LayoutVerified::<&[u8], V2_HEADER>::new_unaligned_from_prefix(
