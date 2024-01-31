@@ -19,7 +19,7 @@ use core::cmp::Ordering;
 use core::convert::TryFrom;
 use core::convert::TryInto;
 use core::mem::{size_of, take};
-use core::num::{NonZeroU8, NonZeroU16};
+use core::num::{NonZeroU16, NonZeroU8};
 use four_cc::FourCC;
 use modular_bitfield::prelude::*;
 use num_derive::FromPrimitive;
@@ -8031,7 +8031,7 @@ impl FromPrimitive for DxioPhyParamIqofc {
         match value {
             0x7FFFFFFF => Some(Self::Skip),
             -4..=4 => Some(Self::Value(value as i32)),
-            _ => None
+            _ => None,
         }
     }
     fn from_u64(value: u64) -> Option<Self> {
@@ -8462,10 +8462,12 @@ impl FromPrimitive for FchGppClkMap {
         match value {
             0xffff => Some(Self::Auto),
             0x0000 => Some(Self::On),
-            x if value < 0x10000 => Some(Self::Value(FchGppClkMapSelection::from_bytes([
-                (x & 0xff) as u8,
-                (x >> 8) as u8,
-            ]))),
+            x if value < 0x10000 => {
+                Some(Self::Value(FchGppClkMapSelection::from_bytes([
+                    (x & 0xff) as u8,
+                    (x >> 8) as u8,
+                ])))
+            }
             _ => None,
         }
     }
@@ -8513,7 +8515,9 @@ make_bitfield_serde! {
 }
 impl_bitfield_primitive_conversion!(MemPmuBistTestSelect, 0b11111, u8);
 
-#[derive(Debug, Default, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[derive(
+    Debug, Default, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone,
+)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
@@ -8553,7 +8557,11 @@ make_bitfield_serde! {
         pub _reserved_1 || SerdeHex8 : B3,
     }
 }
-impl_bitfield_primitive_conversion!(FchConsoleOutSerialPortEspiControllerSelect, 0b0001_1001, u8);
+impl_bitfield_primitive_conversion!(
+    FchConsoleOutSerialPortEspiControllerSelect,
+    0b0001_1001,
+    u8
+);
 
 make_bitfield_serde! {
     #[bitfield(bits = 16)]
@@ -8572,7 +8580,11 @@ make_bitfield_serde! {
         pub _reserved_0 || SerdeHex8 : B7,
     }
 }
-impl_bitfield_primitive_conversion!(MemPmuBistAlgorithmSelect, 0b1_1111_1111, u16);
+impl_bitfield_primitive_conversion!(
+    MemPmuBistAlgorithmSelect,
+    0b1_1111_1111,
+    u16
+);
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
