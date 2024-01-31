@@ -946,16 +946,7 @@ impl_struct_serde_conversion!(
 impl_struct_serde_conversion!(
     DfXgmiChannelTypeSelect,
     SerdeDfXgmiChannelTypeSelect,
-    [
-        s0l0,
-        s0l1,
-        s0l2,
-        s0l3,
-        s1l0,
-        s1l1,
-        s1l2,
-        s1l3,
-    ]
+    [s0l0, s0l1, s0l2, s0l3, s1l0, s1l1, s1l2, s1l3,]
 );
 impl_struct_serde_conversion!(
     FchConsoleOutSerialPortEspiControllerSelect,
