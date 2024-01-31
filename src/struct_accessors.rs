@@ -157,6 +157,7 @@ impl Setter<bool> for BLU16 {
 /// The reason this exists is because our macros don't know whether or not
 /// the getters return Result--but they have to be able to call map_err
 /// on it in case these DO return Result.
+#[allow(dead_code)]
 pub(crate) trait DummyErrorChecks: Sized {
     fn map_err<F, O>(self, _: O) -> core::result::Result<Self, F>
     where
