@@ -182,3 +182,42 @@ fn test_unknown_field() {
         }
     };
 }
+
+#[cfg(feature = "serde")]
+fn take_header_from_collection_mut<
+    'a,
+    T: Sized + zerocopy::FromBytes + zerocopy::AsBytes,
+>(
+    buf: &mut &'a mut [u8],
+) -> Option<&'a mut T> {
+    use std::mem::take;
+    use zerocopy::LayoutVerified;
+
+    let xbuf = take(&mut *buf);
+    match LayoutVerified::<_, T>::new_from_prefix(xbuf) {
+        Some((item, xbuf)) => {
+            *buf = xbuf;
+            Some(item.into_mut())
+        }
+        None => None,
+    }
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_skip_field() {
+    use std::mem::size_of;
+
+    use amd_apcb::memory::AblConsoleOutControl;
+    // 3 is definitely not a valid value for a bool.
+    let mut data = [3u8; size_of::<AblConsoleOutControl>()];
+    let mut buf = &mut data[..];
+    let header =
+        take_header_from_collection_mut::<AblConsoleOutControl>(&mut buf)
+            .unwrap();
+    let s = serde_yaml::to_string(&header).unwrap();
+    assert!(s.find("enable_console_logging").is_none());
+    header.set_enable_console_logging(true);
+    let s = serde_yaml::to_string(&header).unwrap();
+    assert!(s.find("enable_console_logging").is_some());
+}

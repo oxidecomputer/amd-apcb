@@ -1271,6 +1271,28 @@ macro_rules! make_bitfield_serde {(
             )*
         }
     }
+
+    #[cfg(feature = "serde")]
+    paste::paste!{
+        /// Use this for serialization in order to make serde skip those
+        /// fields where the meaning of a raw value is unknown to us.
+        ///
+        /// Caller can then override Serializer::skip_field and thus find out
+        /// which fields were skipped, inferring where errors were.
+        #[doc(hidden)]
+        #[allow(non_camel_case_types)]
+        #[cfg_attr(feature = "serde", derive(Serialize))]
+        #[cfg_attr(feature = "serde", serde(rename = "" $StructName))]
+        pub(crate) struct [<SerdePermissiveSerializing $StructName>] {
+            $(
+                $(#[serde(skip_serializing_if="Option::is_none")]
+                pub $field_name: Option<$field_ty>,)?
+                $(#[serde(skip_serializing_if="Option::is_none")]
+                $(#[$serde_field_orig_meta])*
+                pub $field_name: Option<$serde_ty>,)?
+            )*
+        }
+    }
 }}
 
 make_bitfield_serde! {
@@ -2657,20 +2679,10 @@ pub mod memory {
         #[repr(u32)]
         #[derive(Clone, Copy)]
         pub struct RdimmDdr4Voltages {
-            pub _1_2V || #[serde(default)] bool : bool | pub get bool : pub set bool,
+            pub _1_2V || #[serde(default)] #[serde(rename = "1.2 V")] bool : bool | pub get bool : pub set bool,
             pub _reserved_1 || #[serde(default)] SerdeHex32 : B31,
             // all = 7
         }
-    }
-    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
-    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-    #[cfg_attr(feature = "serde", serde(rename = "RdimmDdr4Voltages"))]
-    pub struct CustomSerdeRdimmDdr4Voltages {
-        #[cfg_attr(feature = "serde", serde(rename = "1.2 V"))]
-        pub _1_2V: bool,
-        #[cfg_attr(feature = "serde", serde(default))]
-        pub _reserved_1: u32,
     }
     macro_rules! define_compat_bitfield_field {
         ($compat_field:ident, $current_field:ident) => {
@@ -2820,26 +2832,12 @@ pub mod memory {
         #[repr(u32)]
         #[derive(Clone, Copy)]
         pub struct UdimmDdr4Voltages {
-            pub _1_5V || #[serde(default)] bool : bool | pub get bool : pub set bool,
-            pub _1_35V || #[serde(default)] bool : bool | pub get bool : pub set bool,
-            pub _1_25V || #[serde(default)] bool : bool | pub get bool : pub set bool,
+            pub _1_5V || #[serde(default)] #[serde(rename = "1.5 V")] bool : bool | pub get bool : pub set bool,
+            pub _1_35V || #[serde(default)] #[serde(rename = "1.35 V")] bool : bool | pub get bool : pub set bool,
+            pub _1_25V || #[serde(default)] #[serde(rename = "1.25 V")] bool : bool | pub get bool : pub set bool,
             // all = 7
             pub _reserved_1 || #[serde(default)] SerdeHex32 : B29,
         }
-    }
-    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
-    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-    #[cfg_attr(feature = "serde", serde(rename = "UdimmDdr4Voltages"))]
-    pub struct CustomSerdeUdimmDdr4Voltages {
-        #[cfg_attr(feature = "serde", serde(rename = "1.5 V"))]
-        pub _1_5V: bool,
-        #[cfg_attr(feature = "serde", serde(rename = "1.35 V"))]
-        pub _1_35V: bool,
-        #[cfg_attr(feature = "serde", serde(rename = "1.25 V"))]
-        pub _1_25V: bool,
-        #[cfg_attr(feature = "serde", serde(default))]
-        pub _reserved_1: u32,
     }
     impl UdimmDdr4Voltages {
         define_compat_bitfield_field!(v_1_5, _1_5V);
@@ -2915,20 +2913,10 @@ pub mod memory {
         #[repr(u32)]
         #[derive(Clone, Copy)]
         pub struct LrdimmDdr4Voltages {
-            pub _1_2V || #[serde(default)] bool : bool | pub get bool : pub set bool,
+            pub _1_2V || #[serde(default)] #[serde(rename = "1.2 V")] bool : bool | pub get bool : pub set bool,
             // all = 7
             pub _reserved_1 || #[serde(default)] SerdeHex32 : B31,
         }
-    }
-    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
-    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-    #[cfg_attr(feature = "serde", serde(rename = "LrdimmDdr4Voltages"))]
-    pub struct CustomSerdeLrdimmDdr4Voltages {
-        #[cfg_attr(feature = "serde", serde(rename = "1.2 V"))]
-        pub _1_2V: bool,
-        #[cfg_attr(feature = "serde", serde(default))]
-        pub _reserved_1: u32,
     }
 
     impl LrdimmDdr4Voltages {
@@ -3843,7 +3831,7 @@ pub mod memory {
         }
     }
     #[cfg(feature = "serde")]
-    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", derive(Deserialize))]
     #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     #[cfg_attr(feature = "serde", serde(rename = "ErrorOutControlBeepCode"))]
@@ -3851,6 +3839,14 @@ pub mod memory {
         pub custom_error_type: ErrorOutControlBeepCodeErrorType,
         pub peak_map: SerdeHex16,
         pub peak_attr: ErrorOutControlBeepCodePeakAttr,
+    }
+    #[cfg(feature = "serde")]
+    #[cfg_attr(feature = "serde", derive(Serialize))]
+    #[cfg_attr(feature = "serde", serde(rename = "ErrorOutControlBeepCode"))]
+    pub(crate) struct CustomSerdePermissiveSerializingErrorOutControlBeepCode {
+        pub custom_error_type: Option<ErrorOutControlBeepCodeErrorType>,
+        pub peak_map: Option<SerdeHex16>,
+        pub peak_attr: Option<ErrorOutControlBeepCodePeakAttr>,
     }
     #[cfg(feature = "serde")]
     impl ErrorOutControlBeepCode {
@@ -4330,7 +4326,7 @@ Clone)]
     }
 
     #[cfg(feature = "serde")]
-    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", derive(Deserialize))]
     #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     #[cfg_attr(
@@ -4339,6 +4335,15 @@ Clone)]
     )]
     pub struct CustomSerdeDdrPostPackageRepairElement {
         pub raw_body: DdrPostPackageRepairBody,
+    }
+    #[cfg(feature = "serde")]
+    #[cfg_attr(feature = "serde", derive(Serialize))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(rename = "DdrPostPackageRepairElement")
+    )]
+    pub struct CustomSerdePermissiveSerializingDdrPostPackageRepairElement {
+        pub raw_body: Option<DdrPostPackageRepairBody>,
     }
     #[cfg(feature = "serde")]
     impl DdrPostPackageRepairElement {
