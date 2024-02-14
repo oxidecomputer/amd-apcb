@@ -2354,7 +2354,9 @@ pub mod memory {
         }
     }
 
-    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[derive(
+        Debug, Default, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone,
+    )]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
@@ -2362,16 +2364,14 @@ pub mod memory {
         PcieHt0 = 0,
         PcieHt1 = 2,
         PcieMmio = 5,
+        #[default]
         FchHtIo = 6,
         FchMmio = 7,
     }
-    impl Default for PortType {
-        fn default() -> Self {
-            PortType::FchHtIo
-        }
-    }
 
-    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[derive(
+        Debug, Default, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone,
+    )]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
@@ -2381,12 +2381,8 @@ pub mod memory {
         #[cfg_attr(feature = "serde", serde(rename = "16 Bit"))]
         _16Bit = 2,
         #[cfg_attr(feature = "serde", serde(rename = "32 Bit"))]
+        #[default]
         _32Bit = 4,
-    }
-    impl Default for PortSize {
-        fn default() -> Self {
-            PortSize::_32Bit
-        }
     }
 
     make_accessors! {
@@ -3727,7 +3723,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
         #[repr(C, packed)]
         pub struct RdimmDdr5BusElement {
             header: RdimmDdr5BusElementHeader,
@@ -3735,21 +3731,9 @@ pub mod memory {
         }
     }
 
-    impl Default for RdimmDdr5BusElement {
-        fn default() -> Self {
-            Self {
-                header: RdimmDdr5BusElementHeader::default(),
-                payload: RdimmDdr5BusElementPayload::default(),
-            }
-        }
-    }
-
     impl EntryCompatible for RdimmDdr5BusElement {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
-            match entry_id {
-                EntryId::Memory(MemoryEntryId::PsRdimmDdr5Bus) => true,
-                _ => false,
-            }
+            matches!(entry_id, EntryId::Memory(MemoryEntryId::PsRdimmDdr5Bus))
         }
     }
 
@@ -3874,7 +3858,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
         #[repr(C, packed)]
         pub struct MemDfeSearchElement32 {
             header: MemDfeSearchElementHeader,
@@ -3885,29 +3869,14 @@ pub mod memory {
         }
     }
 
-    impl Default for MemDfeSearchElement32 {
-        fn default() -> Self {
-            Self {
-                header: MemDfeSearchElementHeader::default(),
-                payload: MemDfeSearchElementPayload::default(),
-                payload_ext: MemDfeSearchElementPayloadExt::default(),
-                _padding_0: 0,
-                _padding_1: 0,
-            }
-        }
-    }
-
     impl EntryCompatible for MemDfeSearchElement32 {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
-            match entry_id {
-                EntryId::Memory(MemoryEntryId::MemDfeSearch) => true,
-                _ => false,
-            }
+            matches!(entry_id, EntryId::Memory(MemoryEntryId::MemDfeSearch))
         }
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
         #[repr(C, packed)]
         pub struct MemDfeSearchElement20 {
             header: MemDfeSearchElementHeader,
@@ -3915,21 +3884,9 @@ pub mod memory {
         }
     }
 
-    impl Default for MemDfeSearchElement20 {
-        fn default() -> Self {
-            Self {
-                header: MemDfeSearchElementHeader::default(),
-                payload: MemDfeSearchElementPayload::default(),
-            }
-        }
-    }
-
     impl EntryCompatible for MemDfeSearchElement20 {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
-            match entry_id {
-                EntryId::Memory(MemoryEntryId::MemDfeSearch) => true,
-                _ => false,
-            }
+            matches!(entry_id, EntryId::Memory(MemoryEntryId::MemDfeSearch))
         }
     }
 
@@ -4846,10 +4803,7 @@ Clone)]
 
     impl EntryCompatible for DdrDqPinMapElement {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
-            match entry_id {
-                EntryId::Memory(MemoryEntryId::DdrDqPinMap) => true,
-                _ => false,
-            }
+            matches!(entry_id, EntryId::Memory(MemoryEntryId::DdrDqPinMap))
         }
     }
 
@@ -4882,30 +4836,16 @@ Clone)]
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
         #[repr(C, packed)]
         pub struct Ddr5CaPinMapElement {
             lanes: [Ddr5CaPinMapElementLane; 2], // pins[lane][bit] == pin; pin == 0xff means un?
         }
     }
 
-    impl Default for Ddr5CaPinMapElement {
-        fn default() -> Self {
-            Self {
-                lanes: [
-                    Ddr5CaPinMapElementLane::default(),
-                    Ddr5CaPinMapElementLane::default(),
-                ],
-            }
-        }
-    }
-
     impl EntryCompatible for Ddr5CaPinMapElement {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
-            match entry_id {
-                EntryId::Memory(MemoryEntryId::Ddr5CaPinMap) => true,
-                _ => false,
-            }
+            matches!(entry_id, EntryId::Memory(MemoryEntryId::Ddr5CaPinMap))
         }
     }
 
