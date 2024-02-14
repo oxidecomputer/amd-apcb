@@ -8859,8 +8859,7 @@ make_token_accessors! {
         MemOdtsMode(default 0, id 0xaeb3_f914) | pub get MemOdtsMode : pub set MemOdtsMode,
         MemEcsModeDdr(default 0xff, id 0xb384_6ddf) | pub get MemEcsModeDdr : pub set MemEcsModeDdr,
         MemBootTimePostPackageRepair(default 0, id 0xe229_1e4a) | pub get MemBootTimePostPackageRepair : pub set MemBootTimePostPackageRepair,
-        // TODO: enum
-        MemMbistTestModeDdr(default 0, id 0x96df_25ca) | pub get u8 : pub set u8,
+        MemMbistTestModeDdr(default 0, id 0x96df_25ca) | pub get MemMbistTestMode : pub set MemMbistTestMode,
         MemPopulationMsgControl(default 0, id 0x2ce1_24dc) | pub get MemPopulationMsgControlMode : pub set MemPopulationMsgControlMode,
         // TODO: same as `MemOdtsCmdThrottleEnable` which is a BoolToken
         MemOdtsCmdThrottleMode(default 1, id 0xc073_6395) | pub get MemOdtsCmdThrottleMode : pub set MemOdtsCmdThrottleMode,
