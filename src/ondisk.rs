@@ -8930,7 +8930,7 @@ make_token_accessors! {
         MemBootTimePostPackageRepair(default 0, id 0xe229_1e4a) | pub get MemBootTimePostPackageRepair : pub set MemBootTimePostPackageRepair,
         MemMbistTestModeDdr(default 0, id 0x96df_25ca) | pub get MemMbistTestMode : pub set MemMbistTestMode,
         MemPopulationMsgControl(default 0, id 0x2ce1_24dc) | pub get MemPopulationMsgControlMode : pub set MemPopulationMsgControlMode,
-        // TODO: same as `MemOdtsCmdThrottleEnable` which is a BoolToken
+        // TODO(#121): BoolToken::MemOdtsCmdThrottleEnable
         MemOdtsCmdThrottleMode(default 1, id 0xc073_6395) | pub get MemOdtsCmdThrottleMode : pub set MemOdtsCmdThrottleMode,
         MemDisplayPmuTrainingResults(default 0, id 0xb8a6_3eba) | pub get MemPmuTrainingResultOutput : pub set MemPmuTrainingResultOutput,
 
@@ -8971,9 +8971,9 @@ make_token_accessors! {
         FchI2cController4(default 0, id 0xcfde_cf00) | pub get FchI2cMode : pub set FchI2cMode,
         FchI2cController5(default 0, id 0x380c_1b76) | pub get FchI2cMode : pub set FchI2cMode,
 
-        // TODO: Maybe should be called `FchI2cSdaRxHold` but that's already a WordToken
+        // TODO(#121): WordToken::FchI2cSdaRxHold
         FchI2cSdaRxHold2(default 0, id 0xa4ba_c3d5) | pub get u8: pub set u8,
-        // Same as `FchI2cSdaHoldOverrideMode` but that's already a WordToken
+        // TODO(#121): WordToken::FchI2cSdaHoldOverrideMode & BoolToken::FchI2cSdaHoldOverride
         FchI2cSdaHoldOverrideMode2(default 0, id 0x545d_7662) | pub get FchI2cSdaHoldOverrideMode : pub set FchI2cSdaHoldOverrideMode,
 
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
@@ -9228,11 +9228,12 @@ make_token_accessors! {
         // Memory Controller
 
         CbsMemPowerDownDelay(default 0xff, id 0x1ebe_755a) | pub get CbsMemPowerDownDelay : pub set CbsMemPowerDownDelay,
+
+        // TODO(#121): ByteToken::MemRollWindowDepth
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
-        // TODO: would be nice to not have to name this differently
         MemRollWindowDepth2(default 0x1ff, id 0x5985_083a) | pub get MemThrottleCtrlRollWindowDepth<NonZeroU16> : pub set MemThrottleCtrlRollWindowDepth<NonZeroU16>,
+        // TODO(#121): ByteToken::OdtsCmdThrottleCycles
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
-        // TODO: would be nice to not have to name this differently
         OdtsCmdThrottleCycles2(default 0x1FF, id 0x6931_8e90) | pub get u16 : pub set u16,
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemPmuBistAlgorithmSelect(default 0x1ff, id 0xeb1b_26d3) | pub get MemPmuBistAlgorithmSelect : pub set MemPmuBistAlgorithmSelect,
@@ -9530,7 +9531,7 @@ make_token_accessors! {
         // Fch
 
         FchEspiAblInitEnable(default 1, id 0x8795_8b5a) | pub get bool : pub set bool,
-        // Same as FchI2cSdaHoldOverrideMode but as bool instead of word token
+        // TODO(#121): WordToken::FchI2cSdaHoldOverrideMode & ByteToken::FchI2cSdaHoldOverrideMode2
         FchI2cSdaHoldOverride(default 0, id 0x545d_7662) | pub get bool : pub set bool,
         FchSpdControlOwnership(default 0, id 0x2329_5d81) | pub get FchSpdControlOwnershipMode : pub set FchSpdControlOwnershipMode,
 
