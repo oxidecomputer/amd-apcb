@@ -8656,6 +8656,15 @@ pub enum DfXgmiPresetControlMode {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemPmuTrainingResultOutput {
+    Disabled = 0,
+    Console = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemPopulationMsgControlMode {
     Warn = 0,
     Halt = 1,
@@ -8863,6 +8872,7 @@ make_token_accessors! {
         MemPopulationMsgControl(default 0, id 0x2ce1_24dc) | pub get MemPopulationMsgControlMode : pub set MemPopulationMsgControlMode,
         // TODO: same as `MemOdtsCmdThrottleEnable` which is a BoolToken
         MemOdtsCmdThrottleMode(default 1, id 0xc073_6395) | pub get MemOdtsCmdThrottleMode : pub set MemOdtsCmdThrottleMode,
+        MemDisplayPmuTrainingResults(default 0, id 0xb8a6_3eba) | pub get MemPmuTrainingResultOutput : pub set MemPmuTrainingResultOutput,
 
         // Ccx
 
@@ -9389,9 +9399,6 @@ make_token_accessors! {
         MemDramDoubleRefreshRateMilan(default 0, id 0x974e_8e7c) | pub get bool : pub set bool, // Milan
         MemSmeMkEnable(default 0, id 0x07a5_db75) | pub get bool : pub set bool,
         MemTsmeEnable(default 0, id 0xf086_9eca) | pub get bool : pub set bool,
-
-        // Why different than DisplayPmuTrainingResults who knows...
-        MemDisplayPmuTrainingResults(default 0, id 0xb8a6_3eba) | pub get bool : pub set bool,
 
         // Ccx
 
