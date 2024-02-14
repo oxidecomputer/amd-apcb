@@ -8385,7 +8385,7 @@ impl From<u8> for DfXgmiChannelType {
         match value {
             0 => DfXgmiChannelType::Disabled,
             1 => DfXgmiChannelType::LongReach,
-            _ => panic!("Invalid value for DfXgmiChannelType: {value}"),
+            _ => panic!("Invalid value for DfXgmiChannelType: {}", value),
         }
     }
 }
@@ -8555,7 +8555,7 @@ impl From<u8> for EspiController {
         match value {
             0 => EspiController::Controller0,
             1 => EspiController::Controller1,
-            _ => panic!("Invalid value for EspiController: {value}"),
+            _ => panic!("Invalid value for EspiController: {}", value),
         }
     }
 }
