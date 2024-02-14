@@ -7515,10 +7515,9 @@ pub enum AdditionalPcieLinkSpeed {
     Keep = 0,
     Gen1 = 1,
     Gen2 = 2,
-    Gen3 = 3, // Not documented?
+    Gen3 = 3,
 }
 
-// TODO: Not explicitly documented but seems to be the case?
 pub type SecondPcieLinkSpeed = AdditionalPcieLinkSpeed;
 pub type ThirdPcieLinkSpeed = AdditionalPcieLinkSpeed;
 pub type FourthPcieLinkSpeed = AdditionalPcieLinkSpeed;
@@ -8941,9 +8940,6 @@ make_token_accessors! {
         // Nbio
 
         NbioSataMode(default 2, id 0xe8fd_e3b2) | pub get u8 : pub set u8,
-
-        // TODO: defaults?
-        // TODO: Reuse `SecondPcieLinkSpeed` enum for Third/Fourth variants?
 
         SecondPcieLinkSpeed(default 0, id 0x8723_750f) | pub get SecondPcieLinkSpeed : pub set SecondPcieLinkSpeed,
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
