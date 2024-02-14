@@ -8939,7 +8939,6 @@ make_token_accessors! {
 
         // Fch
 
-        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         FchConsoleOutMode(default 0, id 0xddb7_59da) | pub get FchConsoleOutMode : pub set FchConsoleOutMode,
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         FchConsoleOutBasicEnable(default 0, id 0xa0903f98) | pub get u8 : pub set u8, // Rome (Obsolete)
@@ -9048,7 +9047,6 @@ make_token_accessors! {
         SecondPcieLinkFunction(default 0, id 0x1097_e009) | pub get u8 : pub set u8,
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         SecondPcieLinkPortPresent(default 0, id 0x973c_eadd) | pub get u8 : pub set u8,
-        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         SecondPcieLinkMaxPayload(default 0xff, id 0xe02d_f04b) | pub get SecondPcieLinkMaxPayload : pub set SecondPcieLinkMaxPayload, // Milan
 
         ThirdPcieLinkSpeed(default 0, id 0x7963_3632) | pub get ThirdPcieLinkSpeed : pub set ThirdPcieLinkSpeed,
@@ -9227,12 +9225,10 @@ make_token_accessors! {
         CbsMemPowerDownDelay(default 0xff, id 0x1ebe_755a) | pub get CbsMemPowerDownDelay : pub set CbsMemPowerDownDelay,
 
         // TODO(#121): ByteToken::MemRollWindowDepth
-        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemRollWindowDepth2(default 0x1ff, id 0x5985_083a) | pub get MemThrottleCtrlRollWindowDepth<NonZeroU16> : pub set MemThrottleCtrlRollWindowDepth<NonZeroU16>,
         // TODO(#121): ByteToken::OdtsCmdThrottleCycles
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         OdtsCmdThrottleCycles2(default 0x1FF, id 0x6931_8e90) | pub get u16 : pub set u16,
-        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemPmuBistAlgorithmSelect(default 0x1ff, id 0xeb1b_26d3) | pub get MemPmuBistAlgorithmSelect : pub set MemPmuBistAlgorithmSelect,
         MemTargetSpeed(default 4800, id 0xd06d_bafb) | pub get MemTargetSpeed : pub set MemTargetSpeed,
 
@@ -9410,7 +9406,6 @@ make_token_accessors! {
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         DfXgmiInitialPreset(default 0x44444444, id 0xC6F86640) | pub get u32 : pub set u32,
 
-        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         DfXgmiChannelTypeSelect(default 0x0, id 0x0db9_89c4) | pub get DfXgmiChannelTypeSelect : pub set DfXgmiChannelTypeSelect,
 
         // TODO: use better types to ensure 1MiB alignment & correct bounds. also, better defaults?
