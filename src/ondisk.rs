@@ -8764,6 +8764,34 @@ pub enum MemSelfHealing {
     Both = 3,
 }
 
+#[derive(BitfieldSpecifier, Copy, Clone, Debug, Default, PartialEq)]
+#[bits = 1]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum DfXgmiAcDcMode {
+    AcCoupled = 0,
+    #[default]
+    DcCoupled = 1,
+}
+
+make_bitfield_serde! {
+    #[bitfield(bits = 8)]
+    #[repr(u8)]
+    #[derive(Debug, Copy, Clone, PartialEq)]
+    pub struct DfXgmiAcDcCoupledLink {
+        pub socket_0_link_0 || #[serde(default)] DfXgmiAcDcMode : DfXgmiAcDcMode | pub get DfXgmiAcDcMode : pub set DfXgmiAcDcMode,
+        pub socket_0_link_1 || #[serde(default)] DfXgmiAcDcMode : DfXgmiAcDcMode | pub get DfXgmiAcDcMode : pub set DfXgmiAcDcMode,
+        pub socket_0_link_2 || #[serde(default)] DfXgmiAcDcMode : DfXgmiAcDcMode | pub get DfXgmiAcDcMode : pub set DfXgmiAcDcMode,
+        pub socket_0_link_3 || #[serde(default)] DfXgmiAcDcMode : DfXgmiAcDcMode | pub get DfXgmiAcDcMode : pub set DfXgmiAcDcMode,
+        pub socket_1_link_0 || #[serde(default)] DfXgmiAcDcMode : DfXgmiAcDcMode | pub get DfXgmiAcDcMode : pub set DfXgmiAcDcMode,
+        pub socket_1_link_1 || #[serde(default)] DfXgmiAcDcMode : DfXgmiAcDcMode | pub get DfXgmiAcDcMode : pub set DfXgmiAcDcMode,
+        pub socket_1_link_2 || #[serde(default)] DfXgmiAcDcMode : DfXgmiAcDcMode | pub get DfXgmiAcDcMode : pub set DfXgmiAcDcMode,
+        pub socket_1_link_3 || #[serde(default)] DfXgmiAcDcMode : DfXgmiAcDcMode | pub get DfXgmiAcDcMode : pub set DfXgmiAcDcMode,
+    }
+}
+impl_bitfield_primitive_conversion!(DfXgmiAcDcCoupledLink, 0b1111_1111, u8);
+
 const UNLIMITED_VERSION: u32 = !0u32;
 
 make_token_accessors! {
@@ -8903,9 +8931,7 @@ make_token_accessors! {
         DfXgmiCrcScale(default 5, id 0x5174_f4a0) | pub get u8 : pub set u8,
         DfCxlMemInterleaving(default 0xFF, id 0x6387_09e6) | pub get DfCxlToggle : pub set DfCxlToggle,
         DfCxlSublinkInterleaving(default 0xFF, id 0x66f_1625a) | pub get DfCxlToggle : pub set DfCxlToggle,
-        // TODO: Represent bitfield somehow
-        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
-        DfXgmiAcDcCoupledLink(default 0xff, id 0xa7ae_5713) | pub get u8 : pub set u8,
+        DfXgmiAcDcCoupledLink(default 0xff, id 0xa7ae_5713) | pub get DfXgmiAcDcCoupledLink : pub set DfXgmiAcDcCoupledLink,
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         DfXgmiCrcThreshold(default 0xff, id 0xc375_4da2) | pub get u8 : pub set u8,
         DfCcdBwThrottleLevel(default 0xFF, id 0xd288_6dc9) | pub get DfCcdBwThrottleLevel : pub set DfCcdBwThrottleLevel,
