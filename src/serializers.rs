@@ -959,3 +959,18 @@ impl_struct_serde_conversion!(
         _reserved_1,
     ]
 );
+
+impl_struct_serde_conversion!(
+    DfXgmiAcDcCoupledLink,
+    SerdeDfXgmiAcDcCoupledLink,
+    [
+        socket_0_link_0,
+        socket_0_link_1,
+        socket_0_link_2,
+        socket_0_link_3,
+        socket_1_link_0,
+        socket_1_link_1,
+        socket_1_link_2,
+        socket_1_link_3,
+    ]
+);
