@@ -6445,9 +6445,7 @@ Clone)]
 
 pub mod fch {
     use super::*;
-    use crate::struct_accessors::{
-        make_accessors, DummyErrorChecks, Getter, Setter, BLU16, BU8,
-    };
+    use crate::struct_accessors::{make_accessors, Getter, Setter, BU8};
     use crate::types::Result;
 
     make_accessors! {
@@ -6506,7 +6504,6 @@ pub mod fch {
     #[cfg(test)]
     mod tests {
         use super::*;
-        use static_assertions::const_assert;
         #[test]
         fn test_struct_sizes() {
             assert!(offset_of!(EspiInit, espi_enabled) == 0);
