@@ -3613,7 +3613,7 @@ pub mod memory {
         fn default() -> Self {
             Self {
                 total_size: (size_of::<Self>() as u32).into(),
-                target_memclk: 2000.into(), // FIXME
+                target_memclk: 2000.into(),
                 dimm_slots_per_channel: 2,
                 dimm0_rank_bitmap: 4,
                 dimm1_rank_bitmap: 4,
@@ -3778,13 +3778,21 @@ pub mod memory {
         #[repr(C, packed)]
         pub struct MemDfeSearchElementPayload {
             total_size || u32 : LU32,
+            /// -40..=40
             tx_dfe_tap_1_start || u8 : u8,
+            /// -40..=40
             tx_dfe_tap_1_end || u8 : u8,
+            /// -15..=15
             tx_dfe_tap_2_start || u8 : u8,
+            /// -15..=15
             tx_dfe_tap_2_end || u8 : u8,
+            /// -12..=12
             tx_dfe_tap_3_start || u8 : u8,
+            /// -12..=12
             tx_dfe_tap_3_end || u8 : u8,
+            /// -8..=8
             tx_dfe_tap_4_start || u8 : u8,
+            /// -8..=8
             tx_dfe_tap_4_end || u8 : u8,
         }
     }
@@ -3833,12 +3841,12 @@ pub mod memory {
         fn default() -> Self {
             Self {
                 total_size: (size_of::<Self>() as u32).into(),
-                rx_dfe_tap_2_min_mv: 0, // FIXME
-                rx_dfe_tap_2_max_mv: 0, // FIXME
-                rx_dfe_tap_3_min_mv: 0, // FIXME
-                rx_dfe_tap_3_max_mv: 0, // FIXME
-                rx_dfe_tap_4_min_mv: 0, // FIXME
-                rx_dfe_tap_4_max_mv: 0, // FIXME
+                rx_dfe_tap_2_min_mv: 0,
+                rx_dfe_tap_2_max_mv: 0,
+                rx_dfe_tap_3_min_mv: 0,
+                rx_dfe_tap_3_max_mv: 0,
+                rx_dfe_tap_4_min_mv: 0,
+                rx_dfe_tap_4_max_mv: 0,
             }
         }
     }
@@ -3858,6 +3866,9 @@ pub mod memory {
     }
 
     make_accessors! {
+        /// Decision Feedback Equalization.
+        /// See also UMC::Phy::RxDFETapCtrl in the memory controller.
+        /// See <https://ieeexplore.ieee.org/document/1455678>.
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
         #[repr(C, packed)]
         pub struct MemDfeSearchElement32 {
@@ -3876,6 +3887,9 @@ pub mod memory {
     }
 
     make_accessors! {
+        /// Decision Feedback Equalization.
+        /// See also UMC::Phy::RxDFETapCtrl in the memory controller.
+        /// See <https://ieeexplore.ieee.org/document/1455678>.
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
         #[repr(C, packed)]
         pub struct MemDfeSearchElement20 {
@@ -4029,7 +4043,7 @@ pub mod memory {
                 EntryId::Memory(MemoryEntryId::PsLrdimmDdr5MaxFreq) => true,
 
                 // Definitely not: EntryId::Memory(MemoryEntryId::PsLrdimmDdr4) => true.
-                // TODO: Check/ EntryId::Memory(PsSodimmDdr4MaxFreq) => true
+                // TODO (bug# 124): EntryId::Memory(PsSodimmDdr4MaxFreq) => true
                 // Definitely not: EntryId::PsDramdownDdr4MaxFreq => true
                 EntryId::Memory(MemoryEntryId::PsUdimmDdr4StretchFreq) => true,
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr4StretchFreq) => true,
@@ -4747,7 +4761,6 @@ Clone)]
         }
     }
 
-    // XXX: Not that useful.
     impl Default for DdrDqPinMapElementLane {
         fn default() -> Self {
             Self { pins: [0, 1, 2, 3, 4, 5, 6, 7] }
@@ -4772,7 +4785,7 @@ Clone)]
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct DdrDqPinMapElement {
-            lanes: [DdrDqPinMapElementLane; 8], // lanes[lane][bit] == pin
+            pub lanes: [DdrDqPinMapElementLane; 8], // lanes[lane][bit] == pin
         }
     }
 
@@ -4811,7 +4824,7 @@ Clone)]
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct Ddr5CaPinMapElementLane {
-            pins: [u8; 14], // TODO: nicer pin type instead of u8; especially for 0xff "un"
+            pub pins: [u8; 14], // TODO (#124): nicer pin type
         }
     }
 
@@ -4839,7 +4852,7 @@ Clone)]
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
         #[repr(C, packed)]
         pub struct Ddr5CaPinMapElement {
-            lanes: [Ddr5CaPinMapElementLane; 2], // pins[lane][bit] == pin; pin == 0xff means un?
+            pub lanes: [Ddr5CaPinMapElementLane; 2], // pins[lane][bit] == pin; pin == 0xff means un?
         }
     }
 
@@ -5259,13 +5272,13 @@ Clone)]
                             #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MaxDimmsPerChannel6 {
-                                type_ || #[serde(default = "MaxDimmsPerChannel::serde_default_tag")] SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                payload_size || #[serde(default = "MaxDimmsPerChannel::serde_default_payload_size")] SerdeHex8 : u8,
+                                type_ || #[serde(default = "MaxDimmsPerChannel6::serde_default_tag")] SerdeHex8 : u8 | pub get u8 : pub set u8,
+                                payload_size || #[serde(default = "MaxDimmsPerChannel6::serde_default_payload_size")] SerdeHex8 : u8,
                                 sockets || SocketIds : u8 | pub get SocketIds : pub set SocketIds,
                                 channels || ChannelIdsSelection12 : LU16 | pub get ChannelIdsSelection12 : pub set ChannelIdsSelection12,
                                 dimms || DimmSlots : u8 | pub get DimmSlots : pub set DimmSlots, // Note: must always be "any"
                                 value || SerdeHex8 : u8 | pub get u8 : pub set u8,
-                                _padding_0: u8,
+                                _padding_0 || #[serde(default)] SerdeHex8 : u8 | pub get u8 : pub set u8,
                             }
                         }
                         impl_EntryCompatible!(MaxDimmsPerChannel6, 4, 6);
@@ -6405,17 +6418,22 @@ pub mod fch {
             io80_decoding_enabled || bool : BU8 | pub get bool : pub set bool,
             io6064_decoding_enabled || bool : BU8 | pub get bool : pub set bool,
 
-            io_range_size || [SerdeHex8; 16] : [u8; 16], // | pub get [u8; 16] : pub set [u8; 16], // FIXME
-            io_range_base || [SerdeHex16; 16] : [LU16; 16], // | pub get [u16; 16] : pub set [u16; 16], // FIXME
+            /// The first entry is usually for IPMI.
+            /// The last two entries != 0 are the serial ports.
+            /// Use values 3 (32 bit) or 7 (64 bit).
+            io_range_size || [SerdeHex8; 16] : [u8; 16] | pub get [u8; 16] : pub set [u8; 16],
+            /// The first entry is usually for IPMI.
+            /// The last two entries != 0 are the serial ports.
+            io_range_base || [SerdeHex16; 16] : [LU16; 16] | pub get [u16; 16] : pub set [u16; 16],
 
-            mmio_range_size || [SerdeHex16; 5] : [LU16; 5], // | pub get [u16; 5] : pub set [u16; 5], // FIXME
-            mmio_range_base || [SerdeHex32; 5] : [LU32; 5], // | pub get [u32; 5] : pub set [u32; 5], // FIXME
+            mmio_range_size || [SerdeHex16; 5] : [LU16; 5] | pub get [u16; 5] : pub set [u16; 5],
+            mmio_range_base || [SerdeHex32; 5] : [LU32; 5] | pub get [u32; 5] : pub set [u32; 5],
 
             irq_mask || SerdeHex32 : LU32, // | pub get LU32 : pub set u32, // FIXME bitmap
             irq_polarity || SerdeHex32 : LU32, // | pub get LU32 : pub set u32, // FIXME bitmap
 
-            cputemp_rtctime_vw_enabled || bool : BU8, // | pub get bool : pub set bool,
-            cputemp_rtctime_vw_index_select || SerdeHex8 : u8, // | pub get u8 : pub set u8,
+            cputemp_rtctime_vw_enabled || bool : BU8 | pub get bool : pub set bool,
+            cputemp_rtctime_vw_index_select || SerdeHex8 : u8 | pub get u8 : pub set u8,
 
             _dummy_1 : u8,
             _dummy_2 : u8,
@@ -8506,10 +8524,10 @@ make_bitfield_serde! {
     #[derive(Debug, Copy, Clone, PartialEq)]
     pub struct FchConsoleOutSerialPortEspiControllerSelect {
         pub espi_controller || EspiController : B1 | pub get EspiController : pub set EspiController,
-        pub _reserved_0 || SerdeHex8 : B2,
+        pub _reserved_0 || #[serde(default)] SerdeHex8 : B2,
         pub io_2e_2f_disabled: bool | pub get bool : pub set bool,
         pub io_4e_4f_disabled: bool | pub get bool : pub set bool,
-        pub _reserved_1 || SerdeHex8 : B3,
+        pub _reserved_1 || #[serde(default)] SerdeHex8 : B3,
     }
 }
 impl_bitfield_primitive_conversion!(
@@ -8532,7 +8550,7 @@ make_bitfield_serde! {
         pub algorithm_7: bool | pub get bool : pub set bool,
         pub algorithm_8: bool | pub get bool : pub set bool,
         pub algorithm_9: bool | pub get bool : pub set bool,
-        pub _reserved_0 || SerdeHex8 : B7,
+        pub _reserved_0 || #[serde(default)] SerdeHex8 : B7,
     }
 }
 impl_bitfield_primitive_conversion!(
