@@ -328,7 +328,13 @@ macro_rules! make_token_accessors {(
            } else
        )*
        {
-           false
+           // We default to VALID for things that have no declaration at all.
+           //
+           // This is in order to simplify both bringup of a new generation
+           // and also to allow the user to temporarily add debug token that
+           // we don't statically know. Downside is that you can add nonsense
+           // tokens and we will not complain.
+           true
        }
       }
       pub fn valid_for_abl0(&self, abl0_version: u32) -> core::result::Result<bool, Error> {
