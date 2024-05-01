@@ -6401,18 +6401,83 @@ pub mod fch {
     use crate::struct_accessors::{make_accessors, Getter, Setter, BU8};
     use crate::types::Result;
 
+    #[repr(u8)]
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Clone, Copy)]
+    #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[non_exhaustive]
+    pub enum EspiInitDataBusSelect {
+        OutputLow = 0,
+        OutputHigh = 1,
+    }
+
+    #[repr(u8)]
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Clone, Copy)]
+    #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[non_exhaustive]
+    pub enum EspiInitClockPinSelect {
+        Spi = 0,
+        Gpio86 = 1,
+    }
+
+    #[repr(u8)]
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Clone, Copy)]
+    #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[non_exhaustive]
+    pub enum EspiInitCsPinSelect {
+        Gpio30 = 0,
+        Gpio31 = 1,
+    }
+
+    #[repr(u8)]
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Clone, Copy)]
+    #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[non_exhaustive]
+    pub enum EspiInitClockFrequency {
+        #[cfg_attr(feature = "serde", serde(rename = "16.66 MHz"))]
+        _16_66MHz = 0,
+        #[cfg_attr(feature = "serde", serde(rename = "33.33 MHz"))]
+        _33_33MHz = 1,
+        #[cfg_attr(feature = "serde", serde(rename = "66.66 MHz"))]
+        _66_66MHz = 2,
+    }
+
+    #[repr(u8)]
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Clone, Copy)]
+    #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[non_exhaustive]
+    pub enum EspiInitIoMode {
+        Single = 0,
+        Dual = 1,
+        Quad = 2,
+    }
+
+    #[repr(u8)]
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Clone, Copy)]
+    #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[non_exhaustive]
+    pub enum EspiInitAlertMode {
+        NoDedicatedAlertPin = 0,
+        DedicatedAlertPin = 1,
+    }
+
     make_accessors! {
         #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct EspiInit {
             espi_enabled || bool : BU8 | pub get bool : pub set bool,
 
-            data_bus_select || SerdeHex8 : u8 | pub get u8 : pub set u8,
-            clock_pin_select || SerdeHex8 : u8 | pub get u8 : pub set u8,
-            cs_pin_select || SerdeHex8 : u8 | pub get u8 : pub set u8,
-            clock_frequency || SerdeHex8 : u8 | pub get u8 : pub set u8,
-            io_mode || SerdeHex8 : u8 | pub get u8 : pub set u8,
-            alert_mode || SerdeHex8 : u8 | pub get u8 : pub set u8,
+            data_bus_select || SerdeHex8 : u8 | pub get EspiInitDataBusSelect : pub set EspiInitDataBusSelect,
+            clock_pin_select || SerdeHex8 : u8 | pub get EspiInitClockPinSelect : pub set EspiInitClockPinSelect,
+            cs_pin_select || SerdeHex8 : u8 | pub get EspiInitCsPinSelect : pub set EspiInitCsPinSelect,
+            clock_frequency || SerdeHex8 : u8 | pub get EspiInitClockFrequency : pub set EspiInitClockFrequency,
+            io_mode || SerdeHex8 : u8 | pub get EspiInitIoMode : pub set EspiInitIoMode,
+            alert_mode || SerdeHex8 : u8 | pub get EspiInitAlertMode : pub set EspiInitAlertMode,
 
             pltrst_deassert || bool : BU8 | pub get bool : pub set bool,
             io80_decoding_enabled || bool : BU8 | pub get bool : pub set bool,
@@ -6421,31 +6486,154 @@ pub mod fch {
             /// The first entry is usually for IPMI.
             /// The last two entries != 0 are the serial ports.
             /// Use values 3 (32 bit) or 7 (64 bit).
-            io_range_size || [SerdeHex8; 16] : [u8; 16] | pub get [u8; 16] : pub set [u8; 16],
+            io_range_sizes_minus_one || [SerdeHex8; 16] : [u8; 16],
             /// The first entry is usually for IPMI.
             /// The last two entries != 0 are the serial ports.
-            io_range_base || [SerdeHex16; 16] : [LU16; 16] | pub get [u16; 16] : pub set [u16; 16],
+            io_range_bases || [SerdeHex16; 16] : [LU16; 16],
 
-            mmio_range_size || [SerdeHex16; 5] : [LU16; 5] | pub get [u16; 5] : pub set [u16; 5],
-            mmio_range_base || [SerdeHex32; 5] : [LU32; 5] | pub get [u32; 5] : pub set [u32; 5],
+            mmio_range_sizes_minus_one || [SerdeHex16; 5] : [LU16; 5],
+            mmio_range_bases || [SerdeHex32; 5] : [LU32; 5],
 
-            irq_mask || SerdeHex32 : LU32, // | pub get LU32 : pub set u32, // FIXME bitmap
-            irq_polarity || SerdeHex32 : LU32, // | pub get LU32 : pub set u32, // FIXME bitmap
+            /// bitmap
+            irq_mask || SerdeHex32 : LU32 | pub get u32 : pub set u32,
+            /// bitmap
+            irq_polarity || SerdeHex32 : LU32 | pub get u32 : pub set u32,
 
             cputemp_rtctime_vw_enabled || bool : BU8 | pub get bool : pub set bool,
-            cputemp_rtctime_vw_index_select || SerdeHex8 : u8 | pub get u8 : pub set u8,
+            cputemp_rtctime_vw_index_select || SerdeHex8 : u8 | pub get u8 : pub set u8, // FIXME what's that?
 
             _dummy_1 : u8,
             _dummy_2 : u8,
 
-            cpu_temp_mmio_base || SerdeHex32 : LU32 | pub get u32 : pub set u32, // FIXME
-            rtc_time_mmio_base || SerdeHex32 : LU32 | pub get u32 : pub set u32, // FIXME
+            cpu_temp_mmio_base || SerdeHex32 : LU32, // 0: none
+            rtc_time_mmio_base || SerdeHex32 : LU32, // 0: none
 
             bus_master_enabled || bool : BU8 | pub get bool : pub set bool,
 
             _dummy_3: u8,
             _dummy_4: u8,
             _dummy_5: u8,
+        }
+    }
+
+    pub struct EspiInitIoRange {
+        pub base: u16,
+        /// Real size in bytes.
+        pub size: u8,
+    }
+
+    pub struct EspiInitMmioRange {
+        pub base: u32,
+        /// Real size in bytes.
+        pub size: u16,
+    }
+
+    impl EspiInit {
+        pub fn io_range(
+            &self,
+            index: usize,
+        ) -> Result<Option<EspiInitIoRange>> {
+            if index < self.io_range_sizes_minus_one.len() {
+                Ok(if self.io_range_bases[index].get() == 0 {
+                    None
+                } else {
+                    Some(EspiInitIoRange {
+                        base: self.io_range_bases[index].get(),
+                        size: self.io_range_sizes_minus_one[index] + 1,
+                    })
+                })
+            } else {
+                Err(Error::EntryRange)
+            }
+        }
+        pub fn set_io_range(
+            &mut self,
+            index: usize,
+            value: Option<EspiInitIoRange>,
+        ) {
+            if index < self.io_range_sizes_minus_one.len() {
+                match value {
+                    None => {
+                        self.io_range_sizes_minus_one[index] = 0.into();
+                        self.io_range_bases[index] = 0.into();
+                    }
+                    Some(x) => {
+                        assert!(x.size > 0);
+                        self.io_range_sizes_minus_one[index] =
+                            (x.size - 1).into();
+                        self.io_range_bases[index] = x.base.into();
+                    }
+                }
+            }
+        }
+        pub fn io_range_count(&self) -> usize {
+            self.io_range_sizes_minus_one.len()
+        }
+
+        pub fn mmio_range(
+            &self,
+            index: usize,
+        ) -> Result<Option<EspiInitMmioRange>> {
+            if index < self.mmio_range_sizes_minus_one.len() {
+                Ok(if self.mmio_range_bases[index].get() == 0 {
+                    None
+                } else {
+                    Some(EspiInitMmioRange {
+                        base: self.mmio_range_bases[index].get(),
+                        size: self.mmio_range_sizes_minus_one[index].get() + 1,
+                    })
+                })
+            } else {
+                Err(Error::EntryRange)
+            }
+        }
+        pub fn set_mmio_range(
+            &mut self,
+            index: usize,
+            value: Option<EspiInitMmioRange>,
+        ) {
+            if index < self.mmio_range_sizes_minus_one.len() {
+                match value {
+                    None => {
+                        self.mmio_range_sizes_minus_one[index] = 0.into();
+                        self.mmio_range_bases[index] = 0.into();
+                    }
+                    Some(x) => {
+                        assert!(x.size > 0);
+                        self.mmio_range_sizes_minus_one[index] =
+                            (x.size - 1).into();
+                        self.mmio_range_bases[index] = x.base.into();
+                    }
+                }
+            }
+        }
+        pub fn mmio_range_count(&self) -> usize {
+            self.mmio_range_sizes_minus_one.len()
+        }
+
+        pub fn cpu_temp_mmio_base(&self) -> Result<Option<u32>> {
+            match self.cpu_temp_mmio_base.get() {
+                0 => Ok(None),
+                x => Ok(Some(x)),
+            }
+        }
+        pub fn set_cpu_temp_mmio_base(&mut self, value: Option<u32>) {
+            self.cpu_temp_mmio_base.set(match value {
+                None => 0,
+                Some(x) => x,
+            });
+        }
+        pub fn rtc_time_mmio_base(&self) -> Result<Option<u32>> {
+            match self.rtc_time_mmio_base.get() {
+                0 => Ok(None),
+                x => Ok(Some(x)),
+            }
+        }
+        pub fn set_rtc_time_mmio_base(&mut self, value: Option<u32>) {
+            self.rtc_time_mmio_base.set(match value {
+                None => 0,
+                Some(x) => x,
+            });
         }
     }
 
@@ -6474,10 +6662,10 @@ pub mod fch {
             assert!(offset_of!(EspiInit, pltrst_deassert) == 7);
             assert!(offset_of!(EspiInit, io80_decoding_enabled) == 8);
             assert!(offset_of!(EspiInit, io6064_decoding_enabled) == 9);
-            assert!(offset_of!(EspiInit, io_range_size) == 10);
-            assert!(offset_of!(EspiInit, io_range_base) == 26);
-            assert!(offset_of!(EspiInit, mmio_range_size) == 58);
-            assert!(offset_of!(EspiInit, mmio_range_base) == 68);
+            assert!(offset_of!(EspiInit, io_range_sizes_minus_one) == 10);
+            assert!(offset_of!(EspiInit, io_range_bases) == 26);
+            assert!(offset_of!(EspiInit, mmio_range_sizes_minus_one) == 58);
+            assert!(offset_of!(EspiInit, mmio_range_bases) == 68);
             assert!(offset_of!(EspiInit, irq_mask) == 88);
             assert!(offset_of!(EspiInit, irq_polarity) == 92);
             assert!(offset_of!(EspiInit, cputemp_rtctime_vw_enabled) == 96);

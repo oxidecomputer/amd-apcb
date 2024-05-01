@@ -36,6 +36,8 @@ pub enum Error {
     EntryUniqueKeyViolation,
     #[cfg_attr(feature = "std", error("entry type mismatch"))]
     EntryTypeMismatch,
+    #[cfg_attr(feature = "std", error("entry range"))]
+    EntryRange,
     #[cfg_attr(feature = "std", error("token not found"))]
     TokenNotFound,
     #[cfg_attr(feature = "std", error("token ordering violation"))]
