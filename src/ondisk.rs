@@ -6472,12 +6472,12 @@ pub mod fch {
         pub struct EspiInit {
             espi_enabled || bool : BU8 | pub get bool : pub set bool,
 
-            data_bus_select || SerdeHex8 : u8 | pub get EspiInitDataBusSelect : pub set EspiInitDataBusSelect,
-            clock_pin_select || SerdeHex8 : u8 | pub get EspiInitClockPinSelect : pub set EspiInitClockPinSelect,
-            cs_pin_select || SerdeHex8 : u8 | pub get EspiInitCsPinSelect : pub set EspiInitCsPinSelect,
-            clock_frequency || SerdeHex8 : u8 | pub get EspiInitClockFrequency : pub set EspiInitClockFrequency,
-            io_mode || SerdeHex8 : u8 | pub get EspiInitIoMode : pub set EspiInitIoMode,
-            alert_mode || SerdeHex8 : u8 | pub get EspiInitAlertMode : pub set EspiInitAlertMode,
+            data_bus_select || EspiInitDataBusSelect : u8 | pub get EspiInitDataBusSelect : pub set EspiInitDataBusSelect,
+            clock_pin_select || EspiInitClockPinSelect : u8 | pub get EspiInitClockPinSelect : pub set EspiInitClockPinSelect,
+            cs_pin_select || EspiInitCsPinSelect : u8 | pub get EspiInitCsPinSelect : pub set EspiInitCsPinSelect,
+            clock_frequency || EspiInitClockFrequency : u8 | pub get EspiInitClockFrequency : pub set EspiInitClockFrequency,
+            io_mode || EspiInitIoMode : u8 | pub get EspiInitIoMode : pub set EspiInitIoMode,
+            alert_mode || EspiInitAlertMode : u8 | pub get EspiInitAlertMode : pub set EspiInitAlertMode,
 
             pltrst_deassert || bool : BU8 | pub get bool : pub set bool,
             io80_decoding_enabled || bool : BU8 | pub get bool : pub set bool,
@@ -6554,13 +6554,12 @@ pub mod fch {
             if index < self.io_range_sizes_minus_one.len() {
                 match value {
                     None => {
-                        self.io_range_sizes_minus_one[index] = 0.into();
+                        self.io_range_sizes_minus_one[index] = 0;
                         self.io_range_bases[index] = 0.into();
                     }
                     Some(x) => {
                         assert!(x.size > 0);
-                        self.io_range_sizes_minus_one[index] =
-                            (x.size - 1).into();
+                        self.io_range_sizes_minus_one[index] = x.size - 1;
                         self.io_range_bases[index] = x.base.into();
                     }
                 }
@@ -6618,10 +6617,7 @@ pub mod fch {
             }
         }
         pub fn set_cpu_temp_mmio_base(&mut self, value: Option<u32>) {
-            self.cpu_temp_mmio_base.set(match value {
-                None => 0,
-                Some(x) => x,
-            });
+            self.cpu_temp_mmio_base.set(value.unwrap_or(0));
         }
         pub fn rtc_time_mmio_base(&self) -> Result<Option<u32>> {
             match self.rtc_time_mmio_base.get() {
@@ -6630,10 +6626,7 @@ pub mod fch {
             }
         }
         pub fn set_rtc_time_mmio_base(&mut self, value: Option<u32>) {
-            self.rtc_time_mmio_base.set(match value {
-                None => 0,
-                Some(x) => x,
-            });
+            self.rtc_time_mmio_base.set(value.unwrap_or(0));
         }
     }
 
