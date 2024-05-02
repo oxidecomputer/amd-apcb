@@ -3875,8 +3875,8 @@ pub mod memory {
             header: MemDfeSearchElementHeader,
             payload: MemDfeSearchElementPayload,
             payload_ext: MemDfeSearchElementPayloadExt,
-            _padding_0: u8,
-            _padding_1: u8,
+            _padding_0 || #[serde(default)] SerdeHex8 : u8,
+            _padding_1 || #[serde(default)] SerdeHex8 : u8,
         }
     }
 
