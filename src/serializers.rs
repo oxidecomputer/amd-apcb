@@ -879,14 +879,14 @@ impl_struct_serde_conversion!(
         irq_polarity,
         cputemp_rtctime_vw_enabled,
         cputemp_rtctime_vw_index_select,
-        _dummy_1,
-        _dummy_2,
+        _reserved_1,
+        _reserved_2,
         cpu_temp_mmio_base,
         rtc_time_mmio_base,
         bus_master_enabled,
-        _dummy_3,
-        _dummy_4,
-        _dummy_5,
+        _reserved_3,
+        _reserved_4,
+        _reserved_5,
     ]
 );
 impl_struct_serde_conversion!(

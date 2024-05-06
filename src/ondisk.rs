@@ -6502,17 +6502,17 @@ pub mod fch {
             cputemp_rtctime_vw_enabled || bool : BU8 | pub get bool : pub set bool,
             cputemp_rtctime_vw_index_select || SerdeHex8 : u8 | pub get u8 : pub set u8, // FIXME what's that?
 
-            _dummy_1 : u8,
-            _dummy_2 : u8,
+            _reserved_1 || #[serde(default)] u8 : u8,
+            _reserved_2 || #[serde(default)] u8 : u8,
 
             cpu_temp_mmio_base || SerdeHex32 : LU32, // 0: none
             rtc_time_mmio_base || SerdeHex32 : LU32, // 0: none
 
             bus_master_enabled || bool : BU8 | pub get bool : pub set bool,
 
-            _dummy_3: u8,
-            _dummy_4: u8,
-            _dummy_5: u8,
+            _reserved_3 || #[serde(default)] u8 : u8,
+            _reserved_4 || #[serde(default)] u8 : u8,
+            _reserved_5 || #[serde(default)] u8 : u8,
         }
     }
 
