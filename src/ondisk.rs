@@ -7218,12 +7218,67 @@ pub enum CcxSmtControl {
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum FchConsoleOutMode {
     Disabled = 0,
     Enabled = 1,
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for FchConsoleOutMode {
+    fn deserialize<D: serde::Deserializer<'de>>(
+        deserializer: D,
+    ) -> std::result::Result<Self, D::Error> {
+        struct ModeVisitor;
+        impl<'de> serde::de::Visitor<'de> for ModeVisitor {
+            type Value = FchConsoleOutMode;
+            fn expecting(
+                &self,
+                formatter: &mut core::fmt::Formatter<'_>,
+            ) -> core::fmt::Result {
+                formatter.write_str("'Disabled', 'Enabled', 0 or 1")
+            }
+            fn visit_str<E: serde::de::Error>(
+                self,
+                v: &str,
+            ) -> core::result::Result<Self::Value, E> {
+                match v {
+                    "Disabled" => Ok(FchConsoleOutMode::Disabled),
+                    "Enabled" => Ok(FchConsoleOutMode::Enabled),
+                    _ => Err(serde::de::Error::custom(
+                        "'Disabled', 'Enabled', 0 or 1 was expected",
+                    )),
+                }
+            }
+            fn visit_i64<E: serde::de::Error>(
+                self,
+                value: i64,
+            ) -> core::result::Result<Self::Value, E> {
+                match value {
+                    0 => Ok(FchConsoleOutMode::Disabled),
+                    1 => Ok(FchConsoleOutMode::Enabled),
+                    _ => Err(serde::de::Error::custom(
+                        "'Disabled', 'Enabled', 0 or 1 was expected",
+                    )),
+                }
+            }
+            fn visit_u64<E: serde::de::Error>(
+                self,
+                value: u64,
+            ) -> core::result::Result<Self::Value, E> {
+                match value {
+                    0 => Ok(FchConsoleOutMode::Disabled),
+                    1 => Ok(FchConsoleOutMode::Enabled),
+                    _ => Err(serde::de::Error::custom(
+                        "'Disabled', 'Enabled', 0 or 1 was expected",
+                    )),
+                }
+            }
+        }
+        deserializer.deserialize_any(ModeVisitor)
+    }
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
