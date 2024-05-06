@@ -12,6 +12,7 @@
 
 use crate::df::*;
 use crate::fch::*;
+use crate::gnb::*;
 use crate::memory::platform_tuning::*;
 use crate::memory::*;
 use crate::ondisk::memory::platform_specific_override::*;
@@ -890,6 +891,11 @@ impl_struct_serde_conversion!(
     ]
 );
 impl_struct_serde_conversion!(
+    EspiSioInitElement,
+    SerdeEspiSioInitElement,
+    [io_port, access_width, data_mask, data_or,]
+);
+impl_struct_serde_conversion!(
     Ddr5CaPinMapElement,
     SerdeDdr5CaPinMapElement,
     [lanes,]
@@ -906,8 +912,20 @@ impl_struct_serde_conversion!(
     ]
 );
 impl_struct_serde_conversion!(
-    MemDfeSearchElementPayload,
-    SerdeMemDfeSearchElementPayload,
+    MemDfeSearchElementHeader12,
+    SerdeMemDfeSearchElementHeader12,
+    [
+        total_size,
+        _reserved,
+        dimm_slots_per_channel,
+        dimm0_rank_bitmap,
+        dimm1_rank_bitmap,
+        sdram_io_width_bitmap,
+    ]
+);
+impl_struct_serde_conversion!(
+    MemDfeSearchElementPayload12,
+    SerdeMemDfeSearchElementPayload12,
     [
         total_size,
         tx_dfe_tap_1_start,
@@ -921,8 +939,8 @@ impl_struct_serde_conversion!(
     ]
 );
 impl_struct_serde_conversion!(
-    MemDfeSearchElementPayloadExt,
-    SerdeMemDfeSearchElementPayloadExt,
+    MemDfeSearchElementPayloadExt12,
+    SerdeMemDfeSearchElementPayloadExt12,
     [
         total_size,
         rx_dfe_tap_2_min_mv,
@@ -931,17 +949,19 @@ impl_struct_serde_conversion!(
         rx_dfe_tap_3_max_mv,
         rx_dfe_tap_4_min_mv,
         rx_dfe_tap_4_max_mv,
+        _reserved_1,
+        _reserved_2,
     ]
-);
-impl_struct_serde_conversion!(
-    MemDfeSearchElement20,
-    SerdeMemDfeSearchElement20,
-    [header, payload,]
 );
 impl_struct_serde_conversion!(
     MemDfeSearchElement32,
     SerdeMemDfeSearchElement32,
-    [header, payload, payload_ext, _padding_0, _padding_1,]
+    [header, payload, payload_ext]
+);
+impl_struct_serde_conversion!(
+    MemDfeSearchElement36,
+    SerdeMemDfeSearchElement36,
+    [header, payload, payload_ext]
 );
 impl_struct_serde_conversion!(
     DfXgmiChannelTypeSelect,
@@ -973,4 +993,105 @@ impl_struct_serde_conversion!(
         socket_1_link_2,
         socket_1_link_3,
     ]
+);
+impl_struct_serde_conversion!(
+    EarlyPcieConfigBody,
+    SerdeEarlyPcieConfigBody,
+    [
+        start_lane,
+        end_lane,
+        socket,
+        port_present,
+        link_speed,
+        reset_pin,
+        root_function,
+        root_device,
+        max_payload,
+        tx_deemphasis,
+        _reserved_1,
+        _reserved_2,
+    ]
+);
+impl_struct_serde_conversion!(
+    EarlyPcieConfigElement,
+    CustomSerdeEarlyPcieConfigElement,
+    [raw_body,]
+);
+impl_struct_serde_conversion!(
+    PmuBistVendorAlgorithmElement,
+    SerdePmuBistVendorAlgorithmElement,
+    [dram_manufacturer_id, algorithm_bit_mask,]
+);
+impl_struct_serde_conversion!(
+    Ddr5RawCardConfigElementHeader32,
+    SerdeDdr5RawCardConfigElementHeader32,
+    [
+        total_size,
+        mem_clk,   // DDR6400_FREQUENCY
+        dimm_type, // bitmap rank type
+        dev_width, // bitmap of SDRAM IO width
+        _reserved_1,
+        _reserved_2,
+        rcd_manufacturer_id, // JEDEC
+        rcd_generation,
+        _reserved_3,
+        _reserved_4,
+        _reserved_5,
+        raw_card_dev, // raw card revision
+        dram_die_stepping_revision,
+        dram_density,
+        _reserved_6,
+        _reserved_7,
+        _reserved_8,
+    ]
+);
+impl_struct_serde_conversion!(
+    Ddr5RawCardConfigElementPayload,
+    SerdeDdr5RawCardConfigElementPayload,
+    [
+        total_size,
+        qck_dev0, // those are numbers that go 1:1; NA = 255 means use ABL default
+        qck_dev1,
+        qck_dev2,
+        qck_dev3,
+        qck_dev4,
+        qck_dev5,
+        qck_dev6,
+        qck_dev7,
+        qck_dev8,
+        qck_dev9,
+        qck_drive_strength,
+        qck_slew, // NA = 255; MODERATE = 0, FAST = 1, SLOW = 2
+        qcs_dev0, // IMP_OFF
+        qcs_dev1,
+        qcs_dev2,
+        qcs_dev3,
+        qcs_dev4,
+        qcs_dev5,
+        qcs_dev6,
+        qcs_dev7,
+        qcs_dev8,
+        qcs_dev9,
+        qcs_drive_strength,
+        qcs_slew, // NA
+        qcs_vref,
+        qca_dev0, // OFF
+        qca_dev1,
+        qca_dev2,
+        qca_dev3,
+        qca_dev4,
+        qca_dev5,
+        qca_dev6,
+        qca_dev7,
+        qca_dev8,
+        qca_dev9,
+        qca_drive_strength,
+        qca_slew, // NA
+        qca_vref,
+    ]
+);
+impl_struct_serde_conversion!(
+    Ddr5RawCardConfigElement,
+    SerdeDdr5RawCardConfigElement,
+    [header, payload,]
 );
