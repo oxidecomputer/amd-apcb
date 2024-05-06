@@ -439,6 +439,7 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
         gen: &mut schemars::gen::SchemaGenerator,
     ) -> schemars::schema::Schema {
         use crate::fch;
+        use crate::gnb;
         use crate::memory;
         use crate::psp;
         use crate::tokens_entry::TokensEntryItem;
@@ -503,12 +504,12 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
             <Vec<memory::Ddr5CaPinMapElement>>::json_schema(gen),
         );
         obj.properties.insert(
-            "MemDfeSearchElement20".to_owned(),
-            <Vec<memory::MemDfeSearchElement20>>::json_schema(gen),
-        );
-        obj.properties.insert(
             "MemDfeSearchElement32".to_owned(),
             <Vec<memory::MemDfeSearchElement32>>::json_schema(gen),
+        );
+        obj.properties.insert(
+            "MemDfeSearchElement36".to_owned(),
+            <Vec<memory::MemDfeSearchElement36>>::json_schema(gen),
         );
         obj.properties.insert(
             "DdrDqPinMapElement".to_owned(),
@@ -544,6 +545,22 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
         );
         obj.properties
             .insert("EspiInit".to_owned(), <fch::EspiInit>::json_schema(gen));
+        obj.properties.insert(
+            "PmuBistVendorAlgorithmElement".to_owned(),
+            <Vec<memory::PmuBistVendorAlgorithmElement>>::json_schema(gen),
+        );
+        obj.properties.insert(
+            "Ddr5RawCardConfigElement".to_owned(),
+            <Vec<memory::Ddr5RawCardConfigElement>>::json_schema(gen),
+        );
+        obj.properties.insert(
+            "EspiSioInitElement".to_owned(),
+            <Vec<fch::EspiSioInitElement>>::json_schema(gen),
+        );
+        obj.properties.insert(
+            "EarlyPcieConfigElement".to_owned(),
+            <Vec<gnb::EarlyPcieConfigElement>>::json_schema(gen),
+        );
         obj.properties
             .insert("BoardIdGettingMethodGpio".to_owned(),
                 <(psp::BoardIdGettingMethodGpio,
@@ -607,6 +624,7 @@ impl<'a> Serialize for EntryItem<'a> {
     {
         use crate::df::SlinkConfig;
         use crate::fch;
+        use crate::gnb;
         use crate::memory;
         use crate::psp;
         let mut state = serializer.serialize_struct("EntryItem", 2)?;
@@ -659,12 +677,12 @@ impl<'a> Serialize for EntryItem<'a> {
                 } else if let Some(s) = self.body_as_struct_array::<memory::Ddr5CaPinMapElement>() {
                     let v = s.iter().collect::<Vec<_>>();
                     state.serialize_field("Ddr5CaPinMapElement", &v)?;
-                } else if let Some(s) = self.body_as_struct_array::<memory::MemDfeSearchElement20>() {
+//                } else if let Some(s) = self.body_as_struct_array::<memory::MemDfeSearchElement32>() { // UH OH
+//                    let v = s.iter().collect::<Vec<_>>();
+//                    state.serialize_field("MemDfeSearchElement32", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::MemDfeSearchElement36>() {
                     let v = s.iter().collect::<Vec<_>>();
-                    state.serialize_field("MemDfeSearchElement20", &v)?;
-                } else if let Some(s) = self.body_as_struct_array::<memory::MemDfeSearchElement32>() {
-                    let v = s.iter().collect::<Vec<_>>();
-                    state.serialize_field("MemDfeSearchElement32", &v)?;
+                    state.serialize_field("MemDfeSearchElement36", &v)?;
                 } else if let Some(s) = self.body_as_struct_array::<memory::DdrDqPinMapElement>() {
                     let v = s.iter().collect::<Vec<_>>();
                     state.serialize_field("DdrDqPinMapElement", &v)?;
@@ -701,6 +719,18 @@ impl<'a> Serialize for EntryItem<'a> {
                     state.serialize_field("BoardIdGettingMethodCustom", &t)?;
                 } else if let Some((header, _)) = self.body_as_struct::<fch::EspiInit>() {
                     state.serialize_field("EspiInit", &header)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::PmuBistVendorAlgorithmElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("PmuBistVendorAlgorithmElement", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<memory::Ddr5RawCardConfigElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("Ddr5RawCardConfigElement", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<fch::EspiSioInitElement>() { // TODO terminator, so variant
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("EspiSioInitElement", &v)?;
+                } else if let Some(s) = self.body_as_struct_array::<gnb::EarlyPcieConfigElement>() {
+                    let v = s.iter().collect::<Vec<_>>();
+                    state.serialize_field("EarlyPcieConfigElement", &v)?;
                 } else if let Some(s) =
 self.body_as_struct_sequence::<memory::platform_specific_override::ElementRef<'_>>() {
                     let i = s.iter().unwrap();
@@ -896,9 +926,11 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
             LrMaxFreqElement,
             DdrDqPinMapElement,
             Ddr5CaPinMapElement,
-            MemDfeSearchElement20,
             MemDfeSearchElement32,
+            MemDfeSearchElement36,
             RdimmDdr5BusElement,
+            EspiSioInitElement, // FIXME move to struct sequence (maybe)
+            EarlyPcieConfigElement,
 
             // Body as struct
             ConsoleOutControl,
@@ -911,6 +943,8 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
             BoardIdGettingMethodSmbus,
             BoardIdGettingMethodCustom,
             EspiInit,
+            PmuBistVendorAlgorithmElement,
+            Ddr5RawCardConfigElement,
 
             // struct sequence
             PlatformSpecificOverrides,
@@ -933,9 +967,11 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
             "LrMaxFreqElement",
             "DdrDqPinMapElement",
             "Ddr5CaPinMapElement",
-            "MemDfeSearchElement20",
             "MemDfeSearchElement32",
+            "MemDfeSearchElement36",
             "RdimmDdr5BusElement",
+            "EspiSioInitElement",
+            "EarlyPcieConfigElement",
             // Body as struct
             "ConsoleOutControl",
             "ExtVoltageControl",
@@ -947,6 +983,8 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
             "BoardIdGettingMethodSmbus",
             "BoardIdGettingMethodCustom",
             "EspiInit",
+            "PmuBistVendorAlgorithmElement",
+            "Ddr5RawCardConfigElement",
             // struct sequence
             "platform_specific_overrides",
             "platform_tuning",
@@ -1015,14 +1053,20 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
                             "Ddr5CaPinMapElement" => {
                                 Ok(Field::Ddr5CaPinMapElement)
                             }
-                            "MemDfeSearchElement20" => {
-                                Ok(Field::MemDfeSearchElement20)
-                            }
                             "MemDfeSearchElement32" => {
                                 Ok(Field::MemDfeSearchElement32)
                             }
+                            "MemDfeSearchElement36" => {
+                                Ok(Field::MemDfeSearchElement36)
+                            }
                             "RdimmDdr5BusElement" => {
                                 Ok(Field::RdimmDdr5BusElement)
+                            }
+                            "EspiSioInitElement" => {
+                                Ok(Field::EspiSioInitElement)
+                            }
+                            "EarlyPcieConfigElement" => {
+                                Ok(Field::EarlyPcieConfigElement)
                             }
 
                             "ConsoleOutControl" => Ok(Field::ConsoleOutControl),
@@ -1047,6 +1091,12 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
                                 Ok(Field::BoardIdGettingMethodCustom)
                             }
                             "EspiInit" => Ok(Field::EspiInit),
+                            "PmuBistVendorAlgorithmElement" => {
+                                Ok(Field::PmuBistVendorAlgorithmElement)
+                            }
+                            "Ddr5RawCardConfigElement" => {
+                                Ok(Field::Ddr5RawCardConfigElement)
+                            }
                             "platform_specific_overrides" => {
                                 Ok(Field::PlatformSpecificOverrides)
                             }
@@ -1082,6 +1132,7 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
             {
                 use crate::df;
                 use crate::fch;
+                use crate::gnb;
                 use crate::memory;
                 use crate::psp;
                 let mut header: Option<ENTRY_HEADER> = None;
@@ -1171,15 +1222,15 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
                                 &mut body, &mut map,
                             )?;
                         }
-                        Field::MemDfeSearchElement20 => {
-                            struct_vec_to_body::<
-                                memory::MemDfeSearchElement20,
-                                V,
-                            >(&mut body, &mut map)?;
-                        }
                         Field::MemDfeSearchElement32 => {
                             struct_vec_to_body::<
                                 memory::MemDfeSearchElement32,
+                                V,
+                            >(&mut body, &mut map)?;
+                        }
+                        Field::MemDfeSearchElement36 => {
+                            struct_vec_to_body::<
+                                memory::MemDfeSearchElement36,
                                 V,
                             >(&mut body, &mut map)?;
                         }
@@ -1236,6 +1287,28 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
                         }
                         Field::EspiInit => {
                             struct_to_body::<fch::EspiInit, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+                        Field::PmuBistVendorAlgorithmElement => {
+                            struct_vec_to_body::<
+                                memory::PmuBistVendorAlgorithmElement,
+                                V,
+                            >(&mut body, &mut map)?;
+                        }
+                        Field::Ddr5RawCardConfigElement => {
+                            struct_vec_to_body::<
+                                memory::Ddr5RawCardConfigElement,
+                                V,
+                            >(&mut body, &mut map)?;
+                        }
+                        Field::EspiSioInitElement => {
+                            struct_vec_to_body::<fch::EspiSioInitElement, V>(
+                                &mut body, &mut map,
+                            )?;
+                        }
+                        Field::EarlyPcieConfigElement => {
+                            struct_vec_to_body::<gnb::EarlyPcieConfigElement, V>(
                                 &mut body, &mut map,
                             )?;
                         }
