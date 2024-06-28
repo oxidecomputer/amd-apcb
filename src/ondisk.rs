@@ -5240,99 +5240,99 @@ Clone)]
     #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
     #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum Ddr5RawCardImpedance {
-       Off = 0,
+        Off = 0,
 
-       #[cfg_attr(feature = "serde", serde(rename = "10 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "10 Ohm"))]
-       _10Ohm = 10,
+        #[cfg_attr(feature = "serde", serde(rename = "10 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "10 Ohm"))]
+        _10Ohm = 10,
 
-       #[cfg_attr(feature = "serde", serde(rename = "14 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "14 Ohm"))]
-       _14Ohm = 14,
+        #[cfg_attr(feature = "serde", serde(rename = "14 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "14 Ohm"))]
+        _14Ohm = 14,
 
-       #[cfg_attr(feature = "serde", serde(rename = "20 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "20 Ohm"))]
-       _20Ohm = 20,
+        #[cfg_attr(feature = "serde", serde(rename = "20 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "20 Ohm"))]
+        _20Ohm = 20,
 
-       #[cfg_attr(feature = "serde", serde(rename = "25 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "25 Ohm"))]
-       _25Ohm = 25,
+        #[cfg_attr(feature = "serde", serde(rename = "25 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "25 Ohm"))]
+        _25Ohm = 25,
 
-       #[cfg_attr(feature = "serde", serde(rename = "26 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "26 Ohm"))]
-       _26Ohm = 26,
+        #[cfg_attr(feature = "serde", serde(rename = "26 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "26 Ohm"))]
+        _26Ohm = 26,
 
-       #[cfg_attr(feature = "serde", serde(rename = "27 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "27 Ohm"))]
-       _27Ohm = 27,
+        #[cfg_attr(feature = "serde", serde(rename = "27 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "27 Ohm"))]
+        _27Ohm = 27,
 
-       #[cfg_attr(feature = "serde", serde(rename = "28 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "28 Ohm"))]
-       _28Ohm = 28,
+        #[cfg_attr(feature = "serde", serde(rename = "28 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "28 Ohm"))]
+        _28Ohm = 28,
 
-       #[cfg_attr(feature = "serde", serde(rename = "30 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "30 Ohm"))]
-       _30Ohm = 30,
+        #[cfg_attr(feature = "serde", serde(rename = "30 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "30 Ohm"))]
+        _30Ohm = 30,
 
-       #[cfg_attr(feature = "serde", serde(rename = "32 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "32 Ohm"))]
-       _32Ohm = 32,
+        #[cfg_attr(feature = "serde", serde(rename = "32 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "32 Ohm"))]
+        _32Ohm = 32,
 
-       #[cfg_attr(feature = "serde", serde(rename = "34 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "34 Ohm"))]
-       _34Ohm = 34,
+        #[cfg_attr(feature = "serde", serde(rename = "34 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "34 Ohm"))]
+        _34Ohm = 34,
 
-       #[cfg_attr(feature = "serde", serde(rename = "36 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "36 Ohm"))]
-       _36Ohm = 36,
+        #[cfg_attr(feature = "serde", serde(rename = "36 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "36 Ohm"))]
+        _36Ohm = 36,
 
-       #[cfg_attr(feature = "serde", serde(rename = "40 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "40 Ohm"))]
-       _40Ohm = 40,
+        #[cfg_attr(feature = "serde", serde(rename = "40 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "40 Ohm"))]
+        _40Ohm = 40,
 
-       #[cfg_attr(feature = "serde", serde(rename = "43 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "43 Ohm"))]
-       _43Ohm = 43,
+        #[cfg_attr(feature = "serde", serde(rename = "43 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "43 Ohm"))]
+        _43Ohm = 43,
 
-       #[cfg_attr(feature = "serde", serde(rename = "48 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "48 Ohm"))]
-       _48Ohm = 48,
+        #[cfg_attr(feature = "serde", serde(rename = "48 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "48 Ohm"))]
+        _48Ohm = 48,
 
-       #[cfg_attr(feature = "serde", serde(rename = "53 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "53 Ohm"))]
-       _53Ohm = 53,
+        #[cfg_attr(feature = "serde", serde(rename = "53 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "53 Ohm"))]
+        _53Ohm = 53,
 
-       #[cfg_attr(feature = "serde", serde(rename = "60 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "60 Ohm"))]
-       _60Ohm = 60,
+        #[cfg_attr(feature = "serde", serde(rename = "60 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "60 Ohm"))]
+        _60Ohm = 60,
 
-       #[cfg_attr(feature = "serde", serde(rename = "68 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "68 Ohm"))]
-       _68Ohm = 68,
+        #[cfg_attr(feature = "serde", serde(rename = "68 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "68 Ohm"))]
+        _68Ohm = 68,
 
-       #[cfg_attr(feature = "serde", serde(rename = "80 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "80 Ohm"))]
-       _80Ohm = 80,
+        #[cfg_attr(feature = "serde", serde(rename = "80 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "80 Ohm"))]
+        _80Ohm = 80,
 
-       #[cfg_attr(feature = "serde", serde(rename = "96 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "96 Ohm"))]
-       _96Ohm = 96,
+        #[cfg_attr(feature = "serde", serde(rename = "96 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "96 Ohm"))]
+        _96Ohm = 96,
 
-       #[cfg_attr(feature = "serde", serde(rename = "120 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "120 Ohm"))]
-       _120Ohm = 120,
+        #[cfg_attr(feature = "serde", serde(rename = "120 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "120 Ohm"))]
+        _120Ohm = 120,
 
-       #[cfg_attr(feature = "serde", serde(rename = "160 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "160 Ohm"))]
-       _160Ohm = 160,
+        #[cfg_attr(feature = "serde", serde(rename = "160 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "160 Ohm"))]
+        _160Ohm = 160,
 
-       #[cfg_attr(feature = "serde", serde(rename = "240 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "240 Ohm"))]
-       _240Ohm = 240,
+        #[cfg_attr(feature = "serde", serde(rename = "240 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "240 Ohm"))]
+        _240Ohm = 240,
 
-       #[cfg_attr(feature = "serde", serde(rename = "480 Ω"))]
-       #[cfg_attr(feature = "serde", serde(alias = "480 Ohm"))]
-       _480Ohm = 480,
+        #[cfg_attr(feature = "serde", serde(rename = "480 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "480 Ohm"))]
+        _480Ohm = 480,
     }
 
     // TODO: 14, 20, 27
@@ -5795,13 +5795,21 @@ Clone)]
         }
     }
     impl Ddr5RawCardConfigElementPayload {
-        pub fn qck_drive_strength(&self) -> Result<Option<Ddr5RawCardDriveStrength>> {
+        pub fn qck_drive_strength(
+            &self,
+        ) -> Result<Option<Ddr5RawCardDriveStrength>> {
             Ok(match self.qck_drive_strength.get() {
                 0xff => None,
-                x => Some(Ddr5RawCardDriveStrength::from_u16(x).ok_or(Error::EntryTypeMismatch)?),
+                x => Some(
+                    Ddr5RawCardDriveStrength::from_u16(x)
+                        .ok_or(Error::EntryTypeMismatch)?,
+                ),
             })
         }
-        pub fn set_qck_drive_strength(&mut self, value: Option<Ddr5RawCardDriveStrength>) {
+        pub fn set_qck_drive_strength(
+            &mut self,
+            value: Option<Ddr5RawCardDriveStrength>,
+        ) {
             self.qck_drive_strength.set(match value {
                 None => 0xff,
                 Some(x) => x.to_u16().unwrap(),
@@ -5810,7 +5818,10 @@ Clone)]
         pub fn qck_slew(&self) -> Result<Option<Ddr5RawCardSlew>> {
             Ok(match self.qck_slew.get() {
                 0xff => None,
-                x => Some(Ddr5RawCardSlew::from_u16(x).ok_or(Error::EntryTypeMismatch)?),
+                x => Some(
+                    Ddr5RawCardSlew::from_u16(x)
+                        .ok_or(Error::EntryTypeMismatch)?,
+                ),
             })
         }
         pub fn set_qck_slew(&mut self, value: Option<Ddr5RawCardSlew>) {
@@ -5819,13 +5830,21 @@ Clone)]
                 Some(x) => x.to_u16().unwrap(),
             })
         }
-        pub fn qcs_drive_strength(&self) -> Result<Option<Ddr5RawCardDriveStrength>> {
+        pub fn qcs_drive_strength(
+            &self,
+        ) -> Result<Option<Ddr5RawCardDriveStrength>> {
             Ok(match self.qcs_drive_strength.get() {
                 0xff => None,
-                x => Some(Ddr5RawCardDriveStrength::from_u16(x).ok_or(Error::EntryTypeMismatch)?),
+                x => Some(
+                    Ddr5RawCardDriveStrength::from_u16(x)
+                        .ok_or(Error::EntryTypeMismatch)?,
+                ),
             })
         }
-        pub fn set_qcs_drive_strength(&mut self, value: Option<Ddr5RawCardDriveStrength>) {
+        pub fn set_qcs_drive_strength(
+            &mut self,
+            value: Option<Ddr5RawCardDriveStrength>,
+        ) {
             self.qcs_drive_strength.set(match value {
                 None => 0xff,
                 Some(x) => x.to_u16().unwrap(),
@@ -5834,7 +5853,10 @@ Clone)]
         pub fn qcs_slew(&self) -> Result<Option<Ddr5RawCardSlew>> {
             Ok(match self.qcs_slew.get() {
                 0xff => None,
-                x => Some(Ddr5RawCardSlew::from_u16(x).ok_or(Error::EntryTypeMismatch)?),
+                x => Some(
+                    Ddr5RawCardSlew::from_u16(x)
+                        .ok_or(Error::EntryTypeMismatch)?,
+                ),
             })
         }
         pub fn set_qcs_slew(&mut self, value: Option<Ddr5RawCardSlew>) {
@@ -5844,13 +5866,21 @@ Clone)]
             })
         }
 
-        pub fn qca_drive_strength(&self) -> Result<Option<Ddr5RawCardDriveStrength>> {
+        pub fn qca_drive_strength(
+            &self,
+        ) -> Result<Option<Ddr5RawCardDriveStrength>> {
             Ok(match self.qca_drive_strength.get() {
                 0xff => None,
-                x => Some(Ddr5RawCardDriveStrength::from_u16(x).ok_or(Error::EntryTypeMismatch)?),
+                x => Some(
+                    Ddr5RawCardDriveStrength::from_u16(x)
+                        .ok_or(Error::EntryTypeMismatch)?,
+                ),
             })
         }
-        pub fn set_qca_drive_strength(&mut self, value: Option<Ddr5RawCardDriveStrength>) {
+        pub fn set_qca_drive_strength(
+            &mut self,
+            value: Option<Ddr5RawCardDriveStrength>,
+        ) {
             self.qca_drive_strength.set(match value {
                 None => 0xff,
                 Some(x) => x.to_u16().unwrap(),
@@ -5859,7 +5889,10 @@ Clone)]
         pub fn qca_slew(&self) -> Result<Option<Ddr5RawCardSlew>> {
             Ok(match self.qca_slew.get() {
                 0xff => None,
-                x => Some(Ddr5RawCardSlew::from_u16(x).ok_or(Error::EntryTypeMismatch)?),
+                x => Some(
+                    Ddr5RawCardSlew::from_u16(x)
+                        .ok_or(Error::EntryTypeMismatch)?,
+                ),
             })
         }
         pub fn set_qca_slew(&mut self, value: Option<Ddr5RawCardSlew>) {
