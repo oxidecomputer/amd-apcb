@@ -686,6 +686,8 @@ pub enum MemoryEntryId {
     PsDramdownDdr4StretchFreq,
 
     PlatformTuning,
+    PmuBistVendorAlgorithm,
+    Ddr5RawCardConfig,
 
     Unknown(u16),
 }
@@ -755,6 +757,8 @@ impl ToPrimitive for MemoryEntryId {
             Self::PsDramdownDdr4StretchFreq => 0x74,
 
             Self::PlatformTuning => 0x75,
+            Self::PmuBistVendorAlgorithm => 0xA1,
+            Self::Ddr5RawCardConfig => 0xA2,
 
             Self::Unknown(x) => (*x) as i64,
         })
@@ -831,6 +835,8 @@ impl FromPrimitive for MemoryEntryId {
                 0x93 => Self::PsLrdimmDdr5StretchFreq,
                 0x94 => Self::Ps3dsRdimmDdr5MaxFreq,
                 0x95 => Self::Ps3dsRdimmDdr5StretchFreq,
+                0xA1 => Self::PmuBistVendorAlgorithm,
+                0xA2 => Self::Ddr5RawCardConfig,
 
                 x => Self::Unknown(x as u16),
             })
@@ -852,6 +858,7 @@ impl FromPrimitive for MemoryEntryId {
 pub enum GnbEntryId {
     DefaultParameters, // Naples
     Parameters,        // Naples
+    EarlyPcieConfig,   // Turin
     Unknown(u16),
 }
 
@@ -860,6 +867,7 @@ impl ToPrimitive for GnbEntryId {
         Some(match self {
             Self::DefaultParameters => 0x09,
             Self::Parameters => 0x0A,
+            Self::EarlyPcieConfig => 0x1003,
             Self::Unknown(x) => (*x) as i64,
         })
     }
@@ -874,6 +882,7 @@ impl FromPrimitive for GnbEntryId {
             Some(match value {
                 0x09 => Self::DefaultParameters,
                 0x0A => Self::Parameters,
+                0x1003 => Self::EarlyPcieConfig,
                 x => Self::Unknown(x as u16),
             })
         } else {
@@ -895,7 +904,8 @@ pub enum FchEntryId {
     DefaultParameters, // Naples
     Parameters,        // Naples
 
-    EspiInit, // Genoa
+    EspiInit,    // Genoa
+    EspiSioInit, // Turin
 
     Unknown(u16),
 }
@@ -906,6 +916,7 @@ impl ToPrimitive for FchEntryId {
             Self::DefaultParameters => 0x0B,
             Self::Parameters => 0x0C,
             Self::EspiInit => 0x2001,
+            Self::EspiSioInit => 0x2005,
             Self::Unknown(x) => (*x) as i64,
         })
     }
@@ -921,6 +932,7 @@ impl FromPrimitive for FchEntryId {
                 0x0B => Self::DefaultParameters,
                 0x0C => Self::Parameters,
                 0x2001 => Self::EspiInit,
+                0x2005 => Self::EspiSioInit,
                 x => Self::Unknown(x as u16),
             })
         } else {
@@ -1472,6 +1484,191 @@ impl BoardInstances {
 }
 
 impl_bitfield_primitive_conversion!(BoardInstances, 0xffff, u16);
+
+pub mod gnb {
+    use super::{
+        paste, AsBytes, BitfieldSpecifier, EntryCompatible, EntryId, FromBytes,
+        FromPrimitive, Getter, GnbEntryId, Result, SerdeHex8, Setter,
+        ToPrimitive, Unaligned,
+    };
+    #[cfg(feature = "serde")]
+    use super::{Deserialize, Serialize};
+    use crate::struct_accessors::make_accessors;
+    use modular_bitfield::prelude::*;
+
+    #[derive(
+        Clone,
+        Copy,
+        Debug,
+        PartialEq,
+        FromPrimitive,
+        ToPrimitive,
+        BitfieldSpecifier,
+    )]
+    // FIXME #[non_exhaustive]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[bits = 3]
+    pub enum EarlyPcieLinkSpeed {
+        Maximum = 0,
+        Gen1 = 1,
+        Gen2 = 2,
+        Gen3 = 3,
+        Gen4 = 4,
+        Gen5 = 5,
+        _Reserved6 = 6,
+        _Reserved7 = 7,
+    }
+    //impl_bitfield_primitive_conversion!(LrdimmDdr4DimmRanks, 0b11, u32);
+
+    #[derive(
+        Clone,
+        Copy,
+        Debug,
+        PartialEq,
+        FromPrimitive,
+        ToPrimitive,
+        BitfieldSpecifier,
+    )]
+    // FIXME #[non_exhaustive]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[bits = 2]
+    pub enum EarlyPcieResetPin {
+        None = 0,
+        Gpio26 = 1,
+        Gpio266 = 2,
+        _Reserved3 = 3,
+    }
+    //impl_bitfield_primitive_conversion!(LrdimmDdr4DimmRanks, 0b11, u32);
+
+    impl Getter<Result<EarlyPcieLinkSpeed>> for EarlyPcieLinkSpeed {
+        fn get1(self) -> Result<Self> {
+            Ok(self)
+        }
+    }
+
+    impl Setter<EarlyPcieLinkSpeed> for EarlyPcieLinkSpeed {
+        fn set1(&mut self, value: Self) {
+            *self = value;
+        }
+    }
+
+    impl Getter<Result<EarlyPcieResetPin>> for EarlyPcieResetPin {
+        fn get1(self) -> Result<Self> {
+            Ok(self)
+        }
+    }
+
+    impl Setter<EarlyPcieResetPin> for EarlyPcieResetPin {
+        fn set1(&mut self, value: Self) {
+            *self = value;
+        }
+    }
+
+    make_bitfield_serde! {
+        #[bitfield(bits = 64)]
+        #[repr(u64)]
+        #[derive(
+            Clone, Copy, Debug, PartialEq, //BitfieldSpecifier,
+        )]
+        pub struct EarlyPcieConfigBody {
+            pub start_lane || u8 : B8, // (0xFF)
+            pub end_lane || u8 : B8, // (0xFF=UNUSED_LANE if descriptor is unused)
+            #[bits = 2]
+            pub socket || u8 : B2,
+            #[bits = 1]
+            pub port_present || bool : bool | pub get bool : pub set bool,
+            #[bits = 3]
+            pub link_speed: EarlyPcieLinkSpeed | pub get EarlyPcieLinkSpeed : pub set EarlyPcieLinkSpeed,
+            #[bits = 2]
+            pub reset_pin: EarlyPcieResetPin | pub get EarlyPcieResetPin : pub set EarlyPcieResetPin,
+            pub root_function || u8 : B3 | pub get u8 : pub set u8, // XXX (0: default)
+            pub root_device || u8 : B5 | pub get u8 : pub set u8, // XXX (0: default)
+            pub max_payload || u8 : B8 | pub get u8 : pub set u8, // XXX (0xff: ignore),
+            pub tx_deemphasis || u8 : B8 | pub get u8 : pub set u8, // XXX (0xff: ignore)
+            pub _reserved_1 || #[serde(default)] SerdeHex8 : B8, // (0)
+            pub _reserved_2 || #[serde(default)] SerdeHex8 : B8, // (0)
+        }
+    }
+
+    impl Default for EarlyPcieConfigBody {
+        fn default() -> Self {
+            Self::new()
+                .with_start_lane(0xff)
+                .with_end_lane(0xff)
+                .with_socket(0)
+                .with_port_present(true)
+                .with_link_speed(EarlyPcieLinkSpeed::Gen3)
+                .with_reset_pin(EarlyPcieResetPin::None)
+                .with_root_function(0)
+                .with_root_device(0)
+                .with_max_payload(0xff)
+                .with_tx_deemphasis(0xff)
+        }
+    }
+
+    impl_bitfield_primitive_conversion!(
+        EarlyPcieConfigBody,
+        0b1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111,
+        u64
+    );
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct EarlyPcieConfigElement {
+            body: [u8; 8], // no| pub get DdrPostPackageRepairBody : pub set DdrPostPackageRepairBody,
+        }
+    }
+
+    #[cfg(feature = "serde")]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[cfg_attr(feature = "serde", serde(rename = "EarlyPcieConfig"))]
+    pub struct CustomSerdeEarlyPcieConfigElement {
+        #[serde(flatten)]
+        pub raw_body: EarlyPcieConfigBody,
+    }
+
+    #[cfg(feature = "serde")]
+    impl EarlyPcieConfigElement {
+        pub(crate) fn serde_raw_body(&self) -> Result<EarlyPcieConfigBody> {
+            Ok(EarlyPcieConfigBody::from_bytes(self.body))
+        }
+        pub(crate) fn serde_with_raw_body(
+            &mut self,
+            value: EarlyPcieConfigBody,
+        ) -> &mut Self {
+            self.body = value.into_bytes();
+            self
+        }
+    }
+    impl EarlyPcieConfigElement {
+        #[inline]
+        pub fn body(&self) -> Option<EarlyPcieConfigBody> {
+            Some(EarlyPcieConfigBody::from_bytes(self.body))
+        }
+        #[inline]
+        pub fn set_body(&mut self, body: EarlyPcieConfigBody) {
+            self.body = body.into_bytes();
+        }
+    }
+    impl Default for EarlyPcieConfigElement {
+        fn default() -> Self {
+            Self { body: EarlyPcieConfigBody::default().into_bytes() }
+        }
+    }
+
+    impl EntryCompatible for EarlyPcieConfigElement {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            matches!(entry_id, EntryId::Gnb(GnbEntryId::EarlyPcieConfig))
+        }
+    }
+}
 
 make_accessors! {
     #[derive(FromBytes, AsBytes, Unaligned, Clone, Debug)]
@@ -3740,7 +3937,7 @@ pub mod memory {
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
-        pub struct MemDfeSearchElementHeader {
+        pub struct MemDfeSearchElementHeader { // Genoa
             total_size || u32 : LU32,
             dimm_slots_per_channel: u8,
             dimm0_rank_bitmap: u8,
@@ -3776,7 +3973,47 @@ pub mod memory {
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
-        pub struct MemDfeSearchElementPayload {
+        pub struct MemDfeSearchElementHeader12 {
+            total_size || u32 : LU32,
+            _reserved || #[serde(default)] u32 : LU32,
+            dimm_slots_per_channel: u8,
+            dimm0_rank_bitmap: u8,
+            dimm1_rank_bitmap: u8,
+            sdram_io_width_bitmap: u8,
+        }
+    }
+
+    impl Default for MemDfeSearchElementHeader12 {
+        fn default() -> Self {
+            Self {
+                total_size: (size_of::<Self>() as u32).into(),
+                _reserved: 0.into(),
+                dimm_slots_per_channel: 1,
+                dimm0_rank_bitmap: 2,
+                dimm1_rank_bitmap: 1,
+                sdram_io_width_bitmap: 255,
+            }
+        }
+    }
+
+    impl Getter<Result<MemDfeSearchElementHeader12>>
+        for MemDfeSearchElementHeader12
+    {
+        fn get1(self) -> Result<MemDfeSearchElementHeader12> {
+            Ok(self)
+        }
+    }
+
+    impl Setter<MemDfeSearchElementHeader12> for MemDfeSearchElementHeader12 {
+        fn set1(&mut self, value: MemDfeSearchElementHeader12) {
+            *self = value
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct MemDfeSearchElementPayload12 {
             total_size || u32 : LU32,
             /// -40..=40
             tx_dfe_tap_1_start || u8 : u8,
@@ -3796,7 +4033,7 @@ pub mod memory {
             tx_dfe_tap_4_end || u8 : u8,
         }
     }
-    impl Default for MemDfeSearchElementPayload {
+    impl Default for MemDfeSearchElementPayload12 {
         fn default() -> Self {
             Self {
                 total_size: (size_of::<Self>() as u32).into(),
@@ -3812,14 +4049,16 @@ pub mod memory {
         }
     }
 
-    impl Getter<Result<MemDfeSearchElementPayload>> for MemDfeSearchElementPayload {
-        fn get1(self) -> Result<MemDfeSearchElementPayload> {
+    impl Getter<Result<MemDfeSearchElementPayload12>>
+        for MemDfeSearchElementPayload12
+    {
+        fn get1(self) -> Result<MemDfeSearchElementPayload12> {
             Ok(self)
         }
     }
 
-    impl Setter<MemDfeSearchElementPayload> for MemDfeSearchElementPayload {
-        fn set1(&mut self, value: MemDfeSearchElementPayload) {
+    impl Setter<MemDfeSearchElementPayload12> for MemDfeSearchElementPayload12 {
+        fn set1(&mut self, value: MemDfeSearchElementPayload12) {
             *self = value
         }
     }
@@ -3827,7 +4066,7 @@ pub mod memory {
     make_accessors! {
         #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
-        pub struct MemDfeSearchElementPayloadExt {
+        pub struct MemDfeSearchElementPayloadExt12 {
             total_size || u32 : LU32,
             rx_dfe_tap_2_min_mv || i8 : i8,
             rx_dfe_tap_2_max_mv || i8 : i8,
@@ -3835,9 +4074,11 @@ pub mod memory {
             rx_dfe_tap_3_max_mv || i8 : i8,
             rx_dfe_tap_4_min_mv || i8 : i8,
             rx_dfe_tap_4_max_mv || i8 : i8,
+            _reserved_1 || #[serde(default)] SerdeHex8 : u8,
+            _reserved_2 || #[serde(default)] SerdeHex8 : u8,
         }
     }
-    impl Default for MemDfeSearchElementPayloadExt {
+    impl Default for MemDfeSearchElementPayloadExt12 {
         fn default() -> Self {
             Self {
                 total_size: (size_of::<Self>() as u32).into(),
@@ -3847,21 +4088,44 @@ pub mod memory {
                 rx_dfe_tap_3_max_mv: 0,
                 rx_dfe_tap_4_min_mv: 0,
                 rx_dfe_tap_4_max_mv: 0,
+                _reserved_1: 0, // FIXME check
+                _reserved_2: 0, // FIXME check
             }
         }
     }
 
-    impl Getter<Result<MemDfeSearchElementPayloadExt>>
-        for MemDfeSearchElementPayloadExt
+    impl Getter<Result<MemDfeSearchElementPayloadExt12>>
+        for MemDfeSearchElementPayloadExt12
     {
-        fn get1(self) -> Result<MemDfeSearchElementPayloadExt> {
+        fn get1(self) -> Result<MemDfeSearchElementPayloadExt12> {
             Ok(self)
         }
     }
 
-    impl Setter<MemDfeSearchElementPayloadExt> for MemDfeSearchElementPayloadExt {
-        fn set1(&mut self, value: MemDfeSearchElementPayloadExt) {
+    impl Setter<MemDfeSearchElementPayloadExt12>
+        for MemDfeSearchElementPayloadExt12
+    {
+        fn set1(&mut self, value: MemDfeSearchElementPayloadExt12) {
             *self = value
+        }
+    }
+
+    make_accessors! {
+        /// Decision Feedback Equalization.
+        /// See also UMC::Phy::RxDFETapCtrl in the memory controller.
+        /// See <https://ieeexplore.ieee.org/document/1455678>.
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct MemDfeSearchElement36 {
+            header: MemDfeSearchElementHeader12,
+            payload: MemDfeSearchElementPayload12,
+            payload_ext: MemDfeSearchElementPayloadExt12,
+        }
+    }
+
+    impl EntryCompatible for MemDfeSearchElement36 {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            matches!(entry_id, EntryId::Memory(MemoryEntryId::MemDfeSearch))
         }
     }
 
@@ -3873,10 +4137,8 @@ pub mod memory {
         #[repr(C, packed)]
         pub struct MemDfeSearchElement32 {
             header: MemDfeSearchElementHeader,
-            payload: MemDfeSearchElementPayload,
-            payload_ext: MemDfeSearchElementPayloadExt,
-            _padding_0 || #[serde(default)] SerdeHex8 : u8,
-            _padding_1 || #[serde(default)] SerdeHex8 : u8,
+            payload: MemDfeSearchElementPayload12,
+            payload_ext: MemDfeSearchElementPayloadExt12,
         }
     }
 
@@ -3886,27 +4148,12 @@ pub mod memory {
         }
     }
 
-    make_accessors! {
-        /// Decision Feedback Equalization.
-        /// See also UMC::Phy::RxDFETapCtrl in the memory controller.
-        /// See <https://ieeexplore.ieee.org/document/1455678>.
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
-        #[repr(C, packed)]
-        pub struct MemDfeSearchElement20 {
-            header: MemDfeSearchElementHeader,
-            payload: MemDfeSearchElementPayload,
-        }
-    }
-
-    impl EntryCompatible for MemDfeSearchElement20 {
-        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
-            matches!(entry_id, EntryId::Memory(MemoryEntryId::MemDfeSearch))
-        }
-    }
-
     // ACTUAL 1/T, where T is one period.  For DDR, that means DDR400 has
     // frequency 200.
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub enum DdrSpeed {
         Ddr400 = 200,
         Ddr533 = 266,
@@ -3940,8 +4187,61 @@ pub mod memory {
         Ddr3867 = 1933,
         Ddr3933 = 1967,
         Ddr4000 = 2000,
+        Ddr4066 = 2033,
+        Ddr4134 = 2067,
+        Ddr4200 = 2100,
+        Ddr4266 = 2133,
+        Ddr4334 = 2167,
+        Ddr4400 = 2200,
+        Ddr4466 = 2233,
+        Ddr4534 = 2267,
+        Ddr4600 = 2300,
+        Ddr4666 = 2333,
+        Ddr4734 = 2367,
+        Ddr4800 = 2400,
+        Ddr4866 = 2433,
+        Ddr4934 = 2467,
+        Ddr5000 = 2500,
+        Ddr5100 = 2550,
+        Ddr5200 = 2600,
+        Ddr5300 = 2650,
+        Ddr5400 = 2700,
+        Ddr5500 = 2750,
+        Ddr5600 = 2800,
+        Ddr5700 = 2850,
+        Ddr5800 = 2900,
+        Ddr5900 = 2950,
+        Ddr6000 = 3000,
+        Ddr6100 = 3050,
+        Ddr6200 = 3100,
+        Ddr6300 = 3150,
+        Ddr6400 = 3200,
+        Ddr6500 = 3250,
+        Ddr6600 = 3300,
+        Ddr6700 = 3350,
+        Ddr6800 = 3400,
+        Ddr6900 = 3450,
+        Ddr7000 = 3500,
+        Ddr7100 = 3550,
+        Ddr7200 = 3600,
+        Ddr7300 = 3650,
+        Ddr7400 = 3700,
+        Ddr7500 = 3750,
+        Ddr7600 = 3800,
+        Ddr7700 = 3850,
+        Ddr7800 = 3900,
+        Ddr7900 = 3950,
+        Ddr8000 = 4000,
+        Ddr8100 = 4050,
+        Ddr8200 = 4100,
+        Ddr8300 = 4150,
+        Ddr8400 = 4200,
+        Ddr8500 = 4250,
+        Ddr8600 = 4300,
+        Ddr8700 = 4350,
+        Ddr8800 = 4400,
         UnsupportedRome = 2201,
-        UnsupportedMilan = 4401,
+        UnsupportedMilan = 4401, // and Turin
     }
 
     // Usually an array of those is used
@@ -4860,6 +5160,784 @@ Clone)]
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             matches!(entry_id, EntryId::Memory(MemoryEntryId::Ddr5CaPinMap))
         }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct PmuBistVendorAlgorithmElement {
+            pub dram_manufacturer_id || u16 : LU16 | pub get u16 : pub set u16, // jedec id
+            pub algorithm_bit_mask || u16 : LU16 | pub get u16 : pub set u16,
+        }
+    }
+
+    impl HeaderWithTail for PmuBistVendorAlgorithmElement {
+        type TailArrayItemType<'de> = ();
+    }
+
+    impl Default for PmuBistVendorAlgorithmElement {
+        fn default() -> Self {
+            Self {
+                dram_manufacturer_id: 0.into(), // FIXME
+                algorithm_bit_mask: 0.into(),   // FIXME
+            }
+        }
+    }
+
+    impl EntryCompatible for PmuBistVendorAlgorithmElement {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            matches!(
+                entry_id,
+                EntryId::Memory(MemoryEntryId::PmuBistVendorAlgorithm)
+            )
+        }
+    }
+
+    make_accessors! {
+        // FIXME default
+        #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct Ddr5RawCardConfigElementHeader32 {
+            total_size || u32 : LU32,
+
+            pub mem_clk || DdrSpeed : LU32 | pub get DdrSpeed : pub set DdrSpeed,
+            pub dimm_type: u8, // bitmap rank type
+            pub dev_width: u8, // bitmap of SDRAM IO width
+            pub _reserved_1 || #[serde(default)] u8 : u8,
+            pub _reserved_2 || #[serde(default)] u8 : u8,
+            pub rcd_manufacturer_id || u32 : LU32, // JEDEC
+            pub rcd_generation: u8,
+            pub _reserved_3 || #[serde(default)] u8 : u8,
+            pub _reserved_4 || #[serde(default)] u8 : u8,
+            pub _reserved_5 || #[serde(default)] u8 : u8,
+            pub raw_card_dev || u32 : LU32, // raw card revision
+            pub dram_die_stepping_revision || u32 : LU32,
+            pub dram_density: u8,
+            pub _reserved_6 || #[serde(default)] u8 : u8,
+            pub _reserved_7 || #[serde(default)] u8 : u8,
+            pub _reserved_8 || #[serde(default)] u8 : u8,
+        }
+    }
+    impl Getter<Result<Ddr5RawCardConfigElementHeader32>>
+        for Ddr5RawCardConfigElementHeader32
+    {
+        fn get1(self) -> Result<Self> {
+            Ok(self)
+        }
+    }
+
+    impl Setter<Ddr5RawCardConfigElementHeader32>
+        for Ddr5RawCardConfigElementHeader32
+    {
+        fn set1(&mut self, value: Self) {
+            *self = value
+        }
+    }
+
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[non_exhaustive]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    pub enum Ddr5RawCardImpedance {
+        Off = 0,
+
+        #[cfg_attr(feature = "serde", serde(rename = "10 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "10 Ohm"))]
+        _10Ohm = 10,
+
+        #[cfg_attr(feature = "serde", serde(rename = "14 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "14 Ohm"))]
+        _14Ohm = 14,
+
+        #[cfg_attr(feature = "serde", serde(rename = "20 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "20 Ohm"))]
+        _20Ohm = 20,
+
+        #[cfg_attr(feature = "serde", serde(rename = "25 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "25 Ohm"))]
+        _25Ohm = 25,
+
+        #[cfg_attr(feature = "serde", serde(rename = "26 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "26 Ohm"))]
+        _26Ohm = 26,
+
+        #[cfg_attr(feature = "serde", serde(rename = "27 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "27 Ohm"))]
+        _27Ohm = 27,
+
+        #[cfg_attr(feature = "serde", serde(rename = "28 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "28 Ohm"))]
+        _28Ohm = 28,
+
+        #[cfg_attr(feature = "serde", serde(rename = "30 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "30 Ohm"))]
+        _30Ohm = 30,
+
+        #[cfg_attr(feature = "serde", serde(rename = "32 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "32 Ohm"))]
+        _32Ohm = 32,
+
+        #[cfg_attr(feature = "serde", serde(rename = "34 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "34 Ohm"))]
+        _34Ohm = 34,
+
+        #[cfg_attr(feature = "serde", serde(rename = "36 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "36 Ohm"))]
+        _36Ohm = 36,
+
+        #[cfg_attr(feature = "serde", serde(rename = "40 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "40 Ohm"))]
+        _40Ohm = 40,
+
+        #[cfg_attr(feature = "serde", serde(rename = "43 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "43 Ohm"))]
+        _43Ohm = 43,
+
+        #[cfg_attr(feature = "serde", serde(rename = "48 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "48 Ohm"))]
+        _48Ohm = 48,
+
+        #[cfg_attr(feature = "serde", serde(rename = "53 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "53 Ohm"))]
+        _53Ohm = 53,
+
+        #[cfg_attr(feature = "serde", serde(rename = "60 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "60 Ohm"))]
+        _60Ohm = 60,
+
+        #[cfg_attr(feature = "serde", serde(rename = "68 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "68 Ohm"))]
+        _68Ohm = 68,
+
+        #[cfg_attr(feature = "serde", serde(rename = "80 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "80 Ohm"))]
+        _80Ohm = 80,
+
+        #[cfg_attr(feature = "serde", serde(rename = "96 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "96 Ohm"))]
+        _96Ohm = 96,
+
+        #[cfg_attr(feature = "serde", serde(rename = "120 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "120 Ohm"))]
+        _120Ohm = 120,
+
+        #[cfg_attr(feature = "serde", serde(rename = "160 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "160 Ohm"))]
+        _160Ohm = 160,
+
+        #[cfg_attr(feature = "serde", serde(rename = "240 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "240 Ohm"))]
+        _240Ohm = 240,
+
+        #[cfg_attr(feature = "serde", serde(rename = "480 Ω"))]
+        #[cfg_attr(feature = "serde", serde(alias = "480 Ohm"))]
+        _480Ohm = 480,
+    }
+
+    // TODO: 14, 20, 27
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[non_exhaustive]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    pub enum Ddr5RawCardDriveStrength {
+        Light = 0,
+        Moderate = 1,
+        Strong = 2,
+    }
+
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[non_exhaustive]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    pub enum Ddr5RawCardSlew {
+        Moderate = 0,
+        Fast = 1,
+        Slow = 2,
+        Default = 255, // FIXME
+    }
+
+    // Note: From name to encoding: encoding = (97.5 - name)/0.5
+    #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+    #[non_exhaustive]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    pub enum Ddr5RawCardVref {
+        #[cfg_attr(feature = "serde", serde(rename = "35.0%"))]
+        _35_0P = 0x7d,
+
+        #[cfg_attr(feature = "serde", serde(rename = "35.5%"))]
+        _35_5P = 0x7c,
+
+        #[cfg_attr(feature = "serde", serde(rename = "36.0%"))]
+        _36_0P = 0x7b,
+
+        #[cfg_attr(feature = "serde", serde(rename = "36.5%"))]
+        _36_5P = 0x7a,
+
+        #[cfg_attr(feature = "serde", serde(rename = "37.0%"))]
+        _37_0P = 0x79,
+
+        #[cfg_attr(feature = "serde", serde(rename = "37.5%"))]
+        _37_5P = 0x78,
+
+        #[cfg_attr(feature = "serde", serde(rename = "38.0%"))]
+        _38_0P = 0x77,
+
+        #[cfg_attr(feature = "serde", serde(rename = "38.5%"))]
+        _38_5P = 0x76,
+
+        #[cfg_attr(feature = "serde", serde(rename = "39.0%"))]
+        _39_0P = 0x75,
+
+        #[cfg_attr(feature = "serde", serde(rename = "39.5%"))]
+        _39_5P = 0x74,
+
+        #[cfg_attr(feature = "serde", serde(rename = "40.0%"))]
+        _40_0P = 0x73,
+
+        #[cfg_attr(feature = "serde", serde(rename = "40.5%"))]
+        _40_5P = 0x72,
+
+        #[cfg_attr(feature = "serde", serde(rename = "41.0%"))]
+        _41_0P = 0x71,
+
+        #[cfg_attr(feature = "serde", serde(rename = "41.5%"))]
+        _41_5P = 0x70,
+
+        #[cfg_attr(feature = "serde", serde(rename = "42.0%"))]
+        _42_0P = 0x6f,
+
+        #[cfg_attr(feature = "serde", serde(rename = "42.5%"))]
+        _42_5P = 0x6e,
+
+        #[cfg_attr(feature = "serde", serde(rename = "43.0%"))]
+        _43_0P = 0x6d,
+
+        #[cfg_attr(feature = "serde", serde(rename = "43.5%"))]
+        _43_5P = 0x6c,
+
+        #[cfg_attr(feature = "serde", serde(rename = "44.0%"))]
+        _44_0P = 0x6b,
+
+        #[cfg_attr(feature = "serde", serde(rename = "44.5%"))]
+        _44_5P = 0x6a,
+
+        #[cfg_attr(feature = "serde", serde(rename = "45.0%"))]
+        _45_0P = 0x69,
+
+        #[cfg_attr(feature = "serde", serde(rename = "45.5%"))]
+        _45_5P = 0x68,
+
+        #[cfg_attr(feature = "serde", serde(rename = "46.0%"))]
+        _46_0P = 0x67,
+
+        #[cfg_attr(feature = "serde", serde(rename = "46.5%"))]
+        _46_5P = 0x66,
+
+        #[cfg_attr(feature = "serde", serde(rename = "47.0%"))]
+        _47_0P = 0x65,
+
+        #[cfg_attr(feature = "serde", serde(rename = "47.5%"))]
+        _47_5P = 0x64,
+
+        #[cfg_attr(feature = "serde", serde(rename = "48.0%"))]
+        _48_0P = 0x63,
+
+        #[cfg_attr(feature = "serde", serde(rename = "48.5%"))]
+        _48_5P = 0x62,
+
+        #[cfg_attr(feature = "serde", serde(rename = "49.0%"))]
+        _49_0P = 0x61,
+
+        #[cfg_attr(feature = "serde", serde(rename = "49.5%"))]
+        _49_5P = 0x60,
+
+        #[cfg_attr(feature = "serde", serde(rename = "50.0%"))]
+        _50_0P = 0x5f,
+
+        #[cfg_attr(feature = "serde", serde(rename = "50.5%"))]
+        _50_5P = 0x5e,
+
+        #[cfg_attr(feature = "serde", serde(rename = "51.0%"))]
+        _51_0P = 0x5d,
+
+        #[cfg_attr(feature = "serde", serde(rename = "51.5%"))]
+        _51_5P = 0x5c,
+
+        #[cfg_attr(feature = "serde", serde(rename = "52.0%"))]
+        _52_0P = 0x5b,
+
+        #[cfg_attr(feature = "serde", serde(rename = "52.5%"))]
+        _52_5P = 0x5a,
+
+        #[cfg_attr(feature = "serde", serde(rename = "53.0%"))]
+        _53_0P = 0x59,
+
+        #[cfg_attr(feature = "serde", serde(rename = "53.5%"))]
+        _53_5P = 0x58,
+
+        #[cfg_attr(feature = "serde", serde(rename = "54.0%"))]
+        _54_0P = 0x57,
+
+        #[cfg_attr(feature = "serde", serde(rename = "54.5%"))]
+        _54_5P = 0x56,
+
+        #[cfg_attr(feature = "serde", serde(rename = "55.0%"))]
+        _55_0P = 0x55,
+
+        #[cfg_attr(feature = "serde", serde(rename = "55.5%"))]
+        _55_5P = 0x54,
+
+        #[cfg_attr(feature = "serde", serde(rename = "56.0%"))]
+        _56_0P = 0x53,
+
+        #[cfg_attr(feature = "serde", serde(rename = "56.5%"))]
+        _56_5P = 0x52,
+
+        #[cfg_attr(feature = "serde", serde(rename = "57.0%"))]
+        _57_0P = 0x51,
+
+        #[cfg_attr(feature = "serde", serde(rename = "57.5%"))]
+        _57_5P = 0x50,
+
+        #[cfg_attr(feature = "serde", serde(rename = "58.0%"))]
+        _58_0P = 0x4f,
+
+        #[cfg_attr(feature = "serde", serde(rename = "58.5%"))]
+        _58_5P = 0x4e,
+
+        #[cfg_attr(feature = "serde", serde(rename = "59.0%"))]
+        _59_0P = 0x4d,
+
+        #[cfg_attr(feature = "serde", serde(rename = "59.5%"))]
+        _59_5P = 0x4c,
+
+        #[cfg_attr(feature = "serde", serde(rename = "60.0%"))]
+        _60_0P = 0x4b,
+
+        #[cfg_attr(feature = "serde", serde(rename = "60.5%"))]
+        _60_5P = 0x4a,
+
+        #[cfg_attr(feature = "serde", serde(rename = "61.0%"))]
+        _61_0P = 0x49,
+
+        #[cfg_attr(feature = "serde", serde(rename = "61.5%"))]
+        _61_5P = 0x48,
+
+        #[cfg_attr(feature = "serde", serde(rename = "62.0%"))]
+        _62_0P = 0x47,
+
+        #[cfg_attr(feature = "serde", serde(rename = "62.5%"))]
+        _62_5P = 0x46,
+
+        #[cfg_attr(feature = "serde", serde(rename = "63.0%"))]
+        _63_0P = 0x45,
+
+        #[cfg_attr(feature = "serde", serde(rename = "63.5%"))]
+        _63_5P = 0x44,
+
+        #[cfg_attr(feature = "serde", serde(rename = "64.0%"))]
+        _64_0P = 0x43,
+
+        #[cfg_attr(feature = "serde", serde(rename = "64.5%"))]
+        _64_5P = 0x42,
+
+        #[cfg_attr(feature = "serde", serde(rename = "65.0%"))]
+        _65_0P = 0x41,
+
+        #[cfg_attr(feature = "serde", serde(rename = "65.5%"))]
+        _65_5P = 0x40,
+
+        #[cfg_attr(feature = "serde", serde(rename = "66.0%"))]
+        _66_0P = 0x3f,
+
+        #[cfg_attr(feature = "serde", serde(rename = "66.5%"))]
+        _66_5P = 0x3e,
+
+        #[cfg_attr(feature = "serde", serde(rename = "67.0%"))]
+        _67_0P = 0x3d,
+
+        #[cfg_attr(feature = "serde", serde(rename = "67.5%"))]
+        _67_5P = 0x3c,
+
+        #[cfg_attr(feature = "serde", serde(rename = "68.0%"))]
+        _68_0P = 0x3b,
+
+        #[cfg_attr(feature = "serde", serde(rename = "68.5%"))]
+        _68_5P = 0x3a,
+
+        #[cfg_attr(feature = "serde", serde(rename = "69.0%"))]
+        _69_0P = 0x39,
+
+        #[cfg_attr(feature = "serde", serde(rename = "69.5%"))]
+        _69_5P = 0x38,
+
+        #[cfg_attr(feature = "serde", serde(rename = "70.0%"))]
+        _70_0P = 0x37,
+
+        #[cfg_attr(feature = "serde", serde(rename = "70.5%"))]
+        _70_5P = 0x36,
+
+        #[cfg_attr(feature = "serde", serde(rename = "71.0%"))]
+        _71_0P = 0x35,
+
+        #[cfg_attr(feature = "serde", serde(rename = "71.5%"))]
+        _71_5P = 0x34,
+
+        #[cfg_attr(feature = "serde", serde(rename = "72.0%"))]
+        _72_0P = 0x33,
+
+        #[cfg_attr(feature = "serde", serde(rename = "72.5%"))]
+        _72_5P = 0x32,
+
+        #[cfg_attr(feature = "serde", serde(rename = "73.0%"))]
+        _73_0P = 0x31,
+
+        #[cfg_attr(feature = "serde", serde(rename = "73.5%"))]
+        _73_5P = 0x30,
+
+        #[cfg_attr(feature = "serde", serde(rename = "74.0%"))]
+        _74_0P = 0x2f,
+
+        #[cfg_attr(feature = "serde", serde(rename = "74.5%"))]
+        _74_5P = 0x2e,
+
+        #[cfg_attr(feature = "serde", serde(rename = "75.0%"))]
+        _75_0P = 0x2d,
+
+        #[cfg_attr(feature = "serde", serde(rename = "75.5%"))]
+        _75_5P = 0x2c,
+
+        #[cfg_attr(feature = "serde", serde(rename = "76.0%"))]
+        _76_0P = 0x2b,
+
+        #[cfg_attr(feature = "serde", serde(rename = "76.5%"))]
+        _76_5P = 0x2a,
+
+        #[cfg_attr(feature = "serde", serde(rename = "77.0%"))]
+        _77_0P = 0x29,
+
+        #[cfg_attr(feature = "serde", serde(rename = "77.5%"))]
+        _77_5P = 0x28,
+
+        #[cfg_attr(feature = "serde", serde(rename = "78.0%"))]
+        _78_0P = 0x27,
+
+        #[cfg_attr(feature = "serde", serde(rename = "78.5%"))]
+        _78_5P = 0x26,
+
+        #[cfg_attr(feature = "serde", serde(rename = "79.0%"))]
+        _79_0P = 0x25,
+
+        #[cfg_attr(feature = "serde", serde(rename = "79.5%"))]
+        _79_5P = 0x24,
+
+        #[cfg_attr(feature = "serde", serde(rename = "80.0%"))]
+        _80_0P = 0x23,
+
+        #[cfg_attr(feature = "serde", serde(rename = "80.5%"))]
+        _80_5P = 0x22,
+
+        #[cfg_attr(feature = "serde", serde(rename = "81.0%"))]
+        _81_0P = 0x21,
+
+        #[cfg_attr(feature = "serde", serde(rename = "81.5%"))]
+        _81_5P = 0x20,
+
+        #[cfg_attr(feature = "serde", serde(rename = "82.0%"))]
+        _82_0P = 0x1f,
+
+        #[cfg_attr(feature = "serde", serde(rename = "82.5%"))]
+        _82_5P = 0x1e,
+
+        #[cfg_attr(feature = "serde", serde(rename = "83.0%"))]
+        _83_0P = 0x1d,
+
+        #[cfg_attr(feature = "serde", serde(rename = "83.5%"))]
+        _83_5P = 0x1c,
+
+        #[cfg_attr(feature = "serde", serde(rename = "84.0%"))]
+        _84_0P = 0x1b,
+
+        #[cfg_attr(feature = "serde", serde(rename = "84.5%"))]
+        _84_5P = 0x1a,
+
+        #[cfg_attr(feature = "serde", serde(rename = "85.0%"))]
+        _85_0P = 0x19,
+
+        #[cfg_attr(feature = "serde", serde(rename = "85.5%"))]
+        _85_5P = 0x18,
+
+        #[cfg_attr(feature = "serde", serde(rename = "86.0%"))]
+        _86_0P = 0x17,
+
+        #[cfg_attr(feature = "serde", serde(rename = "86.5%"))]
+        _86_5P = 0x16,
+
+        #[cfg_attr(feature = "serde", serde(rename = "87.0%"))]
+        _87_0P = 0x15,
+
+        #[cfg_attr(feature = "serde", serde(rename = "87.5%"))]
+        _87_5P = 0x14,
+
+        #[cfg_attr(feature = "serde", serde(rename = "88.0%"))]
+        _88_0P = 0x13,
+
+        #[cfg_attr(feature = "serde", serde(rename = "88.5%"))]
+        _88_5P = 0x12,
+
+        #[cfg_attr(feature = "serde", serde(rename = "89.0%"))]
+        _89_0P = 0x11,
+
+        #[cfg_attr(feature = "serde", serde(rename = "89.5%"))]
+        _89_5P = 0x10,
+
+        #[cfg_attr(feature = "serde", serde(rename = "90.0%"))]
+        _90_0P = 0x0f,
+
+        #[cfg_attr(feature = "serde", serde(rename = "90.5%"))]
+        _90_5P = 0x0e,
+
+        #[cfg_attr(feature = "serde", serde(rename = "91.0%"))]
+        _91_0P = 0x0d,
+
+        #[cfg_attr(feature = "serde", serde(rename = "91.5%"))]
+        _91_5P = 0x0c,
+
+        #[cfg_attr(feature = "serde", serde(rename = "92.0%"))]
+        _92_0P = 0x0b,
+
+        #[cfg_attr(feature = "serde", serde(rename = "92.5%"))]
+        _92_5P = 0x0a,
+
+        #[cfg_attr(feature = "serde", serde(rename = "93.0%"))]
+        _93_0P = 0x09,
+
+        #[cfg_attr(feature = "serde", serde(rename = "93.5%"))]
+        _93_5P = 0x08,
+
+        #[cfg_attr(feature = "serde", serde(rename = "94.0%"))]
+        _94_0P = 0x07,
+
+        #[cfg_attr(feature = "serde", serde(rename = "94.5%"))]
+        _94_5P = 0x06,
+
+        #[cfg_attr(feature = "serde", serde(rename = "95.0%"))]
+        _95_0P = 0x05,
+
+        #[cfg_attr(feature = "serde", serde(rename = "95.5%"))]
+        _95_5P = 0x04,
+
+        #[cfg_attr(feature = "serde", serde(rename = "96.0%"))]
+        _96_0P = 0x03,
+
+        #[cfg_attr(feature = "serde", serde(rename = "96.5%"))]
+        _96_5P = 0x02,
+
+        #[cfg_attr(feature = "serde", serde(rename = "97.0%"))]
+        _97_0P = 0x01,
+
+        #[cfg_attr(feature = "serde", serde(rename = "97.5%"))]
+        _97_5P = 0x00,
+    }
+
+    make_accessors! {
+        // FIXME default
+        #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct Ddr5RawCardConfigElementPayload {
+            total_size || u32 : LU32,
+
+            pub qck_dev0 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qck_dev1 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qck_dev2 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qck_dev3 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qck_dev4 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qck_dev5 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qck_dev6 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qck_dev7 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qck_dev8 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qck_dev9 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qck_drive_strength || u16 : LU16,
+            pub qck_slew || Ddr5RawCardSlew : LU16,
+
+            pub qcs_dev0 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qcs_dev1 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qcs_dev2 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qcs_dev3 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qcs_dev4 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qcs_dev5 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qcs_dev6 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qcs_dev7 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qcs_dev8 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qcs_dev9 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qcs_drive_strength || u16 : LU16,
+            pub qcs_slew || Ddr5RawCardSlew : LU16,
+            pub qcs_vref || Ddr5RawCardVref : LU16 | pub get Ddr5RawCardVref : pub set Ddr5RawCardVref,
+
+            pub qca_dev0 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qca_dev1 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qca_dev2 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qca_dev3 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qca_dev4 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qca_dev5 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qca_dev6 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qca_dev7 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qca_dev8 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qca_dev9 || Ddr5RawCardImpedance : LU16 | pub get Ddr5RawCardImpedance : pub set Ddr5RawCardImpedance,
+            pub qca_drive_strength || u16 : LU16,
+            pub qca_slew || Ddr5RawCardSlew : LU16,
+            pub qca_vref || Ddr5RawCardVref : LU16 | pub get Ddr5RawCardVref : pub set Ddr5RawCardVref,
+        }
+    }
+    impl Ddr5RawCardConfigElementPayload {
+        pub fn qck_drive_strength(
+            &self,
+        ) -> Result<Option<Ddr5RawCardDriveStrength>> {
+            Ok(match self.qck_drive_strength.get() {
+                0xff => None,
+                x => Some(
+                    Ddr5RawCardDriveStrength::from_u16(x)
+                        .ok_or(Error::EntryTypeMismatch)?,
+                ),
+            })
+        }
+        pub fn set_qck_drive_strength(
+            &mut self,
+            value: Option<Ddr5RawCardDriveStrength>,
+        ) {
+            self.qck_drive_strength.set(match value {
+                None => 0xff,
+                Some(x) => x.to_u16().unwrap(),
+            })
+        }
+        pub fn qck_slew(&self) -> Result<Option<Ddr5RawCardSlew>> {
+            Ok(match self.qck_slew.get() {
+                0xff => None,
+                x => Some(
+                    Ddr5RawCardSlew::from_u16(x)
+                        .ok_or(Error::EntryTypeMismatch)?,
+                ),
+            })
+        }
+        pub fn set_qck_slew(&mut self, value: Option<Ddr5RawCardSlew>) {
+            self.qck_slew.set(match value {
+                None => 0xff,
+                Some(x) => x.to_u16().unwrap(),
+            })
+        }
+        pub fn qcs_drive_strength(
+            &self,
+        ) -> Result<Option<Ddr5RawCardDriveStrength>> {
+            Ok(match self.qcs_drive_strength.get() {
+                0xff => None,
+                x => Some(
+                    Ddr5RawCardDriveStrength::from_u16(x)
+                        .ok_or(Error::EntryTypeMismatch)?,
+                ),
+            })
+        }
+        pub fn set_qcs_drive_strength(
+            &mut self,
+            value: Option<Ddr5RawCardDriveStrength>,
+        ) {
+            self.qcs_drive_strength.set(match value {
+                None => 0xff,
+                Some(x) => x.to_u16().unwrap(),
+            })
+        }
+        pub fn qcs_slew(&self) -> Result<Option<Ddr5RawCardSlew>> {
+            Ok(match self.qcs_slew.get() {
+                0xff => None,
+                x => Some(
+                    Ddr5RawCardSlew::from_u16(x)
+                        .ok_or(Error::EntryTypeMismatch)?,
+                ),
+            })
+        }
+        pub fn set_qcs_slew(&mut self, value: Option<Ddr5RawCardSlew>) {
+            self.qcs_slew.set(match value {
+                None => 0xff,
+                Some(x) => x.to_u16().unwrap(),
+            })
+        }
+
+        pub fn qca_drive_strength(
+            &self,
+        ) -> Result<Option<Ddr5RawCardDriveStrength>> {
+            Ok(match self.qca_drive_strength.get() {
+                0xff => None,
+                x => Some(
+                    Ddr5RawCardDriveStrength::from_u16(x)
+                        .ok_or(Error::EntryTypeMismatch)?,
+                ),
+            })
+        }
+        pub fn set_qca_drive_strength(
+            &mut self,
+            value: Option<Ddr5RawCardDriveStrength>,
+        ) {
+            self.qca_drive_strength.set(match value {
+                None => 0xff,
+                Some(x) => x.to_u16().unwrap(),
+            })
+        }
+        pub fn qca_slew(&self) -> Result<Option<Ddr5RawCardSlew>> {
+            Ok(match self.qca_slew.get() {
+                0xff => None,
+                x => Some(
+                    Ddr5RawCardSlew::from_u16(x)
+                        .ok_or(Error::EntryTypeMismatch)?,
+                ),
+            })
+        }
+        pub fn set_qca_slew(&mut self, value: Option<Ddr5RawCardSlew>) {
+            self.qca_slew.set(match value {
+                None => 0xff,
+                Some(x) => x.to_u16().unwrap(),
+            })
+        }
+    }
+    impl Getter<Result<Ddr5RawCardConfigElementPayload>>
+        for Ddr5RawCardConfigElementPayload
+    {
+        fn get1(self) -> Result<Self> {
+            Ok(self)
+        }
+    }
+
+    impl Setter<Ddr5RawCardConfigElementPayload>
+        for Ddr5RawCardConfigElementPayload
+    {
+        fn set1(&mut self, value: Self) {
+            *self = value
+        }
+    }
+
+    make_accessors! {
+        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct Ddr5RawCardConfigElement {
+            header: Ddr5RawCardConfigElementHeader32,
+            payload: Ddr5RawCardConfigElementPayload,
+        }
+    }
+
+    impl EntryCompatible for Ddr5RawCardConfigElement {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            matches!(
+                entry_id,
+                EntryId::Memory(MemoryEntryId::Ddr5RawCardConfig)
+            )
+        }
+    }
+
+    impl HeaderWithTail for Ddr5RawCardConfigElement {
+        type TailArrayItemType<'de> = ();
     }
 
     pub mod platform_specific_override {
@@ -6260,14 +7338,14 @@ Clone)]
             const_assert!(size_of::<RdimmDdr5BusElementHeader>() == 12);
             const_assert!(size_of::<RdimmDdr5BusElementPayload>() == 124);
             const_assert!(size_of::<RdimmDdr5BusElement>() == 12 + 124);
-            const_assert!(size_of::<MemDfeSearchElementHeader>() == 8);
-            const_assert!(size_of::<MemDfeSearchElementPayload>() == 12);
-            const_assert!(size_of::<MemDfeSearchElementPayloadExt>() == 10);
-            const_assert!(size_of::<MemDfeSearchElement32>() == 32);
+            const_assert!(size_of::<MemDfeSearchElementHeader12>() == 12);
+            const_assert!(size_of::<MemDfeSearchElementPayload12>() == 12);
+            const_assert!(size_of::<MemDfeSearchElementPayloadExt12>() == 12);
+            const_assert!(size_of::<MemDfeSearchElement36>() == 36);
+            assert!(offset_of!(MemDfeSearchElement36, payload) == 12);
+            assert!(offset_of!(MemDfeSearchElement36, payload_ext) == 24);
             assert!(offset_of!(MemDfeSearchElement32, payload) == 8);
-            assert!(offset_of!(MemDfeSearchElement32, payload_ext) == 8 + 12);
-            assert!(offset_of!(MemDfeSearchElement20, payload) == 8);
-            const_assert!(size_of::<MemDfeSearchElement20>() == 20);
+            const_assert!(size_of::<MemDfeSearchElement32>() == 32);
         }
 
         #[test]
@@ -6637,6 +7715,44 @@ pub mod fch {
     }
 
     impl HeaderWithTail for EspiInit {
+        type TailArrayItemType<'de> = ();
+    }
+
+    #[derive(
+        Debug, Default, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone,
+    )]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    pub enum EspiSioAccessWidth {
+        Terminator = 0, // XXX
+        #[cfg_attr(feature = "serde", serde(rename = "8 Bit"))]
+        _8Bit = 1,
+        #[cfg_attr(feature = "serde", serde(rename = "16 Bit"))]
+        _16Bit = 2,
+        #[cfg_attr(feature = "serde", serde(rename = "32 Bit"))]
+        #[default]
+        _32Bit = 4,
+    }
+
+    make_accessors! {
+        #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct EspiSioInitElement {
+            io_port || SerdeHex16 : LU16 | pub get u16 : pub set u16,
+            access_width || EspiSioAccessWidth : LU16 | pub get EspiSioAccessWidth : pub set EspiSioAccessWidth,
+            data_mask || SerdeHex32 : LU32 | pub get u32 : pub set u32,
+            data_or || SerdeHex32 : LU32 | pub get u32 : pub set u32,
+        }
+    }
+
+    impl EntryCompatible for EspiSioInitElement {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            matches!(entry_id, EntryId::Fch(FchEntryId::EspiSioInit))
+        }
+    }
+
+    impl HeaderWithTail for EspiSioInitElement {
         type TailArrayItemType<'de> = ();
     }
 
