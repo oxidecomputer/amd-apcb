@@ -12,7 +12,9 @@ use crate::ondisk::{
 };
 use crate::ondisk::{Parameters, ParametersIter};
 use crate::tokens_entry::TokensEntryBodyItem;
-use crate::types::{Error, FileSystemError, Result};
+use crate::types::{
+    ApcbContext, Error, FileSystemError, MemDfeSearchVersion, Result,
+};
 use core::marker::PhantomData;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
@@ -46,6 +48,7 @@ impl<'a> EntryItemBody<&'a mut [u8]> {
     pub(crate) fn from_slice(
         header: &ENTRY_HEADER,
         b: &'a mut [u8],
+        context: ApcbContext,
     ) -> Result<EntryItemBody<&'a mut [u8]>> {
         let context_type = ContextType::from_u8(header.context_type).ok_or(
             Error::FileSystem(
@@ -66,7 +69,7 @@ impl<'a> EntryItemBody<&'a mut [u8]> {
             ContextType::Tokens => {
                 let used_size = b.len();
                 Ok(Self::Tokens(TokensEntryBodyItem::<&mut [u8]>::new(
-                    header, b, used_size,
+                    header, b, used_size, context,
                 )?))
             }
             ContextType::Parameters => Err(Error::EntryTypeMismatch),
@@ -78,6 +81,7 @@ impl<'a> EntryItemBody<&'a [u8]> {
     pub(crate) fn from_slice(
         header: &ENTRY_HEADER,
         b: &'a [u8],
+        context: ApcbContext,
     ) -> Result<EntryItemBody<&'a [u8]>> {
         let context_type = ContextType::from_u8(header.context_type).ok_or(
             Error::FileSystem(
@@ -98,7 +102,7 @@ impl<'a> EntryItemBody<&'a [u8]> {
             ContextType::Tokens => {
                 let used_size = b.len();
                 Ok(Self::Tokens(TokensEntryBodyItem::<&[u8]>::new(
-                    header, b, used_size,
+                    header, b, used_size, context,
                 )?))
             }
             ContextType::Parameters => Err(Error::EntryTypeMismatch),
@@ -117,6 +121,7 @@ impl<'a> EntryItemBody<&'a [u8]> {
 
 #[derive(Debug)]
 pub struct EntryMutItem<'a> {
+    pub(crate) context: ApcbContext,
     pub(crate) header: &'a mut ENTRY_HEADER,
     pub body: EntryItemBody<&'a mut [u8]>,
 }
@@ -420,6 +425,7 @@ use std::fmt;
 
 #[derive(Clone)]
 pub struct EntryItem<'a> {
+    pub(crate) context: ApcbContext,
     pub(crate) header: &'a ENTRY_HEADER,
     pub body: EntryItemBody<&'a [u8]>,
 }
@@ -677,12 +683,6 @@ impl<'a> Serialize for EntryItem<'a> {
                 } else if let Some(s) = self.body_as_struct_array::<memory::Ddr5CaPinMapElement>() {
                     let v = s.iter().collect::<Vec<_>>();
                     state.serialize_field("Ddr5CaPinMapElement", &v)?;
-//                } else if let Some(s) = self.body_as_struct_array::<memory::MemDfeSearchElement32>() { // UH OH
-//                    let v = s.iter().collect::<Vec<_>>();
-//                    state.serialize_field("MemDfeSearchElement32", &v)?;
-                } else if let Some(s) = self.body_as_struct_array::<memory::MemDfeSearchElement36>() {
-                    let v = s.iter().collect::<Vec<_>>();
-                    state.serialize_field("MemDfeSearchElement36", &v)?;
                 } else if let Some(s) = self.body_as_struct_array::<memory::DdrDqPinMapElement>() {
                     let v = s.iter().collect::<Vec<_>>();
                     state.serialize_field("DdrDqPinMapElement", &v)?;
@@ -747,7 +747,27 @@ self.body_as_struct_sequence::<memory::platform_tuning::ElementRef<'_>>() {
                     let v = parameters.collect::<Vec<_>>();
                     state.serialize_field("parameters", &v)?;
                 } else {
-                    state.serialize_field("struct_body", &buf)?;
+                    match self.context.mem_dfe_search_version() {
+                        Some(MemDfeSearchVersion::Genoa2) => {
+                            if let Some(s) = self.body_as_struct_array::<memory::MemDfeSearchElement32>() {
+                                    let v = s.iter().collect::<Vec<_>>();
+                                    state.serialize_field("MemDfeSearchElement32", &v)?;
+                            } else {
+                                    state.serialize_field("struct_body", &buf)?;
+                             }
+                        },
+                        Some(MemDfeSearchVersion::Turin1) => {
+                                if let Some(s) = self.body_as_struct_array::<memory::MemDfeSearchElement36>() {
+                                    let v = s.iter().collect::<Vec<_>>();
+                                    state.serialize_field("MemDfeSearchElement36", &v)?;
+                                } else {
+                                    state.serialize_field("struct_body", &buf)?;
+                                }
+                          }
+                          _ => {
+                                state.serialize_field("struct_body", &buf)?;
+                          }
+                    }
                 }
             }
         }
@@ -1223,12 +1243,22 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
                             )?;
                         }
                         Field::MemDfeSearchElement32 => {
+                            // TODO: maybe also sanity-check
+                            // context.mem_dfe_search_version()
+                            // Note: context.mem_dfe_search_version is optional.
+                            // If it's not specified, it deserialization should
+                            // still work.
                             struct_vec_to_body::<
                                 memory::MemDfeSearchElement32,
                                 V,
                             >(&mut body, &mut map)?;
                         }
                         Field::MemDfeSearchElement36 => {
+                            // TODO: maybe also sanity-check
+                            // context.mem_dfe_search_version()
+                            // Note: context.mem_dfe_search_version is optional.
+                            // If it's not specified, it deserialization should
+                            // still work.
                             struct_vec_to_body::<
                                 memory::MemDfeSearchElement36,
                                 V,

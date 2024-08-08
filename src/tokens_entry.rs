@@ -7,7 +7,7 @@ use crate::ondisk::{
     ByteToken, ContextFormat, DwordToken, TokenEntryId, WordToken,
     ENTRY_HEADER, TOKEN_ENTRY,
 };
-use crate::types::{Error, FileSystemError, Result};
+use crate::types::{ApcbContext, Error, FileSystemError, Result};
 use core::convert::TryFrom;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
@@ -27,6 +27,7 @@ pub struct TokensEntryBodyItem<BufferType> {
     entry_id: u16,
     buf: BufferType,
     used_size: usize,
+    context: ApcbContext,
 }
 
 // Note: Only construct those if unit_size, key_pos and key_size are correct!
@@ -42,6 +43,7 @@ impl<BufferType> TokensEntryBodyItem<BufferType> {
         header: &ENTRY_HEADER,
         buf: BufferType,
         used_size: usize,
+        context: ApcbContext,
     ) -> Result<Self> {
         Ok(Self {
             unit_size: header.unit_size,
@@ -51,6 +53,7 @@ impl<BufferType> TokensEntryBodyItem<BufferType> {
             entry_id: header.entry_id.get(),
             buf,
             used_size,
+            context,
         })
     }
     pub(crate) fn prepare_iter(&self) -> Result<TokenEntryId> {
@@ -522,7 +525,7 @@ impl<'a> TokensEntryIter<&'a [u8]> {
         }
     }
     /// Validates the entries (recursively).  Also consumes iterator.
-    pub(crate) fn validate(mut self) -> Result<()> {
+    pub(crate) fn validate(mut self, context: ApcbContext) -> Result<()> {
         let context_format = ContextFormat::from_u8(self.context_format)
             .ok_or(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
@@ -584,7 +587,7 @@ impl<BufferType: ByteSlice> TokensEntryBodyItem<BufferType> {
         (self.iter().ok()?).find(|entry| entry.id() == token_id)
     }
     pub fn validate(&self) -> Result<()> {
-        self.iter()?.validate()
+        self.iter()?.validate(self.context)
     }
 }
 

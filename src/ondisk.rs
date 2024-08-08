@@ -7,6 +7,7 @@
 
 //#![feature(trace_macros)] trace_macros!(true);
 #![allow(non_snake_case)]
+#![allow(clippy::new_without_default)]
 
 pub use crate::naples::{ParameterTimePoint, ParameterTokenConfig};
 use crate::struct_accessors::{make_accessors, Getter, Setter};
