@@ -59,6 +59,8 @@ pub enum Error {
     // Errors used only for Serde
     #[cfg_attr(feature = "std", error("entry not extractable"))]
     EntryNotExtractable,
+    #[cfg_attr(feature = "std", error("context mismatch"))]
+    ContextMismatch,
 }
 
 pub type Result<Q> = core::result::Result<Q, Error>;
@@ -83,3 +85,50 @@ pub(crate) type PtrMut<'a, T> = Cow<'a, T>;
 
 #[cfg(not(feature = "std"))]
 pub(crate) type PtrMut<'a, T> = &'a mut T;
+
+// Note: The integer is 0x100 * MemDfeSearchElement.header_size + 0x10000 *
+// MemDfeSearchElement.payload_size + 0x1000000 *
+// MemDfeSearchElement.payload_ext_size
+// and is mostly for debugging
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[non_exhaustive]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)] // FIXME: Remove Copy?
+pub enum MemDfeSearchVersion {
+    /// At least Genoa 1.0.0.? or lower.
+    Genoa1 = 0x000c08,
+    /// At least Genoa 1.0.0.8 or higher.
+    Genoa2 = 0x0c0c08,
+    /// At least Raphael AM5 1.7.0 or higher.
+    /// At least Granite Ridge AM5 1.7.0 or higher.
+    // At least Fire Range 0.0.6.0 or higher.
+    Turin1 = 0x0c0c0c,
+}
+
+#[derive(Copy, Clone, Debug, Default)] // TODO: Remove Copy?
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct ApcbContext {
+    #[cfg_attr(feature = "serde", serde(default))]
+    mem_dfe_search_version: Option<MemDfeSearchVersion>,
+}
+
+impl ApcbContext {
+    pub fn builder() -> Self {
+        Self::default()
+    }
+    pub fn mem_dfe_search_version(&self) -> Option<MemDfeSearchVersion> {
+        self.mem_dfe_search_version
+    }
+    pub fn with_mem_dfe_search_version(
+        &mut self,
+        value: Option<MemDfeSearchVersion>,
+    ) -> &mut Self {
+        self.mem_dfe_search_version = value;
+        self
+    }
+    pub fn build(&self) -> Self {
+        *self
+    }
+}

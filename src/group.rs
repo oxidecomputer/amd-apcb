@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::types::{Error, FileSystemError, Result};
+use crate::types::{ApcbContext, Error, FileSystemError, Result};
 
 use crate::entry::{EntryItem, EntryItemBody, EntryMutItem};
 use crate::ondisk::GroupId;
@@ -25,6 +25,7 @@ use pre::pre;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct GroupItem<'a> {
+    pub(crate) context: ApcbContext,
     pub(crate) header: &'a GROUP_HEADER,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) buf: &'a [u8],
@@ -60,6 +61,7 @@ impl<'a> schemars::JsonSchema for GroupItem<'a> {
 
 #[derive(Debug)]
 pub struct GroupIter<'a> {
+    pub(crate) context: ApcbContext,
     pub(crate) header: &'a GROUP_HEADER,
     buf: &'a [u8],
     remaining_used_size: usize,
@@ -82,7 +84,10 @@ impl<'a> GroupIter<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what
     /// this function does. Note: The caller needs to manually decrease
     /// remaining_used_size for each call if desired.
-    fn next_item<'b>(buf: &mut &'b [u8]) -> Result<EntryItem<'b>> {
+    fn next_item<'b>(
+        context: ApcbContext,
+        buf: &mut &'b [u8],
+    ) -> Result<EntryItem<'b>> {
         if buf.is_empty() {
             return Err(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
@@ -125,16 +130,16 @@ impl<'a> GroupIter<'a> {
             }
         };
 
-        let body = EntryItemBody::<&[u8]>::from_slice(header, body)?;
+        let body = EntryItemBody::<&[u8]>::from_slice(header, body, context)?;
 
-        Ok(EntryItem { header, body })
+        Ok(EntryItem { context, header, body })
     }
 
     pub(crate) fn next1(&mut self) -> Result<EntryItem<'a>> {
         if self.remaining_used_size == 0 {
             panic!("Internal error");
         }
-        match Self::next_item(&mut self.buf) {
+        match Self::next_item(self.context, &mut self.buf) {
             Ok(e) => {
                 if e.header.group_id.get() == self.header.group_id.get() {
                 } else {
@@ -219,6 +224,7 @@ impl GroupItem<'_> {
 
     pub fn entries(&self) -> GroupIter<'_> {
         GroupIter {
+            context: self.context,
             header: self.header,
             buf: self.buf,
             remaining_used_size: self.used_size,
@@ -241,6 +247,7 @@ impl core::fmt::Debug for GroupItem<'_> {
 
 #[derive(Debug)]
 pub struct GroupMutIter<'a> {
+    pub(crate) context: ApcbContext,
     pub(crate) header: &'a mut GROUP_HEADER,
     buf: &'a mut [u8],
     remaining_used_size: usize,
@@ -250,7 +257,10 @@ impl<'a> GroupMutIter<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what
     /// this function does. Note: The caller needs to manually decrease
     /// remaining_used_size for each call if desired.
-    fn next_item<'b>(buf: &mut &'b mut [u8]) -> Result<EntryMutItem<'b>> {
+    fn next_item<'b>(
+        context: ApcbContext,
+        buf: &mut &'b mut [u8],
+    ) -> Result<EntryMutItem<'b>> {
         if buf.is_empty() {
             return Err(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
@@ -289,8 +299,9 @@ impl<'a> GroupMutIter<'a> {
             }
         };
 
-        let body = EntryItemBody::<&mut [u8]>::from_slice(header, body)?;
-        Ok(EntryMutItem { header, body })
+        let body =
+            EntryItemBody::<&mut [u8]>::from_slice(header, body, context)?;
+        Ok(EntryMutItem { context, header, body })
     }
 
     /// Find the place BEFORE which the entry (GROUP_ID, ENTRY_ID, INSTANCE_ID,
@@ -307,7 +318,7 @@ impl<'a> GroupMutIter<'a> {
             if buf.is_empty() {
                 break;
             }
-            match Self::next_item(&mut buf) {
+            match Self::next_item(self.context, &mut buf) {
                 Ok(e) => {
                     if (
                         e.group_id(),
@@ -355,7 +366,7 @@ impl<'a> GroupMutIter<'a> {
             if buf.is_empty() {
                 return Err(Error::EntryNotFound);
             }
-            match Self::next_item(&mut buf) {
+            match Self::next_item(self.context, &mut buf) {
                 Ok(e) => {
                     let entry_size = e.header.entry_size.get();
                     if (e.id(), e.instance_id(), e.board_instance_mask())
@@ -487,6 +498,7 @@ impl<'a> GroupMutIter<'a> {
 
 #[derive(Debug)]
 pub struct GroupMutItem<'a> {
+    pub(crate) context: ApcbContext,
     pub(crate) header: &'a mut GROUP_HEADER,
     pub(crate) buf: &'a mut [u8],
     pub(crate) used_size: usize,
@@ -688,6 +700,7 @@ impl<'a> GroupMutItem<'a> {
 
     pub fn entries(&self) -> GroupIter<'_> {
         GroupIter {
+            context: self.context,
             header: self.header,
             buf: self.buf,
             remaining_used_size: self.used_size,
@@ -696,6 +709,7 @@ impl<'a> GroupMutItem<'a> {
 
     pub fn entries_mut(&mut self) -> GroupMutIter<'_> {
         GroupMutIter {
+            context: self.context,
             header: self.header,
             buf: self.buf,
             remaining_used_size: self.used_size,
@@ -710,7 +724,7 @@ impl<'a> Iterator for GroupMutIter<'a> {
         if self.remaining_used_size == 0 {
             return None;
         }
-        match Self::next_item(&mut self.buf) {
+        match Self::next_item(self.context, &mut self.buf) {
             Ok(e) => {
                 assert!(e.header.group_id.get() == self.header.group_id.get());
                 let entry_size = e.header.entry_size.get() as usize;
