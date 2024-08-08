@@ -117,6 +117,7 @@ impl<'a> EntryItemBody<&'a [u8]> {
 
 #[derive(Debug)]
 pub struct EntryMutItem<'a> {
+    pub(crate) context: u64,
     pub(crate) header: &'a mut ENTRY_HEADER,
     pub body: EntryItemBody<&'a mut [u8]>,
 }
@@ -420,6 +421,7 @@ use std::fmt;
 
 #[derive(Clone)]
 pub struct EntryItem<'a> {
+    pub(crate) context: u64,
     pub(crate) header: &'a ENTRY_HEADER,
     pub body: EntryItemBody<&'a [u8]>,
 }
@@ -628,6 +630,7 @@ impl<'a> Serialize for EntryItem<'a> {
         use crate::memory;
         use crate::psp;
         let mut state = serializer.serialize_struct("EntryItem", 2)?;
+        assert!(self.context >= 0);
         state.serialize_field("header", self.header)?;
 
         // TODO: Automate this type determination instead of maintaining this

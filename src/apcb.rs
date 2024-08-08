@@ -73,6 +73,7 @@ impl ApcbIoOptions {
 
 #[cfg_attr(feature = "std", derive(Clone))]
 pub struct Apcb<'a> {
+    context: u64,
     used_size: usize,
     pub backing_store: PtrMut<'a, [u8]>,
 }
@@ -83,6 +84,10 @@ pub struct Apcb<'a> {
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct SerdeApcb {
+    /// This field is out-of-band information. At the cost of slight redundancy
+    /// in user config and another extra field that isn't actually in the blob,
+    /// we can actually handle the out-of-band information quite natually.
+    pub context: u64,
     pub version: String,
     pub header: V2_HEADER,
     pub v3_header_ext: Option<V3_HEADER_EXT>,
@@ -110,11 +115,16 @@ impl<'a> schemars::JsonSchema for Apcb<'a> {
 use core::convert::TryFrom;
 
 #[cfg(feature = "serde")]
-impl<'a> TryFrom<SerdeApcb> for Apcb<'a> {
-    type Error = Error;
+impl<'a> Apcb<'a> {
+    //    type Error = Error;
     fn try_from(serde_apcb: SerdeApcb) -> Result<Self> {
         let buf = Cow::from(vec![0xFFu8; Self::MAX_SIZE]);
-        let mut apcb = Apcb::create(buf, 42, &ApcbIoOptions::default())?;
+        let mut apcb = Apcb::create(
+            buf,
+            42,
+            &ApcbIoOptions::default(),
+            serde_apcb.context,
+        )?;
         *apcb.header_mut()? = serde_apcb.header;
         match serde_apcb.v3_header_ext {
             Some(v3) => {
@@ -217,11 +227,13 @@ impl<'de> Deserialize<'de> for Apcb<'_> {
 }
 
 pub struct ApcbIterMut<'a> {
+    context: u64,
     buf: &'a mut [u8],
     remaining_used_size: usize,
 }
 
 pub struct ApcbIter<'a> {
+    context: u64,
     buf: &'a [u8],
     remaining_used_size: usize,
 }
@@ -230,7 +242,10 @@ impl<'a> ApcbIterMut<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what
     /// this function does. Note: The caller needs to manually decrease
     /// remaining_used_size for each call if desired.
-    fn next_item<'b>(buf: &mut &'b mut [u8]) -> Result<GroupMutItem<'b>> {
+    fn next_item<'b>(
+        context: u64,
+        buf: &mut &'b mut [u8],
+    ) -> Result<GroupMutItem<'b>> {
         if buf.is_empty() {
             return Err(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
@@ -256,7 +271,7 @@ impl<'a> ApcbIterMut<'a> {
             ))?;
         let body_len = body.len();
 
-        Ok(GroupMutItem { header, buf: body, used_size: body_len })
+        Ok(GroupMutItem { context, header, buf: body, used_size: body_len })
     }
 
     /// Moves the point to the group with the given GROUP_ID.  Returns (offset,
@@ -273,12 +288,12 @@ impl<'a> ApcbIterMut<'a> {
             if buf.is_empty() {
                 break;
             }
-            let group = ApcbIterMut::next_item(&mut buf)?;
+            let group = ApcbIterMut::next_item(self.context, &mut buf)?;
             let group_size = group.header.group_size.get();
             if group.header.group_id.get() == group_id {
                 return Ok((offset, group_size as usize));
             }
-            let group = ApcbIterMut::next_item(&mut self.buf)?;
+            let group = ApcbIterMut::next_item(self.context, &mut self.buf)?;
             let group_size = group.header.group_size.get() as usize;
             offset = offset
                 .checked_add(group_size)
@@ -295,7 +310,7 @@ impl<'a> ApcbIterMut<'a> {
 
     pub(crate) fn next1(&mut self) -> Result<GroupMutItem<'a>> {
         assert!(self.remaining_used_size != 0, "Internal error");
-        let item = Self::next_item(&mut self.buf)?;
+        let item = Self::next_item(self.context, &mut self.buf)?;
         let group_size = item.header.group_size.get() as usize;
         if group_size <= self.remaining_used_size {
             self.remaining_used_size -= group_size;
@@ -324,7 +339,10 @@ impl<'a> ApcbIter<'a> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what
     /// this function does. Note: The caller needs to manually decrease
     /// remaining_used_size for each call if desired.
-    fn next_item<'b>(buf: &mut &'b [u8]) -> Result<GroupItem<'b>> {
+    fn next_item<'b>(
+        context: u64,
+        buf: &mut &'b [u8],
+    ) -> Result<GroupItem<'b>> {
         if buf.is_empty() {
             return Err(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
@@ -351,12 +369,12 @@ impl<'a> ApcbIter<'a> {
 
         let body_len = body.len();
 
-        Ok(GroupItem { header, buf: body, used_size: body_len })
+        Ok(GroupItem { context, header, buf: body, used_size: body_len })
     }
 
     pub(crate) fn next1(&mut self) -> Result<GroupItem<'a>> {
         assert!(self.remaining_used_size != 0, "Internal error");
-        let item = Self::next_item(&mut self.buf)?;
+        let item = Self::next_item(self.context, &mut self.buf)?;
         let group_size = item.header.group_size.get() as usize;
         if group_size <= self.remaining_used_size {
             self.remaining_used_size -= group_size;
@@ -509,6 +527,7 @@ impl<'a> Apcb<'a> {
 
     pub fn groups(&self) -> Result<ApcbIter<'_>> {
         Ok(ApcbIter {
+            context: self.context,
             buf: self.beginning_of_groups()?,
             remaining_used_size: self.used_size,
         })
@@ -529,6 +548,7 @@ impl<'a> Apcb<'a> {
     pub fn groups_mut(&mut self) -> Result<ApcbIterMut<'_>> {
         let used_size = self.used_size;
         Ok(ApcbIterMut {
+            context: self.context,
             buf: &mut *self.beginning_of_groups_mut()?,
             remaining_used_size: used_size,
         })
@@ -1030,6 +1050,7 @@ impl<'a> Apcb<'a> {
         signature: [u8; 4],
     ) -> Result<GroupMutItem<'_>> {
         // TODO: insert sorted.
+        let context = self.context;
 
         if !match group_id {
             GroupId::Psp => signature == *b"PSPG",
@@ -1090,7 +1111,7 @@ impl<'a> Apcb<'a> {
             ))?;
         let body_len = body.len();
 
-        Ok(GroupMutItem { header, buf: body, used_size: body_len })
+        Ok(GroupMutItem { context, header, buf: body, used_size: body_len })
     }
 
     pub(crate) fn calculate_checksum(
@@ -1136,6 +1157,7 @@ impl<'a> Apcb<'a> {
     pub fn load(
         #[allow(unused_mut)] mut bs: PtrMut<'a, [u8]>,
         options: &ApcbIoOptions,
+        context: u64,
     ) -> Result<Self> {
         let backing_store_len = bs.len();
 
@@ -1263,7 +1285,7 @@ impl<'a> Apcb<'a> {
                 ));
             }
         }
-        let result = Self { backing_store: bs, used_size };
+        let result = Self { context, backing_store: bs, used_size };
 
         match result.groups()?.validate() {
             Ok(_) => {}
@@ -1309,6 +1331,7 @@ impl<'a> Apcb<'a> {
         #[allow(unused_mut)] mut bs: PtrMut<'a, [u8]>,
         initial_unique_apcb_instance: u32,
         options: &ApcbIoOptions,
+        context: u64,
     ) -> Result<Self> {
         #[cfg(not(feature = "std"))]
         let backing_store: &mut [u8] = bs;
@@ -1354,7 +1377,7 @@ impl<'a> Apcb<'a> {
 
         let (mut header, _) = LayoutVerified::<&'_ mut [u8], V2_HEADER>::new_unaligned_from_prefix(backing_store).unwrap();
         header.checksum_byte = checksum_byte;
-        Self::load(bs, options)
+        Self::load(bs, options, context)
     }
     /// Note: Each modification in the APCB causes the value of
     /// unique_apcb_instance to change.

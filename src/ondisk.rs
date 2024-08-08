@@ -36,6 +36,8 @@ use byteorder::WriteBytesExt;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "serde-hex")]
 use serde_hex::{SerHex, StrictPfx};
+#[cfg(feature = "serde")]
+use serde_context::SerializeWithContext;
 
 /// Work around Rust issue# 51443, in case it ever will be phased out.
 /// (zerocopy 0.5.0 has a as_bytes_mut with a Self-where--which is not supposed
