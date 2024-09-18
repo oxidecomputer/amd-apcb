@@ -50,12 +50,17 @@ use std::borrow::Cow;
 #[derive(Clone)]
 pub struct ApcbIoOptions {
     pub check_checksum: bool,
+    pub check_signature_ending: bool,
     pub context: ApcbContext,
 }
 
 impl Default for ApcbIoOptions {
     fn default() -> Self {
-        Self { check_checksum: true, context: ApcbContext::default() }
+        Self {
+            check_checksum: true,
+            check_signature_ending: true,
+            context: ApcbContext::default(),
+        }
     }
 }
 
@@ -66,11 +71,18 @@ impl ApcbIoOptions {
     pub fn check_checksum(&self) -> bool {
         self.check_checksum
     }
+    pub fn check_signature_ending(&self) -> bool {
+        self.check_signature_ending
+    }
     pub fn context(&self) -> ApcbContext {
         self.context
     }
     pub fn with_check_checksum(&mut self, value: bool) -> &mut Self {
         self.check_checksum = value;
+        self
+    }
+    pub fn with_check_signature_ending(&mut self, value: bool) -> &mut Self {
+        self.check_signature_ending = value;
         self
     }
     pub fn with_context(&mut self, value: ApcbContext) -> &mut Self {
@@ -122,9 +134,6 @@ impl<'a> schemars::JsonSchema for Apcb<'a> {
         SerdeApcb::is_referenceable()
     }
 }
-
-#[cfg(feature = "serde")]
-use core::convert::TryFrom;
 
 #[cfg(feature = "serde")]
 impl<'a> Apcb<'a> {
@@ -1259,7 +1268,9 @@ impl<'a> Apcb<'a> {
                     "V3_HEADER_EXT::data_offset",
                 ));
             }
-            if value.signature_ending == *b"BCPA" {
+            if !options.check_signature_ending
+                || value.signature_ending == *b"BCPA"
+            {
             } else {
                 return Err(Error::FileSystem(
                     FileSystemError::InconsistentHeader,
