@@ -652,6 +652,7 @@ pub enum MemoryEntryId {
     PsRdimmDdr5Bus,
     PsRdimmDdr5MaxFreq,
     PsRdimmDdr5StretchFreq,
+    PsRdimmDdr5MaxFreqC1,
 
     Ps3dsRdimmDdr4MaxFreq,
     Ps3dsRdimmDdr4StretchFreq,
@@ -723,6 +724,7 @@ impl ToPrimitive for MemoryEntryId {
             Self::PsRdimmDdr5Bus => 0x89,
             Self::PsRdimmDdr5MaxFreq => 0x8E,
             Self::PsRdimmDdr5StretchFreq => 0x92,
+            Self::PsRdimmDdr5MaxFreqC1 => 0xA3,
 
             Self::Ps3dsRdimmDdr4MaxFreq => 0x4B,
             Self::Ps3dsRdimmDdr4StretchFreq => 0x4C,
@@ -838,6 +840,7 @@ impl FromPrimitive for MemoryEntryId {
                 0x95 => Self::Ps3dsRdimmDdr5StretchFreq,
                 0xA1 => Self::PmuBistVendorAlgorithm,
                 0xA2 => Self::Ddr5RawCardConfig,
+                0xA3 => Self::PsRdimmDdr5MaxFreqC1,
 
                 x => Self::Unknown(x as u16),
             })
@@ -4342,6 +4345,7 @@ pub mod memory {
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr5MaxFreq) => true,
                 EntryId::Memory(MemoryEntryId::Ps3dsRdimmDdr5MaxFreq) => true,
                 EntryId::Memory(MemoryEntryId::PsLrdimmDdr5MaxFreq) => true,
+                EntryId::Memory(MemoryEntryId::PsRdimmDdr5MaxFreqC1) => true,
 
                 // Definitely not: EntryId::Memory(MemoryEntryId::PsLrdimmDdr4) => true.
                 // TODO (bug# 124): EntryId::Memory(PsSodimmDdr4MaxFreq) => true
@@ -9168,6 +9172,24 @@ pub enum BmcRcbCheckingMode {
     Auto = 0xff,
 }
 
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum DfCxlStronglyOrderedWrites {
+    Enabled = 1,
+    Disabled = 0,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemChannelDisableFloatPowerGoodDdr {
+    Enabled = 1,
+    Disabled = 0,
+}
+
 #[allow(non_camel_case_types, non_snake_case)]
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -10271,9 +10293,14 @@ make_token_accessors! {
         FchI2cI3cSmbusSelect1(default 1, id 0x32bd_7f95) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
         FchI2cI3cSmbusSelect2(default 1, id 0x8e27_5326) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
         FchI2cI3cSmbusSelect3(default 1, id 0xed13_9de8) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
-
         FchI2cI3cSmbusSelect4(default 1, id 0x2158_efca) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
         FchI2cI3cSmbusSelect5(default 1, id 0x5caa_a37b) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
+        FchI2cI3cSmbusSelect6(default 1, id 0x4d6a_dfe4) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
+        FchI2cI3cSmbusSelect7(default 1, id 0xc5de_4283) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
+        FchI2cI3cSmbusSelect8(default 1, id 0x6dd8_bd2e) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
+        FchI2cI3cSmbusSelect9(default 1, id 0x3b11_f9c6) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
+        FchI2cI3cSmbusSelect10(default 3, id 0x1da2_3853) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
+        FchI2cI3cSmbusSelect11(default 3, id 0xd1fd_a98e) | pub get FchI2cI3cSmbusSelect : pub set FchI2cI3cSmbusSelect,
 
         FchI2cController4(default 0, id 0xcfde_cf00) | pub get FchI2cMode : pub set FchI2cMode,
         FchI2cController5(default 0, id 0x380c_1b76) | pub get FchI2cMode : pub set FchI2cMode,
@@ -10520,6 +10547,8 @@ make_token_accessors! {
         BmcLinkSpeed(default 0, id 0x9c790f4b) | pub get BmcLinkSpeed : pub set BmcLinkSpeed, // value 1
         /// See <https://www.techdesignforums.com/practice/technique/common-pitfalls-in-pci-express-design/>.
         BmcRcbCheckingMode(default 0, id 0xae7f0df4) | pub get BmcRcbCheckingMode : pub set BmcRcbCheckingMode, // value 0xff // Rome
+        DfCxlStronglyOrderedWrites(default 0, id 0x236e_17a6) | pub get DfCxlStronglyOrderedWrites : pub set DfCxlStronglyOrderedWrites,
+        MemChannelDisableFloatPowerGoodDdr(default 0, id 0x847c_521b) | pub get MemChannelDisableFloatPowerGoodDdr : pub set MemChannelDisableFloatPowerGoodDdr,
     }
 }
 make_token_accessors! {
@@ -10551,6 +10580,8 @@ make_token_accessors! {
         // Fch
 
         FchGppClkMap(default 0xffff, id 0xcd7e_6983) | pub get FchGppClkMap : pub set FchGppClkMap,
+        FchSataSvid(default 0xffff, id 0x111c_de0d) | pub get u16 : pub set u16,
+        FchUsbSvid(default 0xffff, id 0x75a3_9c7f) | pub get u16 : pub set u16,
 
         /// Whether FchI2cSdaRxHold and FchI2cSdaTxHold will be used
         FchI2cSdaHoldOverrideMode(default 0, id 0x545d_7662) | pub get FchI2cSdaHoldOverrideMode : pub set FchI2cSdaHoldOverrideMode, // Milan
@@ -10903,7 +10934,12 @@ make_token_accessors! {
         BmcVgaIoEnable(default 0, id 0x468d2cfa) | pub get bool : pub set bool, // value 0 // legacy
         BmcInitBeforeDram(default 0, id 0xfa94ee37) | pub get bool : pub set bool, // value 0
 
+        // Other
+
         CmosClearTriggerApcbRecovery(default 1, id 0x854e_f3f3) | pub get bool : pub set bool,
+        CmosClearEnableMemRestore(default 0, id 0x6a05_8ca4) | pub get bool : pub set bool,
+        L3Bist(default 0, id 0x081c_2c0f) | pub get bool : pub set bool,
+        GnbMpdmaTfEnable(default 0, id 0x35aa_5977) | pub get bool : pub set bool,
     }
 }
 
