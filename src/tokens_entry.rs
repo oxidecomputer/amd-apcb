@@ -525,7 +525,7 @@ impl<'a> TokensEntryIter<&'a [u8]> {
         }
     }
     /// Validates the entries (recursively).  Also consumes iterator.
-    pub(crate) fn validate(mut self, context: ApcbContext) -> Result<()> {
+    pub(crate) fn validate(mut self, _context: ApcbContext) -> Result<()> {
         let context_format = ContextFormat::from_u8(self.context_format)
             .ok_or(Error::FileSystem(
                 FileSystemError::InconsistentHeader,
