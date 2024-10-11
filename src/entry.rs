@@ -121,6 +121,7 @@ impl<'a> EntryItemBody<&'a [u8]> {
 
 #[derive(Debug)]
 pub struct EntryMutItem<'a> {
+    #[allow(dead_code)]
     pub(crate) context: ApcbContext,
     pub(crate) header: &'a mut ENTRY_HEADER,
     pub body: EntryItemBody<&'a mut [u8]>,
@@ -425,6 +426,7 @@ use std::fmt;
 
 #[derive(Clone)]
 pub struct EntryItem<'a> {
+    #[allow(dead_code)]
     pub(crate) context: ApcbContext,
     pub(crate) header: &'a ENTRY_HEADER,
     pub body: EntryItemBody<&'a [u8]>,
