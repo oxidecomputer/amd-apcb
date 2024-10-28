@@ -1268,8 +1268,12 @@ impl<'a> Apcb<'a> {
                     "V3_HEADER_EXT::data_offset",
                 ));
             }
+            // NOTE: The AMD docs for Turin, Genoa, Milan and Rome say `BCPA`,
+            // i.e., `APCB` backwards. Some vendors are using `BCBA` instead,
+            // e.g., ASRock and coreboot (`3rdparty/blobs/mainboard/`).
             if !options.check_signature_ending
                 || value.signature_ending == *b"BCPA"
+                || value.signature_ending == *b"BCBA"
             {
             } else {
                 return Err(Error::FileSystem(
