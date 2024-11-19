@@ -10594,7 +10594,7 @@ make_token_accessors! {
 
         // MBIST for Genoa & Bergamo
         MemMbistDdrMode(default 0, id 0x7dcb_2da5) | pub get MemMbistDdrMode: pub set MemMbistDdrMode,
-        MemMbistAggressorsDdr(default 0, id 0xb46e_f9ab) | pub get MemMbistTestMode : pub set MemMbistTestMode,
+        MemMbistAggressorsDdr(default 0, id 0xb46e_f9ab) | pub get MemMbistDdrMode : pub set MemMbistDdrMode,
         MemMbistAggressorsChannelDdrMode(default 0, id 0x2fc_8ca9) | pub get MemMbistAggressorsChannelDdrMode : pub set MemMbistAggressorsChannelDdrMode,
         MemMbistPatternSelectDdr(default 0xFF, id 0x5988_cfa6) | pub get MemMbistPatternSelect : pub set MemMbistPatternSelect,
         MemHealingBistRepairTypeDdr(default 0, id 0x9bf8_5c70) | pub get MemHealingBistRepairTypeDdr : pub set MemHealingBistRepairTypeDdr,
