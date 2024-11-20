@@ -10611,6 +10611,7 @@ make_token_accessors! {
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistPatternLengthDdr(default 0, id 0x108b_b3e6) | pub get u8 : pub set u8,
         MemMbistPerBitSlaveDieReportDdr(default 0xff, id 0x3b78_2d55) | pub get MemMbistPerBitSlaveDieReportDdr : pub set MemMbistPerBitSlaveDieReportDdr,
+        MemMbistDataEyeSilentExecutionDdr(default 0, id 0x8ee6_e78f) | pub get MemMbistTest : pub set MemMbistTest,
 
         // BDAT for Genoa, Bergamo, Turin
         BdatSupport(default 0, id 0x2fad_02d2) | pub get BdatSupport : pub set BdatSupport,
