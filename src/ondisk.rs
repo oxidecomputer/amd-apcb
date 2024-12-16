@@ -10245,11 +10245,38 @@ pub enum MemMbistPerBitSlaveDieReportDdr {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemMbistDataEyeSilentExecutionDdr {
+    Disabled = 0,
+    Enabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemSelfHealing {
     Disabled = 0,
     Pmu = 1,
     SelfHealing = 2,
     Both = 3,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum BdatSupport {
+    Disabled = 0,
+    Enabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum BdatPrintData {
+    Disabled = 0,
+    Enabled = 1,
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
@@ -10592,7 +10619,7 @@ make_token_accessors! {
         MemMbistPatternSelect(default 0, id 0xf527ebf8) | pub get MemMbistPatternSelect : pub set MemMbistPatternSelect, // Rome
         MemMbistAggressorOn(default 0, id 0x32361c4) | pub get bool : pub set bool, // Rome; obsolete
 
-        // MBIST for Genoa & Bergamo
+        // MBIST for Genoa, Bergamo, Turin
         MemMbistDdrMode(default 0, id 0x7dcb_2da5) | pub get MemMbistDdrMode: pub set MemMbistDdrMode,
         MemMbistAggressorsDdr(default 0, id 0xb46e_f9ab) | pub get MemMbistDdrMode : pub set MemMbistDdrMode,
         MemMbistAggressorsChannelDdrMode(default 0, id 0x2fc_8ca9) | pub get MemMbistAggressorsChannelDdrMode : pub set MemMbistAggressorsChannelDdrMode,
@@ -10602,6 +10629,14 @@ make_token_accessors! {
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         MemMbistPatternLengthDdr(default 0, id 0x108b_b3e6) | pub get u8 : pub set u8,
         MemMbistPerBitSlaveDieReportDdr(default 0xff, id 0x3b78_2d55) | pub get MemMbistPerBitSlaveDieReportDdr : pub set MemMbistPerBitSlaveDieReportDdr,
+        /// Enables MBIST DDR margining data to be populated in the BDAT (Schema 8 Types 6 & 7).
+        MemMbistDataEyeSilentExecutionDdr(default 0, id 0x8ee6_e78f) | pub get MemMbistDataEyeSilentExecutionDdr : pub set MemMbistDataEyeSilentExecutionDdr,
+
+        // BDAT for Genoa, Bergamo, Turin
+        /// Controls whether BDAT entries are populated and present in the system memory map.
+        BdatSupport(default 0, id 0x2fad_02d2) | pub get BdatSupport : pub set BdatSupport,
+        /// Enables dumping the BDAT entries to the serial console by the ABL during boot.
+        BdatPrintData(default 0, id 0xd232_e51c) | pub get BdatPrintData : pub set BdatPrintData,
 
         // Unsorted Milan; defaults wrong!
 
