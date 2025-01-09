@@ -10155,6 +10155,15 @@ pub enum MemRcdParityMode {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemThermalThrottleMode {
+    Disabled = 0,
+    Enabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum FchI2cSdaHoldOverrideMode {
     IgnoreBoth = 0,
     OverrideBoth = 1,
@@ -10370,6 +10379,9 @@ make_token_accessors! {
         // Byte just like AMD
         MemRcdParity(default 1, id 0x647d_7662) | pub get bool : pub set bool,
         MemRcdParityMode(default 1, id 0xc4f7_c913) | pub get MemRcdParityMode : pub set MemRcdParityMode,
+        /// How many times to try Specific RCD vendor workaround
+        MemRcdSpecificVendorRetryCount(default 5, id 0x7246_00ac) | pub get u8 : pub set u8,
+
         // Byte just like AMD
         CbsMemUncorrectedEccRetryDdr4(default 1, id 0xbff0_0125) | pub get bool : pub set bool,
         /// UMC::CH::SpazCtrl::UrgRefLimit; value: 1...6 (as in register mentioned first)
@@ -10416,6 +10428,19 @@ make_token_accessors! {
         MemDisplayPmuTrainingResults(default 0, id 0xb8a6_3eba) | pub get MemPmuTrainingResultOutput : pub set MemPmuTrainingResultOutput,
         /// See UMC::CH::ThrottleCtrl[ForcePwrDownThrotEn].
         MemForcePowerDownThrottleEnableTurin(default 1, id 0x1084_9d6c) | pub get MemForcePowerDownThrottleEnable : pub set MemForcePowerDownThrottleEnable, // used to be bool.
+        /// Whether PM should manage throttling--and measure sensor on DIMM
+        MemThermalThrottleMode(default 0, id 0xbce9_0051) | pub get MemThermalThrottleMode : pub set MemThermalThrottleMode, // note: default unknown
+
+        /// 40...100; point where memory throttling starts; in °C
+        MemThermalThrottleStartInC(default 85, id 0x1449_3d4b) | pub get u8 : pub set u8,
+        /// 1...50; how many °C below MemThermalThrottleStartInC until we stop throttling
+        MemThermalThrottleHysteresisGapInC(default 5, id 0x2205_08e7) | pub get u8 : pub set u8, // note: default unknown
+        /// Throttling as percentage of max, if temperature exceeded by 10 °C or more
+        MemThermalThrottlePercentIfTempExceededBy10C(default 40, id 0x0141_8fff) | pub get u8 : pub set u8,
+        /// Throttling as percentage of max, if temperature exceeded by 5 °C or more
+        MemThermalThrottlePercentIfTempExceededBy5C(default 20, id 0xec5a_c113) | pub get u8 : pub set u8,
+        /// Throttling as percentage of max, if temperature exceeded by 0 °C or more
+        MemThermalThrottlePercentIfTempExceededBy0C(default 10, id 0x0645_8213) | pub get u8 : pub set u8,
 
         // Ccx
 
