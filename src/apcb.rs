@@ -442,7 +442,7 @@ impl<'a> Apcb<'a> {
     const ROME_VERSION: u16 = 0x30;
     const V3_HEADER_EXT_SIZE: usize =
         size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>();
-    pub const MAX_SIZE: usize = 0x8000;
+    pub const MAX_SIZE: usize = 0x10000;
 
     pub fn header(&self) -> Result<LayoutVerified<&[u8], V2_HEADER>> {
         LayoutVerified::<&[u8], V2_HEADER>::new_unaligned_from_prefix(
