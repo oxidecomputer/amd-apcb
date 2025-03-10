@@ -10224,6 +10224,15 @@ pub enum FchSpdControlOwnershipMode {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum DfP2pOrderedWrites {
+    Enabled = 0,
+    Disabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemMbistDdrMode {
     Disabled = 0,
     Enabled = 1,
@@ -11059,6 +11068,7 @@ make_token_accessors! {
         DfPickerThrottleEnable(default 0, id 0x0bcb_d809) | pub get bool : pub set bool,
         DfNps1With4ChannelInterleavedRdimm4ChannelNonInterleavedNvdimm(default 0, id 0x9d6e_e05e) | pub get bool : pub set bool, // Milan
         DfCdma(default 0, id 0xd7d7_6f0c) | pub get bool : pub set bool,
+        DfP2pOrderedWrites(default 0, id 0x0647_28ef) | pub get DfP2pOrderedWrites : pub set DfP2pOrderedWrites,
 
         // Dxio
 
