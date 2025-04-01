@@ -1498,7 +1498,7 @@ impl Parameters {
                 }
             }
         }
-        Err(Error::ParameterNotFound)
+        Err(Error::ParameterNotFound { parameter_id: key })
     }
 }
 

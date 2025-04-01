@@ -304,7 +304,7 @@ impl<'a> ApcbIterMut<'a> {
         &'_ mut self,
         group_id: GroupId,
     ) -> Result<(usize, usize)> {
-        let group_id = group_id.to_u16().unwrap();
+        let raw_group_id = group_id.to_u16().unwrap();
         let mut remaining_used_size = self.remaining_used_size;
         let mut offset = 0usize;
         loop {
@@ -314,7 +314,7 @@ impl<'a> ApcbIterMut<'a> {
             }
             let group = ApcbIterMut::next_item(self.context, &mut buf)?;
             let group_size = group.header.group_size.get();
-            if group.header.group_id.get() == group_id {
+            if group.header.group_id.get() == raw_group_id {
                 return Ok((offset, group_size as usize));
             }
             let group = ApcbIterMut::next_item(self.context, &mut self.buf)?;
@@ -329,7 +329,7 @@ impl<'a> ApcbIterMut<'a> {
                 "GROUP_HEADER::group_size",
             ))?;
         }
-        Err(Error::GroupNotFound)
+        Err(Error::GroupNotFound { group_id })
     }
 
     pub(crate) fn next1(&mut self) -> Result<GroupMutItem<'a>> {
@@ -593,8 +593,9 @@ impl<'a> Apcb<'a> {
         board_instance_mask: BoardInstances,
     ) -> Result<()> {
         let group_id = entry_id.group_id();
-        let mut group =
-            self.group_mut(group_id)?.ok_or(Error::GroupNotFound)?;
+        let mut group = self
+            .group_mut(group_id)?
+            .ok_or(Error::GroupNotFound { group_id })?;
         let size_diff =
             group.delete_entry(entry_id, instance_id, board_instance_mask)?;
         if size_diff > 0 {
@@ -661,7 +662,8 @@ impl<'a> Apcb<'a> {
             } else {
                 return Err(Error::OutOfSpace);
             }
-            let group = groups.next().ok_or(Error::GroupNotFound)?;
+            let group =
+                groups.next().ok_or(Error::GroupNotFound { group_id })?;
             group.header.group_size.set(new_group_size);
             let buf = &mut self.beginning_of_groups_mut()?[offset..];
             if old_group_size as usize > old_used_size {
@@ -694,7 +696,8 @@ impl<'a> Apcb<'a> {
                 FileSystemError::InconsistentHeader,
                 "ENTRY_HEADER::entry_size",
             ))?;
-            let group = groups.next().ok_or(Error::GroupNotFound)?;
+            let group =
+                groups.next().ok_or(Error::GroupNotFound { group_id })?;
             group.header.group_size.set(new_group_size);
             let buf = &mut self.beginning_of_groups_mut()?[offset..];
             buf.copy_within(
@@ -703,7 +706,7 @@ impl<'a> Apcb<'a> {
             );
             self.used_size = new_used_size;
         }
-        self.group_mut(group_id)?.ok_or(Error::GroupNotFound)
+        self.group_mut(group_id)?.ok_or(Error::GroupNotFound { group_id })
     }
     /// Note: board_instance_mask needs to be exact.
     #[allow(clippy::too_many_arguments)]
@@ -719,13 +722,18 @@ impl<'a> Apcb<'a> {
         payload_initializer: impl Fn(&mut [u8]),
     ) -> Result<()> {
         let group_id = entry_id.group_id();
-        let mut group =
-            self.group_mut(group_id)?.ok_or(Error::GroupNotFound)?;
+        let mut group = self
+            .group_mut(group_id)?
+            .ok_or(Error::GroupNotFound { group_id })?;
         if group
             .entry_exact_mut(entry_id, instance_id, board_instance_mask)
             .is_some()
         {
-            return Err(Error::EntryUniqueKeyViolation);
+            return Err(Error::EntryUniqueKeyViolation {
+                entry_id,
+                instance_id,
+                board_instance_mask,
+            });
         }
 
         let mut entry_allocation: u16 = (size_of::<ENTRY_HEADER>() as u16)
@@ -983,15 +991,25 @@ impl<'a> Apcb<'a> {
     ) -> Result<()> {
         let group_id = entry_id.group_id();
         // Make sure that the entry exists before resizing the group
-        let group = self.group(group_id)?.ok_or(Error::GroupNotFound)?;
+        let group =
+            self.group(group_id)?.ok_or(Error::GroupNotFound { group_id })?;
         let entry = group
             .entry_exact(entry_id, instance_id, board_instance_mask)
-            .ok_or(Error::EntryNotFound)?;
+            .ok_or(Error::EntryNotFound {
+                entry_id,
+                instance_id,
+                board_instance_mask,
+            })?;
         let EntryItemBody::<_>::Tokens(a) = &entry.body else {
             return Err(Error::EntryTypeMismatch);
         };
         if a.token(token_id).is_some() {
-            return Err(Error::TokenUniqueKeyViolation);
+            return Err(Error::TokenUniqueKeyViolation {
+                entry_id,
+                instance_id,
+                board_instance_mask,
+                token_id,
+            });
         }
         // Tokens that destroy the alignment in the container have not been
         // tested, are impossible right now anyway and have never been seen.  So
@@ -1013,7 +1031,7 @@ impl<'a> Apcb<'a> {
             token_id,
             token_value,
         );
-        if let Err(Error::EntryNotFound) = rv {
+        if let Err(Error::EntryNotFound { .. }) = rv {
             panic!(
                 "Internal error: Entry (entry_id = {entry_id:?}, \
                 instance_id = {instance_id:?}, \
@@ -1034,8 +1052,9 @@ impl<'a> Apcb<'a> {
     ) -> Result<()> {
         let group_id = entry_id.group_id();
         // Make sure that the entry exists before resizing the group
-        let mut group =
-            self.group_mut(group_id)?.ok_or(Error::GroupNotFound)?;
+        let mut group = self
+            .group_mut(group_id)?
+            .ok_or(Error::GroupNotFound { group_id })?;
         let token_diff = group.delete_token(
             entry_id,
             instance_id,
@@ -1088,17 +1107,17 @@ impl<'a> Apcb<'a> {
             GroupId::Token => signature == *b"TOKN",
             GroupId::Unknown(_) => true,
         } {
-            return Err(Error::GroupTypeMismatch);
+            return Err(Error::GroupTypeMismatch { group_id, signature });
         }
 
         let mut groups = self.groups_mut()?;
         match groups.move_point_to(group_id) {
-            Err(Error::GroupNotFound) => {}
+            Err(Error::GroupNotFound { .. }) => {}
             Err(x) => {
                 return Err(x);
             }
             _ => {
-                return Err(Error::GroupUniqueKeyViolation);
+                return Err(Error::GroupUniqueKeyViolation { group_id });
             }
         }
 
