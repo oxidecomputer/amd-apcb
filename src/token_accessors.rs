@@ -39,7 +39,7 @@ impl<'a, 'b> TokensMut<'a, 'b> {
         abl0_version: Option<u32>,
     ) -> Result<Self> {
         match apcb.insert_group(GroupId::Token, *b"TOKN") {
-            Err(Error::GroupUniqueKeyViolation) => {}
+            Err(Error::GroupUniqueKeyViolation { .. }) => {}
             Err(x) => {
                 return Err(x);
             }
@@ -59,18 +59,29 @@ impl<'a, 'b> TokensMut<'a, 'b> {
         token_entry_id: TokenEntryId,
         field_key: u32,
     ) -> Result<u32> {
-        let group =
-            self.apcb.group(GroupId::Token)?.ok_or(Error::GroupNotFound)?;
+        let group = self
+            .apcb
+            .group(GroupId::Token)?
+            .ok_or(Error::GroupNotFound { group_id: GroupId::Token })?;
         let entry = group
             .entry_exact(
                 EntryId::Token(token_entry_id),
                 self.instance_id,
                 self.board_instance_mask,
             )
-            .ok_or(Error::EntryNotFound)?;
+            .ok_or(Error::EntryNotFound {
+                entry_id: EntryId::Token(token_entry_id),
+                instance_id: self.instance_id,
+                board_instance_mask: self.board_instance_mask,
+            })?;
         match &entry.body {
             EntryItemBody::<_>::Tokens(ref a) => {
-                let token = a.token(field_key).ok_or(Error::TokenNotFound)?;
+                let token = a.token(field_key).ok_or(Error::TokenNotFound {
+                    token_id: field_key,
+                    //entry_id: token_entry_id,
+                    //instance_id: self.instance_id,
+                    //board_instance_mask: self.board_instance_mask,
+                })?;
                 assert!(token.id() == field_key);
                 let token_value = token.value();
                 Ok(token_value)
@@ -96,7 +107,7 @@ impl<'a, 'b> TokensMut<'a, 'b> {
             token_id,
             token_value,
         ) {
-            Err(Error::EntryNotFound) => {
+            Err(Error::EntryNotFound { .. }) => {
                 match self.apcb.insert_entry(
                     entry_id,
                     self.instance_id,
@@ -105,7 +116,7 @@ impl<'a, 'b> TokensMut<'a, 'b> {
                     self.priority_mask,
                     &[],
                 ) {
-                    Err(Error::EntryUniqueKeyViolation) => {}
+                    Err(Error::EntryUniqueKeyViolation { .. }) => {}
                     Err(x) => {
                         return Err(x);
                     }
@@ -147,7 +158,7 @@ impl<'a, 'b> TokensMut<'a, 'b> {
                     token_value,
                 )?;
             }
-            Err(Error::TokenUniqueKeyViolation) => {
+            Err(Error::TokenUniqueKeyViolation { .. }) => {
                 let mut group = self.apcb.group_mut(GroupId::Token)?.unwrap();
                 let mut entry = group
                     .entry_exact_mut(
@@ -190,18 +201,28 @@ impl<'a, 'b> Tokens<'a, 'b> {
         token_entry_id: TokenEntryId,
         field_key: u32,
     ) -> Result<u32> {
-        let group =
-            self.apcb.group(GroupId::Token)?.ok_or(Error::GroupNotFound)?;
+        let group = self
+            .apcb
+            .group(GroupId::Token)?
+            .ok_or(Error::GroupNotFound { group_id: GroupId::Token })?;
         let entry = group
             .entry_exact(
                 EntryId::Token(token_entry_id),
                 self.instance_id,
                 self.board_instance_mask,
             )
-            .ok_or(Error::EntryNotFound)?;
+            .ok_or(Error::EntryNotFound {
+                entry_id: EntryId::Token(token_entry_id),
+                instance_id: self.instance_id,
+                board_instance_mask: self.board_instance_mask,
+            })?;
         match &entry.body {
             EntryItemBody::<_>::Tokens(ref a) => {
-                let token = a.token(field_key).ok_or(Error::TokenNotFound)?;
+                let token = a.token(field_key).ok_or(Error::TokenNotFound {
+                    token_id: field_key,
+                    //instance_id: self.instance_id,
+                    //board_instance_mask: self.board_instance_mask,
+                })?;
                 assert!(token.id() == field_key);
                 let token_value = token.value();
                 Ok(token_value)
@@ -253,11 +274,16 @@ macro_rules! make_token_accessors {(
           let value = entry.value.get();
           $(
             if ($field_key == tag) {
-                let value = <$field_user_ty>::from_u32(value).ok_or(Error::TokenRange)?;
+                let value = <$field_user_ty>::from_u32(value).ok_or(Error::TokenRange { token_id: tag })?;
                 Ok(Self::$field_name(value))
             } else
           )*{
-                Err(Error::TokenNotFound)
+                Err(Error::TokenNotFound {
+                    token_id: tag,
+                    //entry_id: TokenEntryId::from(entry),
+                    //instance_id
+                    //board_instance_mask
+                })
             }
         }
     }
@@ -266,13 +292,14 @@ macro_rules! make_token_accessors {(
         fn try_from(x: &$enum_name) -> core::result::Result<Self, Self::Error> {
           $(
             if let $enum_name::$field_name(value) = x {
+                let key: u32 = $field_key;
                 Ok(Self {
-                   key: $field_key.into(),
-                   value: value.to_u32().ok_or(Error::TokenRange)?.into(),
+                   key: key.into(),
+                   value: value.to_u32().ok_or(Error::TokenRange { token_id: key })?.into(),
                 })
             } else
           )*{
-                Err(Error::TokenNotFound)
+                panic!("having a token enum variant for something we don't have a key for should be impossible--since both are generated by the same macro.  But it just happened.")
             }
         }
     }

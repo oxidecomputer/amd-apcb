@@ -364,7 +364,11 @@ impl<'a> GroupMutIter<'a> {
                 };
             let mut buf = &mut self.buf[..remaining_used_size];
             if buf.is_empty() {
-                return Err(Error::EntryNotFound);
+                return Err(Error::EntryNotFound {
+                    entry_id,
+                    instance_id,
+                    board_instance_mask,
+                });
             }
             match Self::next_item(self.context, &mut buf) {
                 Ok(e) => {
@@ -585,7 +589,11 @@ impl<'a> GroupMutItem<'a> {
         )?;
         let entry_size: u16 =
             entry_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
-        let entry = entries.next().ok_or(Error::EntryNotFound)?;
+        let entry = entries.next().ok_or(Error::EntryNotFound {
+            entry_id,
+            instance_id,
+            board_instance_mask,
+        })?;
 
         if size_diff > 0 {
             let size_diff: usize =
@@ -683,7 +691,11 @@ impl<'a> GroupMutItem<'a> {
         // Ok.
         let mut entry = self
             .entry_exact_mut(entry_id, instance_id, board_instance_mask)
-            .ok_or(Error::EntryNotFound)?;
+            .ok_or(Error::EntryNotFound {
+                entry_id,
+                instance_id,
+                board_instance_mask,
+            })?;
         entry.delete_token(token_id)?;
         let mut token_size_diff: i64 =
             token_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;

@@ -120,7 +120,7 @@ impl<'a> TokensEntryItem<&'a mut TOKEN_ENTRY> {
             self.token.value.set(value);
             Ok(())
         } else {
-            Err(Error::TokenRange)
+            Err(Error::TokenRange { token_id: self.id() })
         }
     }
 }
@@ -182,7 +182,11 @@ impl<'a> TokensEntryIter<&'a mut [u8]> {
         loop {
             let mut buf = &mut self.buf[..self.remaining_used_size];
             if buf.is_empty() {
-                return Err(Error::TokenNotFound);
+                return Err(Error::TokenNotFound {
+                    token_id,
+                    //entry_id: self.entry_id,
+                    //board_instance_mask
+                });
             }
             match Self::next_item(self.entry_id, &mut buf) {
                 Ok(e) => {

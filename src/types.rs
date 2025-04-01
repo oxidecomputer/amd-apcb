@@ -2,6 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use crate::naples::ParameterTokenConfig;
+use crate::ondisk::BoardInstances;
+use crate::ondisk::EntryId;
+use crate::ondisk::GroupId;
 use crate::ondisk::TokenEntryId;
 
 #[derive(Debug)]
@@ -24,36 +28,70 @@ pub enum Error {
     FileSystem(FileSystemError, &'static str), // message, field name
     #[cfg_attr(feature = "std", error("out of space"))]
     OutOfSpace,
-    #[cfg_attr(feature = "std", error("group not found"))]
-    GroupNotFound,
-    #[cfg_attr(feature = "std", error("group unique key violation"))]
-    GroupUniqueKeyViolation,
-    #[cfg_attr(feature = "std", error("group type mismatch"))]
-    GroupTypeMismatch,
-    #[cfg_attr(feature = "std", error("entry not found"))]
-    EntryNotFound,
-    #[cfg_attr(feature = "std", error("entry unique key violation"))]
-    EntryUniqueKeyViolation,
+    #[cfg_attr(
+        feature = "std",
+        error("group not found - group: {group_id:?}")
+    )]
+    #[non_exhaustive]
+    GroupNotFound { group_id: GroupId },
+    #[cfg_attr(
+        feature = "std",
+        error("group unique key violation - group: {group_id:?}")
+    )]
+    #[non_exhaustive]
+    GroupUniqueKeyViolation { group_id: GroupId },
+    #[cfg_attr(feature = "std", error("group type mismatch - group: {group_id:?}, signature: {signature:?}"))]
+    #[non_exhaustive]
+    GroupTypeMismatch { group_id: GroupId, signature: [u8; 4] },
+    #[cfg_attr(feature = "std", error("entry not found - entry: {entry_id:?}, instance: {instance_id:#04x}, board mask: {board_instance_mask:?}"))]
+    #[non_exhaustive]
+    EntryNotFound {
+        entry_id: EntryId,
+        instance_id: u16,
+        board_instance_mask: BoardInstances,
+    },
+    #[cfg_attr(feature = "std", error("entry unique key violation - entry: {entry_id:?}, instance: {instance_id:#04x}, board mask: {board_instance_mask:?}"))]
+    #[non_exhaustive]
+    EntryUniqueKeyViolation {
+        entry_id: EntryId,
+        instance_id: u16,
+        board_instance_mask: BoardInstances,
+    },
     #[cfg_attr(feature = "std", error("entry type mismatch"))]
     EntryTypeMismatch,
     #[cfg_attr(feature = "std", error("entry range"))]
     EntryRange,
     #[cfg_attr(feature = "std", error("token not found"))]
-    TokenNotFound,
+    #[non_exhaustive]
+    TokenNotFound {
+        token_id: u32,
+        //entry_id: TokenEntryId,
+        //instance_id: u16,
+        //board_instance_mask: BoardInstances,
+    },
     #[cfg_attr(feature = "std", error("token ordering violation"))]
     TokenOrderingViolation,
-    #[cfg_attr(feature = "std", error("token unique key violation"))]
-    TokenUniqueKeyViolation,
-    #[cfg_attr(feature = "std", error("token range"))]
-    TokenRange,
-    #[cfg_attr(feature = "std", error("token entry {entry_id:?} token {token_id} is incompatible with ABL version {abl0_version}"))]
+    #[cfg_attr(feature = "std", error("token unique key violation - entry: {entry_id:?}, instance: {instance_id:#04x}, board mask: {board_instance_mask:?}, token: {token_id:#08x}"))]
+    #[non_exhaustive]
+    TokenUniqueKeyViolation {
+        entry_id: EntryId,
+        instance_id: u16,
+        board_instance_mask: BoardInstances,
+        token_id: u32,
+    },
+    #[cfg_attr(feature = "std", error("token range - token {token_id:#08x}"))]
+    #[non_exhaustive]
+    TokenRange { token_id: u32 },
+    #[cfg_attr(feature = "std", error("token entry {entry_id:?} token {token_id:#08x} is incompatible with ABL version {abl0_version:#08x}"))]
+    #[non_exhaustive]
     TokenVersionMismatch {
         entry_id: TokenEntryId,
         token_id: u32,
         abl0_version: u32,
     },
     #[cfg_attr(feature = "std", error("parameter not found"))]
-    ParameterNotFound,
+    #[non_exhaustive]
+    ParameterNotFound { parameter_id: ParameterTokenConfig },
     #[cfg_attr(feature = "std", error("parameter range"))]
     ParameterRange,
     // Errors used only for Serde
