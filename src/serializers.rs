@@ -1095,3 +1095,31 @@ impl_struct_serde_conversion!(
     SerdeDdr5RawCardConfigElement,
     [header, payload,]
 );
+impl_struct_serde_conversion!(
+    Ddr5TrainingOverrideEntryHeaderFlagsMemClkMask,
+    SerdeDdr5TrainingOverrideEntryHeaderFlagsMemClkMask,
+    [ddr4800, ddr5600, ddr6000, ddr6400,]
+);
+impl_struct_serde_conversion!(
+    Ddr5TrainingOverrideEntryHeaderChannelSelectorMask,
+    SerdeDdr5TrainingOverrideEntryHeaderChannelSelectorMask,
+    [c_0, c_1, c_2, c_3, c_4, c_5, c_6, c_7, c_8, c_9, c_10, c_11,]
+);
+// Note: Using impl_struct_serde_conversion would expose the fact that modular-bitfield doesn't actually have i8 (or i4).
+impl_struct_serde_conversion!(
+    Ddr5TrainingOverrideEntryHeaderFlags,
+    CustomSerdeDdr5TrainingOverrideEntryHeaderFlags,
+    [
+        selected_mem_clks,
+        selected_channels,
+        read_dq_delay_offset,
+        read_dq_vref_offset,
+        write_dq_delay_offset,
+        write_dq_vref_offset
+    ]
+);
+impl_struct_serde_conversion!(
+    Ddr5TrainingOverride40Element,
+    SerdeDdr5TrainingOverride40Element,
+    [length, dimm_module_part_number, _reserved_1, flags,]
+);

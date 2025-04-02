@@ -690,6 +690,7 @@ pub enum MemoryEntryId {
     PlatformTuning,
     PmuBistVendorAlgorithm,
     Ddr5RawCardConfig,
+    Ddr5TrainingOverride,
 
     Unknown(u16),
 }
@@ -762,6 +763,7 @@ impl ToPrimitive for MemoryEntryId {
             Self::PlatformTuning => 0x75,
             Self::PmuBistVendorAlgorithm => 0xA1,
             Self::Ddr5RawCardConfig => 0xA2,
+            Self::Ddr5TrainingOverride => 0xA4,
 
             Self::Unknown(x) => (*x) as i64,
         })
@@ -841,6 +843,7 @@ impl FromPrimitive for MemoryEntryId {
                 0xA1 => Self::PmuBistVendorAlgorithm,
                 0xA2 => Self::Ddr5RawCardConfig,
                 0xA3 => Self::PsRdimmDdr5MaxFreqC1,
+                0xA4 => Self::Ddr5TrainingOverride,
 
                 x => Self::Unknown(x as u16),
             })
@@ -5941,7 +5944,361 @@ Clone)]
         }
     }
 
-    impl HeaderWithTail for Ddr5RawCardConfigElement {
+    make_bitfield_serde!(
+        #[bitfield(bits = 12)]
+        #[derive(
+            Default, Clone, Copy, PartialEq, BitfieldSpecifier,
+        )]
+        pub struct Ddr5TrainingOverrideEntryHeaderChannelSelectorMask {
+            pub c_0: bool | pub get bool : pub set bool,
+            pub c_1: bool | pub get bool : pub set bool,
+            pub c_2: bool | pub get bool : pub set bool,
+            pub c_3: bool | pub get bool : pub set bool,
+            pub c_4: bool | pub get bool : pub set bool,
+            pub c_5: bool | pub get bool : pub set bool,
+            pub c_6: bool | pub get bool : pub set bool,
+            pub c_7: bool | pub get bool : pub set bool,
+            pub c_8: bool | pub get bool : pub set bool,
+            pub c_9: bool | pub get bool : pub set bool,
+            pub c_10: bool | pub get bool : pub set bool,
+            pub c_11: bool | pub get bool : pub set bool,
+        }
+    );
+
+    make_bitfield_serde!(
+        #[bitfield(bits = 4)]
+        #[derive(
+            Default, Clone, Copy, PartialEq, BitfieldSpecifier,
+        )]
+        pub struct Ddr5TrainingOverrideEntryHeaderFlagsMemClkMask {
+            pub ddr4800: bool | pub get bool : pub set bool,
+            pub ddr5600: bool | pub get bool : pub set bool,
+            pub ddr6000: bool | pub get bool : pub set bool,
+            pub ddr6400: bool | pub get bool : pub set bool,
+        }
+    );
+
+    // Note: Using make_bitfield_serde would expose the fact that modular-bitfield doesn't actually have i8 (or i4).
+    #[bitfield(bits = 32)]
+    #[derive(Default, Clone, Copy, PartialEq, BitfieldSpecifier)]
+    pub(crate) struct Ddr5TrainingOverrideEntryHeaderFlags {
+        pub selected_mem_clks: Ddr5TrainingOverrideEntryHeaderFlagsMemClkMask,
+        pub selected_channels:
+            Ddr5TrainingOverrideEntryHeaderChannelSelectorMask,
+        pub read_dq_delay_offset: B4,  // actually i4
+        pub read_dq_vref_offset: B4,   // actually i4
+        pub write_dq_delay_offset: B4, // actually i4
+        pub write_dq_vref_offset: B4,  // actually i4
+    }
+    impl DummyErrorChecks for Ddr5TrainingOverrideEntryHeaderFlags {}
+
+    /// modular-bitfield can't represent i4 (or for that matter, i8).
+    /// So it uses u8 for that.
+    /// So we have to manually convert it here.
+    fn sign_extend_i4_to_i8(x: u8) -> i8 {
+        let sign_mask = x & 0b1000;
+        if sign_mask == 0 {
+            x as i8
+        } else {
+            (x | 0xF0) as i8
+        }
+    }
+
+    /// modular-bitfield can't represent i4 (or for that matter, i8).
+    /// So it uses u8 for that.
+    /// So we have to manually convert it here.
+    fn i8_to_i4(value: i8) -> u8 {
+        (value as u8) & 0b1111
+    }
+
+    impl From<Ddr5TrainingOverrideEntryHeaderFlags> for u32 {
+        fn from(source: Ddr5TrainingOverrideEntryHeaderFlags) -> u32 {
+            let bytes = source.into_bytes();
+            u32::from_le_bytes(bytes)
+        }
+    }
+
+    impl From<u32> for Ddr5TrainingOverrideEntryHeaderFlags {
+        fn from(source: u32) -> Ddr5TrainingOverrideEntryHeaderFlags {
+            Self::from_bytes(source.to_le_bytes())
+        }
+    }
+
+    impl Ddr5TrainingOverrideEntryHeaderFlags {
+        #[allow(dead_code)]
+        pub fn builder() -> Self {
+            Self::new()
+        }
+        #[allow(dead_code)]
+        pub fn build(&self) -> Self {
+            *self
+        }
+        #[allow(dead_code)]
+        pub(crate) fn serde_selected_mem_clks(
+            &self,
+        ) -> Result<Ddr5TrainingOverrideEntryHeaderFlagsMemClkMask> {
+            Ok(self.selected_mem_clks())
+        }
+        #[allow(dead_code)]
+        pub(crate) fn serde_selected_channels(
+            &self,
+        ) -> Result<Ddr5TrainingOverrideEntryHeaderChannelSelectorMask>
+        {
+            Ok(self.selected_channels())
+        }
+        #[allow(dead_code)]
+        pub(crate) fn serde_read_dq_delay_offset(&self) -> Result<i8> {
+            // modular-bitfield can't represent i4 (or for that matter, i8).
+            // So it uses u8 for that.
+            // So we have to manually convert it here.
+            Ok(sign_extend_i4_to_i8(self.read_dq_delay_offset()))
+        }
+        #[allow(dead_code)]
+        pub(crate) fn serde_read_dq_vref_offset(&self) -> Result<i8> {
+            // modular-bitfield can't represent i4 (or for that matter, i8).
+            // So it uses u8 for that.
+            // So we have to manually convert it here.
+            Ok(sign_extend_i4_to_i8(self.read_dq_vref_offset()))
+        }
+        #[allow(dead_code)]
+        pub(crate) fn serde_write_dq_delay_offset(&self) -> Result<i8> {
+            // modular-bitfield can't represent i4 (or for that matter, i8).
+            // So it uses u8 for that.
+            // So we have to manually convert it here.
+            Ok(sign_extend_i4_to_i8(self.write_dq_delay_offset()))
+        }
+        #[allow(dead_code)]
+        pub(crate) fn serde_write_dq_vref_offset(&self) -> Result<i8> {
+            // modular-bitfield can't represent i4 (or for that matter, i8).
+            // So it uses u8 for that.
+            // So we have to manually convert it here.
+            Ok(sign_extend_i4_to_i8(self.write_dq_vref_offset()))
+        }
+        #[allow(dead_code)]
+        pub(crate) fn serde_with_selected_mem_clks(
+            &mut self,
+            value: Ddr5TrainingOverrideEntryHeaderFlagsMemClkMask,
+        ) -> &mut Self {
+            self.set_selected_mem_clks(value);
+            self
+        }
+        #[allow(dead_code)]
+        pub(crate) fn serde_with_selected_channels(
+            &mut self,
+            value: Ddr5TrainingOverrideEntryHeaderChannelSelectorMask,
+        ) -> &mut Self {
+            self.set_selected_channels(value);
+            self
+        }
+        #[allow(dead_code)]
+        pub(crate) fn serde_with_read_dq_delay_offset(
+            &mut self,
+            value: i8,
+        ) -> &mut Self {
+            // modular-bitfield can't represent i4 (or for that matter, i8).
+            // So it uses u8 for that.
+            // So we have to manually convert it here.
+            self.set_read_dq_delay_offset(i8_to_i4(value));
+            self
+        }
+        #[allow(dead_code)]
+        pub(crate) fn serde_with_read_dq_vref_offset(
+            &mut self,
+            value: i8,
+        ) -> &mut Self {
+            // modular-bitfield can't represent i4 (or for that matter, i8).
+            // So it uses u8 for that.
+            // So we have to manually convert it here.
+            self.set_read_dq_vref_offset(i8_to_i4(value));
+            self
+        }
+        #[allow(dead_code)]
+        pub(crate) fn serde_with_write_dq_delay_offset(
+            &mut self,
+            value: i8,
+        ) -> &mut Self {
+            // modular-bitfield can't represent i4 (or for that matter, i8).
+            // So it uses u8 for that.
+            // So we have to manually convert it here.
+            self.set_write_dq_delay_offset(i8_to_i4(value));
+            self
+        }
+        #[allow(dead_code)]
+        pub(crate) fn serde_with_write_dq_vref_offset(
+            &mut self,
+            value: i8,
+        ) -> &mut Self {
+            // modular-bitfield can't represent i4 (or for that matter, i8).
+            // So it uses u8 for that.
+            // So we have to manually convert it here.
+            self.set_write_dq_vref_offset(i8_to_i4(value));
+            self
+        }
+    }
+
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(rename = "Ddr5TrainingOverrideEntryHeaderFlags")
+    )]
+    pub struct CustomSerdeDdr5TrainingOverrideEntryHeaderFlags {
+        pub selected_mem_clks: Ddr5TrainingOverrideEntryHeaderFlagsMemClkMask,
+        pub selected_channels:
+            Ddr5TrainingOverrideEntryHeaderChannelSelectorMask,
+        #[cfg_attr(feature = "serde", serde(default))]
+        pub read_dq_delay_offset: i8,
+        #[cfg_attr(feature = "serde", serde(default))]
+        pub read_dq_vref_offset: i8,
+        #[cfg_attr(feature = "serde", serde(default))]
+        pub write_dq_delay_offset: i8,
+        #[cfg_attr(feature = "serde", serde(default))]
+        pub write_dq_vref_offset: i8,
+    }
+
+    impl_bitfield_primitive_conversion!(
+        Ddr5TrainingOverrideEntryHeaderFlags,
+        0b1111_1111_1111_1111_1111_1111_1111_1111,
+        u32
+    );
+
+    make_accessors! {
+        #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[repr(C, packed)]
+        pub struct Ddr5TrainingOverride40Element {
+            pub length || u32 : LU32,
+            /// SPD byte 521-550
+            pub dimm_module_part_number: [u8; 31] | pub get [u8; 31] : pub set [u8; 31], // TODO: extra type?
+            pub _reserved_1 || #[serde(default)] u8 : u8, // for alignment
+            flags || #[serde(flatten)] Ddr5TrainingOverrideEntryHeaderFlags : LU32 | pub(crate) get Ddr5TrainingOverrideEntryHeaderFlags : pub(crate) set Ddr5TrainingOverrideEntryHeaderFlags,
+        }
+    }
+
+    impl Ddr5TrainingOverride40Element {
+        pub fn selected_mem_clks(
+            &self,
+        ) -> Result<Ddr5TrainingOverrideEntryHeaderFlagsMemClkMask> {
+            Ok(self.flags()?.selected_mem_clks())
+        }
+        pub fn set_selected_mem_clks(
+            &mut self,
+            value: Ddr5TrainingOverrideEntryHeaderFlagsMemClkMask,
+        ) {
+            let mut flags =
+                Ddr5TrainingOverrideEntryHeaderFlags::from(self.flags.get());
+            flags.set_selected_mem_clks(value);
+            self.set_flags(flags)
+        }
+        pub fn with_selected_mem_clks(
+            &mut self,
+            value: Ddr5TrainingOverrideEntryHeaderFlagsMemClkMask,
+        ) -> &mut Self {
+            self.set_selected_mem_clks(value);
+            self
+        }
+        pub fn selected_channels(
+            &self,
+        ) -> Result<Ddr5TrainingOverrideEntryHeaderChannelSelectorMask>
+        {
+            Ok(self.flags()?.selected_channels())
+        }
+        pub fn set_selected_channels(
+            &mut self,
+            value: Ddr5TrainingOverrideEntryHeaderChannelSelectorMask,
+        ) {
+            let mut flags =
+                Ddr5TrainingOverrideEntryHeaderFlags::from(self.flags.get());
+            flags.set_selected_channels(value);
+            self.set_flags(flags)
+        }
+        pub fn with_selected_channels(
+            &mut self,
+            value: Ddr5TrainingOverrideEntryHeaderChannelSelectorMask,
+        ) -> &mut Self {
+            self.set_selected_channels(value);
+            self
+        }
+        pub fn read_dq_delay_offset(&self) -> Result<i8> {
+            // Because u4 doesn't exist in modular-bitfield, it returns an u8.
+            // We need an i8 (or really, an i4).
+            let raw_value: u8 = self.flags()?.read_dq_delay_offset();
+            Ok(sign_extend_i4_to_i8(raw_value))
+        }
+        pub fn set_read_dq_delay_offset(&mut self, value: i8) {
+            let mut flags =
+                Ddr5TrainingOverrideEntryHeaderFlags::from(self.flags.get());
+            // Because modular-bitfield doesn't have i4.
+            flags.set_read_dq_delay_offset(i8_to_i4(value));
+            self.set_flags(flags)
+        }
+        pub fn with_read_dq_delay_offset(&mut self, value: i8) -> &mut Self {
+            self.set_read_dq_delay_offset(value);
+            self
+        }
+        pub fn read_dq_vref_offset(&self) -> Result<i8> {
+            // Because u4 doesn't exist in modular-bitfield, it returns an u8.
+            // We need an i8 (or really, an i4).
+            let raw_value: u8 = self.flags()?.read_dq_vref_offset();
+            Ok(sign_extend_i4_to_i8(raw_value))
+        }
+        pub fn set_read_dq_vref_offset(&mut self, value: i8) {
+            let mut flags =
+                Ddr5TrainingOverrideEntryHeaderFlags::from(self.flags.get());
+            // Because modular-bitfield doesn't have i4.
+            flags.set_read_dq_vref_offset(i8_to_i4(value));
+            self.set_flags(flags)
+        }
+        pub fn with_read_dq_vref_offset(&mut self, value: i8) -> &mut Self {
+            self.set_read_dq_vref_offset(value);
+            self
+        }
+        pub fn write_dq_delay_offset(&self) -> Result<i8> {
+            // Because u4 doesn't exist in modular-bitfield, it returns an u8.
+            // We need an i8 (or really, an i4).
+            let raw_value: u8 = self.flags()?.write_dq_delay_offset();
+            Ok(sign_extend_i4_to_i8(raw_value))
+        }
+        pub fn set_write_dq_delay_offset(&mut self, value: i8) {
+            let mut flags =
+                Ddr5TrainingOverrideEntryHeaderFlags::from(self.flags.get());
+            // Cast because modular-bitfield doesn't have i4.
+            flags.set_write_dq_delay_offset(i8_to_i4(value));
+            self.set_flags(flags)
+        }
+        pub fn with_write_dq_delay_offset(&mut self, value: i8) -> &mut Self {
+            self.set_write_dq_delay_offset(value);
+            self
+        }
+        pub fn write_dq_vref_offset(&self) -> Result<i8> {
+            // Because u4 doesn't exist in modular-bitfield, it returns an u8.
+            // We need an i8 (or really, an i4).
+            let raw_value: u8 = self.flags()?.write_dq_vref_offset();
+            Ok(sign_extend_i4_to_i8(raw_value))
+        }
+        pub fn set_write_dq_vref_offset(&mut self, value: i8) {
+            let mut flags =
+                Ddr5TrainingOverrideEntryHeaderFlags::from(self.flags.get());
+            // Cast because modular-bitfield doesn't have i4.
+            flags.set_write_dq_vref_offset(i8_to_i4(value));
+            self.set_flags(flags)
+        }
+        pub fn with_write_dq_vref_offset(&mut self, value: i8) -> &mut Self {
+            self.set_write_dq_vref_offset(value);
+            self
+        }
+    }
+
+    impl EntryCompatible for Ddr5TrainingOverride40Element {
+        fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
+            matches!(
+                entry_id,
+                EntryId::Memory(MemoryEntryId::Ddr5TrainingOverride)
+            )
+        }
+    }
+
+    impl HeaderWithTail for Ddr5TrainingOverride40Element {
         type TailArrayItemType<'de> = ();
     }
 
@@ -7475,6 +7832,34 @@ Clone)]
             assert!(header.enable_console_logging().unwrap());
             header.set_enable_console_logging(false);
             assert!(!header.enable_console_logging().unwrap());
+        }
+        /// Since modular-bitfield doesn't support i4, we have implemented it ourselves.
+        /// Let's test it.
+        #[test]
+        pub fn test_i4() {
+            let mut entry = Ddr5TrainingOverride40Element::builder()
+                .with_selected_mem_clks(
+                    Ddr5TrainingOverrideEntryHeaderFlagsMemClkMask::builder().with_ddr4800(true).build(),
+                )
+                .with_selected_channels(
+                    Ddr5TrainingOverrideEntryHeaderChannelSelectorMask::builder().with_c_0(true).with_c_11(true).build(),
+                )
+                .with_write_dq_delay_offset(5)
+                .build();
+            assert!(entry.selected_mem_clks().unwrap().ddr4800());
+            assert!(!entry.selected_mem_clks().unwrap().ddr5600());
+            assert_eq!(entry.read_dq_delay_offset().unwrap(), 0);
+            assert_eq!(entry.read_dq_vref_offset().unwrap(), 0);
+            assert_eq!(entry.write_dq_delay_offset().unwrap(), 5);
+            assert_eq!(entry.write_dq_vref_offset().unwrap(), 0);
+            entry.set_write_dq_vref_offset(1);
+            assert_eq!(entry.write_dq_vref_offset().unwrap(), 1);
+            entry.set_write_dq_vref_offset(7);
+            assert_eq!(entry.write_dq_vref_offset().unwrap(), 7);
+            entry.set_write_dq_vref_offset(-1);
+            assert_eq!(entry.write_dq_vref_offset().unwrap(), -1);
+            entry.set_write_dq_vref_offset(-8);
+            assert_eq!(entry.write_dq_vref_offset().unwrap(), -8);
         }
     }
 }
@@ -9288,6 +9673,15 @@ pub enum DfTgtReqGo {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum DfGmiSubTxRxMode {
+    Enabled = 1,
+    Disabled = 0,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemChannelDisableFloatPowerGoodDdr {
     Enabled = 1,
     Disabled = 0,
@@ -9520,6 +9914,8 @@ pub enum MemTargetSpeed {
     _5200 = 5200,
     #[cfg_attr(feature = "serde", serde(rename = "5600 MT/s"))]
     _5600 = 5600,
+    #[cfg_attr(feature = "serde", serde(rename = "6400 MT/s"))]
+    _6400 = 6400,
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
@@ -9972,6 +10368,27 @@ impl_bitfield_primitive_conversion!(MemPmuBistTestSelect, 0b11111, u8);
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemPmuTrainingRetryCount {
+    #[default]
+    _0 = 0,
+    _1 = 1,
+    _2 = 2,
+    _3 = 3,
+    _4 = 4,
+    _5 = 5,
+    _6 = 6,
+    _7 = 7,
+    _8 = 8,
+    _9 = 9,
+    _10 = 10,
+}
+
+#[derive(
+    Debug, Default, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone,
+)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum EspiController {
     #[default]
     Controller0 = 0,
@@ -10309,6 +10726,15 @@ pub enum DfPdrTuningMode {
     Auto = 0xff,
 }
 
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum DfPdrMode {
+    All = 0,
+    Selective = 1,
+}
+
 #[derive(BitfieldSpecifier, Copy, Clone, Debug, Default, PartialEq)]
 #[bits = 1]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -10409,6 +10835,7 @@ make_token_accessors! {
         MemSelfHealBistEnable(default 0, id 0x2c23_924c) | pub get u8 : pub set u8, // FIXME: is it bool ?  // TODO: Before using default, fix default.  It's possibly not correct.
         MemPmuBistAlgorithmSelectDdr(default 1, id 0xc5e7_8e21) | pub get MemPmuBistAlgorithmSelectDdr : pub set MemPmuBistAlgorithmSelectDdr,
         MemPmuBistTestSelect(default 7, id 0x7034_fbfb) | pub get MemPmuBistTestSelect : pub set MemPmuBistTestSelect,
+        MemPmuTrainingRetryCount(default 0, id 0x1564_1ea0) | pub get MemPmuTrainingRetryCount : pub set MemPmuTrainingRetryCount,
         MemHealTestSelect(default 0, id 0x5908_2cf2) | pub get MemHealTestSelect : pub set MemHealTestSelect,
         MemHealPprType(default 0, id 0x5418_1a61) | pub get MemHealPprType : pub set MemHealPprType,
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
@@ -10558,13 +10985,16 @@ make_token_accessors! {
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         DfXgmiCrcThreshold(default 0xff, id 0xc375_4da2) | pub get u8 : pub set u8,
         DfCcdBwThrottleLevel(default 0xFF, id 0xd288_6dc9) | pub get DfCcdBwThrottleLevel : pub set DfCcdBwThrottleLevel,
+        /// See <https://www.amd.com/content/dam/amd/en/documents/epyc-technical-docs/tuning-guides/58467_amd-epyc-9005-tg-bios-and-workload.pdf>.
         DfPdrTuningMode(default 0xFF, id 0x0645_76ca) | pub get DfPdrTuningMode : pub set DfPdrTuningMode,
+        DfPdrMode(default 1, id 0x60b1_fe08) | pub get DfPdrMode : pub set DfPdrMode,
         DfPfOrganization(default 0, id 0xede8_930b) | pub get DfPfOrganization : pub set DfPfOrganization,
         DfXgmiPresetControlMode(default 1, id 0x21aa_0c13) | pub get DfXgmiPresetControlMode : pub set DfXgmiPresetControlMode,
         DfCxlCacheForceStronglyOrderedWrites(default 0, id 0x236e_17a6) | pub get DfCxlStronglyOrderedWrites : pub set DfCxlStronglyOrderedWrites,
         CxlResetPin(default 2, id 0x9226_78f0) | pub get CxlResetPin : pub set CxlResetPin,
         DfUmcCxlMixedInterleavedMode(default 0, id 0x8e49_3e5f) | pub get DfUmcCxlMixedInterleavedMode : pub set DfUmcCxlMixedInterleavedMode,
         DfTgtReqGo(default 0xff, id 0xa2c7_7a9d) | pub get DfTgtReqGo : pub set DfTgtReqGo,
+        DfGmiSubTxRxMode(default 0, id 0x6904_3ee0) | pub get DfGmiSubTxRxMode : pub set DfGmiSubTxRxMode,
 
         // Nbio
 
