@@ -1495,11 +1495,11 @@ impl_bitfield_primitive_conversion!(BoardInstances, 0xffff, u16);
 pub mod gnb {
     use super::{
         paste, AsBytes, BitfieldSpecifier, EntryCompatible, EntryId, FromBytes,
-        FromPrimitive, Getter, GnbEntryId, Result, SerdeHex8, Setter,
-        ToPrimitive, Unaligned,
+        FromPrimitive, Getter, GnbEntryId, Result, Setter, ToPrimitive,
+        Unaligned,
     };
     #[cfg(feature = "serde")]
-    use super::{Deserialize, Serialize};
+    use super::{Deserialize, SerdeHex8, Serialize};
     use crate::struct_accessors::make_accessors;
     use modular_bitfield::prelude::*;
 
