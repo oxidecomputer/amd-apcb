@@ -1330,6 +1330,7 @@ make_bitfield_serde! {
     #[repr(u8)]
     #[derive(Copy, Clone)]
     pub struct PriorityLevels {
+        #[bits = 1]
         pub hard_force || #[serde(default)] bool : bool | pub get bool : pub set bool,
         pub high || #[serde(default)] bool : bool | pub get bool : pub set bool,
         pub medium || #[serde(default)] bool : bool | pub get bool : pub set bool,
@@ -1421,21 +1422,37 @@ make_bitfield_serde! {
     #[repr(u16)]
     #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
     pub struct BoardInstances {
+        #[bits = 1]
         pub instance_0 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub instance_1 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub instance_2 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub instance_3 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub instance_4 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub instance_5 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub instance_6 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub instance_7 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub instance_8 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub instance_9 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub instance_10 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub instance_11 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub instance_12 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub instance_13 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub instance_14 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub instance_15 || #[serde(default)] bool : bool | pub get bool : pub set bool,
     }
 }
@@ -1581,7 +1598,9 @@ pub mod gnb {
             Clone, Copy, Debug, PartialEq, //BitfieldSpecifier,
         )]
         pub struct EarlyPcieConfigBody {
+            #[bits = 8]
             pub start_lane || u8 : B8, // (0xFF)
+            #[bits = 8]
             pub end_lane || u8 : B8, // (0xFF=UNUSED_LANE if descriptor is unused)
             #[bits = 2]
             pub socket || u8 : B2,
@@ -1591,11 +1610,17 @@ pub mod gnb {
             pub link_speed: EarlyPcieLinkSpeed | pub get EarlyPcieLinkSpeed : pub set EarlyPcieLinkSpeed,
             #[bits = 2]
             pub reset_pin: EarlyPcieResetPin | pub get EarlyPcieResetPin : pub set EarlyPcieResetPin,
+            #[bits = 3]
             pub root_function || u8 : B3 | pub get u8 : pub set u8, // XXX (0: default)
+            #[bits = 5]
             pub root_device || u8 : B5 | pub get u8 : pub set u8, // XXX (0: default)
+            #[bits = 8]
             pub max_payload || u8 : B8 | pub get u8 : pub set u8, // XXX (0xff: ignore),
+            #[bits = 8]
             pub tx_deemphasis || u8 : B8 | pub get u8 : pub set u8, // XXX (0xff: ignore)
+            #[bits = 8]
             pub _reserved_1 || #[serde(default)] SerdeHex8 : B8, // (0)
+            #[bits = 8]
             pub _reserved_2 || #[serde(default)] SerdeHex8 : B8, // (0)
         }
     }
@@ -2682,9 +2707,13 @@ pub mod memory {
             Default, Clone, Copy, PartialEq, BitfieldSpecifier,
         )]
         pub struct Ddr4DimmRanks {
+            #[bits = 1]
             pub unpopulated || #[serde(default)] bool : bool | pub get bool : pub set bool,
+            #[bits = 1]
             pub single_rank || #[serde(default)] bool : bool | pub get bool : pub set bool,
+            #[bits = 1]
             pub dual_rank || #[serde(default)] bool : bool | pub get bool : pub set bool,
+            #[bits = 1]
             pub quad_rank || #[serde(default)] bool : bool | pub get bool : pub set bool,
         }
     );
@@ -2714,8 +2743,11 @@ pub mod memory {
             Clone, Copy, PartialEq, BitfieldSpecifier,
         )]
         pub struct LrdimmDdr4DimmRanks {
+            #[bits = 1]
             pub unpopulated || #[serde(default)] bool : bool | pub get bool : pub set bool,
+            #[bits = 1]
             pub lr || #[serde(default)] bool : bool | pub get bool : pub set bool,
+            #[bits = 2]
             pub _reserved_1 || #[serde(default)] SerdeHex8 : B2,
         }
     );
@@ -4471,10 +4503,14 @@ pub mod memory {
         #[derive(PartialEq, Debug, Copy, Clone)]
         #[repr(u32)]
         pub struct ErrorOutControlBeepCodePeakAttr {
+            #[bits = 5]
             pub peak_count || u8 : B5 | pub get u8 : pub set u8,
             /// PULSE_WIDTH: in units of 0.1 s
+            #[bits = 3]
             pub pulse_width || u8 : B3 | pub get u8 : pub set u8,
+            #[bits = 4]
             pub repeat_count || u8 : B4 | pub get u8 : pub set u8,
+            #[bits = 20]
             pub _reserved_1 || #[serde(default)] SerdeHex32 : B20,
         }
     }
@@ -10210,13 +10246,21 @@ make_bitfield_serde! {
     #[derive(PartialEq, Debug, Copy, Clone)]
     #[repr(u32)]
     pub struct DfXgmiChannelTypeSelect {
+        #[bits = 4]
         pub s0l0 || DfXgmiChannelType : B4 | pub get DfXgmiChannelType : pub set DfXgmiChannelType,
+        #[bits = 4]
         pub s0l1 || DfXgmiChannelType : B4 | pub get DfXgmiChannelType : pub set DfXgmiChannelType,
+        #[bits = 4]
         pub s0l2 || DfXgmiChannelType : B4 | pub get DfXgmiChannelType : pub set DfXgmiChannelType,
+        #[bits = 4]
         pub s0l3 || DfXgmiChannelType : B4 | pub get DfXgmiChannelType : pub set DfXgmiChannelType,
+        #[bits = 4]
         pub s1l0 || DfXgmiChannelType : B4 | pub get DfXgmiChannelType : pub set DfXgmiChannelType,
+        #[bits = 4]
         pub s1l1 || DfXgmiChannelType : B4 | pub get DfXgmiChannelType : pub set DfXgmiChannelType,
+        #[bits = 4]
         pub s1l2 || DfXgmiChannelType : B4 | pub get DfXgmiChannelType : pub set DfXgmiChannelType,
+        #[bits = 4]
         pub s1l3 || DfXgmiChannelType : B4 | pub get DfXgmiChannelType : pub set DfXgmiChannelType,
     }
 }
@@ -10260,20 +10304,34 @@ make_bitfield_serde! {
     #[repr(u16)]
     #[derive(Default, Debug, Copy, Clone, PartialEq)]
     pub struct FchGppClkMapSelection {
+        #[bits = 1]
         pub s0_gpp0_off : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub s0_gpp1_off : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub s0_gpp4_off : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub s0_gpp2_off : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub s0_gpp3_off : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub s0_gpp5_off : bool | pub get bool : pub set bool,
+        #[bits = 2]
         pub _reserved_1 || #[serde(default)] SerdeHex8 : B2,
 
+        #[bits = 1]
         pub s1_gpp0_off : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub s1_gpp1_off : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub s1_gpp4_off : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub s1_gpp2_off : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub s1_gpp3_off : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub s1_gpp5_off : bool | pub get bool : pub set bool,
+        #[bits = 2]
         pub _reserved_2 || #[serde(default)] SerdeHex8 : B2,
     }
 }
@@ -10335,11 +10393,17 @@ make_bitfield_serde! {
     #[repr(u8)]
     #[derive(Debug, Copy, Clone, PartialEq)]
     pub struct MemPmuBistTestSelect {
+        #[bits = 1]
         pub algorithm_1 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub algorithm_2 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub algorithm_3 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub algorithm_4 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub algorithm_5 || #[serde(default)] bool : bool | pub get bool : pub set bool,
+        #[bits = 3]
         pub _reserved_0 || #[serde(default)] SerdeHex8 : B3,
     }
 }
@@ -10401,10 +10465,15 @@ make_bitfield_serde! {
     #[repr(u8)]
     #[derive(Debug, Copy, Clone, PartialEq)]
     pub struct FchConsoleOutSerialPortEspiControllerSelect {
+        #[bits = 1]
         pub espi_controller || EspiController : B1 | pub get EspiController : pub set EspiController,
+        #[bits = 2]
         pub _reserved_0 || #[serde(default)] SerdeHex8 : B2,
+        #[bits = 1]
         pub io_2e_2f_disabled: bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub io_4e_4f_disabled: bool | pub get bool : pub set bool,
+        #[bits = 3]
         pub _reserved_1 || #[serde(default)] SerdeHex8 : B3,
     }
 }
@@ -10419,15 +10488,25 @@ make_bitfield_serde! {
     #[repr(u16)]
     #[derive(Debug, Copy, Clone, PartialEq)]
     pub struct MemPmuBistAlgorithmSelect {
+        #[bits = 1]
         pub algorithm_1: bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub algorithm_2: bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub algorithm_3: bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub algorithm_4: bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub algorithm_5: bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub algorithm_6: bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub algorithm_7: bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub algorithm_8: bool | pub get bool : pub set bool,
+        #[bits = 1]
         pub algorithm_9: bool | pub get bool : pub set bool,
+        #[bits = 7]
         pub _reserved_0 || #[serde(default)] SerdeHex8 : B7,
     }
 }
@@ -10734,13 +10813,21 @@ make_bitfield_serde! {
     #[repr(u8)]
     #[derive(Debug, Copy, Clone, PartialEq)]
     pub struct DfXgmiAcDcCoupledLink {
+        #[bits = 1]
         pub socket_0_link_0 || #[serde(default)] DfXgmiAcDcMode : DfXgmiAcDcMode | pub get DfXgmiAcDcMode : pub set DfXgmiAcDcMode,
+        #[bits = 1]
         pub socket_0_link_1 || #[serde(default)] DfXgmiAcDcMode : DfXgmiAcDcMode | pub get DfXgmiAcDcMode : pub set DfXgmiAcDcMode,
+        #[bits = 1]
         pub socket_0_link_2 || #[serde(default)] DfXgmiAcDcMode : DfXgmiAcDcMode | pub get DfXgmiAcDcMode : pub set DfXgmiAcDcMode,
+        #[bits = 1]
         pub socket_0_link_3 || #[serde(default)] DfXgmiAcDcMode : DfXgmiAcDcMode | pub get DfXgmiAcDcMode : pub set DfXgmiAcDcMode,
+        #[bits = 1]
         pub socket_1_link_0 || #[serde(default)] DfXgmiAcDcMode : DfXgmiAcDcMode | pub get DfXgmiAcDcMode : pub set DfXgmiAcDcMode,
+        #[bits = 1]
         pub socket_1_link_1 || #[serde(default)] DfXgmiAcDcMode : DfXgmiAcDcMode | pub get DfXgmiAcDcMode : pub set DfXgmiAcDcMode,
+        #[bits = 1]
         pub socket_1_link_2 || #[serde(default)] DfXgmiAcDcMode : DfXgmiAcDcMode | pub get DfXgmiAcDcMode : pub set DfXgmiAcDcMode,
+        #[bits = 1]
         pub socket_1_link_3 || #[serde(default)] DfXgmiAcDcMode : DfXgmiAcDcMode | pub get DfXgmiAcDcMode : pub set DfXgmiAcDcMode,
     }
 }
