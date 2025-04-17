@@ -147,7 +147,9 @@ fn test(args: BuildArgs) {
     let verbose = args.verbose.then_some("--verbose").unwrap_or("");
     // This should not run the integration tests, otherwise serde_yaml
     // will fail because there's no serde.
-    let args = format!("test --no-default-features --tests --lib {locked} {verbose} {build_type}");
+    let args = format!(
+        "test --no-default-features --tests --lib {locked} {verbose} {build_type}"
+    );
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
 }
 
@@ -156,17 +158,22 @@ fn tests(args: BuildArgs) {
     let build_type = args.profile.build_type().unwrap_or("");
     let locked = args.locked.then_some("--locked").unwrap_or("");
     let verbose = args.verbose.then_some("--verbose").unwrap_or("");
-    let args = format!("test --no-default-features {locked} {build_type} {verbose} --tests --lib");
+    let args = format!(
+        "test --no-default-features {locked} {build_type} {verbose} --tests --lib"
+    );
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
     let args = format!("build {locked} {build_type} {verbose} --features std");
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
-    let args = format!("build {locked} {build_type} {verbose} --features serde");
+    let args =
+        format!("build {locked} {build_type} {verbose} --features serde");
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
     let args = format!(
         "build {locked} {build_type} {verbose} --features serde,schemars,serde-hex"
     );
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
-    let args = format!("build {locked} {build_type} {verbose} --features serde,schemars --example fromyaml");
+    let args = format!(
+        "build {locked} {build_type} {verbose} --features serde,schemars --example fromyaml"
+    );
     cmd(cargo(), args.split_whitespace()).run().expect("test successful");
     let args = format!(
         "test {locked} {build_type} {verbose} --test * --features serde,schemars"

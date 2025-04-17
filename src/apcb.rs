@@ -111,7 +111,8 @@ pub struct SerdeApcb {
     /// we can actually handle the out-of-band information quite natually.
     #[cfg_attr(feature = "serde", serde(default))]
     pub context: ApcbContext,
-    pub _version: String,
+    #[cfg_attr(feature = "serde", allow(dead_code))]
+    pub version: String,
     pub header: V2_HEADER,
     pub v3_header_ext: Option<V3_HEADER_EXT>,
     pub groups: Vec<SerdeGroupItem>,
