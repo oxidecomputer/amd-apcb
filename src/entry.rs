@@ -173,8 +173,8 @@ impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>>
     }
 }
 
-impl<'a, 'b, T: EntryCompatible + MutSequenceElementFromBytes<'b>>
-    StructSequenceEntryMutIter<'a, T>
+impl<'b, T: EntryCompatible + MutSequenceElementFromBytes<'b>>
+    StructSequenceEntryMutIter<'_, T>
 {
     pub(crate) fn validate(mut self) -> Result<()> {
         while !self.buf.is_empty() {
@@ -438,7 +438,7 @@ pub struct SerdeEntryItem {
 }
 
 #[cfg(feature = "schemars")]
-impl<'a> schemars::JsonSchema for EntryItem<'a> {
+impl schemars::JsonSchema for EntryItem<'_> {
     fn schema_name() -> std::string::String {
         String::from("EntryItem")
     }
@@ -631,7 +631,7 @@ impl schemars::JsonSchema for SerdeEntryItem {
 }
 
 #[cfg(feature = "serde")]
-impl<'a> Serialize for EntryItem<'a> {
+impl Serialize for EntryItem<'_> {
     fn serialize<S>(
         &self,
         serializer: S,
@@ -1031,7 +1031,7 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
             {
                 struct FieldVisitor;
 
-                impl<'de> Visitor<'de> for FieldVisitor {
+                impl Visitor<'_> for FieldVisitor {
                     type Value = Field;
 
                     fn expecting(

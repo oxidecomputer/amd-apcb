@@ -1,3 +1,5 @@
+workspace = { members = [ "xtask" ] }
+
 [package]
 name = "amd-apcb"
 version = "0.5.1"

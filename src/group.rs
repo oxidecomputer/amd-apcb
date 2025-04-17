@@ -44,7 +44,7 @@ pub struct SerdeGroupItem {
 }
 
 #[cfg(feature = "schemars")]
-impl<'a> schemars::JsonSchema for GroupItem<'a> {
+impl schemars::JsonSchema for GroupItem<'_> {
     fn schema_name() -> std::string::String {
         SerdeGroupItem::schema_name()
     }
@@ -249,7 +249,7 @@ pub struct GroupMutIter<'a> {
     remaining_used_size: usize,
 }
 
-impl<'a> GroupMutIter<'a> {
+impl GroupMutIter<'_> {
     /// It's useful to have some way of NOT mutating self.buf.  This is what
     /// this function does. Note: The caller needs to manually decrease
     /// remaining_used_size for each call if desired.
@@ -503,7 +503,7 @@ pub struct GroupMutItem<'a> {
     pub(crate) used_size: usize,
 }
 
-impl<'a> GroupMutItem<'a> {
+impl GroupMutItem<'_> {
     /// Note: ASCII
     pub fn signature(&self) -> [u8; 4] {
         self.header.signature
