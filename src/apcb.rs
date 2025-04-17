@@ -28,7 +28,6 @@ use core::default::Default;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
-use pre::pre;
 use static_assertions::const_assert;
 use zerocopy::AsBytes;
 use zerocopy::LayoutVerified;
@@ -710,7 +709,6 @@ impl<'a> Apcb<'a> {
     }
     /// Note: board_instance_mask needs to be exact.
     #[allow(clippy::too_many_arguments)]
-    #[pre]
     fn internal_insert_entry(
         &mut self,
         entry_id: EntryId,
@@ -751,11 +749,7 @@ impl<'a> Apcb<'a> {
         let mut entries = group.entries_mut();
         // Note: On some errors, group.used_size will be reduced by insert_entry
         // again!
-        let rv = #[assure(
-            "Caller already grew the group by `payload_size + size_of::<ENTRY_HEADER>()`",
-            reason = "See above"
-        )]
-        entries.insert_entry(
+        let rv = entries.insert_entry(
             entry_id,
             instance_id,
             board_instance_mask,
@@ -770,7 +764,6 @@ impl<'a> Apcb<'a> {
 
     // Security--and it would be nicer if the person using this would instead
     // contribute a struct layout so we can use it normally
-    #[pre]
     pub(crate) fn insert_entry(
         &mut self,
         entry_id: EntryId,
@@ -980,7 +973,6 @@ impl<'a> Apcb<'a> {
     }
 
     /// Note: INSTANCE_ID is sometimes != 0.
-    #[pre]
     pub fn insert_token(
         &mut self,
         entry_id: EntryId,
@@ -1020,10 +1012,6 @@ impl<'a> Apcb<'a> {
         // Now, GroupMutItem.buf includes space for the token, claimed by no
         // entry so far.  group.insert_token has special logic in order to
         // survive that.
-        #[assure(
-            "Caller already grew the group by `size_of::<TOKEN_ENTRY>()`",
-            reason = "See a few lines above here"
-        )]
         let rv = group.insert_token(
             entry_id,
             instance_id,

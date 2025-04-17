@@ -11,7 +11,6 @@ use crate::types::{ApcbContext, Error, FileSystemError, Result};
 use core::convert::TryFrom;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
-use pre::pre;
 use zerocopy::ByteSlice;
 
 #[cfg(feature = "serde")]
@@ -204,12 +203,6 @@ impl<'a> TokensEntryIter<&'a mut [u8]> {
     }
 
     /// Inserts the given entry data at the right spot.
-    #[pre(
-        "Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`"
-    )]
-    #[pre(
-        "Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`"
-    )]
     pub(crate) fn insert_token(
         &mut self,
         token_id: u32,
@@ -612,28 +605,13 @@ impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
         (self.iter_mut().ok()?).find(|entry| entry.id() == token_id)
     }
 
-    #[pre(
-        "Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`"
-    )]
-    #[pre(
-        "Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`"
-    )]
     pub(crate) fn insert_token(
         &mut self,
         token_id: u32,
         token_value: u32,
     ) -> Result<()> {
         let mut iter = self.iter_mut()?;
-        match #[assure(
-            "Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`",
-            reason = "See our own precondition"
-        )]
-        #[assure(
-            "Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`",
-            reason = "See our own precondition"
-        )]
-        iter.insert_token(token_id, token_value)
-        {
+        match iter.insert_token(token_id, token_value) {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }

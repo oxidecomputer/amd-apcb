@@ -18,7 +18,6 @@ use crate::types::{
 use core::marker::PhantomData;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
-use pre::pre;
 use zerocopy::{AsBytes, FromBytes};
 
 #[cfg(feature = "serde")]
@@ -307,28 +306,13 @@ impl<'a> EntryMutItem<'a> {
     // Note: Because entry_id, instance_id, group_id and board_instance_mask are
     // sort keys, these cannot be mutated.
 
-    #[pre(
-        "Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`"
-    )]
-    #[pre(
-        "Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`"
-    )]
     pub(crate) fn insert_token(
         &mut self,
         token_id: u32,
         token_value: u32,
     ) -> Result<()> {
         match &mut self.body {
-            EntryItemBody::<_>::Tokens(a) =>
-            {
-                #[assure(
-                    "Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`",
-                    reason = "It's our caller's responsibility and our precondition"
-                )]
-                #[assure(
-                    "Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`",
-                    reason = "It's our caller's responsibility and our precondition"
-                )]
+            EntryItemBody::<_>::Tokens(a) => {
                 a.insert_token(token_id, token_value)
             }
             _ => Err(Error::EntryTypeMismatch),
