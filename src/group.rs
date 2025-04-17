@@ -21,7 +21,6 @@ use core::convert::TryInto;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
-use pre::pre;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct GroupItem<'a> {
@@ -396,7 +395,6 @@ impl<'a> GroupMutIter<'a> {
         }
     }
     /// Inserts the given entry data at the right spot.
-    #[pre("Caller already grew the group by `payload_size + size_of::<ENTRY_HEADER>()`")]
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn insert_entry(
         &mut self,
@@ -571,7 +569,6 @@ impl<'a> GroupMutItem<'a> {
         Ok(entry_size as u32)
     }
     /// Resizes the given entry by SIZE_DIFF.
-    #[pre("If `size_diff > 0`, caller needs to have expanded the group by `size_diff` already.  If `size_diff < 0`, caller needs to call `resize_entry_by` BEFORE resizing the group.")]
     pub(crate) fn resize_entry_by(
         &mut self,
         entry_id: EntryId,
@@ -637,7 +634,6 @@ impl<'a> GroupMutItem<'a> {
         }
     }
     /// Inserts the given token.
-    #[pre("Caller already grew the group by `size_of::<TOKEN_ENTRY>()`")]
     pub(crate) fn insert_token(
         &mut self,
         entry_id: EntryId,
@@ -653,28 +649,18 @@ impl<'a> GroupMutItem<'a> {
         // the new area out for the iterator--and reinstate it only after
         // resize_entry_by (which has been adapted specially) is finished with
         // Ok.
-        #[assure("If `size_diff > 0`, caller needs to have expanded the group by `size_diff` already.  If `size_diff < 0`, caller needs to call `resize_entry_by` BEFORE resizing the group.", reason = "Our caller ensured that, and we have a precondition to make him")]
         let mut entry = self.resize_entry_by(
             entry_id,
             instance_id,
             board_instance_mask,
             token_size as i64,
         )?;
-        #[assure(
-            "Caller already increased the entry size by `size_of::<TOKEN_ENTRY>()`",
-            reason = "See right before here"
-        )]
-        #[assure(
-            "Caller already increased the group size by `size_of::<TOKEN_ENTRY>()`",
-            reason = "See our caller (and our own precondition)"
-        )]
         entry.insert_token(token_id, token_value)
     }
 
     /// Deletes the given token.
     /// Returns the number of bytes that were deleted.
     /// Postcondition: Caller will resize the given group
-    #[pre]
     pub(crate) fn delete_token(
         &mut self,
         entry_id: EntryId,
@@ -700,7 +686,6 @@ impl<'a> GroupMutItem<'a> {
         let mut token_size_diff: i64 =
             token_size.try_into().map_err(|_| Error::ArithmeticOverflow)?;
         token_size_diff = -token_size_diff;
-        #[assure("If `size_diff > 0`, caller needs to have expanded the group by `size_diff` already.  If `size_diff < 0`, caller needs to call `resize_entry_by` BEFORE resizing the group.", reason = "Our caller will do that, after calling us")]
         self.resize_entry_by(
             entry_id,
             instance_id,
