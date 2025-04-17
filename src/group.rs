@@ -5,17 +5,17 @@
 use crate::types::{ApcbContext, Error, FileSystemError, Result};
 
 use crate::entry::{EntryItem, EntryItemBody, EntryMutItem};
-use crate::ondisk::GroupId;
 use crate::ondisk::ENTRY_ALIGNMENT;
 use crate::ondisk::ENTRY_HEADER;
 use crate::ondisk::GROUP_HEADER;
+use crate::ondisk::GroupId;
 use crate::ondisk::TOKEN_ENTRY;
+pub use crate::ondisk::{
+    BoardInstances, ContextFormat, ContextType, EntryId, PriorityLevels,
+};
 use crate::ondisk::{
     take_body_from_collection, take_body_from_collection_mut,
     take_header_from_collection, take_header_from_collection_mut,
-};
-pub use crate::ondisk::{
-    BoardInstances, ContextFormat, ContextType, EntryId, PriorityLevels,
 };
 use core::convert::TryInto;
 use core::mem::size_of;
@@ -49,9 +49,9 @@ impl<'a> schemars::JsonSchema for GroupItem<'a> {
         SerdeGroupItem::schema_name()
     }
     fn json_schema(
-        gen: &mut schemars::gen::SchemaGenerator,
+        generator: &mut schemars::r#gen::SchemaGenerator,
     ) -> schemars::schema::Schema {
-        SerdeGroupItem::json_schema(gen)
+        SerdeGroupItem::json_schema(generator)
     }
     fn is_referenceable() -> bool {
         SerdeGroupItem::is_referenceable()
@@ -73,10 +73,7 @@ impl<'a> Iterator for GroupIter<'a> {
         if self.remaining_used_size == 0 {
             return None;
         }
-        match self.next1() {
-            Ok(e) => Some(e),
-            Err(_) => None,
-        }
+        self.next1().ok()
     }
 }
 impl<'a> GroupIter<'a> {
@@ -441,8 +438,8 @@ impl<'a> GroupMutIter<'a> {
         )?;
 
         let mut buf = &mut *self.buf; // already done: offset
-                                      // Move the entries from after the insertion point to the right (in
-                                      // order to make room before for our new entry).
+        // Move the entries from after the insertion point to the right (in
+        // order to make room before for our new entry).
         buf.copy_within(0..self.remaining_used_size, entry_allocation as usize);
 
         //let mut buf = &mut self.buf[..(self.remaining_used_size +
@@ -629,7 +626,10 @@ impl<'a> GroupMutItem<'a> {
         match self.entry_exact_mut(entry_id, instance_id, board_instance_mask) {
             Some(e) => Ok(e),
             None => {
-                panic!("Entry (entry_id = {:?}, instance_id = {:?}, board_instance_mask = {:?}) was found by move_point to, but not by manual iteration after resizing.", entry_id, instance_id, board_instance_mask);
+                panic!(
+                    "Entry (entry_id = {:?}, instance_id = {:?}, board_instance_mask = {:?}) was found by move_point to, but not by manual iteration after resizing.",
+                    entry_id, instance_id, board_instance_mask
+                );
             }
         }
     }

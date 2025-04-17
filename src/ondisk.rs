@@ -10,8 +10,8 @@
 #![allow(clippy::new_without_default)]
 
 pub use crate::naples::{ParameterTimePoint, ParameterTokenConfig};
-use crate::struct_accessors::{make_accessors, Getter, Setter};
-use crate::token_accessors::{make_token_accessors, Tokens, TokensMut};
+use crate::struct_accessors::{Getter, Setter, make_accessors};
+use crate::token_accessors::{Tokens, TokensMut, make_token_accessors};
 use crate::types::Error;
 use crate::types::PriorityLevel;
 use crate::types::Result;
@@ -20,7 +20,7 @@ use core::cmp::Ordering;
 use core::convert::TryFrom;
 use core::convert::TryInto;
 use core::mem::{size_of, take};
-use core::num::{NonZeroU16, NonZeroU8};
+use core::num::{NonZeroU8, NonZeroU16};
 use four_cc::FourCC;
 use modular_bitfield::prelude::*;
 use num_derive::FromPrimitive;
@@ -29,7 +29,7 @@ use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use paste::paste;
 use zerocopy::byteorder::LittleEndian;
-use zerocopy::{AsBytes, FromBytes, LayoutVerified, Unaligned, U16, U32, U64};
+use zerocopy::{AsBytes, FromBytes, LayoutVerified, U16, U32, U64, Unaligned};
 
 #[cfg(feature = "serde")]
 use byteorder::WriteBytesExt;
@@ -190,9 +190,9 @@ macro_rules! make_serde_hex {
             fn schema_name() -> String {
                 <&str>::schema_name()
             }
-            fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+            fn json_schema(generator: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
                // TODO: Further limit which string literals are allowed here.
-                <&str>::json_schema(gen)
+                <&str>::json_schema(generator)
             }
             fn is_referenceable() -> bool {
                 false
@@ -1017,11 +1017,7 @@ impl ToPrimitive for OemEntryId {
 
 impl FromPrimitive for OemEntryId {
     fn from_u64(value: u64) -> Option<Self> {
-        if value < 0x1_0000 {
-            Some(Self::Unknown(value as u16))
-        } else {
-            None
-        }
+        if value < 0x1_0000 { Some(Self::Unknown(value as u16)) } else { None }
     }
     fn from_i64(value: i64) -> Option<Self> {
         if value >= 0 {
@@ -1052,11 +1048,7 @@ impl ToPrimitive for RawEntryId {
 
 impl FromPrimitive for RawEntryId {
     fn from_u64(value: u64) -> Option<Self> {
-        if value < 0x1_0000 {
-            Some(Self::Unknown(value as u16))
-        } else {
-            None
-        }
+        if value < 0x1_0000 { Some(Self::Unknown(value as u16)) } else { None }
     }
     fn from_i64(value: i64) -> Option<Self> {
         if value >= 0 {
@@ -1494,9 +1486,9 @@ impl_bitfield_primitive_conversion!(BoardInstances, 0xffff, u16);
 
 pub mod gnb {
     use super::{
-        paste, AsBytes, BitfieldSpecifier, EntryCompatible, EntryId, FromBytes,
+        AsBytes, BitfieldSpecifier, EntryCompatible, EntryId, FromBytes,
         FromPrimitive, Getter, GnbEntryId, Result, Setter, ToPrimitive,
-        Unaligned,
+        Unaligned, paste,
     };
     #[cfg(feature = "serde")]
     use super::{Deserialize, SerdeHex8, Serialize};
@@ -2025,7 +2017,7 @@ impl Parameters {
 
 pub mod df {
     use super::*;
-    use crate::struct_accessors::{make_accessors, Getter, Setter};
+    use crate::struct_accessors::{Getter, Setter, make_accessors};
     use crate::types::Result;
 
     #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
@@ -2137,7 +2129,7 @@ pub mod df {
 pub mod memory {
     use super::*;
     use crate::struct_accessors::{
-        make_accessors, DummyErrorChecks, Getter, Setter, BLU16, BU8,
+        BLU16, BU8, DummyErrorChecks, Getter, Setter, make_accessors,
     };
     use crate::types::Result;
 
@@ -2863,11 +2855,7 @@ pub mod memory {
         }
         #[inline]
         fn from_i64(raw_value: i64) -> Option<Self> {
-            if raw_value >= 0 {
-                Self::from_u64(raw_value as u64)
-            } else {
-                None
-            }
+            if raw_value >= 0 { Self::from_u64(raw_value as u64) } else { None }
         }
     }
 
@@ -5997,11 +5985,7 @@ Clone)]
     /// So we have to manually convert it here.
     fn sign_extend_i4_to_i8(x: u8) -> i8 {
         let sign_mask = x & 0b1000;
-        if sign_mask == 0 {
-            x as i8
-        } else {
-            (x | 0xF0) as i8
-        }
+        if sign_mask == 0 { x as i8 } else { (x | 0xF0) as i8 }
     }
 
     /// modular-bitfield can't represent i4 (or for that matter, i8).
@@ -7755,13 +7739,13 @@ Clone)]
 
             let mut abl_console_out_control = AblConsoleOutControl::default();
             abl_console_out_control.set_enable_mem_setreg_logging(true);
-            assert!(abl_console_out_control
-                .enable_mem_setreg_logging()
-                .unwrap());
+            assert!(
+                abl_console_out_control.enable_mem_setreg_logging().unwrap()
+            );
             abl_console_out_control.set_enable_mem_setreg_logging(false);
-            assert!(!abl_console_out_control
-                .enable_mem_setreg_logging()
-                .unwrap());
+            assert!(
+                !abl_console_out_control.enable_mem_setreg_logging().unwrap()
+            );
             let console_out_control = ConsoleOutControl::new(
                 abl_console_out_control,
                 AblBreakpointControl::default(),
@@ -7866,7 +7850,7 @@ Clone)]
 
 pub mod fch {
     use super::*;
-    use crate::struct_accessors::{make_accessors, Getter, Setter, BU8};
+    use crate::struct_accessors::{BU8, Getter, Setter, make_accessors};
     use crate::types::Result;
 
     #[repr(u8)]
@@ -8182,7 +8166,7 @@ pub mod fch {
 pub mod psp {
     use super::memory::Gpio;
     use super::*;
-    use crate::struct_accessors::{make_accessors, Getter, Setter};
+    use crate::struct_accessors::{Getter, Setter, make_accessors};
 
     make_accessors! {
         #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
@@ -10104,18 +10088,10 @@ pub enum FchSmbusSpeed {
 }
 impl FromPrimitive for FchSmbusSpeed {
     fn from_u64(value: u64) -> Option<Self> {
-        if value < 0x100 {
-            Some(Self::Value(value as u8))
-        } else {
-            None
-        }
+        if value < 0x100 { Some(Self::Value(value as u8)) } else { None }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 {
-            Self::from_u64(value as u64)
-        } else {
-            None
-        }
+        if value >= 0 { Self::from_u64(value as u64) } else { None }
     }
 }
 impl ToPrimitive for FchSmbusSpeed {
@@ -10139,18 +10115,10 @@ pub enum DfCakeCrcThresholdBounds {
 }
 impl FromPrimitive for DfCakeCrcThresholdBounds {
     fn from_u64(value: u64) -> Option<Self> {
-        if value <= 1_000_000 {
-            Some(Self::Value(value as u32))
-        } else {
-            None
-        }
+        if value <= 1_000_000 { Some(Self::Value(value as u32)) } else { None }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 {
-            Self::from_u64(value as u64)
-        } else {
-            None
-        }
+        if value >= 0 { Self::from_u64(value as u64) } else { None }
     }
 }
 impl ToPrimitive for DfCakeCrcThresholdBounds {
@@ -10184,11 +10152,7 @@ impl FromPrimitive for DfXgmiChannelType {
         }
     }
     fn from_i64(value: i64) -> Option<Self> {
-        if value >= 0 {
-            Self::from_u64(value as u64)
-        } else {
-            None
-        }
+        if value >= 0 { Self::from_u64(value as u64) } else { None }
     }
 }
 impl ToPrimitive for DfXgmiChannelType {

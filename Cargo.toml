@@ -2,9 +2,8 @@
 name = "amd-apcb"
 version = "0.5.1"
 authors = ["Oxide Computer"]
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+edition = "2024"
+license = "MPL-2.0"
 
 [dependencies]
 # newer one than the one in zerocopy--required for WriteBytesExt (used by Parameters).
@@ -21,7 +20,7 @@ serde = { version = "1.0", default-features = false, features = ["derive"], opti
 serde-hex = { version = "0.1", optional = true }
 schemars = { version = "0.8", optional = true }
 parse_int = { version = "0.9", optional = true }
-thiserror = { version = "1.0", optional = true }
+thiserror = { version = "2.0", optional = true }
 
 [features]
 default = ["std"]

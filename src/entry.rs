@@ -5,10 +5,10 @@
 use crate::naples::ParameterTokenConfig;
 use crate::ondisk::ENTRY_HEADER;
 use crate::ondisk::{
-    take_header_from_collection, take_header_from_collection_mut,
     BoardInstances, ContextFormat, ContextType, EntryCompatible, EntryId,
     HeaderWithTail, MutSequenceElementFromBytes, PriorityLevels,
-    SequenceElementFromBytes,
+    SequenceElementFromBytes, take_header_from_collection,
+    take_header_from_collection_mut,
 };
 use crate::ondisk::{Parameters, ParametersIter};
 use crate::tokens_entry::TokensEntryBodyItem;
@@ -198,11 +198,7 @@ impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> Iterator
     type Item = T;
     fn next(&'_ mut self) -> Option<Self::Item> {
         // Note: Further error checking is done in validate()
-        if self.buf.is_empty() {
-            None
-        } else {
-            self.next1().ok()
-        }
+        if self.buf.is_empty() { None } else { self.next1().ok() }
     }
 }
 
@@ -428,7 +424,7 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
         String::from("EntryItem")
     }
     fn json_schema(
-        gen: &mut schemars::gen::SchemaGenerator,
+        generator: &mut schemars::r#gen::SchemaGenerator,
     ) -> schemars::schema::Schema {
         use crate::fch;
         use crate::gnb;
@@ -441,152 +437,162 @@ impl<'a> schemars::JsonSchema for EntryItem<'a> {
         };
         let obj = schema.object();
         obj.required.insert("header".to_owned());
-        obj.properties
-            .insert("header".to_owned(), <ENTRY_HEADER>::json_schema(gen));
+        obj.properties.insert(
+            "header".to_owned(),
+            <ENTRY_HEADER>::json_schema(generator),
+        );
         obj.properties.insert(
             "tokens".to_owned(),
-            <Vec<TokensEntryItem<&'_ TOKEN_ENTRY>>>::json_schema(gen),
+            <Vec<TokensEntryItem<&'_ TOKEN_ENTRY>>>::json_schema(generator),
         );
         obj.properties.insert(
             "LrdimmDdr4OdtPatElement".to_owned(),
-            <Vec<memory::LrdimmDdr4OdtPatElement>>::json_schema(gen),
+            <Vec<memory::LrdimmDdr4OdtPatElement>>::json_schema(generator),
         );
         obj.properties.insert(
             "Ddr4OdtPatElement".to_owned(),
-            <Vec<memory::Ddr4OdtPatElement>>::json_schema(gen),
+            <Vec<memory::Ddr4OdtPatElement>>::json_schema(generator),
         );
         obj.properties.insert(
             "DdrPostPackageRepairElement".to_owned(),
-            <Vec<memory::DdrPostPackageRepairElement>>::json_schema(gen),
+            <Vec<memory::DdrPostPackageRepairElement>>::json_schema(generator),
         );
         obj.properties.insert(
             "DimmInfoSmbusElement".to_owned(),
-            <Vec<memory::DimmInfoSmbusElement>>::json_schema(gen),
+            <Vec<memory::DimmInfoSmbusElement>>::json_schema(generator),
         );
         obj.properties.insert(
             "RdimmDdr4CadBusElement".to_owned(),
-            <Vec<memory::RdimmDdr4CadBusElement>>::json_schema(gen),
+            <Vec<memory::RdimmDdr4CadBusElement>>::json_schema(generator),
         );
         obj.properties.insert(
             "UdimmDdr4CadBusElement".to_owned(),
-            <Vec<memory::UdimmDdr4CadBusElement>>::json_schema(gen),
+            <Vec<memory::UdimmDdr4CadBusElement>>::json_schema(generator),
         );
         obj.properties.insert(
             "LrdimmDdr4CadBusElement".to_owned(),
-            <Vec<memory::LrdimmDdr4CadBusElement>>::json_schema(gen),
+            <Vec<memory::LrdimmDdr4CadBusElement>>::json_schema(generator),
         );
         obj.properties.insert(
             "Ddr4DataBusElement".to_owned(),
-            <Vec<memory::Ddr4DataBusElement>>::json_schema(gen),
+            <Vec<memory::Ddr4DataBusElement>>::json_schema(generator),
         );
         obj.properties.insert(
             "LrdimmDdr4DataBusElement".to_owned(),
-            <Vec<memory::LrdimmDdr4DataBusElement>>::json_schema(gen),
+            <Vec<memory::LrdimmDdr4DataBusElement>>::json_schema(generator),
         );
         obj.properties.insert(
             "MaxFreqElement".to_owned(),
-            <Vec<memory::MaxFreqElement>>::json_schema(gen),
+            <Vec<memory::MaxFreqElement>>::json_schema(generator),
         );
         obj.properties.insert(
             "LrMaxFreqElement".to_owned(),
-            <Vec<memory::LrMaxFreqElement>>::json_schema(gen),
+            <Vec<memory::LrMaxFreqElement>>::json_schema(generator),
         );
         obj.properties.insert(
             "Ddr5CaPinMapElement".to_owned(),
-            <Vec<memory::Ddr5CaPinMapElement>>::json_schema(gen),
+            <Vec<memory::Ddr5CaPinMapElement>>::json_schema(generator),
         );
         obj.properties.insert(
             "MemDfeSearchElement32".to_owned(),
-            <Vec<memory::MemDfeSearchElement32>>::json_schema(gen),
+            <Vec<memory::MemDfeSearchElement32>>::json_schema(generator),
         );
         obj.properties.insert(
             "MemDfeSearchElement36".to_owned(),
-            <Vec<memory::MemDfeSearchElement36>>::json_schema(gen),
+            <Vec<memory::MemDfeSearchElement36>>::json_schema(generator),
         );
         obj.properties.insert(
             "DdrDqPinMapElement".to_owned(),
-            <Vec<memory::DdrDqPinMapElement>>::json_schema(gen),
+            <Vec<memory::DdrDqPinMapElement>>::json_schema(generator),
         );
         obj.properties.insert(
             "RdimmDdr5BusElement".to_owned(),
-            <Vec<memory::RdimmDdr5BusElement>>::json_schema(gen),
+            <Vec<memory::RdimmDdr5BusElement>>::json_schema(generator),
         );
         obj.properties.insert(
             "ConsoleOutControl".to_owned(),
-            <memory::ConsoleOutControl>::json_schema(gen),
+            <memory::ConsoleOutControl>::json_schema(generator),
         );
         obj.properties.insert(
             "NaplesConsoleOutControl".to_owned(),
-            <memory::NaplesConsoleOutControl>::json_schema(gen),
+            <memory::NaplesConsoleOutControl>::json_schema(generator),
         );
         obj.properties.insert(
             "ExtVoltageControl".to_owned(),
-            <memory::ExtVoltageControl>::json_schema(gen),
+            <memory::ExtVoltageControl>::json_schema(generator),
         );
         obj.properties.insert(
             "ErrorOutControl116".to_owned(),
-            <memory::ErrorOutControl116>::json_schema(gen),
+            <memory::ErrorOutControl116>::json_schema(generator),
         );
         obj.properties.insert(
             "ErrorOutControl112".to_owned(),
-            <memory::ErrorOutControl112>::json_schema(gen),
+            <memory::ErrorOutControl112>::json_schema(generator),
         );
         obj.properties.insert(
             "SlinkConfig".to_owned(),
-            <crate::df::SlinkConfig>::json_schema(gen),
+            <crate::df::SlinkConfig>::json_schema(generator),
         );
-        obj.properties
-            .insert("EspiInit".to_owned(), <fch::EspiInit>::json_schema(gen));
+        obj.properties.insert(
+            "EspiInit".to_owned(),
+            <fch::EspiInit>::json_schema(generator),
+        );
         obj.properties.insert(
             "PmuBistVendorAlgorithmElement".to_owned(),
-            <Vec<memory::PmuBistVendorAlgorithmElement>>::json_schema(gen),
+            <Vec<memory::PmuBistVendorAlgorithmElement>>::json_schema(
+                generator,
+            ),
         );
         obj.properties.insert(
             "Ddr5RawCardConfigElement".to_owned(),
-            <Vec<memory::Ddr5RawCardConfigElement>>::json_schema(gen),
+            <Vec<memory::Ddr5RawCardConfigElement>>::json_schema(generator),
         );
         obj.properties.insert(
             "EspiSioInitElement".to_owned(),
-            <Vec<fch::EspiSioInitElement>>::json_schema(gen),
+            <Vec<fch::EspiSioInitElement>>::json_schema(generator),
         );
         obj.properties.insert(
             "EarlyPcieConfigElement".to_owned(),
-            <Vec<gnb::EarlyPcieConfigElement>>::json_schema(gen),
+            <Vec<gnb::EarlyPcieConfigElement>>::json_schema(generator),
         );
         obj.properties
             .insert("BoardIdGettingMethodGpio".to_owned(),
                 <(psp::BoardIdGettingMethodGpio,
                     Vec<<psp::BoardIdGettingMethodGpio as
-                        HeaderWithTail>::TailArrayItemType<'_>>)>::json_schema(gen));
+                        HeaderWithTail>::TailArrayItemType<'_>>)>::json_schema(generator));
         obj.properties
             .insert("BoardIdGettingMethodEeprom".to_owned(),
                 <(psp::BoardIdGettingMethodEeprom,
                     Vec<<psp::BoardIdGettingMethodEeprom as
-                        HeaderWithTail>::TailArrayItemType<'_>>)>::json_schema(gen));
+                        HeaderWithTail>::TailArrayItemType<'_>>)>::json_schema(generator));
         obj.properties
             .insert("BoardIdGettingMethodSmbus".to_owned(),
                 <(psp::BoardIdGettingMethodSmbus,
                     Vec<<psp::BoardIdGettingMethodSmbus as
-                        HeaderWithTail>::TailArrayItemType<'_>>)>::json_schema(gen));
+                        HeaderWithTail>::TailArrayItemType<'_>>)>::json_schema(generator));
         obj.properties
             .insert("BoardIdGettingMethodCustom".to_owned(),
                 <(psp::BoardIdGettingMethodCustom,
                     Vec<<psp::BoardIdGettingMethodCustom as
-                        HeaderWithTail>::TailArrayItemType<'_>>)>::json_schema(gen));
+                        HeaderWithTail>::TailArrayItemType<'_>>)>::json_schema(generator));
 
         obj.properties.insert(
             "platform_specific_overrides".to_owned(),
             <Vec<memory::platform_specific_override::ElementRef<'_>>>::json_schema(
-                gen,
+                generator,
             ),
         );
         obj.properties.insert(
             "platform_tuning".to_owned(),
-            <Vec<memory::platform_tuning::ElementRef<'_>>>::json_schema(gen),
+            <Vec<memory::platform_tuning::ElementRef<'_>>>::json_schema(
+                generator,
+            ),
         );
 
-        obj.properties
-            .insert("parameters".to_owned(), <Parameters>::json_schema(gen));
+        obj.properties.insert(
+            "parameters".to_owned(),
+            <Parameters>::json_schema(generator),
+        );
         schema.into()
     }
 }
@@ -596,9 +602,9 @@ impl schemars::JsonSchema for SerdeEntryItem {
         EntryItem::schema_name()
     }
     fn json_schema(
-        gen: &mut schemars::gen::SchemaGenerator,
+        generator: &mut schemars::r#gen::SchemaGenerator,
     ) -> schemars::schema::Schema {
-        EntryItem::json_schema(gen)
+        EntryItem::json_schema(generator)
     }
     fn is_referenceable() -> bool {
         EntryItem::is_referenceable()

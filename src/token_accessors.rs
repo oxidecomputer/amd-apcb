@@ -75,7 +75,7 @@ impl<'a, 'b> TokensMut<'a, 'b> {
                 board_instance_mask: self.board_instance_mask,
             })?;
         match &entry.body {
-            EntryItemBody::<_>::Tokens(ref a) => {
+            EntryItemBody::<_>::Tokens(a) => {
                 let token = a.token(field_key).ok_or(Error::TokenNotFound {
                     token_id: field_key,
                     //entry_id: token_entry_id,
@@ -168,7 +168,7 @@ impl<'a, 'b> TokensMut<'a, 'b> {
                     )
                     .unwrap();
                 match &mut entry.body {
-                    EntryItemBody::<_>::Tokens(ref mut a) => {
+                    EntryItemBody::<_>::Tokens(a) => {
                         let mut token = a.token_mut(token_id).unwrap();
                         token.set_value(token_value)?;
                     }
@@ -217,7 +217,7 @@ impl<'a, 'b> Tokens<'a, 'b> {
                 board_instance_mask: self.board_instance_mask,
             })?;
         match &entry.body {
-            EntryItemBody::<_>::Tokens(ref a) => {
+            EntryItemBody::<_>::Tokens(a) => {
                 let token = a.token(field_key).ok_or(Error::TokenNotFound {
                     token_id: field_key,
                     //instance_id: self.instance_id,

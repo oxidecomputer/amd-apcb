@@ -6,21 +6,21 @@ use crate::types::{ApcbContext, Error, FileSystemError, PtrMut, Result};
 
 use crate::entry::EntryItemBody;
 use crate::group::{GroupItem, GroupMutItem};
-use crate::ondisk::GroupId;
 use crate::ondisk::ENTRY_ALIGNMENT;
 use crate::ondisk::ENTRY_HEADER;
 use crate::ondisk::GROUP_HEADER;
+use crate::ondisk::GroupId;
 use crate::ondisk::TOKEN_ENTRY;
 use crate::ondisk::V2_HEADER;
 use crate::ondisk::V3_HEADER_EXT;
-use crate::ondisk::{
-    take_body_from_collection, take_body_from_collection_mut,
-    take_header_from_collection, take_header_from_collection_mut,
-    HeaderWithTail, ParameterAttributes, SequenceElementAsBytes,
-};
 pub use crate::ondisk::{
     BoardInstances, ContextType, EntryCompatible, EntryId, Parameter,
     PriorityLevels,
+};
+use crate::ondisk::{
+    HeaderWithTail, ParameterAttributes, SequenceElementAsBytes,
+    take_body_from_collection, take_body_from_collection_mut,
+    take_header_from_collection, take_header_from_collection_mut,
 };
 use crate::token_accessors::{Tokens, TokensMut};
 use core::convert::TryInto;
@@ -111,7 +111,7 @@ pub struct SerdeApcb {
     /// we can actually handle the out-of-band information quite natually.
     #[cfg_attr(feature = "serde", serde(default))]
     pub context: ApcbContext,
-    pub version: String,
+    pub _version: String,
     pub header: V2_HEADER,
     pub v3_header_ext: Option<V3_HEADER_EXT>,
     pub groups: Vec<SerdeGroupItem>,
@@ -125,9 +125,9 @@ impl<'a> schemars::JsonSchema for Apcb<'a> {
         SerdeApcb::schema_name()
     }
     fn json_schema(
-        gen: &mut schemars::gen::SchemaGenerator,
+        generator: &mut schemars::r#gen::SchemaGenerator,
     ) -> schemars::schema::Schema {
-        SerdeApcb::json_schema(gen)
+        SerdeApcb::json_schema(generator)
     }
     fn is_referenceable() -> bool {
         SerdeApcb::is_referenceable()
@@ -1181,7 +1181,7 @@ impl<'a> Apcb<'a> {
         // Correct for stored_checksum_byte
         checksum_byte = checksum_byte.wrapping_sub(stored_checksum_byte);
         Ok((0x100u16 - u16::from(checksum_byte)) as u8) // Note: This can
-                                                        // overflow
+        // overflow
     }
 
     /// Note: for OPTIONS, try ApcbIoOptions::default()
