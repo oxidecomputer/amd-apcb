@@ -8848,7 +8848,7 @@ impl<'de> serde::Deserialize<'de> for FchConsoleOutMode {
         deserializer: D,
     ) -> std::result::Result<Self, D::Error> {
         struct ModeVisitor;
-        impl<'de> serde::de::Visitor<'de> for ModeVisitor {
+        impl serde::de::Visitor<'_> for ModeVisitor {
             type Value = FchConsoleOutMode;
             fn expecting(
                 &self,
@@ -11676,7 +11676,7 @@ make_token_accessors! {
 
 // Compatibility shim for old token accessors (which we have a lot of
 // configurations with)
-impl<'a, 'b> Tokens<'a, 'b> {
+impl Tokens<'_, '_> {
     #[allow(non_snake_case)]
     pub fn mem_limit_memory_to_below_1_TiB(&self) -> Result<bool> {
         bool::from_u32(self.get(TokenEntryId::Bool, 0x5e71e6d8)?)
@@ -11723,7 +11723,7 @@ impl<'a, 'b> Tokens<'a, 'b> {
 
 // Compatibility shim for old token accessors (which we have a lot of
 // configurations with)
-impl<'a, 'b> TokensMut<'a, 'b> {
+impl TokensMut<'_, '_> {
     #[allow(non_snake_case)]
     pub fn mem_limit_memory_to_below_1_TiB(&self) -> Result<bool> {
         bool::from_u32(self.get(TokenEntryId::Bool, 0x5e71e6d8)?)

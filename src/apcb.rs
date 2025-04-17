@@ -120,7 +120,7 @@ pub struct SerdeApcb {
 }
 
 #[cfg(feature = "schemars")]
-impl<'a> schemars::JsonSchema for Apcb<'a> {
+impl schemars::JsonSchema for Apcb<'_> {
     fn schema_name() -> std::string::String {
         SerdeApcb::schema_name()
     }
@@ -135,7 +135,7 @@ impl<'a> schemars::JsonSchema for Apcb<'a> {
 }
 
 #[cfg(feature = "serde")]
-impl<'a> Apcb<'a> {
+impl Apcb<'_> {
     pub fn context(&self) -> ApcbContext {
         self.context
     }
@@ -197,7 +197,7 @@ impl<'a> Apcb<'a> {
 }
 
 #[cfg(feature = "serde")]
-impl<'a> Serialize for Apcb<'a> {
+impl Serialize for Apcb<'_> {
     fn serialize<S>(
         &self,
         serializer: S,
