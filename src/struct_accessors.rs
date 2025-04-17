@@ -9,7 +9,7 @@ use crate::types::Result;
 use four_cc::FourCC;
 use num_traits::{FromPrimitive, ToPrimitive};
 use zerocopy::byteorder::LittleEndian;
-use zerocopy::{AsBytes, FromBytes, U16, U32, U64};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout, U16, U32, U64};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -68,11 +68,21 @@ impl<T: FromPrimitive> Getter<Result<T>> for u32 {
         T::from_u32(self).ok_or(Error::EntryTypeMismatch)
     }
 }
-#[derive(Default, Debug, PartialEq, FromBytes, AsBytes, Clone, Copy)]
-#[repr(C, packed)]
+#[derive(
+    Default,
+    Debug,
+    PartialEq,
+    FromBytes,
+    Immutable,
+    IntoBytes,
+    KnownLayout,
+    Clone,
+    Copy,
+)]
+#[repr(transparent)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
-pub(crate) struct BU8(pub(crate) u8);
+pub struct BU8(pub(crate) u8);
 impl Getter<Result<bool>> for BU8 {
     fn get1(self) -> Result<bool> {
         match self.0 {
@@ -109,7 +119,9 @@ impl From<bool> for BU8 {
     }
 }
 
-#[derive(Debug, PartialEq, FromBytes, AsBytes, Clone, Copy)]
+#[derive(
+    Debug, PartialEq, FromBytes, IntoBytes, KnownLayout, Immutable, Clone, Copy,
+)]
 #[repr(C, packed)]
 pub(crate) struct BLU16(pub(crate) U16<LittleEndian>);
 impl Getter<Result<bool>> for BLU16 {

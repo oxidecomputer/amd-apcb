@@ -18,7 +18,7 @@ use crate::types::{ApcbContext, Error, FileSystemError, Result};
 use core::marker::PhantomData;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
-use zerocopy::{AsBytes, FromBytes};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[cfg(feature = "serde")]
 use crate::ondisk::{Parameter, TOKEN_ENTRY};
@@ -202,24 +202,32 @@ impl<'a, T: EntryCompatible + MutSequenceElementFromBytes<'a>> Iterator
     }
 }
 
-pub struct StructArrayEntryMutItem<'a, T: Sized + FromBytes + AsBytes> {
+pub struct StructArrayEntryMutItem<
+    'a,
+    T: Sized + FromBytes + IntoBytes + Immutable + KnownLayout,
+> {
     buf: &'a mut [u8],
     _item: PhantomData<&'a T>,
 }
 
-impl<'a, T: 'a + Sized + FromBytes + AsBytes> StructArrayEntryMutItem<'a, T> {
+impl<'a, T: 'a + Sized + FromBytes + IntoBytes + Immutable + KnownLayout>
+    StructArrayEntryMutItem<'a, T>
+{
     pub fn iter_mut(&mut self) -> StructArrayEntryMutIter<'_, T> {
         StructArrayEntryMutIter { buf: self.buf, _item: PhantomData }
     }
 }
 
-pub struct StructArrayEntryMutIter<'a, T: Sized + FromBytes + AsBytes> {
+pub struct StructArrayEntryMutIter<
+    'a,
+    T: Sized + FromBytes + IntoBytes + Immutable + KnownLayout,
+> {
     buf: &'a mut [u8],
     _item: PhantomData<&'a T>,
 }
 
-impl<'a, T: 'a + Sized + FromBytes + AsBytes> Iterator
-    for StructArrayEntryMutIter<'a, T>
+impl<'a, T: 'a + Sized + FromBytes + IntoBytes + Immutable + KnownLayout>
+    Iterator for StructArrayEntryMutIter<'a, T>
 {
     type Item = &'a mut T;
     fn next(&mut self) -> Option<&'a mut T> {
@@ -323,7 +331,13 @@ impl<'a> EntryMutItem<'a> {
     }
 
     pub fn body_as_struct_mut<
-        H: EntryCompatible + Sized + FromBytes + AsBytes + HeaderWithTail,
+        H: EntryCompatible
+            + Sized
+            + FromBytes
+            + IntoBytes
+            + Immutable
+            + KnownLayout
+            + HeaderWithTail,
     >(
         &mut self,
     ) -> Option<(
@@ -350,7 +364,12 @@ impl<'a> EntryMutItem<'a> {
     }
 
     pub fn body_as_struct_array_mut<
-        T: EntryCompatible + Sized + FromBytes + AsBytes,
+        T: EntryCompatible
+            + Sized
+            + FromBytes
+            + IntoBytes
+            + Immutable
+            + KnownLayout,
     >(
         &mut self,
     ) -> Option<StructArrayEntryMutItem<'_, T>> {
@@ -825,7 +844,7 @@ fn struct_vec_to_body<'a, T, M>(
     map: &mut M,
 ) -> core::result::Result<(), M::Error>
 where
-    T: zerocopy::AsBytes + Deserialize<'a>,
+    T: IntoBytes + Immutable + KnownLayout + Deserialize<'a>,
     M: MapAccess<'a>,
 {
     if body.is_some() {
@@ -849,7 +868,7 @@ fn struct_to_body<'a, T, M>(
     map: &mut M,
 ) -> core::result::Result<(), M::Error>
 where
-    T: zerocopy::AsBytes + Deserialize<'a> + HeaderWithTail,
+    T: IntoBytes + Immutable + KnownLayout + Deserialize<'a> + HeaderWithTail,
     M: MapAccess<'a>,
 {
     if body.is_some() {
@@ -1372,11 +1391,11 @@ impl<'de> Deserialize<'de> for SerdeEntryItem {
             && header.context_type == (ContextType::Tokens as u8)
         {
             let body = result.body.as_mut_slice();
-            let mut tokens = zerocopy::LayoutVerified::<
-                _,
-                [crate::ondisk::TOKEN_ENTRY],
-            >::new_slice_unaligned(body)
-            .ok_or(de::Error::custom("tokens could not be sorted"))?;
+            let mut tokens =
+                zerocopy::Ref::<_, [crate::ondisk::TOKEN_ENTRY]>::from_bytes(
+                    body,
+                )
+                .map_err(|_| de::Error::custom("tokens could not be sorted"))?;
             tokens.sort_by(|a, b| a.key.get().cmp(&b.key.get()));
         }
         Ok(result)
@@ -1452,12 +1471,17 @@ impl<'a, T: EntryCompatible + SequenceElementFromBytes<'a>> Iterator
     }
 }
 
-pub struct StructArrayEntryItem<'a, T: Sized + FromBytes> {
+pub struct StructArrayEntryItem<
+    'a,
+    T: Sized + FromBytes + IntoBytes + Immutable + KnownLayout,
+> {
     buf: &'a [u8],
     _item: PhantomData<&'a T>,
 }
 
-impl<'a, T: 'a + Sized + FromBytes> StructArrayEntryItem<'a, T> {
+impl<'a, T: 'a + Sized + FromBytes + IntoBytes + Immutable + KnownLayout>
+    StructArrayEntryItem<'a, T>
+{
     pub fn iter(&self) -> StructArrayEntryIter<'_, T> {
         StructArrayEntryIter { buf: self.buf, _item: PhantomData }
     }
@@ -1492,12 +1516,17 @@ impl Parameters {
     }
 }
 
-pub struct StructArrayEntryIter<'a, T: Sized + FromBytes> {
+pub struct StructArrayEntryIter<
+    'a,
+    T: Sized + FromBytes + IntoBytes + Immutable + KnownLayout,
+> {
     buf: &'a [u8],
     _item: PhantomData<&'a T>,
 }
 
-impl<'a, T: 'a + Sized + FromBytes> Iterator for StructArrayEntryIter<'a, T> {
+impl<'a, T: 'a + Sized + FromBytes + IntoBytes + Immutable + KnownLayout>
+    Iterator for StructArrayEntryIter<'a, T>
+{
     type Item = &'a T;
     fn next(&mut self) -> Option<&'a T> {
         if self.buf.is_empty() {
@@ -1571,7 +1600,13 @@ impl<'a> EntryItem<'a> {
     }
 
     pub fn body_as_struct<
-        H: EntryCompatible + Sized + FromBytes + HeaderWithTail,
+        H: EntryCompatible
+            + Sized
+            + FromBytes
+            + IntoBytes
+            + Immutable
+            + KnownLayout
+            + HeaderWithTail,
     >(
         &'a self,
     ) -> Option<(&'a H, StructArrayEntryItem<'a, H::TailArrayItemType<'a>>)>
@@ -1594,7 +1629,14 @@ impl<'a> EntryItem<'a> {
         }
     }
 
-    pub fn body_as_struct_array<T: EntryCompatible + Sized + FromBytes>(
+    pub fn body_as_struct_array<
+        T: EntryCompatible
+            + Sized
+            + FromBytes
+            + IntoBytes
+            + Immutable
+            + KnownLayout,
+    >(
         &'a self,
     ) -> Option<StructArrayEntryItem<'a, T>> {
         match &self.body {

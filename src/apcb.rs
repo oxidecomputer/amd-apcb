@@ -29,8 +29,8 @@ use core::mem::size_of;
 use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use static_assertions::const_assert;
-use zerocopy::AsBytes;
-use zerocopy::LayoutVerified;
+use zerocopy::Ref;
+use zerocopy::{Immutable, IntoBytes, KnownLayout};
 
 // The following imports are only used for std enviroments and serde.
 #[cfg(feature = "std")]
@@ -443,52 +443,50 @@ impl<'a> Apcb<'a> {
         size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>();
     pub const MAX_SIZE: usize = 0x10000;
 
-    pub fn header(&self) -> Result<LayoutVerified<&[u8], V2_HEADER>> {
-        LayoutVerified::<&[u8], V2_HEADER>::new_unaligned_from_prefix(
-            &*self.backing_store,
-        )
-        .map(|(layout, _)| layout)
-        .ok_or(Error::FileSystem(
-            FileSystemError::InconsistentHeader,
-            "V2_HEADER",
-        ))
+    pub fn header(&self) -> Result<Ref<&[u8], V2_HEADER>> {
+        Ref::<&[u8], V2_HEADER>::from_prefix(&*self.backing_store)
+            .map(|(layout, _)| layout)
+            .map_err(|_| {
+                Error::FileSystem(
+                    FileSystemError::InconsistentHeader,
+                    "V2_HEADER",
+                )
+            })
     }
 
-    pub fn header_mut(
-        &mut self,
-    ) -> Result<LayoutVerified<&mut [u8], V2_HEADER>> {
+    pub fn header_mut(&mut self) -> Result<Ref<&mut [u8], V2_HEADER>> {
         #[cfg(not(feature = "std"))]
         let bs: &mut [u8] = self.backing_store;
         #[cfg(feature = "std")]
         let bs: &mut [u8] = self.backing_store.to_mut();
-        LayoutVerified::<&mut [u8], V2_HEADER>::new_unaligned_from_prefix(bs)
+        Ref::<&mut [u8], V2_HEADER>::from_prefix(bs)
             .map(|(layout, _)| layout)
-            .ok_or(Error::FileSystem(
-                FileSystemError::InconsistentHeader,
-                "V2_HEADER",
-            ))
+            .map_err(|_| {
+                Error::FileSystem(
+                    FileSystemError::InconsistentHeader,
+                    "V2_HEADER",
+                )
+            })
     }
 
-    pub fn v3_header_ext(
-        &self,
-    ) -> Result<Option<LayoutVerified<&[u8], V3_HEADER_EXT>>> {
+    pub fn v3_header_ext(&self) -> Result<Option<Ref<&[u8], V3_HEADER_EXT>>> {
         let (header, rest) =
-            LayoutVerified::<&[u8], V2_HEADER>::new_unaligned_from_prefix(
-                &*self.backing_store,
-            )
-            .ok_or(Error::FileSystem(
-                FileSystemError::InconsistentHeader,
-                "V2_HEADER",
-            ))?;
+            Ref::<&[u8], V2_HEADER>::from_prefix(&*self.backing_store)
+                .map_err(|_| {
+                    Error::FileSystem(
+                        FileSystemError::InconsistentHeader,
+                        "V2_HEADER",
+                    )
+                })?;
         let v3_header_ext =
             if usize::from(header.header_size) == Self::V3_HEADER_EXT_SIZE {
-                let (ext, _) =
-                    LayoutVerified::<&[u8], V3_HEADER_EXT>
-                        ::new_unaligned_from_prefix(rest)
-                    .ok_or(Error::FileSystem(
+                let (ext, _) = Ref::<&[u8], V3_HEADER_EXT>::from_prefix(rest)
+                    .map_err(|_| {
+                    Error::FileSystem(
                         FileSystemError::InconsistentHeader,
                         "V3_HEADER_EXT",
-                    ))?;
+                    )
+                })?;
                 Some(ext)
             } else {
                 None
@@ -498,28 +496,28 @@ impl<'a> Apcb<'a> {
 
     pub fn v3_header_ext_mut(
         &mut self,
-    ) -> Result<Option<LayoutVerified<&mut [u8], V3_HEADER_EXT>>> {
+    ) -> Result<Option<Ref<&mut [u8], V3_HEADER_EXT>>> {
         #[cfg(not(feature = "std"))]
         let bs: &mut [u8] = self.backing_store;
         #[cfg(feature = "std")]
         let bs: &mut [u8] = self.backing_store.to_mut();
-        let (header, rest) =
-            LayoutVerified::<&mut [u8], V2_HEADER>::new_unaligned_from_prefix(
-                bs,
-            )
-            .ok_or(Error::FileSystem(
-                FileSystemError::InconsistentHeader,
-                "V2_HEADER",
-            ))?;
+        let (header, rest) = Ref::<&mut [u8], V2_HEADER>::from_prefix(bs)
+            .map_err(|_| {
+                Error::FileSystem(
+                    FileSystemError::InconsistentHeader,
+                    "V2_HEADER",
+                )
+            })?;
         let v3_header_ext =
             if usize::from(header.header_size) == Self::V3_HEADER_EXT_SIZE {
                 let (header_ext, _) =
-                    LayoutVerified::<&mut [u8], V3_HEADER_EXT>
-                        ::new_unaligned_from_prefix(rest)
-                    .ok_or(Error::FileSystem(
-                        FileSystemError::InconsistentHeader,
-                        "V3_HEADER_EXT",
-                    ))?;
+                    Ref::<&mut [u8], V3_HEADER_EXT>::from_prefix(rest)
+                        .map_err(|_| {
+                            Error::FileSystem(
+                                FileSystemError::InconsistentHeader,
+                                "V3_HEADER_EXT",
+                            )
+                        })?;
                 Some(header_ext)
             } else {
                 None
@@ -830,7 +828,9 @@ impl<'a> Apcb<'a> {
     /// a enum of struct refs (PlatformSpecificElementRef,
     /// PlatformTuningElementRef) or just one struct. Note: Currently,
     /// INSTANCE_ID is always supposed to be 0.
-    pub fn insert_struct_array_as_entry<T: EntryCompatible + AsBytes>(
+    pub fn insert_struct_array_as_entry<
+        T: EntryCompatible + IntoBytes + Immutable + KnownLayout,
+    >(
         &mut self,
         entry_id: EntryId,
         instance_id: u16,
@@ -871,7 +871,7 @@ impl<'a> Apcb<'a> {
     /// it.  TAIL is allowed to be &[], and often has to be.
     /// Note: Currently, INSTANCE_ID is always supposed to be 0.
     pub fn insert_struct_entry<
-        H: EntryCompatible + AsBytes + HeaderWithTail,
+        H: EntryCompatible + IntoBytes + Immutable + KnownLayout + HeaderWithTail,
     >(
         &mut self,
         entry_id: EntryId,
@@ -1146,22 +1146,22 @@ impl<'a> Apcb<'a> {
     }
 
     pub(crate) fn calculate_checksum(
-        header: &LayoutVerified<&'_ [u8], V2_HEADER>,
-        v3_header_ext: &Option<LayoutVerified<&'_ [u8], V3_HEADER_EXT>>,
+        header: &Ref<&'_ [u8], V2_HEADER>,
+        v3_header_ext: &Option<Ref<&'_ [u8], V3_HEADER_EXT>>,
         beginning_of_groups: &[u8],
     ) -> Result<u8> {
         let mut checksum_byte = 0u8;
         let stored_checksum_byte = header.checksum_byte;
-        for c in header.bytes() {
+        for c in header.as_bytes() {
             checksum_byte = checksum_byte.wrapping_add(*c);
         }
-        let mut offset = header.bytes().len();
+        let mut offset = header.as_bytes().len();
         if let Some(v3_header_ext) = &v3_header_ext {
-            for c in v3_header_ext.bytes() {
+            for c in v3_header_ext.as_bytes() {
                 checksum_byte = checksum_byte.wrapping_add(*c);
             }
             offset = offset
-                .checked_add(v3_header_ext.bytes().len())
+                .checked_add(v3_header_ext.as_bytes().len())
                 .ok_or(Error::OutOfSpace)?;
         }
         let apcb_size = header.apcb_size.get();
@@ -1196,14 +1196,12 @@ impl<'a> Apcb<'a> {
         #[cfg(feature = "std")]
         let backing_store: &mut [u8] = bs.to_mut();
 
-        let (header, mut rest) =
-            LayoutVerified::<&[u8], V2_HEADER>::new_unaligned_from_prefix(
-                &*backing_store,
-            )
-            .ok_or(Error::FileSystem(
-                FileSystemError::InconsistentHeader,
-                "V2_HEADER",
-            ))?;
+        let (header, mut rest) = Ref::<&[u8], V2_HEADER>::from_prefix(
+            &*backing_store,
+        )
+        .map_err(|_| {
+            Error::FileSystem(FileSystemError::InconsistentHeader, "V2_HEADER")
+        })?;
 
         if header.signature != *b"APCB" {
             return Err(Error::FileSystem(
@@ -1232,12 +1230,15 @@ impl<'a> Apcb<'a> {
         let v3_header_ext = if usize::from(header.header_size)
             == size_of::<V2_HEADER>() + size_of::<V3_HEADER_EXT>()
         {
-            let (header_ext, restb) = LayoutVerified::<&[u8], V3_HEADER_EXT>
-                ::new_unaligned_from_prefix(rest)
-                .ok_or(Error::FileSystem(
-                FileSystemError::InconsistentHeader,
-                "V3_HEADER_EXT",
-            ))?;
+            let (header_ext, restb) = Ref::<&[u8], V3_HEADER_EXT>::from_prefix(
+                rest,
+            )
+            .map_err(|_| {
+                Error::FileSystem(
+                    FileSystemError::InconsistentHeader,
+                    "V3_HEADER_EXT",
+                )
+            })?;
             let value = &*header_ext;
             rest = restb;
             if value.signature == *b"ECB2" {
@@ -1403,15 +1404,14 @@ impl<'a> Apcb<'a> {
             header.apcb_size = (header.header_size.get() as u32).into();
         }
         let (header, rest) =
-            LayoutVerified::<&'_ [u8], V2_HEADER>::new_unaligned_from_prefix(
-                &*backing_store,
-            )
-            .unwrap();
-        let (v3_header_ext, rest) = LayoutVerified::<&'_ [u8], V3_HEADER_EXT>::new_unaligned_from_prefix(rest).unwrap();
+            Ref::<&'_ [u8], V2_HEADER>::from_prefix(&*backing_store).unwrap();
+        let (v3_header_ext, rest) =
+            Ref::<&'_ [u8], V3_HEADER_EXT>::from_prefix(rest).unwrap();
         let checksum_byte =
             Self::calculate_checksum(&header, &Some(v3_header_ext), rest)?;
 
-        let (mut header, _) = LayoutVerified::<&'_ mut [u8], V2_HEADER>::new_unaligned_from_prefix(backing_store).unwrap();
+        let (mut header, _) =
+            Ref::<&'_ mut [u8], V2_HEADER>::from_prefix(backing_store).unwrap();
         header.checksum_byte = checksum_byte;
         Self::load(bs, options)
     }

@@ -29,7 +29,9 @@ use num_traits::FromPrimitive;
 use num_traits::ToPrimitive;
 use paste::paste;
 use zerocopy::byteorder::LittleEndian;
-use zerocopy::{AsBytes, FromBytes, LayoutVerified, U16, U32, U64, Unaligned};
+use zerocopy::{
+    FromBytes, Immutable, IntoBytes, KnownLayout, Ref, U16, U32, U64, Unaligned,
+};
 
 #[cfg(feature = "serde")]
 use byteorder::WriteBytesExt;
@@ -80,11 +82,13 @@ pub trait MutSequenceElementFromBytes<'a>: Sized {
 /// type of the sequence will be.
 pub trait HeaderWithTail {
     #[cfg(feature = "serde")]
-    type TailArrayItemType<'de>: AsBytes
+    type TailArrayItemType<'de>: IntoBytes
+        + Immutable
+        + KnownLayout
         + FromBytes
         + serde::de::Deserialize<'de>;
     #[cfg(not(feature = "serde"))]
-    type TailArrayItemType<'de>: AsBytes + FromBytes;
+    type TailArrayItemType<'de>: IntoBytes + FromBytes + Immutable + KnownLayout;
 }
 
 /// Given *BUF (a collection of multiple items), retrieves the first of the
@@ -92,15 +96,15 @@ pub trait HeaderWithTail {
 /// cannot be parsed, returns None and does not advance.
 pub(crate) fn take_header_from_collection_mut<
     'a,
-    T: Sized + FromBytes + AsBytes,
+    T: Sized + FromBytes + IntoBytes + Immutable + KnownLayout,
 >(
     buf: &mut &'a mut [u8],
 ) -> Option<&'a mut T> {
     let xbuf = take(&mut *buf);
-    match LayoutVerified::<_, T>::new_from_prefix(xbuf) {
+    match Ref::<_, T>::from_prefix(xbuf).ok() {
         Some((item, xbuf)) => {
             *buf = xbuf;
-            Some(item.into_mut())
+            Some(Ref::into_mut(item))
         }
         None => None,
     }
@@ -135,14 +139,17 @@ pub(crate) fn take_body_from_collection_mut<'a>(
 /// Given *BUF (a collection of multiple items), retrieves the first of the
 /// items and returns it after advancing *BUF to the next item. If the item
 /// cannot be parsed, returns None and does not advance.
-pub(crate) fn take_header_from_collection<'a, T: Sized + FromBytes>(
+pub(crate) fn take_header_from_collection<
+    'a,
+    T: Sized + FromBytes + IntoBytes + Immutable + KnownLayout,
+>(
     buf: &mut &'a [u8],
 ) -> Option<&'a T> {
     let xbuf = take(&mut *buf);
-    match LayoutVerified::<_, T>::new_from_prefix(xbuf) {
+    match Ref::<_, T>::from_prefix(xbuf).ok() {
         Some((item, xbuf)) => {
             *buf = xbuf;
-            Some(item.into_ref())
+            Some(Ref::into_ref(item))
         }
         None => None,
     }
@@ -297,7 +304,7 @@ make_array_accessors!(SerdeHex32, LU32);
 make_array_accessors!(SerdeHex64, LU64);
 
 make_accessors! {
-    #[derive(Copy, FromBytes, AsBytes, Unaligned, Debug, Clone)]
+    #[derive(Copy, FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, Debug, Clone)]
     #[repr(C, packed)]
     pub struct V2_HEADER {
         pub signature || FourCC : [u8; 4],
@@ -352,7 +359,7 @@ fn serde_v3_header_ext_reserved_5() -> SerdeHex16 {
 // them any more, except for bug compatibility.
 make_accessors! {
     #[derive(
-        FromBytes, AsBytes, Unaligned, Clone, Copy,
+        FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, Clone, Copy,
     )]
     #[repr(C, packed)]
     pub struct V3_HEADER_EXT {
@@ -1188,7 +1195,7 @@ impl EntryId {
 
 make_accessors! {
     #[derive(
-        FromBytes, AsBytes, Unaligned, Clone, Debug,
+        FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, Clone, Debug,
     )]
     #[repr(C, packed)]
     pub struct GROUP_HEADER {
@@ -1486,9 +1493,9 @@ impl_bitfield_primitive_conversion!(BoardInstances, 0xffff, u16);
 
 pub mod gnb {
     use super::{
-        AsBytes, BitfieldSpecifier, EntryCompatible, EntryId, FromBytes,
-        FromPrimitive, Getter, GnbEntryId, Result, Setter, ToPrimitive,
-        Unaligned, paste,
+        BitfieldSpecifier, EntryCompatible, EntryId, FromBytes, FromPrimitive,
+        Getter, GnbEntryId, Immutable, IntoBytes, KnownLayout, Result, Setter,
+        ToPrimitive, Unaligned, paste,
     };
     #[cfg(feature = "serde")]
     use super::{Deserialize, SerdeHex8, Serialize};
@@ -1616,7 +1623,7 @@ pub mod gnb {
     );
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct EarlyPcieConfigElement {
             body: [u8; 8], // no| pub get DdrPostPackageRepairBody : pub set DdrPostPackageRepairBody,
@@ -1670,7 +1677,7 @@ pub mod gnb {
 }
 
 make_accessors! {
-    #[derive(FromBytes, AsBytes, Unaligned, Clone, Debug)]
+    #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, Clone, Debug)]
     #[repr(C, packed)]
     pub(crate) struct ENTRY_HEADER {
         pub(crate) group_id || SerdeHex16 : LU16, // should be equal to the group's group_id
@@ -1708,7 +1715,7 @@ impl Default for ENTRY_HEADER {
 
 pub const ENTRY_ALIGNMENT: usize = 4;
 
-#[derive(FromBytes, AsBytes, Clone, Unaligned)]
+#[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Clone, Unaligned)]
 #[repr(C, packed)]
 pub struct TOKEN_ENTRY {
     pub key: LU32,
@@ -1901,7 +1908,9 @@ impl Iterator for ParametersIter<'_> {
 }
 
 /// For Naples.
-#[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug)]
+#[derive(
+    FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
+)]
 #[repr(C, packed)]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Parameters {}
@@ -2038,7 +2047,7 @@ pub mod df {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct SlinkRegion {
             size || SerdeHex64 : LU64,
@@ -2070,7 +2079,17 @@ pub mod df {
     }
 
     // Rome only; even there, it's almost all 0s
-    #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+    #[derive(
+        FromBytes,
+        IntoBytes,
+        Immutable,
+        KnownLayout,
+        Unaligned,
+        PartialEq,
+        Debug,
+        Copy,
+        Clone,
+    )]
     #[repr(C, packed)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
@@ -2134,7 +2153,7 @@ pub mod memory {
     use crate::types::Result;
 
     make_accessors! {
-        #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(Default, FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct DimmInfoSmbusElement {
             dimm_slot_present || bool : BU8 | pub get bool : pub set bool, // if false, it's soldered-down and not a slot
@@ -2290,7 +2309,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct AblConsoleOutControl {
             enable_console_logging || bool : BU8 | pub get bool : pub set bool,
@@ -2345,7 +2364,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct AblBreakpointControl {
             enable_breakpoint || bool : BU8 | pub get bool : pub set bool,
@@ -2380,7 +2399,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct ConsoleOutControl {
             pub abl_console_out_control: AblConsoleOutControl,
@@ -2439,7 +2458,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct NaplesAblConsoleOutControl {
             enable_console_logging || bool : BU8 | pub get bool : pub set bool,
@@ -2492,7 +2511,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct NaplesConsoleOutControl {
             pub abl_console_out_control: NaplesAblConsoleOutControl,
@@ -2582,7 +2601,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct ExtVoltageControl {
             enabled || bool : BU8 | pub get bool : pub set bool,
@@ -2950,7 +2969,7 @@ pub mod memory {
     // Usually an array of those is used
     make_accessors! {
         /// Control/Address Bus Element
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct RdimmDdr4CadBusElement {
             dimm_slots_per_channel || SerdeHex32 : LU32 | pub get u32 : pub set u32,
@@ -3077,7 +3096,7 @@ pub mod memory {
     // Usually an array of those is used
     make_accessors! {
         /// Control/Address Bus Element
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct UdimmDdr4CadBusElement {
             dimm_slots_per_channel || SerdeHex32 : LU32 | pub get u32 : pub set u32,
@@ -3172,7 +3191,7 @@ pub mod memory {
     // Usually an array of those is used
     make_accessors! {
         /// Control/Address Bus Element
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4CadBusElement {
             dimm_slots_per_channel || SerdeHex32 : LU32 | pub get u32 : pub set u32,
@@ -3582,7 +3601,7 @@ pub mod memory {
     // Usually an array of those is used
     // Note: This structure is not used for soldered-down DRAM!
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct Ddr4DataBusElement {
             dimm_slots_per_channel || SerdeHex32 : LU32 | pub get u32 : pub set u32,
@@ -3689,7 +3708,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4DataBusElement {
             dimm_slots_per_channel || SerdeHex32 : LU32 | pub get u32 : pub set u32,
@@ -3789,7 +3808,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct RdimmDdr5BusElementHeader {
             total_size || u32 : LU32,
@@ -3827,7 +3846,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct RdimmDdr5BusElementPayload {
             total_size || u32 : LU32,
@@ -3915,7 +3934,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
         #[repr(C, packed)]
         pub struct RdimmDdr5BusElement {
             header: RdimmDdr5BusElementHeader,
@@ -3930,7 +3949,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct MemDfeSearchElementHeader { // Genoa
             total_size || u32 : LU32,
@@ -3966,7 +3985,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct MemDfeSearchElementHeader12 {
             total_size || u32 : LU32,
@@ -4006,7 +4025,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct MemDfeSearchElementPayload12 {
             total_size || u32 : LU32,
@@ -4059,7 +4078,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct MemDfeSearchElementPayloadExt12 {
             total_size || u32 : LU32,
@@ -4109,7 +4128,7 @@ pub mod memory {
         /// Decision Feedback Equalization.
         /// See also UMC::Phy::RxDFETapCtrl in the memory controller.
         /// See <https://ieeexplore.ieee.org/document/1455678>.
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
         #[repr(C, packed)]
         pub struct MemDfeSearchElement36 {
             header: MemDfeSearchElementHeader12,
@@ -4128,7 +4147,7 @@ pub mod memory {
         /// Decision Feedback Equalization.
         /// See also UMC::Phy::RxDFETapCtrl in the memory controller.
         /// See <https://ieeexplore.ieee.org/document/1455678>.
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
         #[repr(C, packed)]
         pub struct MemDfeSearchElement32 {
             header: MemDfeSearchElementHeader,
@@ -4242,7 +4261,7 @@ pub mod memory {
     // Usually an array of those is used
     // Note: This structure is not used for LR DRAM
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct MaxFreqElement {
             dimm_slots_per_channel || DimmsPerChannel : u8 | pub get DimmsPerChannel : pub set DimmsPerChannel,
@@ -4359,7 +4378,7 @@ pub mod memory {
 
     // Usually an array of those is used
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct LrMaxFreqElement {
             dimm_slots_per_channel || SerdeHex8 : u8 | pub get u8 : pub set u8,
@@ -4420,7 +4439,7 @@ pub mod memory {
     }
 
     make_accessors! {
-        #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Clone, Copy)]
+        #[derive(Default, FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Clone, Copy)]
         #[repr(C, packed)]
         pub struct Gpio {
             pin || SerdeHex8 : u8 | pub get u8 : pub set u8, // in FCH
@@ -4481,7 +4500,7 @@ pub mod memory {
         Unknown = 0xf, // that's specified as "Unknown".
     }
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct ErrorOutControlBeepCode {
             error_type || ErrorOutControlBeepCodeErrorType : LU16,
@@ -4575,7 +4594,7 @@ pub mod memory {
 
     macro_rules! define_ErrorOutControl {($struct_name:ident, $padding_before_gpio:expr, $padding_after_gpio: expr) => (
         make_accessors! {
-            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy,
+            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy,
 Clone)]
             #[repr(C, packed)]
             pub struct $struct_name {
@@ -4794,7 +4813,7 @@ Clone)]
 
     make_accessors! {
         /// See PPR 12.7.2.2 DRAM ODT Pin Control
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct Ddr4OdtPatElement {
             dimm_rank_bitmaps || Ddr4OdtPatDimmRankBitmaps : LU32 | pub get Ddr4OdtPatDimmRankBitmaps : pub set Ddr4OdtPatDimmRankBitmaps,
@@ -4866,7 +4885,7 @@ Clone)]
 
     make_accessors! {
         /// See PPR DRAM ODT Pin Control
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct LrdimmDdr4OdtPatElement {
             dimm_rank_bitmaps || LrdimmDdr4OdtPatDimmRankBitmaps : LU32 | pub get LrdimmDdr4OdtPatDimmRankBitmaps : pub set LrdimmDdr4OdtPatDimmRankBitmaps,
@@ -4969,7 +4988,7 @@ Clone)]
     );
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct DdrPostPackageRepairElement {
             body: [u8; 8], // no| pub get DdrPostPackageRepairBody : pub set DdrPostPackageRepairBody,
@@ -5044,7 +5063,7 @@ Clone)]
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct DdrDqPinMapElementLane {
             pins: [u8; 8],
@@ -5078,7 +5097,7 @@ Clone)]
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct DdrDqPinMapElement {
             pub lanes: [DdrDqPinMapElementLane; 8], // lanes[lane][bit] == pin
@@ -5117,7 +5136,7 @@ Clone)]
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct Ddr5CaPinMapElementLane {
             pub pins: [u8; 14], // TODO (#124): nicer pin type
@@ -5145,7 +5164,7 @@ Clone)]
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
         #[repr(C, packed)]
         pub struct Ddr5CaPinMapElement {
             pub lanes: [Ddr5CaPinMapElementLane; 2], // pins[lane][bit] == pin; pin == 0xff means un?
@@ -5159,7 +5178,7 @@ Clone)]
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct PmuBistVendorAlgorithmElement {
             pub dram_manufacturer_id || u16 : LU16 | pub get u16 : pub set u16, // jedec id
@@ -5191,7 +5210,7 @@ Clone)]
 
     make_accessors! {
         // FIXME default
-        #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(Default, FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct Ddr5RawCardConfigElementHeader32 {
             total_size || u32 : LU32,
@@ -5743,7 +5762,7 @@ Clone)]
 
     make_accessors! {
         // FIXME default
-        #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(Default, FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct Ddr5RawCardConfigElementPayload {
             total_size || u32 : LU32,
@@ -5915,7 +5934,7 @@ Clone)]
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Default, Copy, Clone)]
         #[repr(C, packed)]
         pub struct Ddr5RawCardConfigElement {
             header: Ddr5RawCardConfigElementHeader32,
@@ -6148,7 +6167,7 @@ Clone)]
     );
 
     make_accessors! {
-        #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(Default, FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct Ddr5TrainingOverride40Element {
             pub length || u32 : LU32,
@@ -6293,7 +6312,7 @@ Clone)]
 
                         use core::mem::size_of;
                         use static_assertions::const_assert;
-                        use zerocopy::{AsBytes, FromBytes, Unaligned};
+                        use zerocopy::{IntoBytes, FromBytes, Unaligned};
                         use super::super::*;
                         use crate::struct_accessors::{Getter, Setter, make_accessors};
                         use crate::types::Result;
@@ -6500,7 +6519,7 @@ Clone)]
 
                             impl SequenceElementAsBytes for $struct_ {
                                 fn checked_as_bytes(&self, entry_id: EntryId) -> Option<&[u8]> {
-                                    let blob = AsBytes::as_bytes(self);
+                                    let blob = IntoBytes::as_bytes(self);
                                     if <$struct_>::is_entry_compatible(entry_id, blob) {
                                         Some(blob)
                                     } else {
@@ -6510,7 +6529,7 @@ Clone)]
                             }
                             impl ElementAsBytes for $struct_ {
                                 fn element_as_bytes(&self) -> &[u8] {
-                                    AsBytes::as_bytes(self)
+                                    IntoBytes::as_bytes(self)
                                 }
                             }
 
@@ -6520,7 +6539,7 @@ Clone)]
                         )}
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Clone)]
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Clone)]
                             #[repr(C, packed)]
                             pub struct CkeTristateMap {
                                 type_ || #[serde(default = "CkeTristateMap::serde_default_tag")] SerdeHex8 : u8 | pub get u8 : pub set u8,
@@ -6558,7 +6577,7 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct OdtTristateMap {
@@ -6597,7 +6616,7 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct CsTristateMap {
                                 type_ || #[serde(default = "CsTristateMap::serde_default_tag")] SerdeHex8 : u8 | pub get u8 : pub set u8,
@@ -6635,7 +6654,7 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MaxDimmsPerChannel {
                                 type_ || #[serde(default = "MaxDimmsPerChannel::serde_default_tag")] SerdeHex8 : u8 | pub get u8 : pub set u8,
@@ -6693,7 +6712,7 @@ Clone)]
                         impl_bitfield_primitive_conversion!(ChannelIdsSelection12, 0b1111_1111_1111, u16);
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MaxDimmsPerChannel6 {
                                 type_ || #[serde(default = "MaxDimmsPerChannel6::serde_default_tag")] SerdeHex8 : u8 | pub get u8 : pub set u8,
@@ -6732,7 +6751,7 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MemclkMap {
@@ -6770,7 +6789,7 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MaxChannelsPerSocket {
@@ -6851,7 +6870,7 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MemBusSpeed {
@@ -6893,7 +6912,7 @@ Clone)]
 
                         make_accessors! {
                             /// Max. Chip Selects per channel
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MaxCsPerChannel {
@@ -6949,7 +6968,7 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MemTechnology {
@@ -6987,7 +7006,7 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct WriteLevellingSeedDelay {
@@ -7020,7 +7039,7 @@ Clone)]
 
                         make_accessors! {
                             /// See <https://www.amd.com/system/files/TechDocs/43170_14h_Mod_00h-0Fh_BKDG.pdf> section 2.9.3.7.2.1
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct RxEnSeed {
@@ -7061,7 +7080,7 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct LrDimmNoCs6Cs7Routing {
@@ -7098,7 +7117,7 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct SolderedDownSodimm {
@@ -7135,7 +7154,7 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct LvDimmForce1V5 {
@@ -7172,7 +7191,7 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MinimumRwDataEyeWidth {
@@ -7213,7 +7232,7 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct CpuFamilyFilter {
@@ -7242,7 +7261,7 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct SolderedDownDimmsPerChannel {
@@ -7289,7 +7308,7 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MemPowerPolicy {
@@ -7338,7 +7357,7 @@ Clone)]
                         }
 
                         make_accessors! {
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Copy, Clone)]
                             #[repr(C, packed)]
                             pub struct MotherboardLayers {
@@ -7458,7 +7477,7 @@ Clone)]
         crate::struct_variants_enum::collect_EntryCompatible_impl_into_enum! {
                         use core::mem::size_of;
                         use static_assertions::const_assert;
-                        use zerocopy::{AsBytes, FromBytes, Unaligned};
+                        use zerocopy::{IntoBytes, FromBytes, Unaligned};
                         use super::super::*;
                         //use crate::struct_accessors::{Getter, Setter, make_accessors};
                         //use crate::types::Result;
@@ -7519,7 +7538,7 @@ Clone)]
 
                             impl SequenceElementAsBytes for $struct_ {
                                 fn checked_as_bytes(&self, entry_id: EntryId) -> Option<&[u8]> {
-                                    let blob = AsBytes::as_bytes(self);
+                                    let blob = IntoBytes::as_bytes(self);
                                     if <$struct_>::is_entry_compatible(entry_id, blob) {
                                         Some(blob)
                                     } else {
@@ -7534,7 +7553,7 @@ Clone)]
                         )}
 
                         make_accessors!{
-                            #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug,
+                            #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug,
         Clone, Copy)]
                             #[repr(C, packed)]
                             pub struct Terminator {
@@ -7919,7 +7938,7 @@ pub mod fch {
     }
 
     make_accessors! {
-        #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(Default, FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct EspiInit {
             espi_enabled || bool : BU8 | pub get bool : pub set bool,
@@ -8110,7 +8129,7 @@ pub mod fch {
     }
 
     make_accessors! {
-        #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(Default, FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct EspiSioInitElement {
             io_port || SerdeHex16 : LU16 | pub get u16 : pub set u16,
@@ -8169,7 +8188,7 @@ pub mod psp {
     use crate::struct_accessors::{Getter, Setter, make_accessors};
 
     make_accessors! {
-        #[derive(Default, FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(Default, FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct IdApcbMapping {
             id_and_feature_mask || SerdeHex8 : u8 | pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
@@ -8245,7 +8264,7 @@ pub mod psp {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct IdRevApcbMapping {
             id_and_rev_and_feature_mask || SerdeHex8 : u8 | pub get u8 : pub set u8, // bit 7: normal or feature-controlled?  other bits: mask
@@ -8292,7 +8311,7 @@ pub mod psp {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodCustom {
             access_method || SerdeHex16 : LU16 | pub get u16 : pub set u16, // 0xF for BoardIdGettingMethodCustom
@@ -8333,7 +8352,7 @@ pub mod psp {
 
     make_array_accessors!(Gpio, Gpio);
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodGpio {
             access_method || SerdeHex16 : LU16 | pub get u16 : pub set u16, // 3 for BoardIdGettingMethodGpio
@@ -8378,7 +8397,7 @@ pub mod psp {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodEeprom {
             access_method || SerdeHex16 : LU16 | pub get u16 : pub set u16, // 2 for BoardIdGettingMethodEeprom
@@ -8435,7 +8454,7 @@ pub mod psp {
     }
 
     make_accessors! {
-        #[derive(FromBytes, AsBytes, Unaligned, PartialEq, Debug, Copy, Clone)]
+        #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct BoardIdGettingMethodSmbus {
             access_method || SerdeHex16 : LU16 | pub get u16 : pub set u16, // 1 for BoardIdGettingMethodSmbus
