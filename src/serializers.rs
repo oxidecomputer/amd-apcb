@@ -51,8 +51,8 @@ macro_rules! impl_struct_serde_conversion{($StructName:ident, $SerdeStructName:i
             fn schema_name() -> String {
                 $SerdeStructName::schema_name()
             }
-            fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-                $SerdeStructName::json_schema(gen)
+            fn json_schema(generator: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
+                $SerdeStructName::json_schema(generator)
             }
             fn is_referenceable() -> bool {
                 $SerdeStructName::is_referenceable()

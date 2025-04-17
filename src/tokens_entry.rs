@@ -3,9 +3,9 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use crate::ondisk::{
-    take_header_from_collection, take_header_from_collection_mut, BoolToken,
-    ByteToken, ContextFormat, DwordToken, TokenEntryId, WordToken,
-    ENTRY_HEADER, TOKEN_ENTRY,
+    BoolToken, ByteToken, ContextFormat, DwordToken, ENTRY_HEADER, TOKEN_ENTRY,
+    TokenEntryId, WordToken, take_header_from_collection,
+    take_header_from_collection_mut,
 };
 use crate::types::{ApcbContext, Error, FileSystemError, Result};
 use core::convert::TryFrom;
@@ -88,7 +88,7 @@ pub struct TokensEntryItem<TokenType> {
     pub(crate) token: TokenType,
 }
 
-impl<'a> TokensEntryItem<&'a mut TOKEN_ENTRY> {
+impl TokensEntryItem<&mut TOKEN_ENTRY> {
     pub fn id(&self) -> u32 {
         self.token.key.get()
     }
@@ -390,14 +390,14 @@ impl core::convert::TryFrom<SerdeTokensEntryItem> for TOKEN_ENTRY {
 }
 
 #[cfg(feature = "schemars")]
-impl<'a> schemars::JsonSchema for TokensEntryItem<&'a TOKEN_ENTRY> {
+impl schemars::JsonSchema for TokensEntryItem<&TOKEN_ENTRY> {
     fn schema_name() -> std::string::String {
         SerdeTokensEntryItem::schema_name()
     }
     fn json_schema(
-        gen: &mut schemars::gen::SchemaGenerator,
+        generator: &mut schemars::r#gen::SchemaGenerator,
     ) -> schemars::schema::Schema {
-        SerdeTokensEntryItem::json_schema(gen)
+        SerdeTokensEntryItem::json_schema(generator)
     }
     fn is_referenceable() -> bool {
         SerdeTokensEntryItem::is_referenceable()
@@ -405,7 +405,7 @@ impl<'a> schemars::JsonSchema for TokensEntryItem<&'a TOKEN_ENTRY> {
 }
 
 #[cfg(feature = "serde")]
-impl<'a> Serialize for TokensEntryItem<&'a TOKEN_ENTRY> {
+impl Serialize for TokensEntryItem<&TOKEN_ENTRY> {
     fn serialize<S>(
         &self,
         serializer: S,
@@ -417,7 +417,7 @@ impl<'a> Serialize for TokensEntryItem<&'a TOKEN_ENTRY> {
     }
 }
 
-impl<'a> core::fmt::Debug for TokensEntryItem<&'a TOKEN_ENTRY> {
+impl core::fmt::Debug for TokensEntryItem<&TOKEN_ENTRY> {
     fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let entry = self.token;
         let key = entry.key.get();
@@ -460,7 +460,7 @@ impl<'a> core::fmt::Debug for TokensEntryItem<&'a TOKEN_ENTRY> {
     }
 }
 
-impl<'a> TokensEntryItem<&'a TOKEN_ENTRY> {
+impl TokensEntryItem<&TOKEN_ENTRY> {
     pub fn id(&self) -> u32 {
         self.token.key.get()
     }
@@ -560,10 +560,7 @@ impl<'a> Iterator for TokensEntryIter<&'a [u8]> {
         if self.remaining_used_size == 0 {
             return None;
         }
-        match self.next1() {
-            Ok(e) => Some(e),
-            Err(_) => None,
-        }
+        self.next1().ok()
     }
 }
 
@@ -588,8 +585,8 @@ impl<BufferType: ByteSlice> TokensEntryBodyItem<BufferType> {
     }
 }
 
-impl<'a> TokensEntryBodyItem<&'a mut [u8]> {
-    pub fn iter_mut(&mut self) -> Result<TokensEntryIter<&'_ mut [u8]>> {
+impl TokensEntryBodyItem<&mut [u8]> {
+    pub fn iter_mut(&mut self) -> Result<TokensEntryIter<&mut [u8]>> {
         let entry_id = self.prepare_iter()?;
         Ok(TokensEntryIter {
             context_format: self.context_format,

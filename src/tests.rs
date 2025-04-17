@@ -4,17 +4,17 @@
 
 #[cfg(test)]
 mod tests {
-    use crate::ondisk::{
-        memory::ConsoleOutControl, memory::DimmInfoSmbusElement,
-        memory::ExtVoltageControl, psp::BoardIdGettingMethodEeprom,
-        psp::IdRevApcbMapping, psp::RevAndFeatureValue, BaudRate,
-        BoardInstances, CcxEntryId, ContextType, DfEntryId, EntryId, GroupId,
-        MemoryEntryId, PriorityLevels, PspEntryId, TokenEntryId,
-    };
-    use crate::types::PriorityLevel;
     use crate::Apcb;
     use crate::ApcbIoOptions;
     use crate::EntryItemBody;
+    use crate::ondisk::{
+        BaudRate, BoardInstances, CcxEntryId, ContextType, DfEntryId, EntryId,
+        GroupId, MemoryEntryId, PriorityLevels, PspEntryId, TokenEntryId,
+        memory::ConsoleOutControl, memory::DimmInfoSmbusElement,
+        memory::ExtVoltageControl, psp::BoardIdGettingMethodEeprom,
+        psp::IdRevApcbMapping, psp::RevAndFeatureValue,
+    };
+    use crate::types::PriorityLevel;
     use crate::{Error, FileSystemError};
     use core::default::Default;
 

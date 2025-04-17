@@ -28,10 +28,7 @@ pub enum Error {
     FileSystem(FileSystemError, &'static str), // message, field name
     #[cfg_attr(feature = "std", error("out of space"))]
     OutOfSpace,
-    #[cfg_attr(
-        feature = "std",
-        error("group not found - group: {group_id:?}")
-    )]
+    #[cfg_attr(feature = "std", error("group not found - group: {group_id:?}"))]
     #[non_exhaustive]
     GroupNotFound { group_id: GroupId },
     #[cfg_attr(
@@ -40,17 +37,32 @@ pub enum Error {
     )]
     #[non_exhaustive]
     GroupUniqueKeyViolation { group_id: GroupId },
-    #[cfg_attr(feature = "std", error("group type mismatch - group: {group_id:?}, signature: {signature:?}"))]
+    #[cfg_attr(
+        feature = "std",
+        error(
+            "group type mismatch - group: {group_id:?}, signature: {signature:?}"
+        )
+    )]
     #[non_exhaustive]
     GroupTypeMismatch { group_id: GroupId, signature: [u8; 4] },
-    #[cfg_attr(feature = "std", error("entry not found - entry: {entry_id:?}, instance: {instance_id:#04x}, board mask: {board_instance_mask:?}"))]
+    #[cfg_attr(
+        feature = "std",
+        error(
+            "entry not found - entry: {entry_id:?}, instance: {instance_id:#04x}, board mask: {board_instance_mask:?}"
+        )
+    )]
     #[non_exhaustive]
     EntryNotFound {
         entry_id: EntryId,
         instance_id: u16,
         board_instance_mask: BoardInstances,
     },
-    #[cfg_attr(feature = "std", error("entry unique key violation - entry: {entry_id:?}, instance: {instance_id:#04x}, board mask: {board_instance_mask:?}"))]
+    #[cfg_attr(
+        feature = "std",
+        error(
+            "entry unique key violation - entry: {entry_id:?}, instance: {instance_id:#04x}, board mask: {board_instance_mask:?}"
+        )
+    )]
     #[non_exhaustive]
     EntryUniqueKeyViolation {
         entry_id: EntryId,
@@ -71,7 +83,12 @@ pub enum Error {
     },
     #[cfg_attr(feature = "std", error("token ordering violation"))]
     TokenOrderingViolation,
-    #[cfg_attr(feature = "std", error("token unique key violation - entry: {entry_id:?}, instance: {instance_id:#04x}, board mask: {board_instance_mask:?}, token: {token_id:#08x}"))]
+    #[cfg_attr(
+        feature = "std",
+        error(
+            "token unique key violation - entry: {entry_id:?}, instance: {instance_id:#04x}, board mask: {board_instance_mask:?}, token: {token_id:#08x}"
+        )
+    )]
     #[non_exhaustive]
     TokenUniqueKeyViolation {
         entry_id: EntryId,
@@ -82,7 +99,12 @@ pub enum Error {
     #[cfg_attr(feature = "std", error("token range - token {token_id:#08x}"))]
     #[non_exhaustive]
     TokenRange { token_id: u32 },
-    #[cfg_attr(feature = "std", error("token entry {entry_id:?} token {token_id:#08x} is incompatible with ABL version {abl0_version:#08x}"))]
+    #[cfg_attr(
+        feature = "std",
+        error(
+            "token entry {entry_id:?} token {token_id:#08x} is incompatible with ABL version {abl0_version:#08x}"
+        )
+    )]
     #[non_exhaustive]
     TokenVersionMismatch {
         entry_id: TokenEntryId,
