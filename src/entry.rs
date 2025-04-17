@@ -12,9 +12,9 @@ use crate::ondisk::{
 };
 use crate::ondisk::{Parameters, ParametersIter};
 use crate::tokens_entry::TokensEntryBodyItem;
-use crate::types::{
-    ApcbContext, Error, FileSystemError, MemDfeSearchVersion, Result,
-};
+#[cfg(feature = "serde")]
+use crate::types::MemDfeSearchVersion;
+use crate::types::{ApcbContext, Error, FileSystemError, Result};
 use core::marker::PhantomData;
 use core::mem::size_of;
 use num_traits::FromPrimitive;
@@ -1557,7 +1557,7 @@ impl<'a> EntryItem<'a> {
         Ok(())
     }
 
-    pub fn body_as_buf(&'a self) -> Option<&[u8]> {
+    pub fn body_as_buf(&self) -> Option<&[u8]> {
         match &self.body {
             EntryItemBody::Struct(buf) => Some(buf),
             _ => None,
@@ -1568,7 +1568,7 @@ impl<'a> EntryItem<'a> {
         H: EntryCompatible + Sized + FromBytes + HeaderWithTail,
     >(
         &'a self,
-    ) -> Option<(&'a H, StructArrayEntryItem<'a, H::TailArrayItemType<'_>>)>
+    ) -> Option<(&'a H, StructArrayEntryItem<'a, H::TailArrayItemType<'a>>)>
     {
         let id = self.id();
         match &self.body {
