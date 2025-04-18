@@ -10,7 +10,9 @@
 #![allow(clippy::new_without_default)]
 
 pub use crate::naples::{ParameterTimePoint, ParameterTokenConfig};
-use crate::struct_accessors::{Getter, Setter, make_accessors};
+use crate::struct_accessors::{
+    Getter, Setter, make_accessors, make_bitfield_serde,
+};
 use crate::token_accessors::{Tokens, TokensMut, make_token_accessors};
 use crate::types::Error;
 use crate::types::PriorityLevel;
@@ -1243,88 +1245,6 @@ impl Default for GROUP_HEADER {
     }
 }
 
-/// A variant of the make_accessors macro for modular_bitfields.
-macro_rules! make_bitfield_serde {(
-        $(#[$struct_meta:meta])*
-        $struct_vis:vis
-        struct $StructName:ident {
-                $(
-                        $(#[$field_meta:meta])*
-                        $field_vis:vis
-                        $field_name:ident
-                        $(|| $(#[$serde_field_orig_meta:meta])* $serde_ty:ty : $field_orig_ty:ty)?
-                        $(: $field_ty:ty)?
-                        $(| $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
-                ),* $(,)?
-        }
-) => {
-    $(#[$struct_meta])*
-    $struct_vis
-    struct $StructName {
-        $(
-            $(#[$field_meta])*
-            $field_vis
-            $($field_name : $field_ty,)?
-            $($field_name : $field_orig_ty,)?
-        )*
-    }
-
-    impl $StructName {
-        pub fn builder() -> Self {
-            Self::new() // NOT default
-        }
-        pub fn build(&self) -> Self {
-            self.clone()
-        }
-    }
-
-    #[cfg(feature = "serde")]
-    impl $StructName {
-        $(
-            paste!{
-                $(
-                    pub(crate) fn [<serde_ $field_name>] (self : &'_ Self)
-                        -> Result<$field_ty> {
-                        Ok(self.$field_name())
-                    }
-                )?
-                $(
-                    pub(crate) fn [<serde_ $field_name>] (self : &'_ Self)
-                        -> Result<$serde_ty> {
-                        Ok(self.$field_name().into())
-                    }
-                )?
-                $(
-                    pub(crate) fn [<serde_with_ $field_name>](self : &mut Self, value: $field_ty) -> &mut Self {
-                        self.[<set_ $field_name>](value.into());
-                        self
-                    }
-                )?
-                $(
-                    pub(crate) fn [<serde_with_ $field_name>](self : &mut Self, value: $serde_ty) -> &mut Self {
-                        self.[<set_ $field_name>](value.into());
-                        self
-                    }
-                )?
-            }
-        )*
-    }
-
-    #[cfg(feature = "serde")]
-    paste::paste! {
-        #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-        #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
-        #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-        #[cfg_attr(feature = "serde", serde(rename = "" $StructName))]
-        pub(crate) struct [<Serde $StructName>] {
-            $(
-                $(pub $field_name : <$field_ty as Specifier>::InOut,)?
-                $($(#[$serde_field_orig_meta])* pub $field_name : $serde_ty,)?
-            )*
-        }
-    }
-}}
-
 make_bitfield_serde! {
     #[bitfield(bits = 8)]
     #[repr(u8)]
@@ -1512,7 +1432,7 @@ pub mod gnb {
     use super::{
         BitfieldSpecifier, EntryCompatible, EntryId, FromBytes, FromPrimitive,
         Getter, GnbEntryId, Immutable, IntoBytes, KnownLayout, Result, Setter,
-        ToPrimitive, Unaligned, paste,
+        ToPrimitive, Unaligned, make_bitfield_serde, paste,
     };
     #[cfg(feature = "serde")]
     use super::{Deserialize, SerdeHex8, Serialize};
