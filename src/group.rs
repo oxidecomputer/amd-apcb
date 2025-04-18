@@ -392,6 +392,8 @@ impl GroupMutIter<'_> {
         }
     }
     /// Inserts the given entry data at the right spot.
+    /// Precondition: The caller already grew the group by
+    /// `payload_size + size_of::<ENTRY_HEADER>()`
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn insert_entry(
         &mut self,
@@ -566,6 +568,9 @@ impl GroupMutItem<'_> {
         Ok(entry_size as u32)
     }
     /// Resizes the given entry by SIZE_DIFF.
+    /// Precondition: If `size_diff > 0`, the caller must have already
+    /// expanded the group `size_diff`.  If `size_diff < 0`, the caller
+    /// must call `resize_entry_by` before resizing the group.
     pub(crate) fn resize_entry_by(
         &mut self,
         entry_id: EntryId,
@@ -634,6 +639,8 @@ impl GroupMutItem<'_> {
         }
     }
     /// Inserts the given token.
+    /// Precondition: Caller already increased the group size by
+    /// `size_of::<TOKEN_ENTRY>()`.
     pub(crate) fn insert_token(
         &mut self,
         entry_id: EntryId,

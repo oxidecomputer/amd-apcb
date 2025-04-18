@@ -203,6 +203,8 @@ impl<'a> TokensEntryIter<&'a mut [u8]> {
     }
 
     /// Inserts the given entry data at the right spot.
+    /// Precondition: Caller must have already increased the group size
+    /// by `size_of::<TOKEN_ENTRY>()`.
     pub(crate) fn insert_token(
         &mut self,
         token_id: u32,
@@ -602,6 +604,8 @@ impl TokensEntryBodyItem<&mut [u8]> {
         (self.iter_mut().ok()?).find(|entry| entry.id() == token_id)
     }
 
+    /// Precondition: Caller already increased the group size by
+    /// `size_of::<TOKEN_ENTRY>()`.
     pub(crate) fn insert_token(
         &mut self,
         token_id: u32,
