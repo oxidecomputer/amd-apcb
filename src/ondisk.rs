@@ -8856,6 +8856,15 @@ pub enum FchConsoleOutSerialPortIoBase {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum FchPreferredIo {
+    Bus = 0,
+    Auto = 0xf,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum FchIc3TransferSpeed {
     #[cfg_attr(feature = "serde", serde(alias = "12.5 MHz"))]
     Sdr0 = 0,
@@ -10469,6 +10478,15 @@ pub enum PspSevMode {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum PspSevMode2 {
+    Disabled = 1,
+    Enabled = 0,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum PspApmlSbtsiSlaveMode {
     #[cfg_attr(feature = "serde", serde(alias = "I3C"))]
     I3c = 0,
@@ -10787,6 +10805,7 @@ make_token_accessors! {
         // PSP
 
         PspEnableDebugMode(default 0, id 0xd109_1cd0) | pub get PspEnableDebugMode : pub set PspEnableDebugMode,
+        PspSevMode2(default 0, id 0xadc8_33e4) | pub get PspSevMode2 : pub set PspSevMode2,
 
         PspApmlSbtsiSlaveMode(default 0, id 0xb666_1742) | pub get PspApmlSbtsiSlaveMode : pub set PspApmlSbtsiSlaveMode,
 
@@ -10884,6 +10903,7 @@ make_token_accessors! {
         FchConsoleOutBasicEnable(default 0, id 0xa0903f98) | pub get u8 : pub set u8, // Rome (Obsolete)
         FchConsoleOutSerialPort(default 0, id 0xfff9_f34d) | pub get FchConsoleSerialPort : pub set FchConsoleSerialPort,
         FchConsoleOutSerialPortIoBase(default 0, id 0x95dc_6839) | pub get FchConsoleOutSerialPortIoBase : pub set FchConsoleOutSerialPortIoBase,
+        FchPreferredIo(default 0xf, id 0xdbd7_39ba) | pub get FchPreferredIo : pub set FchPreferredIo,
         FchSmbusSpeed(default 42, id 0x2447_3329) | pub get FchSmbusSpeed : pub set FchSmbusSpeed,
         FchConsoleOutSuperIoType(default 0, id 0x5c8d_6e82) | pub get FchConsoleOutSuperIoType : pub set FchConsoleOutSuperIoType, // init mode
         FchIc3TransferSpeed(default 2, id 0x1ed8_fae5) | pub get FchIc3TransferSpeed : pub set FchIc3TransferSpeed,
@@ -11258,9 +11278,9 @@ make_token_accessors! {
         // Unsorted Milan; obsolete and ungrouped; defaults wrong!
 
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
-        Dimm3DsSensorCritical(default 0, id 0x16b77f73) | pub get u16 : pub set u16, // value 0x50 // (Obsolete; added in Milan)
+        Dimm3DsSensorCritical(default 80, id 0x16b77f73) | pub get u16 : pub set u16, // Milan
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
-        Dimm3DsSensorUpper(default 0, id 0x2db877e4) | pub get u16 : pub set u16, // value 0x42 // (Obsolete; added in Milan)
+        Dimm3DsSensorUpper(default 66, id 0x2db877e4) | pub get u16 : pub set u16, // Milan
 
         // Unsorted Rome; ungrouped; defaults wrong!
 
@@ -11288,6 +11308,11 @@ make_token_accessors! {
         /// DIMM temperature sensor register at address 4
         #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
         DimmSensorCritical(default 95, id 0x38e9bf5d) | pub get u16 : pub set u16, // Rome (Obsolete)
+
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        LrdimmSensorUpper(default 66, id 0xcddd55d0) | pub get u16 : pub set u16, // Milan 1.0.0.b
+        #[cfg_attr(feature = "serde-hex", serde(serialize_with = "SerHex::<StrictPfx>::serialize", deserialize_with = "SerHex::<StrictPfx>::deserialize"))]
+        LrdimmSensorCritical(default 80, id 0x22000b2b) | pub get u16 : pub set u16, // Milan 1.0.0.b
 
         // BMC Rome
 
