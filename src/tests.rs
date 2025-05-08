@@ -703,6 +703,7 @@ mod tests {
 
     #[test]
     fn insert_tokens() -> Result<(), Error> {
+        use crate::ByteToken;
         let mut buffer: [u8; Apcb::MAX_SIZE] = [0xFF; Apcb::MAX_SIZE];
         let mut apcb =
             Apcb::create(&mut buffer[0..], 42, &ApcbIoOptions::default())
@@ -737,9 +738,6 @@ mod tests {
             &[],
         )?;
 
-        // pub(crate) fn insert_token(&mut self, entry_id: EntryId, instance_id:
-        // u16, board_instance_mask: BoardInstances, token_id: u32, token_value:
-        // u32) -> Result<()> {
         apcb.insert_token(
             EntryId::Token(TokenEntryId::Byte),
             0,
@@ -803,9 +801,15 @@ mod tests {
         assert!(matches!(entries.next(), None));
 
         assert!(matches!(groups.next(), None));
+        let entry_id = TokenEntryId::Byte;
+        let token_id = 0xae46_cea4; // FIXME: ByteToken::AblSerialBaudRate as u32 does not work ?!
         let tokens =
             apcb.tokens(0, BoardInstances::from_instance(0).unwrap()).unwrap();
-        assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::_4800Baud);
+
+        assert_eq!(
+            tokens.get(entry_id, token_id,).unwrap(),
+            BaudRate::_4800Baud as u32
+        );
 
         let _tokens = apcb
             .tokens_mut(
@@ -823,9 +827,13 @@ mod tests {
                 None,
             )
             .unwrap();
-        assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::_4800Baud);
-        tokens.set_abl_serial_baud_rate(BaudRate::_9600Baud).unwrap();
-        assert!(tokens.abl_serial_baud_rate().unwrap() == BaudRate::_9600Baud);
+        assert_eq!(
+            tokens.get(entry_id, token_id,).unwrap(),
+            BaudRate::_4800Baud as u32
+        );
+        tokens.set(entry_id, token_id, BaudRate::_9600Baud as u32).unwrap();
+        let value = tokens.get(entry_id, token_id).unwrap();
+        assert!(value == BaudRate::_9600Baud as u32);
         Ok(())
     }
 
