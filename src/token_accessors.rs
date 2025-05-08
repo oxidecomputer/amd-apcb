@@ -303,44 +303,6 @@ macro_rules! make_token_accessors {(
             }
         }
     }
-    $(
-            impl<'a, 'b> Tokens<'a, 'b> {
-                paste! {
-                  #[allow(non_snake_case)]
-                  #[inline]
-                  $getter_vis
-                  fn [<$field_name:snake>] (self: &'_ Self)
-                      -> Result<$field_user_ty>
-                  {
-                      <$field_user_ty>::from_u32(self.get($field_entry_id, $field_key)?).ok_or_else(|| Error::EntryTypeMismatch)
-                  }
-                }
-            }
-            impl<'a, 'b> TokensMut<'a, 'b> {
-
-            paste! {
-              #[allow(non_snake_case)]
-              #[inline]
-              $getter_vis
-              fn [<$field_name:snake>] (self: &'_ Self)
-                  -> Result<$field_user_ty>
-              {
-                  <$field_user_ty>::from_u32(self.get($field_entry_id, $field_key)?).ok_or_else(|| Error::EntryTypeMismatch)
-              }
-            }
-            $(
-              paste! {
-                  #[allow(non_snake_case)]
-                  #[inline]
-                  $setter_vis
-                  fn [<set_ $field_name:snake>] (self: &'_ mut Self, value: $field_setter_user_ty) -> Result<()> {
-                      let token_value = value.to_u32().unwrap();
-                      self.set($field_entry_id, $field_key, token_value)
-                  }
-              }
-            )?
-            }
-    )*
     impl $enum_name {
       #[allow(unused_variables)]
       pub(crate) fn valid_for_abl0_raw(abl0_version: u32, field_key: u32) -> bool {
