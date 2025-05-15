@@ -8514,9 +8514,23 @@ pub enum BaudRate {
     _57600Baud = 7,
     #[cfg_attr(feature = "serde", serde(rename = "115200 Baud"))]
     _115200Baud = 8,
-    /// Note: This variant needs a custom AgesaBootloader.
+    #[cfg_attr(feature = "serde", serde(rename = "230400 Baud"))]
+    _230400Baud = 9,
+    /// This variant only got added with Turin.
+    #[cfg_attr(feature = "serde", serde(rename = "460800 Baud"))]
+    _460800Baud = 10,
+    /// This variant only got added with Turin.
+    #[cfg_attr(feature = "serde", serde(rename = "576000 Baud"))]
+    _576000Baud = 11,
+    /// This variant only got added with Turin.
+    #[cfg_attr(feature = "serde", serde(rename = "921600 Baud"))]
+    _921600Baud = 12,
+    /// This variant only got added with Turin.
+    #[cfg_attr(feature = "serde", serde(rename = "1500000 Baud"))]
+    _1500000Baud = 13,
+    /// This variant only got added with Turin.
     #[cfg_attr(feature = "serde", serde(rename = "3000000 Baud"))]
-    _3000000Baud = 9,
+    _3000000Baud = 14,
 }
 
 #[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
