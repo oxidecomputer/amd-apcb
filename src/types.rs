@@ -8,7 +8,7 @@ use crate::ondisk::EntryId;
 use crate::ondisk::GroupId;
 use crate::ondisk::TokenEntryId;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
 #[non_exhaustive]
 pub enum FileSystemError {
@@ -18,7 +18,7 @@ pub enum FileSystemError {
     PayloadTooBig,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
 #[non_exhaustive]
 pub enum Error {
