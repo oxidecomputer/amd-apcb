@@ -10595,6 +10595,33 @@ pub enum MemThermalThrottleMode {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemTimingWriteToWriteScheduler3ds4800Workaround {
+    Disabled = 0,
+    Enabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemSpecificVendorDieCeWorkaround {
+    Disabled = 0,
+    Enabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemSpecificVendorDieCacsWorkaround {
+    Disabled = 0,
+    Enabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum FchI2cSdaHoldOverrideMode {
     IgnoreBoth = 0,
     OverrideBoth = 1,
@@ -10900,6 +10927,12 @@ make_token_accessors! {
         MemThermalThrottlePercentIfTempExceededBy5C(default 20, id 0xec5a_c113) | pub get u8 : pub set u8,
         /// Throttling as percentage of max, if temperature exceeded by 0 °C or more
         MemThermalThrottlePercentIfTempExceededBy0C(default 10, id 0x0645_8213) | pub get u8 : pub set u8,
+        /// 3DS write-to-write scheduler workaround.
+        MemTimingWriteToWriteScheduler3ds4800Workaround(default 0, id 0x3ee8_9212) | pub get MemTimingWriteToWriteScheduler3ds4800Workaround : pub set MemTimingWriteToWriteScheduler3ds4800Workaround, // Turin 1.0.0.6
+        /// CE (chip enable) workaround.
+        MemSpecificVendorDieCeWorkaround(default 0, id 0x0636_bda8) | pub get MemSpecificVendorDieCeWorkaround : pub set MemSpecificVendorDieCeWorkaround, // Turin 1.0.0.6
+        /// Vref CACS workaround.
+        MemSpecificVendorDieCacsWorkaround(default 1, id 0x4a0b_4129) | pub get MemSpecificVendorDieCacsWorkaround : pub set MemSpecificVendorDieCacsWorkaround, // Turin 1.0.0.6
 
         // Ccx
 
