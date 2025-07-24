@@ -10586,6 +10586,16 @@ pub enum MemRcdParityMode {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum MemEccErrInjectionDdr {
+    Enabled = 0,
+    Disabled = 1,
+    Auto = 0xff,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum MemThermalThrottleMode {
     Disabled = 0,
     Enabled = 1,
@@ -10866,6 +10876,8 @@ make_token_accessors! {
         MemRcdParityMode(default 1, id 0xc4f7_c913) | pub get MemRcdParityMode : pub set MemRcdParityMode,
         /// How many times to try Specific RCD vendor workaround
         MemRcdSpecificVendorRetryCount(default 5, id 0x7246_00ac) | pub get u8 : pub set u8,
+        /// Whether or not UMC error injection configuration writes are disabled
+        MemEccErrInjectionDdr(default 0xff, id 0xf77a_05f1) | pub get MemEccErrInjectionDdr : pub set MemEccErrInjectionDdr,
 
         // Byte just like AMD
         CbsMemUncorrectedEccRetryDdr4(default 1, id 0xbff0_0125) | pub get bool : pub set bool,
