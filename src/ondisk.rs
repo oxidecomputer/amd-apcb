@@ -10843,6 +10843,18 @@ pub enum FchPowerFailMode {
     Previous = 3,
 }
 
+#[allow(non_camel_case_types, non_snake_case)]
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum SecI2cVoltageMode {
+    #[cfg_attr(feature = "serde", serde(rename = "1.1 V"))]
+    _1P1 = 11,
+    #[cfg_attr(feature = "serde", serde(rename = "1.8 V"))]
+    _1P8 = 18,
+}
+
 const UNLIMITED_VERSION: u32 = !0u32;
 
 make_token_accessors! {
@@ -11027,6 +11039,8 @@ make_token_accessors! {
 
         FchMp1WarnRstAckMode(default 0xff, id 0x448d_d056) | pub get FchMp1WarnRstAckMode : pub set FchMp1WarnRstAckMode,
         FchPowerFailMode(default 0, id 0x2662_e79d) | pub get FchPowerFailMode : pub set FchPowerFailMode, // default wrong
+        /// Voltage mode for SEC I2C SDA/SCL lines
+        SecI2cVoltageMode(default 11, id 0xd55e_9490) | pub get SecI2cVoltageMode : pub set SecI2cVoltageMode,
 
         // Df
 
