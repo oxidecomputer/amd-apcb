@@ -9498,6 +9498,24 @@ fn test_volate() {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum DfEnhancedPartialWriteToSameAddress {
+    Disabled = 0,
+    Enabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum DfEnhancedPartialWrite {
+    Disabled = 0,
+    Enabled = 1,
+}
+
+#[derive(Debug, PartialEq, FromPrimitive, ToPrimitive, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub enum DfXgmiTxEqMode {
     Disabled = 0,
     EnabledByLane = 1,
@@ -11078,6 +11096,10 @@ make_token_accessors! {
         DfUmcCxlMixedInterleavedMode(default 0, id 0x8e49_3e5f) | pub get DfUmcCxlMixedInterleavedMode : pub set DfUmcCxlMixedInterleavedMode,
         DfTgtReqGo(default 0xff, id 0xa2c7_7a9d) | pub get DfTgtReqGo : pub set DfTgtReqGo,
         DfGmiSubTxRxMode(default 0, id 0x6904_3ee0) | pub get DfGmiSubTxRxMode : pub set DfGmiSubTxRxMode,
+        /// See DF::IOMConfig3[DisNon64EnhWrToSameAddr].
+        DfEnhancedPartialWriteToSameAddress(default 0, id 0x5ddd_7698) | pub get DfEnhancedPartialWriteToSameAddress  : pub set DfEnhancedPartialWriteToSameAddress, // Turin 1.0.0.7
+        /// See DF::IOMConfig2[DisNon64WrDynCnRply].
+        DfEnhancedPartialWrite(default 0, id 0x6ca6_918b) | pub get DfEnhancedPartialWrite : pub set DfEnhancedPartialWrite, // Turin 1.0.0.7
 
         // Nbio
 
