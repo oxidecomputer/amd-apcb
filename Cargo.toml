@@ -2,7 +2,7 @@ workspace = { members = [ "xtask" ] }
 
 [package]
 name = "amd-apcb"
-version = "0.5.4"
+version = "0.5.5"
 authors = ["Oxide Computer"]
 edition = "2024"
 license = "MPL-2.0"
