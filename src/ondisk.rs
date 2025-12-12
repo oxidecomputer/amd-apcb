@@ -663,6 +663,7 @@ pub enum MemoryEntryId {
     PsRdimmDdr5Bus,
     PsRdimmDdr5MaxFreq,
     PsRdimmDdr5StretchFreq,
+    PsRdimmDdr5RawCardConfig,
     PsRdimmDdr5MaxFreqC1,
 
     Ps3dsRdimmDdr4MaxFreq,
@@ -681,8 +682,12 @@ pub enum MemoryEntryId {
     PsLrdimmDdr4DataBus,
     PsLrdimmDdr4MaxFreq,
     PsLrdimmDdr4StretchFreq,
+    PsLrdimmDdr5Bus,
     PsLrdimmDdr5MaxFreq,
     PsLrdimmDdr5StretchFreq,
+    PsLrdimmDdr5RawCardConfig,
+
+    PsMrdimmDdr5MaxFreq,
 
     PsSodimmDdr4OdtPat,
     PsSodimmDdr4CadBus,
@@ -700,7 +705,6 @@ pub enum MemoryEntryId {
 
     PlatformTuning,
     PmuBistVendorAlgorithm,
-    Ddr5RawCardConfig,
     Ddr5TrainingOverride,
 
     Unknown(u16),
@@ -736,6 +740,7 @@ impl ToPrimitive for MemoryEntryId {
             Self::PsRdimmDdr5Bus => 0x89,
             Self::PsRdimmDdr5MaxFreq => 0x8E,
             Self::PsRdimmDdr5StretchFreq => 0x92,
+            Self::PsRdimmDdr5RawCardConfig => 0xA2,
             Self::PsRdimmDdr5MaxFreqC1 => 0xA3,
 
             Self::Ps3dsRdimmDdr4MaxFreq => 0x4B,
@@ -743,6 +748,8 @@ impl ToPrimitive for MemoryEntryId {
             Self::Ps3dsRdimmDdr4DataBus => 0x4D,
             Self::Ps3dsRdimmDdr5MaxFreq => 0x94,
             Self::Ps3dsRdimmDdr5StretchFreq => 0x95,
+
+            Self::PsMrdimmDdr5MaxFreq => 0xA5,
 
             Self::ConsoleOutControl => 0x50,
             Self::EventControl => 0x51,
@@ -754,8 +761,10 @@ impl ToPrimitive for MemoryEntryId {
             Self::PsLrdimmDdr4DataBus => 0x56,
             Self::PsLrdimmDdr4MaxFreq => 0x57,
             Self::PsLrdimmDdr4StretchFreq => 0x58,
+            Self::PsLrdimmDdr5Bus => 0x8A,
             Self::PsLrdimmDdr5MaxFreq => 0x8F,
             Self::PsLrdimmDdr5StretchFreq => 0x93,
+            Self::PsLrdimmDdr5RawCardConfig => 0xA7,
 
             Self::PsSodimmDdr4OdtPat => 0x59,
             Self::PsSodimmDdr4CadBus => 0x5A,
@@ -773,7 +782,6 @@ impl ToPrimitive for MemoryEntryId {
 
             Self::PlatformTuning => 0x75,
             Self::PmuBistVendorAlgorithm => 0xA1,
-            Self::Ddr5RawCardConfig => 0xA2,
             Self::Ddr5TrainingOverride => 0xA4,
 
             Self::Unknown(x) => (*x) as i64,
@@ -845,6 +853,7 @@ impl FromPrimitive for MemoryEntryId {
                 0x75 => Self::PlatformTuning,
 
                 0x89 => Self::PsRdimmDdr5Bus,
+                0x8A => Self::PsLrdimmDdr5Bus,
                 0x8E => Self::PsRdimmDdr5MaxFreq,
                 0x8F => Self::PsLrdimmDdr5MaxFreq,
                 0x92 => Self::PsRdimmDdr5StretchFreq,
@@ -852,9 +861,11 @@ impl FromPrimitive for MemoryEntryId {
                 0x94 => Self::Ps3dsRdimmDdr5MaxFreq,
                 0x95 => Self::Ps3dsRdimmDdr5StretchFreq,
                 0xA1 => Self::PmuBistVendorAlgorithm,
-                0xA2 => Self::Ddr5RawCardConfig,
+                0xA2 => Self::PsRdimmDdr5RawCardConfig,
                 0xA3 => Self::PsRdimmDdr5MaxFreqC1,
                 0xA4 => Self::Ddr5TrainingOverride,
+                0xA5 => Self::PsMrdimmDdr5MaxFreq,
+                0xA7 => Self::PsLrdimmDdr5RawCardConfig,
 
                 x => Self::Unknown(x as u16),
             })
@@ -3887,7 +3898,11 @@ pub mod memory {
 
     impl EntryCompatible for RdimmDdr5BusElement {
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
-            matches!(entry_id, EntryId::Memory(MemoryEntryId::PsRdimmDdr5Bus))
+            matches!(
+                entry_id,
+                EntryId::Memory(MemoryEntryId::PsRdimmDdr5Bus)
+                    | EntryId::Memory(MemoryEntryId::PsLrdimmDdr5Bus)
+            )
         }
     }
 
@@ -4299,6 +4314,7 @@ pub mod memory {
                 EntryId::Memory(MemoryEntryId::Ps3dsRdimmDdr5MaxFreq) => true,
                 EntryId::Memory(MemoryEntryId::PsLrdimmDdr5MaxFreq) => true,
                 EntryId::Memory(MemoryEntryId::PsRdimmDdr5MaxFreqC1) => true,
+                EntryId::Memory(MemoryEntryId::PsMrdimmDdr5MaxFreq) => true,
 
                 // Definitely not: EntryId::Memory(MemoryEntryId::PsLrdimmDdr4) => true.
                 // TODO (bug# 124): EntryId::Memory(PsSodimmDdr4MaxFreq) => true
@@ -5893,7 +5909,8 @@ Clone)]
         fn is_entry_compatible(entry_id: EntryId, _prefix: &[u8]) -> bool {
             matches!(
                 entry_id,
-                EntryId::Memory(MemoryEntryId::Ddr5RawCardConfig)
+                EntryId::Memory(MemoryEntryId::PsRdimmDdr5RawCardConfig)
+                    | EntryId::Memory(MemoryEntryId::PsLrdimmDdr5RawCardConfig)
             )
         }
     }
