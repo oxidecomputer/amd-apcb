@@ -195,7 +195,7 @@ struct SerdeFoo {
     // and stored without warning (which is what a lot of Rust crates
     // culturally do--see for example register crates, hal crates etc).
     // To prevent truncation is why, whenever possible, we use an
-    // enum that derives BitfieldSpecifier instead of things like B3.
+    // enum that derives Specifier instead of things like B3.
     // That way, out of bounds values cannot happen.
     // These enums can be used as `TYPE` directly in `#[bitfield]` fields.
     pub a: Quux

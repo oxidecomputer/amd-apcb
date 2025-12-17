@@ -9,7 +9,7 @@ use crate::types::Result;
 use modular_bitfield::prelude::*;
 
 #[derive(
-    Debug, PartialEq, num_derive::FromPrimitive, Clone, Copy, BitfieldSpecifier,
+    Debug, Default, PartialEq, num_derive::FromPrimitive, Clone, Copy, Specifier,
 )]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
@@ -18,6 +18,7 @@ use modular_bitfield::prelude::*;
 #[bits = 8]
 pub enum ParameterTimePoint {
     Never = 0,
+    #[default]
     Any = 1,
 }
 
@@ -33,14 +34,8 @@ impl Setter<ParameterTimePoint> for ParameterTimePoint {
     }
 }
 
-impl Default for ParameterTimePoint {
-    fn default() -> Self {
-        Self::Any
-    }
-}
-
 #[derive(
-    Debug, PartialEq, num_derive::FromPrimitive, Clone, Copy, BitfieldSpecifier,
+    Debug, Default, PartialEq, num_derive::FromPrimitive, Clone, Copy, Specifier,
 )]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
@@ -413,13 +408,8 @@ pub enum ParameterTokenConfig {
     Fch1c06 = 0x1C06, // FIXME
     Fch1c07 = 0x1C07, // FIXME
 
+    #[default]
     Limit = 0x1FFF,
-}
-
-impl Default for ParameterTokenConfig {
-    fn default() -> Self {
-        Self::Limit
-    }
 }
 
 impl Getter<Result<ParameterTokenConfig>> for ParameterTokenConfig {
