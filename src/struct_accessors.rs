@@ -239,7 +239,19 @@ impl DummyErrorChecks for bool {}
 /// The "pub set" will use the given SETTER_PARAMETER_TYPE as the
 /// parameter type of the generated setter, using Setter converters to get
 /// there as needed.
-macro_rules! make_accessors {(
+///
+/// The actual work generating the code as described above is actually done
+/// by the pair of macros `make_accessors_base` and `make_accessors_serde`.
+/// The former is what defines the struct and impl with the field accessors.
+/// The latter generates the serde compatible struct. One can thus just call
+/// `make_accessors_base` if you have a custom serde type definition.
+macro_rules! make_accessors {
+    ( $($args:tt)* ) => {
+        crate::struct_accessors::make_accessors_base! { $($args)* }
+        crate::struct_accessors::make_accessors_serde! { $($args)* }
+    }
+}
+macro_rules! make_accessors_base {(
     $(#[$struct_meta:meta])*
     $struct_vis:vis
     struct $StructName:ident {
@@ -339,7 +351,22 @@ macro_rules! make_accessors {(
             )?
         )*
     }
-    // for serde
+)}
+macro_rules! make_accessors_serde {(
+    $(#[$struct_meta:meta])*
+    $struct_vis:vis
+    struct $StructName:ident {
+        $(
+            $(#[$field_meta:meta])*
+            $field_vis:vis
+            $field_name:ident
+            $(|| $(#[$serde_field_orig_meta:meta])* $serde_ty:ty : $field_orig_ty:ty)?
+            $(: $field_ty:ty)?
+            $(| $getter_vis:vis get $field_user_ty:ty
+              $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
+        ),* $(,)?
+    }
+) => (
     #[cfg(feature = "serde")]
     paste::paste!{
         #[doc(hidden)]
@@ -361,9 +388,17 @@ macro_rules! make_accessors {(
 )}
 
 pub(crate) use make_accessors;
+pub(crate) use make_accessors_base;
+pub(crate) use make_accessors_serde;
 
 /// A variant of the make_accessors macro for modular_bitfields.
-macro_rules! make_bitfield_serde {(
+macro_rules! make_bitfield_serde {
+    ( $($args:tt)* ) => {
+        crate::struct_accessors::make_bitfield_serde_base! { $($args)* }
+        crate::struct_accessors::make_bitfield_serde_type! { $($args)* }
+    }
+}
+macro_rules! make_bitfield_serde_base {(
         $(#[$struct_meta:meta])*
         $struct_vis:vis
         struct $StructName:ident {
@@ -428,7 +463,21 @@ macro_rules! make_bitfield_serde {(
             }
         )*
     }
-
+}}
+macro_rules! make_bitfield_serde_type {(
+        $(#[$struct_meta:meta])*
+        $struct_vis:vis
+        struct $StructName:ident {
+                $(
+                        $(#[$field_meta:meta])*
+                        $field_vis:vis
+                        $field_name:ident
+                        $(|| $(#[$serde_field_orig_meta:meta])* $serde_ty:ty : $field_orig_ty:ty)?
+                        $(: $field_ty:ty)?
+                        $(| $getter_vis:vis get $field_user_ty:ty $(: $setter_vis:vis set $field_setter_user_ty:ty)?)?
+                ),* $(,)?
+        }
+) => {
     #[cfg(feature = "serde")]
     paste::paste! {
         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -445,3 +494,5 @@ macro_rules! make_bitfield_serde {(
 }}
 
 pub(crate) use make_bitfield_serde;
+pub(crate) use make_bitfield_serde_base;
+pub(crate) use make_bitfield_serde_type;

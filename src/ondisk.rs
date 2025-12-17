@@ -1438,7 +1438,7 @@ pub mod gnb {
         Immutable, IntoBytes, KnownLayout, Result, Setter, Specifier,
         ToPrimitive, Unaligned, make_bitfield_serde, paste,
     };
-    use crate::struct_accessors::make_accessors;
+    use crate::struct_accessors::make_accessors_base;
     use modular_bitfield::prelude::*;
 
     #[derive(
@@ -1557,7 +1557,7 @@ pub mod gnb {
         u64
     );
 
-    make_accessors! {
+    make_accessors_base! {
         #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct EarlyPcieConfigElement {
@@ -2084,6 +2084,7 @@ pub mod memory {
     use super::*;
     use crate::struct_accessors::{
         BLU16, BU8, DummyErrorChecks, Getter, Setter, make_accessors,
+        make_accessors_base, make_bitfield_serde_base,
     };
     use crate::types::Result;
 
@@ -2839,7 +2840,7 @@ pub mod memory {
         }
     }
 
-    make_bitfield_serde! {
+    make_bitfield_serde_base! {
         #[bitfield(bits = 32)]
         #[repr(u32)]
         #[derive(Clone, Copy)]
@@ -3002,7 +3003,7 @@ pub mod memory {
         }
     }
 
-    make_bitfield_serde! {
+    make_bitfield_serde_base! {
         #[bitfield(bits = 32)]
         #[repr(u32)]
         #[derive(Clone, Copy)]
@@ -3097,7 +3098,7 @@ pub mod memory {
         }
     }
 
-    make_bitfield_serde! {
+    make_bitfield_serde_base! {
         #[bitfield(bits = 32)]
         #[repr(u32)]
         #[derive(Clone, Copy)]
@@ -4445,7 +4446,7 @@ pub mod memory {
         Smu = 9,
         Unknown = 0xf, // that's specified as "Unknown".
     }
-    make_accessors! {
+    make_accessors_base! {
         #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct ErrorOutControlBeepCode {
@@ -4933,7 +4934,7 @@ Clone)]
         u64
     );
 
-    make_accessors! {
+    make_accessors_base! {
         #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct DdrPostPackageRepairElement {
