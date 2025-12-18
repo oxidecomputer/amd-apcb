@@ -376,7 +376,7 @@ impl GroupMutIter<'_> {
                         offset = offset
                             .checked_add(entry_size.into())
                             .ok_or(Error::ArithmeticOverflow)?;
-                        while offset % ENTRY_ALIGNMENT != 0 {
+                        while !offset.is_multiple_of(ENTRY_ALIGNMENT) {
                             offset = offset
                                 .checked_add(1)
                                 .ok_or(Error::ArithmeticOverflow)?;

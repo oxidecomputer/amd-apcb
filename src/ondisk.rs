@@ -125,7 +125,8 @@ pub(crate) fn take_body_from_collection_mut<'a>(
     let xbuf = take(&mut *buf);
     if xbuf.len() >= size {
         let (item, xbuf) = xbuf.split_at_mut(size);
-        if size % alignment != 0 && xbuf.len() >= alignment - (size % alignment)
+        if !size.is_multiple_of(alignment)
+            && xbuf.len() >= alignment - (size % alignment)
         {
             let (_, b) = xbuf.split_at_mut(alignment - (size % alignment));
             *buf = b;
@@ -170,7 +171,8 @@ pub(crate) fn take_body_from_collection<'a>(
     let xbuf = take(&mut *buf);
     if xbuf.len() >= size {
         let (item, xbuf) = xbuf.split_at(size);
-        if size % alignment != 0 && xbuf.len() >= alignment - (size % alignment)
+        if !size.is_multiple_of(alignment)
+            && xbuf.len() >= alignment - (size % alignment)
         {
             let (_, b) = xbuf.split_at(alignment - (size % alignment));
             *buf = b;
@@ -1429,24 +1431,18 @@ impl BoardInstances {
 impl_bitfield_primitive_conversion!(BoardInstances, 0xffff, u16);
 
 pub mod gnb {
-    use super::{
-        BitfieldSpecifier, EntryCompatible, EntryId, FromBytes, FromPrimitive,
-        Getter, GnbEntryId, Immutable, IntoBytes, KnownLayout, Result, Setter,
-        ToPrimitive, Unaligned, make_bitfield_serde, paste,
-    };
     #[cfg(feature = "serde")]
     use super::{Deserialize, SerdeHex8, Serialize};
-    use crate::struct_accessors::make_accessors;
+    use super::{
+        EntryCompatible, EntryId, FromBytes, FromPrimitive, Getter, GnbEntryId,
+        Immutable, IntoBytes, KnownLayout, Result, Setter, Specifier,
+        ToPrimitive, Unaligned, make_bitfield_serde, paste,
+    };
+    use crate::struct_accessors::make_accessors_base;
     use modular_bitfield::prelude::*;
 
     #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        FromPrimitive,
-        ToPrimitive,
-        BitfieldSpecifier,
+        Clone, Copy, Debug, PartialEq, FromPrimitive, ToPrimitive, Specifier,
     )]
     // FIXME #[non_exhaustive]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -1466,13 +1462,7 @@ pub mod gnb {
     //impl_bitfield_primitive_conversion!(LrdimmDdr4DimmRanks, 0b11, u32);
 
     #[derive(
-        Clone,
-        Copy,
-        Debug,
-        PartialEq,
-        FromPrimitive,
-        ToPrimitive,
-        BitfieldSpecifier,
+        Clone, Copy, Debug, PartialEq, FromPrimitive, ToPrimitive, Specifier,
     )]
     // FIXME #[non_exhaustive]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -1515,7 +1505,7 @@ pub mod gnb {
         #[bitfield(bits = 64)]
         #[repr(u64)]
         #[derive(
-            Clone, Copy, Debug, PartialEq, //BitfieldSpecifier,
+            Clone, Copy, Debug, PartialEq, //Specifier,
         )]
         pub struct EarlyPcieConfigBody {
             #[bits = 8]
@@ -1567,7 +1557,7 @@ pub mod gnb {
         u64
     );
 
-    make_accessors! {
+    make_accessors_base! {
         #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct EarlyPcieConfigElement {
@@ -2094,6 +2084,7 @@ pub mod memory {
     use super::*;
     use crate::struct_accessors::{
         BLU16, BU8, DummyErrorChecks, Getter, Setter, make_accessors,
+        make_accessors_base, make_bitfield_serde_base,
     };
     use crate::types::Result;
 
@@ -2624,7 +2615,7 @@ pub mod memory {
         /// allows either single or dual rank.
         #[bitfield(bits = 4)]
         #[derive(
-            Default, Clone, Copy, PartialEq, BitfieldSpecifier,
+            Default, Clone, Copy, PartialEq, Specifier,
         )]
         pub struct Ddr4DimmRanks {
             #[bits = 1]
@@ -2660,7 +2651,7 @@ pub mod memory {
         /// either unpopulated or lr.
         #[bitfield(bits = 4)]
         #[derive(
-            Clone, Copy, PartialEq, BitfieldSpecifier,
+            Clone, Copy, PartialEq, Specifier,
         )]
         pub struct LrdimmDdr4DimmRanks {
             #[bits = 1]
@@ -2849,7 +2840,7 @@ pub mod memory {
         }
     }
 
-    make_bitfield_serde! {
+    make_bitfield_serde_base! {
         #[bitfield(bits = 32)]
         #[repr(u32)]
         #[derive(Clone, Copy)]
@@ -3012,7 +3003,7 @@ pub mod memory {
         }
     }
 
-    make_bitfield_serde! {
+    make_bitfield_serde_base! {
         #[bitfield(bits = 32)]
         #[repr(u32)]
         #[derive(Clone, Copy)]
@@ -3107,7 +3098,7 @@ pub mod memory {
         }
     }
 
-    make_bitfield_serde! {
+    make_bitfield_serde_base! {
         #[bitfield(bits = 32)]
         #[repr(u32)]
         #[derive(Clone, Copy)]
@@ -4455,7 +4446,7 @@ pub mod memory {
         Smu = 9,
         Unknown = 0xf, // that's specified as "Unknown".
     }
-    make_accessors! {
+    make_accessors_base! {
         #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, PartialEq, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct ErrorOutControlBeepCode {
@@ -4736,7 +4727,7 @@ Clone)]
     make_bitfield_serde! {
         #[bitfield(bits = 32)]
         #[repr(u32)]
-        #[derive(Default, Clone, Copy, BitfieldSpecifier)]
+        #[derive(Default, Clone, Copy, Specifier)]
         pub struct Ddr4OdtPatDimmRankBitmaps {
             #[bits = 4]
             pub dimm0: Ddr4DimmRanks | pub get Ddr4DimmRanks : pub set Ddr4DimmRanks, // @0
@@ -4825,7 +4816,7 @@ Clone)]
     make_bitfield_serde! {
         #[bitfield(bits = 32)]
         #[repr(u32)]
-        #[derive(Clone, Copy, BitfieldSpecifier)]
+        #[derive(Clone, Copy, Specifier)]
         pub struct LrdimmDdr4OdtPatDimmRankBitmaps {
             pub dimm0: LrdimmDdr4DimmRanks | pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks, // @bit 0
             pub dimm1: LrdimmDdr4DimmRanks | pub get LrdimmDdr4DimmRanks : pub set LrdimmDdr4DimmRanks, // @bit 4
@@ -4893,7 +4884,7 @@ Clone)]
     }
 
     /*
-        #[derive(BitfieldSpecifier, Debug, PartialEq)]
+        #[derive(Specifier, Debug, PartialEq)]
         #[bits = 1]
         pub enum DdrPostPackageRepairBodyDeviceWidth {
             Width0 = 0,
@@ -4943,7 +4934,7 @@ Clone)]
         u64
     );
 
-    make_accessors! {
+    make_accessors_base! {
         #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned, Debug, Copy, Clone)]
         #[repr(C, packed)]
         pub struct DdrPostPackageRepairElement {
@@ -5910,7 +5901,7 @@ Clone)]
     make_bitfield_serde!(
         #[bitfield(bits = 12)]
         #[derive(
-            Default, Clone, Copy, PartialEq, BitfieldSpecifier,
+            Default, Clone, Copy, PartialEq, Specifier,
         )]
         pub struct Ddr5TrainingOverrideEntryHeaderChannelSelectorMask {
             pub c_0: bool | pub get bool : pub set bool,
@@ -5931,7 +5922,7 @@ Clone)]
     make_bitfield_serde!(
         #[bitfield(bits = 4)]
         #[derive(
-            Default, Clone, Copy, PartialEq, BitfieldSpecifier,
+            Default, Clone, Copy, PartialEq, Specifier,
         )]
         pub struct Ddr5TrainingOverrideEntryHeaderFlagsMemClkMask {
             pub ddr4800: bool | pub get bool : pub set bool,
@@ -5943,7 +5934,7 @@ Clone)]
 
     // Note: Using make_bitfield_serde would expose the fact that modular-bitfield doesn't actually have i8 (or i4).
     #[bitfield(bits = 32)]
-    #[derive(Default, Clone, Copy, PartialEq, BitfieldSpecifier)]
+    #[derive(Default, Clone, Copy, PartialEq, Specifier)]
     pub(crate) struct Ddr5TrainingOverrideEntryHeaderFlags {
         pub selected_mem_clks: Ddr5TrainingOverrideEntryHeaderFlagsMemClkMask,
         pub selected_channels:
@@ -10804,7 +10795,7 @@ pub enum DfPdrMode {
     Selective = 1,
 }
 
-#[derive(BitfieldSpecifier, Copy, Clone, Debug, Default, PartialEq)]
+#[derive(Specifier, Copy, Clone, Debug, Default, PartialEq)]
 #[bits = 1]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]

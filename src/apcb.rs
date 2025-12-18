@@ -740,7 +740,7 @@ impl<'a> Apcb<'a> {
                     .map_err(|_| Error::ArithmeticOverflow)?,
             )
             .ok_or(Error::OutOfSpace)?;
-        while entry_allocation % (ENTRY_ALIGNMENT as u16) != 0 {
+        while !entry_allocation.is_multiple_of(ENTRY_ALIGNMENT as u16) {
             entry_allocation += 1;
         }
         let mut group =
@@ -1008,7 +1008,7 @@ impl<'a> Apcb<'a> {
         // tested, are impossible right now anyway and have never been seen.  So
         // disallow those.
         const TOKEN_SIZE: u16 = size_of::<TOKEN_ENTRY>() as u16;
-        const_assert!(TOKEN_SIZE % (ENTRY_ALIGNMENT as u16) == 0);
+        const_assert!(TOKEN_SIZE.is_multiple_of(ENTRY_ALIGNMENT as u16));
         let mut group = self.resize_group_by(group_id, TOKEN_SIZE.into())?;
         // Now, GroupMutItem.buf includes space for the token, claimed by no
         // entry so far.  group.insert_token has special logic in order to
